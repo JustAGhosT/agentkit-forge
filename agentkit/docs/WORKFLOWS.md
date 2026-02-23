@@ -310,7 +310,7 @@ correct, passwords are properly hashed with bcrypt, and test coverage is thoroug
 **What the AI does:**
 - Collects the current state: git branch, last commit, orchestrator state, events log
 - Writes a structured handoff document with: what was done, current blockers, next 3 actions, validation commands, and open risks
-- Saves the handoff to `docs/08_reference/ai_handoffs/` (if the directory exists)
+- Saves the handoff to `docs/ai_handoffs/` (if the directory exists)
 - Logs the handoff event to `.claude/state/events.log`
 
 **Expected output:**
@@ -738,7 +738,7 @@ Use this flow whenever you are starting a new Claude Code session and there is p
 ### Prerequisites
 
 - A previous session used `/handoff` to save its state
-- The `docs/08_reference/ai_handoffs/` directory contains handoff documents
+- The `docs/ai_handoffs/` directory contains handoff documents
 - The `.claude/state/orchestrator.json` file contains the orchestrator state from the last session
 
 ### Step-by-Step
@@ -748,12 +748,12 @@ Use this flow whenever you are starting a new Claude Code session and there is p
 When you start a new session, the first thing to do is find and read the most recent handoff document:
 
 ```
-Read the most recent handoff document from docs/08_reference/ai_handoffs/ and
+Read the most recent handoff document from docs/ai_handoffs/ and
 summarize where we left off.
 ```
 
 **What the AI does:**
-- Lists files in the `docs/08_reference/ai_handoffs/` directory
+- Lists files in the `docs/ai_handoffs/` directory
 - Reads the most recent handoff (sorted by date)
 - Summarizes the key information: what was done, what is blocked, and what the next actions are
 
@@ -925,7 +925,7 @@ Review all changes made across both sessions (backend + frontend).
 ```
 
 **What the AI does with `--save`:**
-- Writes the handoff document to console AND to `docs/08_reference/ai_handoffs/`
+- Writes the handoff document to console AND to `docs/ai_handoffs/`
 - Updates the orchestrator state to Phase 5 (Ship)
 - Logs the session completion to events.log
 
@@ -985,7 +985,7 @@ A chronological log of every significant action:
 [2026-02-23T10:30:00Z] [HANDOFF] [ORCHESTRATOR] Session complete. Done: 3 items. Blockers: 0. Next: "Create PR".
 ```
 
-**3. Handoff Documents (`docs/08_reference/ai_handoffs/`)**
+**3. Handoff Documents (`docs/ai_handoffs/`)**
 
 Human-readable markdown files with structured summaries. These serve as the "cold start" document: anyone (human or AI) should be able to read a handoff and start working within 2 minutes.
 
@@ -1009,5 +1009,5 @@ Total time: 10-15 minutes for the continuation session.
 - Read the handoff BEFORE checking orchestrator state. The handoff is written for humans and gives you context faster
 - Use `/orchestrate --status` to verify the technical state matches what the handoff describes
 - If the orchestrator lock is stale (left over from a crashed session), use `/orchestrate --force-unlock` to clear it
-- Handoff documents accumulate in `docs/08_reference/ai_handoffs/`. Periodically review and archive old ones
+- Handoff documents accumulate in `docs/ai_handoffs/`. Periodically review and archive old ones
 - The events log is append-only and grows over time. It is a useful audit trail but does not need to be read end-to-end -- the last 10-20 entries are usually sufficient

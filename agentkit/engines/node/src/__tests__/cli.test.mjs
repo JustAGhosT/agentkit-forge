@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'child_process';
+import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = resolve(__dirname, '..', 'cli.mjs');
+const PKG_VERSION = JSON.parse(readFileSync(resolve(__dirname, '..', '..', '..', '..', 'package.json'), 'utf-8')).version;
 
 function run(...args) {
   try {
@@ -48,7 +50,7 @@ describe('CLI', () => {
 
   it('shows version from package.json', () => {
     const result = run('--help');
-    expect(result.stdout).toContain('AgentKit Forge v0.1.0');
+    expect(result.stdout).toContain(`AgentKit Forge v${PKG_VERSION}`);
   });
 
   it('rejects unknown commands with exit code 1', () => {

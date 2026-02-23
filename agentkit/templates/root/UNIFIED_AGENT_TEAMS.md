@@ -244,7 +244,7 @@ protocol:
 1. **Parse**: Extract task description, target teams, and starting phase.
 2. **Plan**: Generate a work breakdown structure assigning subtasks to teams.
 3. **Dispatch**: Send each subtask to the appropriate team context.
-4. **Track**: Update `schema.json` state with task assignments and statuses.
+4. **Track**: Update `.claude/state/orchestrator.json` state with task assignments and statuses.
 5. **Sync**: Periodically check team progress and resolve blockers.
 6. **Complete**: Aggregate results and advance to the next phase.
 

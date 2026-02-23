@@ -9,6 +9,13 @@
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
+# -- Require jq for JSON parsing ------------------------------------------
+if ! command -v jq &>/dev/null; then
+    # jq is required to parse stdin JSON; allow stop without checks
+    cat > /dev/null  # drain stdin
+    exit 0
+fi
+
 # -- Read JSON payload from stdin ------------------------------------------
 INPUT=$(cat)
 
@@ -132,7 +139,7 @@ fi
 
 if [[ -n "$AGENTKIT_ROOT" ]] && command -v jq &>/dev/null; then
     LOG_DIR="${AGENTKIT_ROOT}/logs"
-    mkdir -p "$LOG_DIR"
+    mkdir -p "$LOG_DIR" 2>/dev/null || true
     DATE_STR=$(date -u +"%Y-%m-%d")
     LOG_FILE="${LOG_DIR}/usage-${DATE_STR}.jsonl"
     TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
@@ -140,7 +147,9 @@ if [[ -n "$AGENTKIT_ROOT" ]] && command -v jq &>/dev/null; then
     SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
     files_changed=0
     if command -v git &>/dev/null && git -C "$CWD" rev-parse --is-inside-work-tree &>/dev/null; then
-        files_changed=$(git -C "$CWD" diff --name-only HEAD 2>/dev/null | wc -l | tr -d ' ' || echo "0")
+        tracked=$(git -C "$CWD" diff --name-only HEAD 2>/dev/null | wc -l | tr -d ' ' || echo "0")
+        untracked=$(git -C "$CWD" ls-files --others --exclude-standard 2>/dev/null | wc -l | tr -d ' ' || echo "0")
+        files_changed=$(( tracked + untracked ))
     fi
 
     jq -n --arg ts "$TIMESTAMP" --arg sid "$SESSION_ID" --arg files "$files_changed" \

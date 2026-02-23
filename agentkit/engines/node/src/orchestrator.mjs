@@ -99,7 +99,11 @@ function createDefaultState(projectRoot) {
 export function loadState(projectRoot) {
   const path = statePath(projectRoot);
   if (existsSync(path)) {
-    return JSON.parse(readFileSync(path, 'utf-8'));
+    try {
+      return JSON.parse(readFileSync(path, 'utf-8'));
+    } catch (err) {
+      console.warn(`[agentkit:orchestrate] Corrupted state file, resetting: ${err.message}`);
+    }
   }
   const state = createDefaultState(projectRoot);
   saveState(projectRoot, state);
@@ -133,20 +137,7 @@ export function saveState(projectRoot, state) {
  * @returns {{ acquired: boolean, existingLock?: object }}
  */
 export function acquireLock(projectRoot, holder = {}) {
-  const path = lockPath(projectRoot);
-
-  // Check for existing lock
-  if (existsSync(path)) {
-    const existing = JSON.parse(readFileSync(path, 'utf-8'));
-    const age = Date.now() - new Date(existing.started_at).getTime();
-
-    if (age < LOCK_STALE_MS) {
-      return { acquired: false, existingLock: existing };
-    }
-    // Stale lock — remove and proceed
-    unlinkSync(path);
-  }
-
+  const lPath = lockPath(projectRoot);
   const dir = stateDir(projectRoot);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
@@ -158,8 +149,28 @@ export function acquireLock(projectRoot, holder = {}) {
     started_at: new Date().toISOString(),
     session_id: holder.sessionId || '',
   };
-  writeFileSync(path, JSON.stringify(lockData, null, 2) + '\n', 'utf-8');
-  return { acquired: true };
+
+  try {
+    // Atomic create — fails with EEXIST if lock file already exists
+    writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
+    return { acquired: true };
+  } catch (err) {
+    if (err.code !== 'EEXIST') throw err;
+    // Lock file exists — check staleness
+    const existing = JSON.parse(readFileSync(lPath, 'utf-8'));
+    const age = Date.now() - new Date(existing.started_at).getTime();
+    if (age < LOCK_STALE_MS) {
+      return { acquired: false, existingLock: existing };
+    }
+    // Stale lock — remove and retry once
+    unlinkSync(lPath);
+    try {
+      writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
+      return { acquired: true };
+    } catch {
+      return { acquired: false, existingLock: existing };
+    }
+  }
 }
 
 function getHostname() {
@@ -460,7 +471,7 @@ export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
       const result = setPhase(state, phase);
       if (result.error) {
         console.error(`[agentkit:orchestrate] ${result.error}`);
-        process.exit(1);
+        return;
       }
       saveState(projectRoot, result.state);
       appendEvent(projectRoot, 'phase_set', { phase, phase_name: PHASES[phase] });

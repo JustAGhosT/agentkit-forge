@@ -77,7 +77,7 @@ Example entries:
 
 Orchestration sessions can span multiple Claude Code sessions. Continuity is maintained through three mechanisms:
 
-1. **Handoff documents** -- At the end of a session, the orchestrator writes a handoff document to `docs/08_reference/ai_handoffs/`. This document captures current context, decisions made, and what needs to happen next. The next session reads the most recent handoff to restore context.
+1. **Handoff documents** -- At the end of a session, the orchestrator writes a handoff document to `docs/ai_handoffs/`. This document captures current context, decisions made, and what needs to happen next. The next session reads the most recent handoff to restore context.
 
 2. **State file persistence** -- The `orchestrator.json` file persists on disk between sessions. When the orchestrator starts, it reads this file to determine which phase to resume from and what work remains.
 

@@ -73,18 +73,18 @@ Append to `.claude/state/events.log`:
 
 ### 2. Handoff Archive (optional)
 
-If the directory `docs/08_reference/ai_handoffs/` exists, or if the orchestrator state indicates handoff archiving is enabled, also write the full handoff to:
+If the directory `docs/ai_handoffs/` exists, or if the orchestrator state indicates handoff archiving is enabled, also write the full handoff to:
 
 ```
-docs/08_reference/ai_handoffs/<YYYY-MM-DD>.md
+docs/ai_handoffs/<YYYY-MM-DD>.md
 ```
 
 If multiple handoffs happen on the same day, append a counter:
 ```
-docs/08_reference/ai_handoffs/<YYYY-MM-DD>-02.md
+docs/ai_handoffs/<YYYY-MM-DD>-02.md
 ```
 
-Do NOT create the `docs/08_reference/ai_handoffs/` directory if it does not exist. Only write there if it already exists.
+Do NOT create the `docs/ai_handoffs/` directory if it does not exist. Only write there if it already exists.
 
 ### 3. Console Output (always)
 

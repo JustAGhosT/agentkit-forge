@@ -305,6 +305,8 @@ function insertHeader(content, ext, version, repoName) {
       if (endOfFrontmatter > -1) {
         return content.substring(0, endOfFrontmatter + 1) + '\n' + header + content.substring(endOfFrontmatter + 1);
       }
+      // Frontmatter closing --- is at EOF — append header after it
+      return content + '\n' + header;
     }
   }
 
@@ -483,8 +485,8 @@ function syncClaudeMd(templatesDir, tmpDir, vars, version, repoName) {
 
   let content = readFileSync(claudeMdPath, 'utf-8');
   content = renderTemplate(content, { ...vars, repoName });
-  const header = getGeneratedHeader(version, repoName, '.md');
-  writeOutput(resolve(tmpDir, 'CLAUDE.md'), header + content);
+  content = insertHeader(content, '.md', version, repoName);
+  writeOutput(resolve(tmpDir, 'CLAUDE.md'), content);
 }
 
 function syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName) {

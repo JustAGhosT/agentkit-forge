@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, rmSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import {
   generateSessionId, initSession, endSession, logEvent,
   getSessions, generateReport,
 } from '../cost-tracker.mjs';
 
-const TEST_AGENTKIT = resolve(import.meta.dirname, '..', '..', '..', '..', '..', '.test-cost-tracker', 'agentkit');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const TEST_AGENTKIT = resolve(__dirname, '..', '..', '..', '..', '..', '.test-cost-tracker', 'agentkit');
 const TEST_PROJECT = resolve(TEST_AGENTKIT, '..');
 
 describe('cost-tracker', () => {

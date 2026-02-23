@@ -327,7 +327,9 @@ function formatMs(ms) {
   const hours = Math.floor(ms / 3_600_000);
   const mins = Math.floor((ms % 3_600_000) / 60_000);
   if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
+  if (mins > 0) return `${mins}m`;
+  const secs = Math.floor(ms / 1000);
+  return `${secs}s`;
 }
 
 // ---------------------------------------------------------------------------

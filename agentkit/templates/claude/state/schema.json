@@ -105,29 +105,29 @@
       "type": "boolean",
       "description": "Whether all phases are complete"
     },
-    "lastHealthcheck": {
+    "last_healthcheck": {
       "type": "string",
       "format": "date-time",
       "description": "Timestamp of last healthcheck run"
     },
-    "healthStatus": {
+    "health_status": {
       "type": "string",
       "enum": ["HEALTHY", "UNHEALTHY"],
       "description": "Overall health status from last healthcheck"
     },
-    "sessionMetrics": {
+    "session_metrics": {
       "type": "object",
       "description": "Cost tracking session metrics",
       "properties": {
-        "currentSessionId": {
+        "current_session_id": {
           "type": "string",
           "description": "Active session ID for cost tracking"
         },
-        "totalSessions": {
+        "total_sessions": {
           "type": "integer",
           "description": "Total sessions recorded"
         },
-        "lastSessionEnd": {
+        "last_session_end": {
           "type": "string",
           "format": "date-time",
           "description": "When the last session ended"

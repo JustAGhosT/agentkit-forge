@@ -245,7 +245,7 @@ Open Claude Code in your project directory and walk through this sequence. Each 
 
 ## Command Quick Reference
 
-AgentKit Forge provides 23 slash commands, organized into four categories.
+AgentKit Forge provides 23 slash commands, organized into three categories.
 
 ### Workflow Commands
 

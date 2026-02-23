@@ -27,12 +27,20 @@ const SECRET_PATTERNS = [
 
 function getChangedFiles(projectRoot, flags) {
   if (flags.range) {
-    // Commit range
+    // Validate range to prevent shell injection — only allow commit-range notation
+    if (!/^[a-zA-Z0-9._\-/:^~]+(?:\.{2,3}[a-zA-Z0-9._\-/:^~]+)?$/.test(flags.range)) {
+      throw new Error(`Invalid --range value: ${flags.range}`);
+    }
     const r = execCommand(`git diff --name-only ${flags.range}`, { cwd: projectRoot });
     return r.exitCode === 0 ? r.stdout.trim().split('\n').filter(Boolean) : [];
   }
 
   if (flags.file) {
+    // Constrain to project root to prevent path traversal
+    const abs = resolve(projectRoot, flags.file);
+    if (!abs.startsWith(resolve(projectRoot) + '/') && abs !== resolve(projectRoot)) {
+      throw new Error(`--file must be within the project root: ${flags.file}`);
+    }
     return [flags.file];
   }
 

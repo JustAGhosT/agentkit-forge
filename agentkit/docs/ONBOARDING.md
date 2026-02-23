@@ -287,7 +287,7 @@ git commit -m "chore: update AgentKit Forge and re-sync configuration"
 
 Ensure Node.js is installed and available on your PATH. Verify with `node --version`.
 
-**YAML parse errors during check**
+**YAML parse errors during validation**
 
 Validate your YAML files with an online YAML validator or run `node -e "require('yaml').parse(require('fs').readFileSync('file.yaml','utf8'))"`.
 

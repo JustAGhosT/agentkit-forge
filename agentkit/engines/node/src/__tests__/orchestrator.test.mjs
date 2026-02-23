@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import {
   loadState, saveState, acquireLock, releaseLock, checkLock,
   appendEvent, readEvents, advancePhase, setPhase, updateTeamStatus,
@@ -8,7 +9,8 @@ import {
 } from '../orchestrator.mjs';
 
 // Use a temporary directory for tests
-const TEST_ROOT = resolve(import.meta.dirname, '..', '..', '..', '..', '..', '.test-orchestrator');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const TEST_ROOT = resolve(__dirname, '..', '..', '..', '..', '..', '.test-orchestrator');
 const STATE_DIR = resolve(TEST_ROOT, '.claude', 'state');
 
 describe('orchestrator', () => {

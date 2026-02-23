@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { runDiscover } from '../discover.mjs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -8,19 +8,16 @@ const AGENTKIT_ROOT = resolve(__dirname, '..', '..', '..', '..');
 const PROJECT_ROOT = resolve(AGENTKIT_ROOT, '..');
 
 describe('runDiscover()', () => {
+  afterEach(() => { vi.restoreAllMocks(); });
+
   it('returns a discovery report for the current repo', async () => {
-    // Capture console output
-    const logs = [];
-    const origLog = console.log;
-    console.log = (...args) => logs.push(args.join(' '));
+    vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const report = await runDiscover({
       agentkitRoot: AGENTKIT_ROOT,
       projectRoot: PROJECT_ROOT,
       flags: { output: 'json' },
     });
-
-    console.log = origLog;
 
     // Report should have expected structure
     expect(report).toHaveProperty('techStacks');
@@ -43,17 +40,13 @@ describe('runDiscover()', () => {
   });
 
   it('detects GitHub Actions CI', async () => {
-    const logs = [];
-    const origLog = console.log;
-    console.log = (...args) => logs.push(args.join(' '));
+    vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const report = await runDiscover({
       agentkitRoot: AGENTKIT_ROOT,
       projectRoot: PROJECT_ROOT,
       flags: { output: 'json' },
     });
-
-    console.log = origLog;
 
     // Should detect our CI workflow
     expect(report.cicd).toContain('github-actions');

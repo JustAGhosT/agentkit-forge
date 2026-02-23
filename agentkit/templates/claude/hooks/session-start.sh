@@ -17,8 +17,9 @@ if command -v jq &>/dev/null; then
   CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
 else
   # Fallback: extract values with grep/sed (handles simple flat JSON)
-  SESSION_ID=$(echo "$INPUT" | grep -o '"session_id"\s*:\s*"[^"]*"' | sed 's/.*: *"//;s/"$//' || true)
-  CWD=$(echo "$INPUT" | grep -o '"cwd"\s*:\s*"[^"]*"' | sed 's/.*: *"//;s/"$//' || true)
+  # Use POSIX character classes for portability (BSD/macOS grep lacks \s)
+  SESSION_ID=$(echo "$INPUT" | grep -o '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"//;s/"$//' || true)
+  CWD=$(echo "$INPUT" | grep -o '"cwd"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"//;s/"$//' || true)
 fi
 
 # Fall back to $PWD when cwd is not supplied.
@@ -107,8 +108,8 @@ if command -v jq &>/dev/null; then
       }
   }'
 else
-  # Fallback: manually construct JSON (escape newlines and quotes in summary)
-  escaped_summary=$(printf '%s' "$env_summary" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' '\\' | sed 's/\\/\\n/g')
+  # Fallback: manually construct JSON (escape backslashes, quotes, and newlines)
+  escaped_summary=$(printf '%s' "$env_summary" | awk '{gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); printf "%s\\n", $0}' | sed '$ s/\\n$//')
   printf '{"hookSpecificOutput":{"additionalContext":"%s"}}\n' "$escaped_summary"
 fi
 

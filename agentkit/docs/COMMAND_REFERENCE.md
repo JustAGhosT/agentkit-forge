@@ -399,7 +399,7 @@ Lint errors:
 
 | Flag | Description |
 |------|-------------|
-| `--save` | Write the handoff to the archive directory (`docs/08_reference/ai_handoffs/`) in addition to console output. |
+| `--save` | Write the handoff to the archive directory (`docs/ai_handoffs/`) in addition to console output. |
 
 **Example invocation:**
 
@@ -410,7 +410,7 @@ Lint errors:
 
 **Expected output sample:**
 
-```
+````
 # Session Handoff
 
 **Date:** 2026-02-23T17:30:00Z
@@ -436,7 +436,7 @@ Lint errors:
 ```bash
 pnpm build && npx vitest run && npx tsc --noEmit
 ```
-```
+````
 
 ---
 

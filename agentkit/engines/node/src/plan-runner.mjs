@@ -114,7 +114,7 @@ function readBacklog(projectRoot) {
  * @param {object} opts.flags
  * @returns {object}
  */
-export async function runPlan({ agentkitRoot, projectRoot, flags = {} }) {
+export async function runPlan({ projectRoot, flags = {} }) {
   console.log('[agentkit:plan] Current plan and status...');
   console.log('');
 
@@ -135,7 +135,7 @@ export async function runPlan({ agentkitRoot, projectRoot, flags = {} }) {
   console.log('');
 
   // --- Team Status ---
-  const activeTeams = Object.entries(state.team_progress)
+  const activeTeams = Object.entries(state.team_progress ?? {})
     .filter(([_, t]) => t.status !== 'idle');
 
   if (activeTeams.length > 0) {
@@ -148,14 +148,15 @@ export async function runPlan({ agentkitRoot, projectRoot, flags = {} }) {
   }
 
   // --- Todo Items ---
-  if (state.todo_items.length > 0) {
-    console.log(`--- Todo Items (${state.todo_items.length}) ---`);
-    const pending = state.todo_items.filter(t => t.status === 'pending' || t.status === 'in_progress');
+  const todoItems = state.todo_items ?? [];
+  if (todoItems.length > 0) {
+    console.log(`--- Todo Items (${todoItems.length}) ---`);
+    const pending = todoItems.filter(t => t.status === 'pending' || t.status === 'in_progress');
     for (const item of pending.slice(0, 10)) {
       const icon = item.status === 'in_progress' ? '▶' : '○';
       console.log(`  [${icon}] ${item.id}: ${item.title}${item.team ? ` (${item.team})` : ''}`);
     }
-    const done = state.todo_items.filter(t => t.status === 'done').length;
+    const done = todoItems.filter(t => t.status === 'done').length;
     if (done > 0) {
       console.log(`  (${done} completed items)`);
     }
@@ -199,7 +200,7 @@ export async function runPlan({ agentkitRoot, projectRoot, flags = {} }) {
     phaseName: state.phase_name,
     guidance,
     activeTeams: activeTeams.length,
-    todoItems: state.todo_items.length,
+    todoItems: todoItems.length,
     backlogItems: backlog ? backlog.length : 0,
   };
 }

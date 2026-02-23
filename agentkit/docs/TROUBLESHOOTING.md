@@ -173,7 +173,7 @@ rm -rf .claude/state/
 
 Then re-run `/orchestrate` to initialize a new state directory and begin from Phase 1 (Discovery).
 
-This removes all state, events, and lock files. Handoff documents in `docs/08_reference/ai_handoffs/` are not affected.
+This removes all state, events, and lock files. Handoff documents in `docs/ai_handoffs/` are not affected.
 
 ### Partial Reset
 

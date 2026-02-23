@@ -105,7 +105,8 @@ function generateHandoffDoc(git, state, events, timestamp) {
     lines.push(`| Team | Status | Notes |`);
     lines.push(`|------|--------|-------|`);
     for (const [teamId, team] of activeTeams) {
-      lines.push(`| ${teamId} | ${team.status} | ${team.notes || ''} |`);
+      const notes = (team.notes || '').replace(/\|/g, '\\|');
+      lines.push(`| ${teamId} | ${team.status} | ${notes} |`);
     }
     lines.push(``);
   }
@@ -154,7 +155,7 @@ function generateHandoffDoc(git, state, events, timestamp) {
  * @param {object} opts
  * @param {string} opts.agentkitRoot
  * @param {string} opts.projectRoot
- * @param {object} opts.flags - --save (write to docs/08_reference/ai_handoffs/)
+ * @param {object} opts.flags - --save (write to docs/ai_handoffs/)
  * @returns {object}
  */
 export async function runHandoff({ agentkitRoot, projectRoot, flags = {} }) {
@@ -173,15 +174,16 @@ export async function runHandoff({ agentkitRoot, projectRoot, flags = {} }) {
 
   // Optionally save to file
   if (flags.save) {
-    const handoffDir = resolve(projectRoot, 'docs', '08_reference', 'ai_handoffs');
+    const handoffDir = resolve(projectRoot, 'docs', 'ai_handoffs');
     if (!existsSync(handoffDir)) {
       mkdirSync(handoffDir, { recursive: true });
     }
-    const dateStr = timestamp.split('T')[0];
+    // Include time in filename to avoid overwriting on same day
+    const dateStr = timestamp.replace(/:/g, '-').replace(/\.\d{3}Z$/, '');
     const filename = `handoff-${dateStr}.md`;
     const filepath = resolve(handoffDir, filename);
     writeFileSync(filepath, doc, 'utf-8');
-    console.log(`Saved to: docs/08_reference/ai_handoffs/${filename}`);
+    console.log(`Saved to: docs/ai_handoffs/${filename}`);
   }
 
   // Log event

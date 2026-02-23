@@ -81,6 +81,7 @@ export async function runValidate({ agentkitRoot, projectRoot, flags }) {
   const requiredCommands = [
     'orchestrate', 'discover', 'healthcheck', 'review', 'sync-backlog',
     'check', 'plan', 'handoff', 'build', 'test', 'format', 'deploy', 'security',
+    'project-review',
     'team-backend', 'team-frontend', 'team-data', 'team-infra', 'team-devops',
     'team-testing', 'team-security', 'team-docs', 'team-product', 'team-quality',
   ];

@@ -83,5 +83,5 @@ jobs:
         run: |
           for f in spec/*.yaml; do
             echo "Checking $f..."
-            node -e "import yaml from 'js-yaml'; import fs from 'fs'; yaml.load(fs.readFileSync('$f','utf8'))" --input-type=module
+            SPEC_FILE="$f" node --input-type=module -e "import yaml from 'js-yaml'; import fs from 'fs'; yaml.load(fs.readFileSync(process.env.SPEC_FILE,'utf8'));"
           done

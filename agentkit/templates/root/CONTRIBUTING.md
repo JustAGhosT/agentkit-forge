@@ -67,7 +67,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 2. Run all quality gates locally: `agentkit validate`
 3. Create a PR with a clear description and test plan
 4. All CI checks must pass
-5. Request review from the relevant team (see AGENT_TEAMS.md)
+5. Request review from the relevant team (see [UNIFIED_AGENT_TEAMS.md](./UNIFIED_AGENT_TEAMS.md))
 6. Address review feedback
 7. Squash-merge when approved
 

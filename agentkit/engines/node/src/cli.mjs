@@ -33,14 +33,14 @@ const VALID_FLAGS = {
   init: ['repoName', 'force', 'help'],
   sync: ['overlay', 'help'],
   validate: ['help'],
-  discover: ['output', 'help'],
+  discover: ['output', 'depth', 'include-deps', 'help'],
   'spec-validate': ['help'],
-  orchestrate: ['teams', 'phase', 'status', 'force-unlock', 'assess-only', 'help'],
-  plan: ['help'],
-  check: ['fix', 'fast', 'stack', 'bail', 'help'],
-  review: ['range', 'file', 'help'],
-  handoff: ['team', 'save', 'help'],
-  healthcheck: ['help'],
+  orchestrate: ['assess-only', 'scope', 'dry-run', 'team', 'phase', 'status', 'force-unlock', 'help'],
+  plan: ['issue', 'output', 'depth', 'help'],
+  check: ['fix', 'stack', 'bail', 'help'],
+  review: ['pr', 'range', 'focus', 'severity', 'help'],
+  handoff: ['format', 'include-diff', 'tag', 'save', 'help'],
+  healthcheck: ['stack', 'fix', 'verbose', 'help'],
   cost: ['summary', 'sessions', 'report', 'month', 'format', 'last', 'help'],
   'project-review': ['scope', 'focus', 'phase', 'help'],
 };
@@ -111,7 +111,7 @@ Options:
     --file <path>       Review a specific file
 
   handoff:
-    --save              Save handoff to docs/08_reference/ai_handoffs/
+    --save              Save handoff to docs/ai_handoffs/
 
   cost:
     --summary           Show recent session summary

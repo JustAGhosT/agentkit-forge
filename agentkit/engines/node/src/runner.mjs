@@ -2,7 +2,7 @@
  * AgentKit Forge — Process Execution Helper
  * Shared utility for running shell commands with timeout, output capture, and timing.
  */
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 
 /**
  * Execute a shell command and capture results.
@@ -44,13 +44,9 @@ export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
  * @returns {boolean}
  */
 export function commandExists(cmd) {
-  const check = process.platform === 'win32' ? `where ${cmd}` : `which ${cmd}`;
-  try {
-    execSync(check, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
-    return true;
-  } catch {
-    return false;
-  }
+  const bin = process.platform === 'win32' ? 'where' : 'which';
+  const result = spawnSync(bin, [cmd], { encoding: 'utf-8', stdio: 'pipe' });
+  return result.status === 0;
 }
 
 /**
@@ -62,7 +58,8 @@ export function formatDuration(ms) {
   if (ms < 1000) return `${ms}ms`;
   const s = (ms / 1000).toFixed(1);
   if (ms < 60_000) return `${s}s`;
-  const m = Math.floor(ms / 60_000);
-  const remainS = ((ms % 60_000) / 1000).toFixed(0);
+  const totalSeconds = Math.floor(ms / 1000);
+  const m = Math.floor(totalSeconds / 60);
+  const remainS = totalSeconds % 60;
   return `${m}m ${remainS}s`;
 }
