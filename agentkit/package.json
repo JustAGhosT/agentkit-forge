@@ -11,6 +11,8 @@
     "agentkit:sync": "node engines/node/src/cli.mjs sync",
     "agentkit:init": "node engines/node/src/cli.mjs init",
     "agentkit:validate": "node engines/node/src/cli.mjs validate",
+    "agentkit:discover": "node engines/node/src/cli.mjs discover",
+    "agentkit:spec-validate": "node engines/node/src/cli.mjs spec-validate",
     "test": "vitest run",
     "test:watch": "vitest"
   },

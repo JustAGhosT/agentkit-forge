@@ -41,12 +41,20 @@ jobs:
         run: npm ci
         working-directory: agentkit
 
+      - name: Validate spec schemas
+        run: node engines/node/src/cli.mjs spec-validate
+        working-directory: agentkit
+
       - name: Run sync
         run: node engines/node/src/cli.mjs sync
         working-directory: agentkit
 
       - name: Validate generated outputs
         run: node engines/node/src/cli.mjs validate
+        working-directory: agentkit
+
+      - name: Run discover
+        run: node engines/node/src/cli.mjs discover --output json
         working-directory: agentkit
 
       - name: Check for drift

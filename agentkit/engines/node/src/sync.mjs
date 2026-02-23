@@ -207,11 +207,20 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 
   // 5. Atomic swap: move temp outputs to project root
   console.log('[agentkit:sync] Writing outputs...');
+  const resolvedRoot = resolve(projectRoot) + '/';
   let count = 0;
   const failedFiles = [];
   for (const srcFile of walkDir(tmpDir)) {
     const relPath = relative(tmpDir, srcFile);
     const destFile = resolve(projectRoot, relPath);
+
+    // Path traversal protection: ensure all output stays within project root
+    if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot)) {
+      console.error(`[agentkit:sync] BLOCKED: path traversal detected — ${relPath}`);
+      failedFiles.push({ file: relPath, error: 'path traversal blocked' });
+      continue;
+    }
+
     try {
       ensureDir(dirname(destFile));
       cpSync(srcFile, destFile, { force: true });

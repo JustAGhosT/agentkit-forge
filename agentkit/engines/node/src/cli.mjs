@@ -19,12 +19,14 @@ try {
   VERSION = pkg.version || VERSION;
 } catch { /* fallback to 0.0.0 */ }
 
-const VALID_COMMANDS = ['init', 'sync', 'validate'];
+const VALID_COMMANDS = ['init', 'sync', 'validate', 'discover', 'spec-validate'];
 
 const VALID_FLAGS = {
   init: ['repoName', 'force', 'help'],
   sync: ['overlay', 'help'],
   validate: ['help'],
+  discover: ['output', 'help'],
+  'spec-validate': ['help'],
 };
 
 const args = process.argv.slice(2);
@@ -56,9 +58,11 @@ AgentKit Forge v${VERSION}
 Usage: node cli.mjs <command> [options]
 
 Commands:
-  init       Initialize repo overlay from template
-  sync       Render all AI tool configs from spec + overlay
-  validate   Validate generated outputs
+  init            Initialize repo overlay from template
+  sync            Render all AI tool configs from spec + overlay
+  validate        Validate generated outputs
+  discover        Scan repo to detect tech stacks and structure
+  spec-validate   Validate YAML spec files for schema correctness
 
 Options:
   init:
@@ -68,7 +72,13 @@ Options:
   sync:
     --overlay <name>    Override overlay name (default: from .agentkit-repo)
 
+  discover:
+    --output <format>   Output format: yaml (default), json, or markdown
+
   validate:
+    (no options)
+
+  spec-validate:
     (no options)
 
   All commands:
@@ -123,6 +133,17 @@ async function main() {
       case 'validate': {
         const { runValidate } = await import('./validate.mjs');
         await runValidate({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'discover': {
+        const { runDiscover } = await import('./discover.mjs');
+        await runDiscover({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'spec-validate': {
+        const { runSpecValidation } = await import('./spec-validator.mjs');
+        const result = runSpecValidation(AGENTKIT_ROOT);
+        if (!result.valid) process.exit(1);
         break;
       }
     }
