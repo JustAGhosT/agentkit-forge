@@ -106,7 +106,7 @@ const agentSchema = {
 // Schema: commands.yaml
 // ---------------------------------------------------------------------------
 const VALID_COMMAND_TYPES = ['workflow', 'team', 'utility'];
-const VALID_TOOLS = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'Bash'];
+const VALID_TOOLS = ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'Bash', 'WebSearch', 'WebFetch'];
 
 const commandSchema = {
   type: 'object',

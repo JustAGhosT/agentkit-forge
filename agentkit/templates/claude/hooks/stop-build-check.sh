@@ -122,5 +122,31 @@ if [[ -f "${CWD}/pyproject.toml" ]]; then
     fi
 fi
 
+# -- Session cost tracking: log session end --------------------------------
+AGENTKIT_ROOT=""
+if [[ -d "${CWD}/agentkit" ]]; then
+    AGENTKIT_ROOT="${CWD}/agentkit"
+elif [[ -d "${CWD}/../agentkit" ]]; then
+    AGENTKIT_ROOT="${CWD}/../agentkit"
+fi
+
+if [[ -n "$AGENTKIT_ROOT" ]] && command -v jq &>/dev/null; then
+    LOG_DIR="${AGENTKIT_ROOT}/logs"
+    mkdir -p "$LOG_DIR"
+    DATE_STR=$(date -u +"%Y-%m-%d")
+    LOG_FILE="${LOG_DIR}/usage-${DATE_STR}.jsonl"
+    TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+
+    SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+    files_changed=0
+    if command -v git &>/dev/null && git -C "$CWD" rev-parse --is-inside-work-tree &>/dev/null; then
+        files_changed=$(git -C "$CWD" diff --name-only HEAD 2>/dev/null | wc -l | tr -d ' ' || echo "0")
+    fi
+
+    jq -n --arg ts "$TIMESTAMP" --arg sid "$SESSION_ID" --arg files "$files_changed" \
+        '{timestamp: $ts, event: "session_end", sessionId: $sid, filesModified: ($files | tonumber)}' \
+        >> "$LOG_FILE" 2>/dev/null || true
+fi
+
 # If no build tools were found, or all checks passed -- allow stop.
 exit 0

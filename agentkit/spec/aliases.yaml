@@ -11,6 +11,9 @@ aliases:
   # Assessment shorthand
   /assess: "/orchestrate --assess-only"
 
+  # Project review shorthand
+  /audit: "/project-review"
+
   # Team command colon-syntax compatibility
   # Maps /team:<id> to the canonical /team-<id> form
   "/team:backend": "/team-backend"

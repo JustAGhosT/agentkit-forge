@@ -1,11 +1,28 @@
 # AgentKit Forge Cost Tracking Guide
 
-> **Status: ROADMAP** — This document describes planned cost tracking features
-> that are **not yet implemented**. It serves as a design specification for
-> future development. The CLI flags and configuration options described below
-> do not exist yet.
+> **Status: PARTIALLY IMPLEMENTED** — Session-level tracking (session start/end,
+> duration, commands run, files modified) is implemented via lifecycle hooks and
+> the `cost` CLI command. Token-level tracking (input/output tokens, estimated
+> USD cost) requires AI tool API access and remains on the roadmap.
 
-A design specification for tracking AI costs including token usage logging, session tracking, monthly reports, and optimization tips.
+Session-level usage tracking for AI development workflows. Tracks session duration, commands invoked, and files modified via lifecycle hooks. Token-level cost tracking is a roadmap item.
+
+## What's Implemented
+
+- **Session tracking via hooks:** `session-start.sh` logs session start; `stop-build-check.sh` logs session end with file counts
+- **JSONL usage logs:** Daily log files at `agentkit/logs/usage-YYYY-MM-DD.jsonl`
+- **Session files:** Per-session records at `agentkit/logs/sessions/session-<id>.json`
+- **CLI reporting:** `node agentkit/engines/node/src/cli.mjs cost --summary|--sessions|--report`
+- **Monthly aggregation:** Reports by user, command, and time period
+- **Export formats:** Table, JSON, and CSV output
+
+## What's Roadmap
+
+- Token-level tracking (input/output/cache tokens, estimated USD cost)
+- Budget alerts and limits
+- Webhook notifications
+- Cache analytics
+- Model-specific cost rates
 
 ---
 

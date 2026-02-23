@@ -251,6 +251,24 @@ git commit -m "feat: adopt agentkit-forge for AI orchestration"
 
 ---
 
+## Documentation
+
+Comprehensive guides for using AgentKit Forge:
+
+| Guide | Description |
+|-------|-------------|
+| **[Quick Start](agentkit/docs/QUICK_START.md)** | Your first 15 minutes — setup, first session, command overview |
+| **[Command Reference](agentkit/docs/COMMAND_REFERENCE.md)** | All 23 commands with examples, flags, and expected outputs |
+| **[Workflows](agentkit/docs/WORKFLOWS.md)** | Worked examples: feature dev, bug fix, project audit, multi-session |
+| **[Team Guide](agentkit/docs/TEAM_GUIDE.md)** | When to use which team, decision matrix, handoff patterns |
+| **[State & Sessions](agentkit/docs/STATE_AND_SESSIONS.md)** | Orchestrator state, events log, session continuity, lock files |
+| **[Customization](agentkit/docs/CUSTOMIZATION.md)** | Overlays, settings reference, adding commands/rules/teams |
+| **[Troubleshooting](agentkit/docs/TROUBLESHOOTING.md)** | Common errors, recovery procedures, FAQ |
+| **[Onboarding](agentkit/docs/ONBOARDING.md)** | Full adoption guide with CI integration |
+| **[Cost Tracking](agentkit/docs/COST_TRACKING.md)** | Session tracking, usage reports, optimization tips |
+
+---
+
 ## What Gets Generated
 
 After running `sync`, these directories are created (all gitignored — regenerate with `sync`):

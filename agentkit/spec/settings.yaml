@@ -100,6 +100,17 @@ permissions:
     - "Bash(gh repo delete*)"
 
 # =============================================================================
+# Cost Tracking — Session-level usage tracking
+# =============================================================================
+
+costTracking:
+  enabled: true
+  logDir: logs                  # Relative to agentkit root
+  retentionDays: 90             # Auto-purge logs older than this
+  # Note: Token-level tracking requires AI tool API access (not available).
+  # Session-level metrics (duration, commands, files) are tracked via hooks.
+
+# =============================================================================
 # Hooks — Lifecycle callbacks for session and tool events
 # =============================================================================
 

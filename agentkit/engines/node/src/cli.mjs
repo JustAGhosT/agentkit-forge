@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * AgentKit Forge CLI Router
- * Routes subcommands to their handlers: init, sync, validate
+ * Routes subcommands to their handlers.
  */
 import { fileURLToPath } from 'url';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { dirname, resolve } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,10 +20,14 @@ try {
 } catch { /* fallback to 0.0.0 */ }
 
 const VALID_COMMANDS = ['init', 'sync', 'validate', 'discover', 'spec-validate',
-  'orchestrate', 'plan', 'check', 'review', 'handoff'];
+  'orchestrate', 'plan', 'check', 'review', 'handoff', 'healthcheck', 'cost',
+  'project-review'];
 
-// Workflow commands — primarily slash commands for AI tools, but runnable from CLI
-const WORKFLOW_COMMANDS = ['orchestrate', 'plan', 'check', 'review', 'handoff'];
+// Workflow commands with runtime handlers
+const WORKFLOW_COMMANDS = ['orchestrate', 'plan', 'check', 'review', 'handoff', 'healthcheck'];
+
+// Commands that are slash-command-only (no CLI handler)
+const SLASH_ONLY_COMMANDS = ['project-review'];
 
 const VALID_FLAGS = {
   init: ['repoName', 'force', 'help'],
@@ -31,11 +35,14 @@ const VALID_FLAGS = {
   validate: ['help'],
   discover: ['output', 'help'],
   'spec-validate': ['help'],
-  orchestrate: ['teams', 'phase', 'help'],
+  orchestrate: ['teams', 'phase', 'status', 'force-unlock', 'assess-only', 'help'],
   plan: ['help'],
-  check: ['help'],
-  review: ['help'],
-  handoff: ['team', 'help'],
+  check: ['fix', 'fast', 'stack', 'bail', 'help'],
+  review: ['range', 'file', 'help'],
+  handoff: ['team', 'save', 'help'],
+  healthcheck: ['help'],
+  cost: ['summary', 'sessions', 'report', 'month', 'format', 'last', 'help'],
+  'project-review': ['scope', 'focus', 'phase', 'help'],
 };
 
 const args = process.argv.slice(2);
@@ -73,29 +80,46 @@ Commands:
   discover        Scan repo to detect tech stacks and structure
   spec-validate   Validate YAML spec files for schema correctness
 
-Workflow Commands (primarily slash commands for AI tools):
-  orchestrate     Multi-team coordination workflow
-  plan            Create implementation plan
-  check           Run quality gates
-  review          Request code review
-  handoff         Hand off work to another team
+Workflow Commands:
+  orchestrate     Multi-team coordination workflow (state machine)
+  plan            Show plan status and recommendations
+  check           Run quality gates (format, lint, typecheck, test, build)
+  review          Run automated review checks (secrets, large files, TODOs)
+  handoff         Generate session handoff document
+  healthcheck     Pre-flight validation of repo health
+
+Utility Commands:
+  cost            Session cost and usage tracking
+
+Slash-Command Only:
+  project-review  Comprehensive project audit (use as /project-review in AI tool)
 
 Options:
-  init:
-    --repoName <name>   Repository name (default: parent folder name)
-    --force             Overwrite existing overlay
+  orchestrate:
+    --status            Show current orchestrator state
+    --force-unlock      Clear stale session lock
+    --phase <1-5>       Jump to specific phase
 
-  sync:
-    --overlay <name>    Override overlay name (default: from .agentkit-repo)
+  check:
+    --fix               Auto-fix issues where possible
+    --fast              Skip build step
+    --stack <name>      Limit to specific tech stack
+    --bail              Stop on first failure
 
-  discover:
-    --output <format>   Output format: yaml (default), json, or markdown
+  review:
+    --range <range>     Git commit range (e.g. HEAD~3..HEAD)
+    --file <path>       Review a specific file
 
-  validate:
-    (no options)
+  handoff:
+    --save              Save handoff to docs/08_reference/ai_handoffs/
 
-  spec-validate:
-    (no options)
+  cost:
+    --summary           Show recent session summary
+    --sessions          List recent sessions
+    --report            Generate aggregate report
+    --month <YYYY-MM>   Month for report
+    --format <fmt>      Export format: json, csv (default: table)
+    --last <period>     Time period (e.g. 7d, 30d)
 
   All commands:
     --help              Show this help message
@@ -162,16 +186,53 @@ async function main() {
         if (!result.valid) process.exit(1);
         break;
       }
+      case 'orchestrate': {
+        const { runOrchestrate } = await import('./orchestrator.mjs');
+        await runOrchestrate({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'check': {
+        const { runCheck } = await import('./check.mjs');
+        const result = await runCheck({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        if (!result.overallPassed) process.exit(1);
+        break;
+      }
+      case 'review': {
+        const { runReview } = await import('./review-runner.mjs');
+        const result = await runReview({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        if (result.status === 'FAIL') process.exit(1);
+        break;
+      }
+      case 'plan': {
+        const { runPlan } = await import('./plan-runner.mjs');
+        await runPlan({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'handoff': {
+        const { runHandoff } = await import('./handoff.mjs');
+        await runHandoff({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'healthcheck': {
+        const { runHealthcheck } = await import('./healthcheck.mjs');
+        await runHealthcheck({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'cost': {
+        const { runCost } = await import('./cost-tracker.mjs');
+        await runCost({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
       default: {
-        if (WORKFLOW_COMMANDS.includes(command)) {
+        if (SLASH_ONLY_COMMANDS.includes(command)) {
           const cmdFile = resolve(PROJECT_ROOT, '.claude', 'commands', `${command}.md`);
-          console.log(`[agentkit:${command}] Workflow command: /${command}`);
+          console.log(`[agentkit:${command}] Slash command: /${command}`);
           console.log();
           console.log(`This is an AI agent slash command. Use it within your AI tool:`);
           console.log(`  Claude Code:  /${command}`);
           console.log(`  Cursor:       @${command}`);
           console.log();
-          if ((await import('fs')).existsSync(cmdFile)) {
+          if (existsSync(cmdFile)) {
             console.log(`Command definition: .claude/commands/${command}.md`);
           } else {
             console.log('Run "agentkit sync" first to generate command files.');
