@@ -37,6 +37,220 @@ node agentkit/engines/node/src/cli.mjs init --repoName MyProject
 node agentkit/engines/node/src/cli.mjs sync
 ```
 
+---
+
+## Adoption Guide: New Repos
+
+Use this path when starting a project from scratch.
+
+### Step 1 — Create your repo from the template
+
+Click **"Use this template"** on GitHub (or clone directly):
+
+```bash
+gh repo create my-org/my-project --template my-org/agentkit-forge --private --clone
+cd my-project
+```
+
+### Step 2 — Install and initialize
+
+```bash
+pnpm -C agentkit install
+```
+
+**Windows:**
+```powershell
+.\agentkit\bin\init.ps1 -RepoName my-project
+```
+
+**Linux/macOS:**
+```bash
+node agentkit/engines/node/src/cli.mjs init --repoName my-project
+```
+
+This does three things:
+1. Copies `agentkit/overlays/__TEMPLATE__/` to `agentkit/overlays/my-project/`
+2. Sets `repoName: my-project` in your overlay's `settings.yaml`
+3. Runs `sync` to generate all AI tool configs
+
+### Step 3 — Customize your overlay
+
+Edit `agentkit/overlays/my-project/settings.yaml`:
+
+```yaml
+repoName: my-project
+defaultBranch: main
+primaryStack: node          # node | dotnet | rust | python | auto
+windowsFirst: true
+renderTargets:
+  - claude
+  - cursor
+  - windsurf
+  - copilot
+  - ai
+```
+
+Remove render targets you don't need. For example, a team using only Claude Code and Cursor:
+
+```yaml
+renderTargets:
+  - claude
+  - cursor
+```
+
+### Step 4 — Add repo-specific rules or commands
+
+Override or extend any spec definition in your overlay files:
+
+- `agentkit/overlays/my-project/commands.yaml` — add project-specific slash commands
+- `agentkit/overlays/my-project/rules.yaml` — add project-specific coding rules
+
+### Step 5 — Start working
+
+```bash
+# Discover the codebase
+/discover
+
+# Run a health check
+/healthcheck
+
+# Start orchestrated development
+/orchestrate
+```
+
+### Step 6 — Commit the right files
+
+The `agentkit/` directory is your source of truth — commit it. Generated outputs (`.claude/`, `.cursor/`, `.windsurf/`, `docs/`, etc.) are gitignored. Each developer runs `sync` locally after cloning.
+
+```bash
+git add agentkit/ .gitignore .gitattributes README.md LICENSE
+git commit -m "feat: initialize agentkit-forge scaffold"
+```
+
+---
+
+## Adoption Guide: Existing Repos
+
+Use this path to add AgentKit Forge to a project that already has code.
+
+### Step 1 — Add the agentkit directory
+
+Copy or merge the `agentkit/` directory into your repo root. If using git:
+
+```bash
+# Add agentkit-forge as a remote
+git remote add agentkit-forge https://github.com/my-org/agentkit-forge.git
+git fetch agentkit-forge
+
+# Bring in just the agentkit/ directory (and root config files)
+git checkout agentkit-forge/main -- agentkit/ .gitattributes
+```
+
+Or simply copy the folder manually.
+
+### Step 2 — Merge the .gitignore
+
+Append the AgentKit Forge ignore rules to your existing `.gitignore`. The key entries:
+
+```gitignore
+# AgentKit Forge — generated outputs (regenerate with: pnpm -C agentkit agentkit:sync)
+/.claude/
+/.cursor/
+/.windsurf/
+/.ai/
+/.github/copilot-instructions.md
+/.github/instructions/
+/.github/workflows/ai-framework-ci.yml
+/.github/ISSUE_TEMPLATE/
+/.github/PULL_REQUEST_TEMPLATE.md
+/mcp/
+/CLAUDE.md
+/UNIFIED_AGENT_TEAMS.md
+/AGENT_TEAMS.md
+/AGENT_BACKLOG.md
+/QUALITY_GATES.md
+/docs/
+/.vscode/
+/.editorconfig
+/.prettierrc
+/.markdownlint.json
+```
+
+> **Important:** Use leading `/` on each pattern so they only match at the repo root — not inside `agentkit/templates/`.
+
+If your repo already has a `docs/` directory, either:
+- Rename the existing docs (e.g., `documentation/`) and let AgentKit Forge generate `docs/`
+- Remove `/docs/` from `.gitignore` and skip the docs render target in your overlay
+
+If your repo already has a `.vscode/` directory you want to keep, remove `/.vscode/` from `.gitignore` and manually merge AgentKit's recommended settings.
+
+### Step 3 — Install and initialize
+
+```bash
+pnpm -C agentkit install
+```
+
+**Windows:**
+```powershell
+.\agentkit\bin\init.ps1 -RepoName my-existing-project
+```
+
+**Linux/macOS:**
+```bash
+node agentkit/engines/node/src/cli.mjs init --repoName my-existing-project
+```
+
+### Step 4 — Tune the overlay for your stack
+
+Edit `agentkit/overlays/my-existing-project/settings.yaml`:
+
+```yaml
+repoName: my-existing-project
+defaultBranch: main            # or develop, trunk, etc.
+primaryStack: auto             # auto-detects from Cargo.toml, package.json, etc.
+windowsFirst: false            # set to true for Windows-primary teams
+renderTargets:
+  - claude                     # only enable tools your team uses
+  - cursor
+```
+
+### Step 5 — Handle conflicts with existing configs
+
+| Existing file | Resolution |
+|---|---|
+| `.claude/` directory | Back up, then let `sync` regenerate. Merge any custom commands into your overlay's `commands.yaml` |
+| `.cursor/rules/` | Back up custom rules. Add them to `agentkit/overlays/<repo>/rules.yaml` to have them rendered automatically |
+| `.github/PULL_REQUEST_TEMPLATE.md` | Merge your template content with AgentKit's generated template, or remove it from `.gitignore` to keep yours |
+| `.editorconfig` | Compare and merge; AgentKit's template is minimal and additive |
+| `CLAUDE.md` | Move custom instructions into your overlay or into `agentkit/spec/` |
+
+### Step 6 — Run sync and verify
+
+```bash
+# Regenerate all configs
+node agentkit/engines/node/src/cli.mjs sync
+
+# Verify generated output
+ls -la .claude/ .cursor/ docs/
+```
+
+### Step 7 — Validate
+
+```bash
+node agentkit/engines/node/src/cli.mjs validate
+```
+
+This checks that all spec files parse correctly and overlay references are valid.
+
+### Step 8 — Commit
+
+```bash
+git add agentkit/ .gitignore .gitattributes
+git commit -m "feat: adopt agentkit-forge for AI orchestration"
+```
+
+---
+
 ## What Gets Generated
 
 After running `sync`, these directories are created (all gitignored — regenerate with `sync`):
@@ -50,6 +264,10 @@ After running `sync`, these directories are created (all gitignored — regenera
 | `.github/instructions/` | GitHub Copilot path-specific instructions |
 | `mcp/` | MCP server + A2A protocol configurations |
 | `docs/` | Full 8-category documentation structure |
+| `CLAUDE.md` | Root Claude Code instructions |
+| `UNIFIED_AGENT_TEAMS.md` | Team definitions and routing |
+| `QUALITY_GATES.md` | Quality gate checks per stack |
+| `AGENT_BACKLOG.md` | Backlog tracking for agent work |
 
 ## Core Commands
 
@@ -93,14 +311,37 @@ agentkit/           ← Canonical source of truth (committed)
 .windsurf/          ← Generated (not committed)
 ```
 
-## Using as a Template
+## Overlay System
 
-1. Click **"Use this template"** on GitHub to create a new repo
-2. Clone your new repo
-3. Run `pnpm -C agentkit install`
-4. Run `init` with your repo name
-5. Run `sync` to generate all configs
-6. Start working with `/discover` → `/healthcheck` → `/orchestrate`
+Each repo gets its own overlay directory under `agentkit/overlays/<repo-name>/`. Overlays let you:
+
+- **Override commands** — Add project-specific slash commands or modify built-in ones
+- **Override rules** — Add coding standards specific to your project
+- **Configure settings** — Choose which tools to generate configs for, set your default branch, select your primary tech stack
+
+Overlay values take precedence over `agentkit/spec/` defaults. This means the same `agentkit/` directory can power multiple repos with different configurations.
+
+## Keeping Up to Date
+
+When the upstream AgentKit Forge template gets updates:
+
+```bash
+# If you used "Use this template" (no git history link)
+git remote add agentkit-forge https://github.com/my-org/agentkit-forge.git
+git fetch agentkit-forge
+git merge agentkit-forge/main --allow-unrelated-histories
+
+# If you forked
+git fetch upstream
+git merge upstream/main
+```
+
+After merging, re-run sync to regenerate outputs:
+
+```bash
+pnpm -C agentkit install
+node agentkit/engines/node/src/cli.mjs sync
+```
 
 ## License
 
