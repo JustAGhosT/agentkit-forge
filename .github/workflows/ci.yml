@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: agentkit
+
+      - name: Run tests
+        run: npm test
+        working-directory: agentkit
+
+  validate:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: agentkit
+
+      - name: Run sync
+        run: node engines/node/src/cli.mjs sync
+        working-directory: agentkit
+
+      - name: Validate generated outputs
+        run: node engines/node/src/cli.mjs validate
+        working-directory: agentkit
+
+      - name: Check for drift
+        run: |
+          if ! git diff --quiet; then
+            echo "::error::Generated files are out of sync. Run 'npm run agentkit:sync' and commit."
+            git diff --stat
+            exit 1
+          fi
+
+  yaml-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate YAML spec files
+        run: |
+          npm install -g js-yaml
+          for f in agentkit/spec/*.yaml; do
+            echo "Checking $f..."
+            node -e "require('js-yaml').load(require('fs').readFileSync('$f','utf8'))"
+          done

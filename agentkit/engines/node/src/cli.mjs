@@ -4,12 +4,28 @@
  * Routes subcommands to their handlers: init, sync, validate
  */
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 import { dirname, resolve } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const AGENTKIT_ROOT = resolve(__dirname, '..', '..', '..');
 const PROJECT_ROOT = resolve(AGENTKIT_ROOT, '..');
+
+// Read version from package.json (single source of truth)
+let VERSION = '0.0.0';
+try {
+  const pkg = JSON.parse(readFileSync(resolve(AGENTKIT_ROOT, 'package.json'), 'utf-8'));
+  VERSION = pkg.version || VERSION;
+} catch { /* fallback to 0.0.0 */ }
+
+const VALID_COMMANDS = ['init', 'sync', 'validate'];
+
+const VALID_FLAGS = {
+  init: ['repoName', 'force', 'help'],
+  sync: ['overlay', 'help'],
+  validate: ['help'],
+};
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -33,10 +49,9 @@ function parseFlags(args) {
   return flags;
 }
 
-async function main() {
-  if (!command || command === '--help' || command === '-h') {
-    console.log(`
-AgentKit Forge v0.1.0
+function showHelp() {
+  console.log(`
+AgentKit Forge v${VERSION}
 
 Usage: node cli.mjs <command> [options]
 
@@ -55,11 +70,43 @@ Options:
 
   validate:
     (no options)
+
+  All commands:
+    --help              Show this help message
+
+Environment:
+  DEBUG=1              Show stack traces on errors
 `);
+}
+
+async function main() {
+  if (!command || command === '--help' || command === '-h') {
+    showHelp();
     process.exit(0);
   }
 
+  if (!VALID_COMMANDS.includes(command)) {
+    console.error(`Unknown command: "${command}"`);
+    console.error(`Valid commands: ${VALID_COMMANDS.join(', ')}`);
+    console.error('Run with --help for usage information.');
+    process.exit(1);
+  }
+
   const flags = parseFlags(commandArgs);
+
+  // Show command-specific help
+  if (flags.help) {
+    showHelp();
+    process.exit(0);
+  }
+
+  // Warn on unrecognised flags
+  const validForCommand = VALID_FLAGS[command] || [];
+  for (const key of Object.keys(flags)) {
+    if (!validForCommand.includes(key)) {
+      console.warn(`[agentkit:${command}] Warning: unrecognised flag --${key} (ignored)`);
+    }
+  }
 
   try {
     switch (command) {
@@ -78,15 +125,13 @@ Options:
         await runValidate({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
         break;
       }
-      default:
-        console.error(`Unknown command: ${command}`);
-        console.error('Run with --help for usage information.');
-        process.exit(1);
     }
   } catch (err) {
-    console.error(`[agentkit:${command}] Error:`, err.message);
+    console.error(`[agentkit:${command}] Error: ${err.message}`);
     if (process.env.DEBUG) {
       console.error(err.stack);
+    } else {
+      console.error('  (set DEBUG=1 for full stack trace)');
     }
     process.exit(1);
   }

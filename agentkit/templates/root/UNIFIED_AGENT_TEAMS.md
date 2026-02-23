@@ -261,7 +261,7 @@ When multiple teams need to modify overlapping files:
 
 ## State Management
 
-All orchestration state is persisted in `agentkit/state/schema.json`.
+All orchestration state is persisted in `.claude/state/orchestrator.json`.
 
 ### Schema Structure
 

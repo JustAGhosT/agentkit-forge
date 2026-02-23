@@ -273,7 +273,7 @@ When a quality gate cannot be satisfied and an exemption is needed:
 
 ### Reporting Cadence
 
-- **Per-task**: Gate results logged in `agentkit/state/schema.json` after each evaluation.
+- **Per-task**: Gate results logged in `.claude/state/schema.json` after each evaluation.
 - **Per-sprint**: Aggregate metrics reviewed during sprint retrospective.
 - **Per-milestone**: Trend analysis to identify systemic quality gaps.
 

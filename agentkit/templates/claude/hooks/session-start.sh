@@ -11,8 +11,15 @@ set -euo pipefail
 # ── Read JSON payload from stdin ──────────────────────────────────────────
 INPUT=$(cat)
 
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
-CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+# Parse JSON — prefer jq if available, fall back to basic grep/sed extraction
+if command -v jq &>/dev/null; then
+  SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+  CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+else
+  # Fallback: extract values with grep/sed (handles simple flat JSON)
+  SESSION_ID=$(echo "$INPUT" | grep -o '"session_id"\s*:\s*"[^"]*"' | sed 's/.*: *"//;s/"$//' || true)
+  CWD=$(echo "$INPUT" | grep -o '"cwd"\s*:\s*"[^"]*"' | sed 's/.*: *"//;s/"$//' || true)
+fi
 
 # Fall back to $PWD when cwd is not supplied.
 CWD="${CWD:-$PWD}"
@@ -64,10 +71,16 @@ env_summary=$(printf 'Session: %s\nWorking directory: %s\n\nToolchains:\n%s\n\nG
     "$SESSION_ID" "$CWD" "$tools_summary" "$git_summary")
 
 # ── Return structured output ────────────────────────────────────────────
-jq -n --arg ctx "$env_summary" '{
-    hookSpecificOutput: {
-        additionalContext: $ctx
-    }
-}'
+if command -v jq &>/dev/null; then
+  jq -n --arg ctx "$env_summary" '{
+      hookSpecificOutput: {
+          additionalContext: $ctx
+      }
+  }'
+else
+  # Fallback: manually construct JSON (escape newlines and quotes in summary)
+  escaped_summary=$(printf '%s' "$env_summary" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' '\\' | sed 's/\\/\\n/g')
+  printf '{"hookSpecificOutput":{"additionalContext":"%s"}}\n' "$escaped_summary"
+fi
 
 exit 0

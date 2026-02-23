@@ -1,6 +1,11 @@
 # AgentKit Forge Cost Tracking Guide
 
-A comprehensive guide for tracking AI costs including token usage logging, session tracking, monthly reports, and optimization tips.
+> **Status: ROADMAP** — This document describes planned cost tracking features
+> that are **not yet implemented**. It serves as a design specification for
+> future development. The CLI flags and configuration options described below
+> do not exist yet.
+
+A design specification for tracking AI costs including token usage logging, session tracking, monthly reports, and optimization tips.
 
 ---
 

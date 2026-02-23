@@ -10,6 +10,11 @@
   "scripts": {
     "agentkit:sync": "node engines/node/src/cli.mjs sync",
     "agentkit:init": "node engines/node/src/cli.mjs init",
-    "agentkit:validate": "node engines/node/src/cli.mjs validate"
+    "agentkit:validate": "node engines/node/src/cli.mjs validate",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18"
   }
 }
