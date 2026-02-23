@@ -210,8 +210,8 @@ function scanForPatterns(dir, patterns, onMatch, onCount) {
         count++;
         try {
           let content = readFileSync(full, 'utf-8');
-          // Strip code-fenced blocks to avoid false positives from documentation examples
-          content = content.replace(/```[\s\S]*?```/g, '');
+          // Strip code blocks and inline code to avoid false positives from documentation examples
+          content = content.replace(/```[\s\S]*?```/g, '').replace(/`[^`]+`/g, '');
           for (const pattern of patterns) {
             if (pattern.test(content)) {
               onMatch(full, pattern.toString());
