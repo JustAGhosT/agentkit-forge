@@ -23,10 +23,12 @@ function buildSteps(stack, flags) {
   const steps = [];
 
   if (stack.formatter) {
-    const resolved = resolveFormatter(stack.formatter);
-    if (!isValidCommand(resolved)) {
+    if (typeof stack.formatter !== 'string' || !stack.formatter.trim()) {
+      console.warn(`[agentkit:check] Skipping non-string formatter value`);
+    } else if (!isValidCommand(stack.formatter) && !isValidCommand(resolveFormatter(stack.formatter))) {
       console.warn(`[agentkit:check] Skipping invalid formatter command: ${stack.formatter}`);
     } else {
+      const resolved = resolveFormatter(stack.formatter);
       const fixCmd = flags.fix ? `${resolved} --write .` : null;
       steps.push({
         name: 'format',

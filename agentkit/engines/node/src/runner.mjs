@@ -44,7 +44,12 @@ export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, FORCE_COLOR: '0' },
-    // On Windows, use shell to resolve .cmd/.bat executables (e.g. npx.cmd)
+    // SECURITY: On Windows, shell:true is required to resolve .cmd/.bat executables
+    // (e.g. npx.cmd). This means cmd.exe interprets the command string, but injection
+    // is mitigated by: (1) parseCommand() splits into [executable, ...args] so
+    // metacharacters in arguments are individually quoted by Node's child_process,
+    // and (2) callers must validate inputs with isValidCommand() which rejects
+    // shell metacharacters ($`|;&<>(){}!\) before reaching this point.
     shell: process.platform === 'win32',
   });
 

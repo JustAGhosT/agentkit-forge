@@ -234,7 +234,12 @@ function getHostname() {
 export function releaseLock(projectRoot) {
   const path = lockPath(projectRoot);
   if (existsSync(path)) {
-    unlinkSync(path);
+    try {
+      unlinkSync(path);
+    } catch (err) {
+      console.warn(`[agentkit:orchestrate] Failed to release lock: ${err.message}`);
+      return false;
+    }
     return true;
   }
   return false;

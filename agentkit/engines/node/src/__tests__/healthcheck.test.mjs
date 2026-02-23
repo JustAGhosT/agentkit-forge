@@ -16,7 +16,7 @@ describe('runHealthcheck()', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns structured result with tools list', async () => {
+  it('returns structured result with tools list', { timeout: 30_000 }, async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);

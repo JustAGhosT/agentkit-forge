@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import os from 'os';
 import { execCommand, commandExists, formatDuration, isValidCommand, formatTimestamp } from '../runner.mjs';
 
 describe('execCommand()', () => {
@@ -17,8 +18,9 @@ describe('execCommand()', () => {
   });
 
   it('captures stderr', () => {
-    const result = execCommand('node -e "process.stderr.write(\'err msg\')"');
-    expect(result.stderr).toContain('err msg');
+    // Avoid nested quotes that break on Windows cmd.exe with shell:true
+    const result = execCommand('node -e "process.stderr.write(String(42))"');
+    expect(result.stderr).toContain('42');
   });
 
   it('handles nonexistent command gracefully', () => {
@@ -28,10 +30,14 @@ describe('execCommand()', () => {
   });
 
   it('respects cwd option', () => {
-    const result = execCommand('pwd', { cwd: '/tmp' });
+    // Use node to print cwd — cross-platform (pwd doesn't exist on Windows)
+    const tmpDir = os.tmpdir();
+    const result = execCommand('node -e "console.log(process.cwd())"', { cwd: tmpDir });
     expect(result.exitCode).toBe(0);
-    // On some systems /tmp may be a symlink, just check it resolves
-    expect(result.stdout.trim()).toContain('tmp');
+    // Normalize both paths for comparison (resolve symlinks, normalize separators)
+    const printed = result.stdout.trim().toLowerCase().replace(/\\/g, '/');
+    const expected = tmpDir.toLowerCase().replace(/\\/g, '/');
+    expect(printed).toContain(expected);
   });
 
   it('handles commands with arguments correctly', () => {

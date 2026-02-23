@@ -27,8 +27,11 @@ const SECRET_PATTERNS = [
 
 function getChangedFiles(projectRoot, flags) {
   if (flags.range) {
-    // Validate range to prevent shell injection — only allow commit-range notation
-    if (!/^[a-zA-Z0-9._\-/:^~]+(?:\.{2,3}[a-zA-Z0-9._\-/:^~]+)?$/.test(flags.range)) {
+    // Validate range to prevent shell injection — only allow commit-range notation.
+    // Intentionally restrictive: blocks @{...} reflog syntax and special chars that
+    // could be interpreted by cmd.exe on Windows (where shell:true is used).
+    // Allowed: alphanumeric, dots, dashes, slashes, colons, carets, tildes, and .. / ... range operators.
+    if (!/^[a-zA-Z0-9._\-/:^~@]+(?:\.{2,3}[a-zA-Z0-9._\-/:^~@]+)?$/.test(flags.range) || /[@][{]/.test(flags.range)) {
       throw new Error(`Invalid --range value: ${flags.range}`);
     }
     const r = execCommand(`git diff --name-only ${flags.range}`, { cwd: projectRoot });
