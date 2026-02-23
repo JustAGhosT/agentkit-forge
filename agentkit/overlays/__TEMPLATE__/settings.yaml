@@ -1,0 +1,12 @@
+# Repo-specific overlay settings
+# This file is copied by `agentkit init` and customized per repo.
+repoName: __TEMPLATE__
+defaultBranch: main
+primaryStack: auto
+windowsFirst: true
+renderTargets:
+  - claude
+  - cursor
+  - windsurf
+  - copilot
+  - ai

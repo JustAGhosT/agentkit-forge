@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# Hook: Stop
+# Purpose: Best-effort build / lint / test validation before Claude stops.
+#          If the build fails the hook returns a "block" decision so Claude
+#          can attempt to fix the problem before finishing.
+# Stdin:   JSON with session_id, cwd, hook_event_name, stop_hook_active, ...
+# Stdout:  JSON with decision "block" + reason on failure, empty on success
+# ---------------------------------------------------------------------------
+set -euo pipefail
+
+# -- Read JSON payload from stdin ------------------------------------------
+INPUT=$(cat)
+
+CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+CWD="${CWD:-$PWD}"
+
+# Guard against infinite loops: if stop_hook_active is already true the hook
+# was re-invoked after a previous block -- let it through this time.
+STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // "false"')
+if [[ "$STOP_HOOK_ACTIVE" == "true" ]]; then
+    exit 0
+fi
+
+# -- Helper: run a command and capture failure -----------------------------
+run_check() {
+    local label="$1"
+    shift
+    local output
+    if output=$("$@" 2>&1); then
+        return 0
+    else
+        FAILURE_REASON="${label} failed:\n${output}"
+        return 1
+    fi
+}
+
+FAILURE_REASON=""
+
+# -- Auto-detect stack and run checks --------------------------------------
+ran_check=false
+
+# Node.js / JavaScript / TypeScript
+if [[ -f "${CWD}/package.json" ]]; then
+    ran_check=true
+
+    # Determine the package manager.
+    pm="npm"
+    if [[ -f "${CWD}/pnpm-lock.yaml" ]] && command -v pnpm &>/dev/null; then
+        pm="pnpm"
+    elif [[ -f "${CWD}/yarn.lock" ]] && command -v yarn &>/dev/null; then
+        pm="yarn"
+    fi
+
+    # Try lint, then test, then build -- stop at first failure.
+    has_script() { jq -e --arg s "$1" '.scripts[$s] // empty' "${CWD}/package.json" &>/dev/null; }
+
+    if has_script "lint"; then
+        if ! run_check "${pm} lint" "$pm" run lint --prefix "$CWD"; then
+            jq -n --arg reason "$FAILURE_REASON" '{ decision: "block", reason: $reason }'
+            exit 0
+        fi
+    fi
+
+    if has_script "test"; then
+        if ! run_check "${pm} test" "$pm" run test --prefix "$CWD"; then
+            jq -n --arg reason "$FAILURE_REASON" '{ decision: "block", reason: $reason }'
+            exit 0
+        fi
+    fi
+
+    if has_script "build"; then
+        if ! run_check "${pm} build" "$pm" run build --prefix "$CWD"; then
+            jq -n --arg reason "$FAILURE_REASON" '{ decision: "block", reason: $reason }'
+            exit 0
+        fi
+    fi
+fi
+
+# .NET
+SLN_FILE=$(find "$CWD" -maxdepth 2 -name '*.sln' -o -name '*.csproj' 2>/dev/null | head -n1 || true)
+if [[ -n "$SLN_FILE" ]] && command -v dotnet &>/dev/null; then
+    ran_check=true
+    if ! run_check "dotnet build" dotnet build "$SLN_FILE" --nologo --verbosity quiet; then
+        jq -n --arg reason "$FAILURE_REASON" '{ decision: "block", reason: $reason }'
+        exit 0
+    fi
+    if ! run_check "dotnet test" dotnet test "$SLN_FILE" --nologo --verbosity quiet --no-build; then
+        jq -n --arg reason "$FAILURE_REASON" '{ decision: "block", reason: $reason }'
+        exit 0
+    fi
+fi
+
+# Rust / Cargo
+if [[ -f "${CWD}/Cargo.toml" ]] && command -v cargo &>/dev/null; then
+    ran_check=true
+    if ! run_check "cargo check" cargo check --manifest-path "${CWD}/Cargo.toml" --quiet; then
+        jq -n --arg reason "$FAILURE_REASON" '{ decision: "block", reason: $reason }'
+        exit 0
+    fi
+    if ! run_check "cargo test" cargo test --manifest-path "${CWD}/Cargo.toml" --quiet; then
+        jq -n --arg reason "$FAILURE_REASON" '{ decision: "block", reason: $reason }'
+        exit 0
+    fi
+fi
+
+# Python
+if [[ -f "${CWD}/pyproject.toml" ]]; then
+    ran_check=true
+
+    # Try pytest first, fall back to unittest.
+    if command -v pytest &>/dev/null; then
+        if ! run_check "pytest" pytest --rootdir "$CWD" -q; then
+            jq -n --arg reason "$FAILURE_REASON" '{ decision: "block", reason: $reason }'
+            exit 0
+        fi
+    elif command -v python3 &>/dev/null; then
+        if ! run_check "python -m pytest" python3 -m pytest --rootdir "$CWD" -q 2>/dev/null; then
+            jq -n --arg reason "$FAILURE_REASON" '{ decision: "block", reason: $reason }'
+            exit 0
+        fi
+    fi
+fi
+
+# If no build tools were found, or all checks passed -- allow stop.
+exit 0

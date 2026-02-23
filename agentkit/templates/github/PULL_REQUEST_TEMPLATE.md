@@ -1,0 +1,35 @@
+## Summary
+
+Brief description of what this PR does and why.
+
+Closes #<!-- issue number -->
+
+## Changes
+
+- [ ] Change 1
+- [ ] Change 2
+- [ ] Change 3
+
+## Test Plan
+
+Describe how you tested these changes:
+
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manual testing performed
+
+### Validation Commands
+
+```bash
+# Commands to verify this change works correctly
+```
+
+## Checklist
+
+- [ ] Tests pass locally (`npm test` / `cargo test` / equivalent)
+- [ ] Linter passes with no new warnings
+- [ ] Build succeeds
+- [ ] Documentation updated (if behavior changed)
+- [ ] No secrets, tokens, or credentials in the diff
+- [ ] Breaking changes documented (if applicable)
+- [ ] Reviewed my own diff before requesting review

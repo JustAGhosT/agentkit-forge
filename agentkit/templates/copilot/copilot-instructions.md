@@ -1,0 +1,72 @@
+# GitHub Copilot Instructions
+
+You are assisting with a project managed by the AgentKit Forge framework.
+Follow these instructions for all code generation, suggestions, and chat responses.
+
+## Core Workflow
+
+This project uses a 5-phase orchestration lifecycle:
+
+1. **Discovery** — Understand the codebase before making changes (`/discover`)
+2. **Planning** — Define tasks with clear acceptance criteria (`/plan`)
+3. **Implementation** — Write code in small, reversible increments
+4. **Validation** — Run quality gates before marking work complete (`/check`)
+5. **Ship** — Final review, merge, and deploy (`/review`)
+
+Always start by reading `UNIFIED_AGENT_TEAMS.md` and `AGENT_TEAMS.md` to
+understand team assignments, ownership boundaries, and escalation paths.
+
+## Coding Conventions
+
+- **Minimal diffs** — Change only what is necessary. Do not reformat unrelated
+  code or reorganize imports unless that is the explicit task.
+- **Backwards compatibility** — Avoid breaking existing public APIs. When a
+  breaking change is unavoidable, document it clearly and provide a migration
+  path.
+- **Add tests** — Every behavioral change should include at least one test that
+  would have failed before the change and passes after.
+- **No secrets** — Never generate, log, or include API keys, tokens, passwords,
+  or connection strings in code or comments. Use environment variables or secret
+  managers exclusively.
+- **Error handling** — Prefer explicit error handling over silent failures.
+  Return meaningful error messages that help operators diagnose issues without
+  leaking internal details.
+- **Type safety** — Use the strongest type guarantees available in the language
+  (TypeScript strict mode, Rust's type system, Python type hints with mypy).
+
+## Repository Conventions
+
+- `UNIFIED_AGENT_TEAMS.md` — Canonical team definitions and workflow phases
+- `AGENT_TEAMS.md` — Repo-specific team mapping and ownership
+- `AGENT_BACKLOG.md` — Current work items and priorities
+- `docs/` — Architecture Decision Records (ADRs), runbooks, and guides
+- `CLAUDE.md` — Claude-specific project context and conventions
+
+When referencing documentation, always check these files first before making
+assumptions about project structure or conventions.
+
+## Working with Issues
+
+- Read the full issue description and all comments before starting
+- Link your changes to the relevant issue number in commit messages
+- If the issue is ambiguous, list your assumptions in the PR description
+- Break large issues into smaller, independently reviewable PRs
+
+## Development Workflow
+
+1. Create a feature branch from the default branch
+2. Make small, focused commits with descriptive messages
+3. Run the project's lint, test, and build commands before pushing
+4. Open a PR with a clear summary, test plan, and checklist
+5. Address review feedback in follow-up commits (do not force-push)
+
+## Quality Gates
+
+Before marking any task as complete, verify:
+
+- [ ] All existing tests pass
+- [ ] New tests cover the change
+- [ ] Linter reports no new warnings
+- [ ] Build succeeds
+- [ ] No secrets or credentials in the diff
+- [ ] Documentation is updated if behavior changed

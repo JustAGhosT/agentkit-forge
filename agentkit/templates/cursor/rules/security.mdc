@@ -1,0 +1,11 @@
+---
+description: "Security rules for AI-assisted development"
+globs:
+alwaysApply: true
+---
+# Security Rules
+- Never read, print, or commit secrets or tokens
+- Prefer least privilege and deny-by-default
+- Never disable security checks to make tests pass
+- Any auth change requires tests + docs
+- Never write to .env, .tfvars, or credential files

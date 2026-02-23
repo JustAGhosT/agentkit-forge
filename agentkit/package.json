@@ -1,0 +1,15 @@
+{
+  "name": "agentkit-forge-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AgentKit Forge — unified AI agent team framework sync engine",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "scripts": {
+    "agentkit:sync": "node engines/node/src/cli.mjs sync",
+    "agentkit:init": "node engines/node/src/cli.mjs init",
+    "agentkit:validate": "node engines/node/src/cli.mjs validate"
+  }
+}

@@ -1,0 +1,4 @@
+Follow UNIFIED_AGENT_TEAMS.md and CLAUDE.md.
+Use /discover → /healthcheck → /plan → implement → /check → /review.
+Never modify .env, secrets, or credential files.
+Prefer small, reversible changes with tests.

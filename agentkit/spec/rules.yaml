@@ -1,0 +1,386 @@
+# =============================================================================
+# rules.yaml — Domain-specific coding rules and standards
+# Canonical source of truth for agentkit-forge
+# Version: 0.1.0
+# =============================================================================
+# Rules are organized by domain. Each rule set defines conventions, tooling
+# requirements, and quality gates that agents must enforce.
+# =============================================================================
+
+rules:
+
+  # ===========================================================================
+  # TypeScript / JavaScript
+  # ===========================================================================
+  - domain: typescript
+    description: >
+      Standards for all TypeScript and JavaScript code across the repository.
+      Covers linting, formatting, type safety, and accessibility.
+    applies-to:
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.mjs"
+      - "**/*.mts"
+    conventions:
+      - id: ts-lint
+        rule: "All code must pass ESLint with the project configuration"
+        severity: error
+        autofix: true
+        tool: "eslint --fix"
+
+      - id: ts-format
+        rule: "All code must be formatted with Prettier"
+        severity: error
+        autofix: true
+        tool: "prettier --write"
+
+      - id: ts-explicit-types
+        rule: >
+          All exported functions, classes, and module boundaries must have
+          explicit type annotations. Inferred types are acceptable only for
+          local variables and private implementation details.
+        severity: error
+        autofix: false
+
+      - id: ts-no-any
+        rule: >
+          Avoid 'any' type. Use 'unknown' with type guards when the type
+          is truly dynamic. Exceptions require a comment explaining why.
+        severity: warning
+        autofix: false
+
+      - id: ts-wcag-aa
+        rule: >
+          All UI components must meet WCAG AA accessibility standards. This
+          includes: semantic HTML, ARIA attributes where needed, keyboard
+          navigation support, sufficient color contrast (4.5:1 for normal
+          text, 3:1 for large text), and screen reader compatibility.
+        severity: error
+        autofix: false
+        applies-to:
+          - "**/*.tsx"
+          - "**/*.jsx"
+          - "components/**"
+
+      - id: ts-no-console
+        rule: >
+          No console.log in production code. Use the project's structured
+          logger instead. console.log is acceptable in scripts/ and test files.
+        severity: warning
+        autofix: false
+
+      - id: ts-strict-null
+        rule: >
+          Strict null checks must be enabled. Handle null/undefined explicitly
+          rather than relying on truthiness checks for non-boolean values.
+        severity: error
+        autofix: false
+
+  # ===========================================================================
+  # .NET / C#
+  # ===========================================================================
+  - domain: dotnet
+    description: >
+      Standards for all .NET and C# code. Emphasizes dependency injection,
+      clean architecture layering, and API backwards compatibility.
+    applies-to:
+      - "**/*.cs"
+      - "**/*.csproj"
+      - "**/*.sln"
+    conventions:
+      - id: dn-dependency-injection
+        rule: >
+          All services must use constructor-based dependency injection.
+          Service registration must be in dedicated extension methods
+          (e.g., AddMyFeatureServices). Never use the service locator
+          anti-pattern.
+        severity: error
+        autofix: false
+
+      - id: dn-clean-layering
+        rule: >
+          Follow clean architecture layering: Domain has no external
+          dependencies, Application depends only on Domain, Infrastructure
+          implements interfaces defined in Application, and Presentation
+          depends on Application. No layer may bypass the layer directly
+          above it.
+        severity: error
+        autofix: false
+
+      - id: dn-ports-adapters
+        rule: >
+          Use ports and adapters (hexagonal architecture) for all external
+          integrations. Define port interfaces in the Application layer
+          and implement adapters in the Infrastructure layer. This ensures
+          external dependencies are always behind abstractions.
+        severity: error
+        autofix: false
+
+      - id: dn-backwards-compat
+        rule: >
+          Public API surfaces must maintain backwards compatibility. Breaking
+          changes require a version bump, deprecation notice in the prior
+          version, and migration documentation. Use API versioning for
+          HTTP endpoints.
+        severity: error
+        autofix: false
+
+      - id: dn-format
+        rule: "All code must pass 'dotnet format' with the project editorconfig"
+        severity: error
+        autofix: true
+        tool: "dotnet format"
+
+      - id: dn-nullable
+        rule: >
+          Nullable reference types must be enabled. All reference type
+          parameters and return values must be explicitly nullable or
+          non-nullable.
+        severity: warning
+        autofix: false
+
+  # ===========================================================================
+  # Python
+  # ===========================================================================
+  - domain: python
+    description: >
+      Standards for all Python code. Covers linting, formatting, testing,
+      and architectural boundaries for IO.
+    applies-to:
+      - "**/*.py"
+      - "pyproject.toml"
+    conventions:
+      - id: py-lint
+        rule: "All code must pass ruff check with the project configuration"
+        severity: error
+        autofix: true
+        tool: "ruff check --fix"
+
+      - id: py-format
+        rule: "All code must be formatted with black"
+        severity: error
+        autofix: true
+        tool: "black"
+
+      - id: py-test-coverage
+        rule: >
+          All modules must have corresponding pytest test files. New code
+          must include tests. Coverage must not decrease from the current
+          baseline. Use pytest fixtures for test setup and parameterize
+          for variant testing.
+        severity: error
+        autofix: false
+        tool: "python -m pytest --cov"
+
+      - id: py-io-boundaries
+        rule: >
+          IO operations (file system, network, database) must be isolated
+          at module boundaries using dependency injection or explicit IO
+          boundary patterns. Core logic must be pure and testable without
+          mocking IO. Use protocols (typing.Protocol) to define IO interfaces.
+        severity: error
+        autofix: false
+
+      - id: py-type-hints
+        rule: >
+          All public functions and methods must have type hints. Use
+          typing.Protocol for structural subtyping. Run mypy in strict
+          mode for new modules.
+        severity: warning
+        autofix: false
+        tool: "mypy --strict"
+
+      - id: py-docstrings
+        rule: >
+          All public modules, classes, and functions must have docstrings
+          following Google style. Include Args, Returns, and Raises sections
+          where applicable.
+        severity: warning
+        autofix: false
+
+  # ===========================================================================
+  # Rust
+  # ===========================================================================
+  - domain: rust
+    description: >
+      Standards for all Rust code. Emphasizes explicit error handling,
+      safety, and toolchain compliance.
+    applies-to:
+      - "**/*.rs"
+      - "Cargo.toml"
+    conventions:
+      - id: rs-error-handling
+        rule: >
+          Use explicit error handling with Result and Option types. Define
+          custom error types using thiserror for libraries and anyhow for
+          applications. Chain errors with context using .context() or
+          .with_context().
+        severity: error
+        autofix: false
+
+      - id: rs-no-unwrap
+        rule: >
+          Never use .unwrap() or .expect() in non-test code. Use proper
+          error propagation with the ? operator instead. In tests,
+          .unwrap() is acceptable for assertions. Panicking in production
+          code is a bug.
+        severity: error
+        autofix: false
+        exceptions:
+          - "**/*.test.rs"
+          - "**/tests/**"
+          - "**/benches/**"
+
+      - id: rs-clippy
+        rule: >
+          All code must pass 'cargo clippy' with no warnings. Use
+          #[allow(clippy::...)] only with an explanatory comment when
+          a lint is genuinely inapplicable.
+        severity: error
+        autofix: false
+        tool: "cargo clippy -- -D warnings"
+
+      - id: rs-fmt
+        rule: "All code must be formatted with 'cargo fmt'"
+        severity: error
+        autofix: true
+        tool: "cargo fmt"
+
+      - id: rs-unsafe
+        rule: >
+          Minimize use of unsafe blocks. Every unsafe block must have a
+          SAFETY comment explaining why the invariants are upheld. Prefer
+          safe abstractions. New unsafe code requires review by a second
+          contributor.
+        severity: error
+        autofix: false
+
+      - id: rs-documentation
+        rule: >
+          All public items must have documentation comments (///). Include
+          examples in doc comments for complex APIs. Run 'cargo doc' with
+          no warnings.
+        severity: warning
+        autofix: false
+
+  # ===========================================================================
+  # Security
+  # ===========================================================================
+  - domain: security
+    description: >
+      Cross-cutting security rules that apply to all code in the repository.
+      These rules take precedence over domain-specific rules when they conflict.
+    applies-to:
+      - "**/*"
+    conventions:
+      - id: sec-no-secrets
+        rule: >
+          Never read, print, log, or expose secrets, API keys, tokens,
+          passwords, or connection strings in code, logs, or error messages.
+          Use environment variables or secret managers. Never commit .env
+          files, credentials, or private keys to version control.
+        severity: critical
+        autofix: false
+
+      - id: sec-least-privilege
+        rule: >
+          Apply least privilege principle everywhere: IAM roles, database
+          permissions, API scopes, file system access. Request only the
+          minimum permissions required for the operation. Document why
+          each permission is needed.
+        severity: error
+        autofix: false
+
+      - id: sec-deny-by-default
+        rule: >
+          All access control must be deny-by-default. Authentication is
+          required for all endpoints unless explicitly marked as public.
+          Authorization checks must be performed at the handler level,
+          not middleware alone. Default to most restrictive settings.
+        severity: error
+        autofix: false
+
+      - id: sec-input-validation
+        rule: >
+          All external input must be validated and sanitized. Use schema
+          validation libraries (zod, FluentValidation, pydantic, serde)
+          at system boundaries. Never trust client-side validation alone.
+        severity: error
+        autofix: false
+
+      - id: sec-dependency-audit
+        rule: >
+          Dependencies must be audited for known vulnerabilities before
+          adoption and on a regular schedule. Pin dependency versions.
+          Review transitive dependencies for supply chain risk.
+        severity: warning
+        autofix: false
+
+      - id: sec-encryption
+        rule: >
+          Sensitive data must be encrypted at rest and in transit. Use
+          TLS 1.2+ for all network communication. Use AES-256 or
+          equivalent for data at rest. Never implement custom cryptography.
+        severity: error
+        autofix: false
+
+  # ===========================================================================
+  # Blockchain
+  # ===========================================================================
+  - domain: blockchain
+    description: >
+      Standards for blockchain integrations including Solana, EtherLink, and
+      x402 payment protocol patterns.
+    applies-to:
+      - "**/*.sol"
+      - "**/blockchain/**"
+      - "**/web3/**"
+      - "**/contracts/**"
+      - "**/programs/**"
+    conventions:
+      - id: bc-solana
+        rule: >
+          Solana programs must use Anchor framework conventions. Validate
+          all account constraints using Anchor macros. Use PDAs (Program
+          Derived Addresses) for deterministic account addressing. All
+          instructions must have explicit error codes and documentation.
+        severity: error
+        autofix: false
+
+      - id: bc-etherlink
+        rule: >
+          EtherLink integrations must follow the bridge contract pattern.
+          Validate all cross-chain messages. Implement replay protection.
+          Use the canonical EtherLink SDK for L1-L2 communication.
+          Handle finality differences between L1 and L2 explicitly.
+        severity: error
+        autofix: false
+
+      - id: bc-x402
+        rule: >
+          x402 payment protocol implementations must follow the HTTP 402
+          payment-required flow. Implement proper payment verification
+          before granting resource access. Support idempotent payment
+          processing. Include receipt generation and verification.
+          Handle payment timeout and retry scenarios.
+        severity: error
+        autofix: false
+
+      - id: bc-gas-optimization
+        rule: >
+          Optimize for gas costs. Minimize storage operations, batch
+          transactions where possible, and use calldata over memory
+          for read-only function parameters. Document gas cost estimates
+          for public functions.
+        severity: warning
+        autofix: false
+
+      - id: bc-audit-trail
+        rule: >
+          All state-changing operations must emit events for off-chain
+          indexing. Include sufficient context in events for reconstruction
+          of state transitions. Log transaction hashes for cross-reference.
+        severity: error
+        autofix: false

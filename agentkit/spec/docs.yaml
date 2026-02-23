@@ -1,0 +1,323 @@
+# =============================================================================
+# docs.yaml — Documentation structure and organization
+# Canonical source of truth for agentkit-forge
+# Version: 0.1.0
+# =============================================================================
+# Defines the documentation hierarchy, category conventions, ADR numbering
+# ranges, and special-purpose documentation directories.
+# =============================================================================
+
+# =============================================================================
+# Documentation Categories
+# Each category has a numeric prefix for sort ordering and a defined purpose.
+# =============================================================================
+
+categories:
+
+  - id: "01_product"
+    name: Product
+    path: "docs/01_product/"
+    description: >
+      Product vision, strategy, market analysis, and competitive landscape.
+      Contains high-level product direction and business context that
+      informs engineering decisions.
+    contents:
+      - "vision.md — Product vision and mission statement"
+      - "strategy.md — Go-to-market strategy and positioning"
+      - "personas.md — User personas and target audience profiles"
+      - "competitive-analysis.md — Competitive landscape and differentiation"
+      - "metrics.md — Key product metrics and success criteria"
+
+  - id: "02_architecture"
+    name: Architecture
+    path: "docs/02_architecture/"
+    description: >
+      System architecture, design decisions, and technical foundations.
+      Includes architecture diagrams, service boundaries, and integration
+      patterns. Home of Architecture Decision Records (ADRs).
+    contents:
+      - "overview.md — High-level system architecture overview"
+      - "service-map.md — Service boundaries and communication patterns"
+      - "data-flow.md — Data flow diagrams and pipeline architecture"
+      - "tech-stack.md — Technology choices and rationale"
+      - "ADR/ — Architecture Decision Records (see ADR numbering below)"
+
+  - id: "03_api"
+    name: API
+    path: "docs/03_api/"
+    description: >
+      API documentation including endpoint references, authentication
+      flows, rate limiting, versioning strategy, and client SDK guides.
+    contents:
+      - "overview.md — API design principles and conventions"
+      - "authentication.md — Authentication and authorization flows"
+      - "versioning.md — API versioning strategy and migration guides"
+      - "rate-limiting.md — Rate limiting policies and headers"
+      - "errors.md — Error response format and error code catalog"
+      - "openapi/ — OpenAPI specification files"
+
+  - id: "04_development"
+    name: Development
+    path: "docs/04_development/"
+    description: >
+      Developer guides, setup instructions, coding standards, and
+      contribution workflows. Everything a new developer needs to
+      get productive.
+    contents:
+      - "getting-started.md — Local development environment setup"
+      - "coding-standards.md — Language-specific coding conventions"
+      - "git-workflow.md — Branch strategy, commit conventions, PR process"
+      - "testing-guide.md — Test strategy, patterns, and running tests"
+      - "debugging.md — Debugging tools, techniques, and common issues"
+      - "contributing.md — Contribution guidelines and code review process"
+
+  - id: "05_deployment"
+    name: Deployment
+    path: "docs/05_deployment/"
+    description: >
+      Deployment procedures, environment configurations, CI/CD pipeline
+      documentation, and release management processes.
+    contents:
+      - "environments.md — Environment inventory and configuration"
+      - "ci-cd.md — CI/CD pipeline architecture and workflow documentation"
+      - "release-process.md — Release checklist and versioning procedures"
+      - "rollback.md — Rollback procedures and disaster recovery"
+      - "monitoring.md — Monitoring, alerting, and observability setup"
+      - "runbooks/ — Operational runbooks for common scenarios"
+
+  - id: "06_security"
+    name: Security
+    path: "docs/06_security/"
+    description: >
+      Security documentation including threat models, compliance
+      requirements, incident response procedures, and audit logs.
+    contents:
+      - "overview.md — Security posture and policy summary"
+      - "threat-model.md — Threat model and risk assessment"
+      - "compliance.md — Compliance requirements (SOC2, GDPR, etc.)"
+      - "incident-response.md — Security incident response procedures"
+      - "audit-log.md — Security audit history and findings"
+      - "secrets-management.md — Secrets management practices and tooling"
+
+  - id: "07_operations"
+    name: Operations
+    path: "docs/07_operations/"
+    description: >
+      Operational documentation including SLAs, on-call procedures,
+      capacity planning, and performance benchmarks.
+    contents:
+      - "sla.md — Service level agreements and objectives"
+      - "on-call.md — On-call rotation and escalation procedures"
+      - "capacity.md — Capacity planning and scaling guidelines"
+      - "performance.md — Performance benchmarks and optimization history"
+      - "cost-management.md — Cloud cost tracking and optimization"
+
+  - id: "08_reference"
+    name: Reference
+    path: "docs/08_reference/"
+    description: >
+      Reference materials including glossary, acronym definitions,
+      external resource links, and tool configuration references.
+    contents:
+      - "glossary.md — Project-specific terminology and definitions"
+      - "acronyms.md — Acronym and abbreviation reference"
+      - "external-resources.md — Links to external documentation and tools"
+      - "tool-config.md — Configuration reference for project tooling"
+      - "faq.md — Frequently asked questions and answers"
+
+# =============================================================================
+# Special-Purpose Directories
+# =============================================================================
+
+specialDirectories:
+
+  - id: prd
+    name: Product Requirements Documents
+    path: "docs/prd/"
+    description: >
+      Individual Product Requirements Documents (PRDs) for features,
+      enhancements, and initiatives. Each PRD follows a standardized
+      template with problem statement, goals, requirements, acceptance
+      criteria, and technical considerations.
+    naming: "PRD-{NNN}-{slug}.md"
+    template: |
+      # PRD-{NNN}: {Title}
+
+      ## Status
+      Draft | In Review | Approved | In Progress | Completed
+
+      ## Problem Statement
+      {Describe the problem being solved}
+
+      ## Goals
+      - {Goal 1}
+      - {Goal 2}
+
+      ## Non-Goals
+      - {Explicit non-goal 1}
+
+      ## Requirements
+      ### Functional Requirements
+      - [ ] {FR-1}
+
+      ### Non-Functional Requirements
+      - [ ] {NFR-1}
+
+      ## Acceptance Criteria
+      - [ ] {AC-1}
+
+      ## Technical Considerations
+      {Architecture notes, dependencies, risks}
+
+      ## Timeline
+      | Milestone | Date | Status |
+      |-----------|------|--------|
+
+  - id: ai_handoffs
+    name: AI Handoff Documents
+    path: "docs/ai_handoffs/"
+    description: >
+      Session handoff documents generated by AI agents. Each document
+      captures what was accomplished, what remains, open questions, and
+      context needed for continuity between sessions.
+    naming: "{YYYY-MM-DD}-{HHmm}-{tag}.md"
+    template: |
+      # AI Handoff — {Date} {Tag}
+
+      ## Session Summary
+      {What was this session about}
+
+      ## Completed
+      - {What was accomplished}
+
+      ## In Progress
+      - {What was started but not finished}
+
+      ## Remaining
+      - {What still needs to be done}
+
+      ## Open Questions
+      - {Unresolved decisions or questions}
+
+      ## Context for Next Session
+      {Important context, gotchas, and notes}
+
+      ## Files Changed
+      - {path/to/file — description of change}
+
+# =============================================================================
+# ADR Numbering Ranges
+# Architecture Decision Records are numbered by domain for organization.
+# =============================================================================
+
+adrRanges:
+  - range: "0001-0099"
+    domain: Core
+    path: "docs/02_architecture/ADR/"
+    description: >
+      Core architecture decisions: system design, service boundaries,
+      technology choices, data architecture, API design patterns, and
+      foundational infrastructure decisions.
+    examples:
+      - "ADR-0001 — Monorepo structure with Nx/Turbo"
+      - "ADR-0002 — API versioning strategy"
+      - "ADR-0003 — Database selection and sharding strategy"
+
+  - range: "0100-0199"
+    domain: Security
+    path: "docs/02_architecture/ADR/"
+    description: >
+      Security-related architecture decisions: authentication mechanisms,
+      authorization models, encryption standards, secrets management,
+      and compliance frameworks.
+    examples:
+      - "ADR-0100 — Authentication with OAuth 2.0 + PKCE"
+      - "ADR-0101 — Role-based access control model"
+      - "ADR-0102 — Secrets management with HashiCorp Vault"
+
+  - range: "0200-0299"
+    domain: Blockchain
+    path: "docs/02_architecture/ADR/"
+    description: >
+      Blockchain and Web3 architecture decisions: chain selection,
+      smart contract patterns, wallet integration, payment protocols,
+      and cross-chain communication strategies.
+    examples:
+      - "ADR-0200 — Solana program architecture with Anchor"
+      - "ADR-0201 — EtherLink L2 integration pattern"
+      - "ADR-0202 — x402 payment protocol implementation"
+
+  - range: "0300-0399"
+    domain: AI/ML
+    path: "docs/02_architecture/ADR/"
+    description: >
+      AI and machine learning architecture decisions: model selection,
+      inference patterns, agent orchestration, prompt engineering
+      strategies, and AI safety guardrails.
+    examples:
+      - "ADR-0300 — LLM provider abstraction layer"
+      - "ADR-0301 — Agent orchestration with agentkit-forge"
+      - "ADR-0302 — RAG pipeline architecture"
+
+  - range: "0400-0499"
+    domain: Infrastructure
+    path: "docs/02_architecture/ADR/"
+    description: >
+      Infrastructure architecture decisions: cloud provider selection,
+      container orchestration, networking topology, CDN strategy,
+      and disaster recovery design.
+    examples:
+      - "ADR-0400 — Azure as primary cloud provider"
+      - "ADR-0401 — Kubernetes cluster topology"
+      - "ADR-0402 — Multi-region failover strategy"
+
+  - range: "0500-0599"
+    domain: API Design
+    path: "docs/02_architecture/ADR/"
+    description: >
+      API design decisions: protocol selection (REST, GraphQL, gRPC),
+      pagination strategies, error handling conventions, rate limiting
+      approaches, and API gateway patterns.
+    examples:
+      - "ADR-0500 — GraphQL federation for service composition"
+      - "ADR-0501 — Cursor-based pagination standard"
+      - "ADR-0502 — API gateway with rate limiting and circuit breaking"
+
+# =============================================================================
+# ADR Template
+# =============================================================================
+
+adrTemplate: |
+  # ADR-{NNNN}: {Title}
+
+  ## Status
+  Proposed | Accepted | Deprecated | Superseded by ADR-{NNNN}
+
+  ## Date
+  {YYYY-MM-DD}
+
+  ## Context
+  {What is the issue we are deciding on? What forces are at play?}
+
+  ## Decision
+  {What is the change we are proposing and/or doing?}
+
+  ## Consequences
+
+  ### Positive
+  - {Benefit 1}
+
+  ### Negative
+  - {Tradeoff 1}
+
+  ### Neutral
+  - {Observation 1}
+
+  ## Alternatives Considered
+  ### {Alternative 1}
+  - Pros: {pros}
+  - Cons: {cons}
+  - Why rejected: {reason}
+
+  ## References
+  - {Link or reference 1}

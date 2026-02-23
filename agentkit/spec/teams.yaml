@@ -1,0 +1,98 @@
+# =============================================================================
+# teams.yaml — Team definitions and tech stack configurations
+# Canonical source of truth for agentkit-forge
+# Version: 0.1.0
+# =============================================================================
+
+teams:
+  - id: backend
+    name: BACKEND
+    focus: "API, services, core logic"
+    scope: ["apps/api/**", "services/**", "src/server/**", "controllers/**"]
+
+  - id: frontend
+    name: FRONTEND
+    focus: "UI, components, PWA"
+    scope: ["apps/web/**", "apps/marketing/**", "src/client/**", "components/**"]
+
+  - id: data
+    name: DATA
+    focus: "Database, models, migrations"
+    scope: ["db/**", "migrations/**", "models/**", "prisma/**"]
+
+  - id: infra
+    name: INFRA
+    focus: "IaC, cloud, Terraform/Bicep"
+    scope: ["infra/**", "terraform/**", "bicep/**", "pulumi/**"]
+
+  - id: devops
+    name: DEVOPS
+    focus: "CI/CD, pipelines, automation"
+    scope: [".github/workflows/**", "scripts/**", "docker/**", "Dockerfile*"]
+
+  - id: testing
+    name: TESTING
+    focus: "Unit, E2E, integration tests"
+    scope: ["**/*.test.*", "**/*.spec.*", "tests/**", "e2e/**", "playwright/**"]
+
+  - id: security
+    name: SECURITY
+    focus: "Auth, compliance, audit"
+    scope: ["auth/**", "security/**", "middleware/auth*"]
+
+  - id: docs
+    name: DOCUMENTATION
+    focus: "Docs, ADRs, guides"
+    scope: ["docs/**", "*.md", "ADR/**"]
+
+  - id: product
+    name: PRODUCT
+    focus: "Features, PRDs, roadmap"
+    scope: ["docs/01_product/**", "docs/prd/**"]
+
+  - id: quality
+    name: QUALITY
+    focus: "Code review, refactoring, bugs, reliability"
+    scope: ["**/*"]
+
+# =============================================================================
+# Tech Stack Definitions
+# Each stack declares build/test/lint/format commands and file detection patterns
+# =============================================================================
+
+techStacks:
+  - name: node
+    buildCommand: "pnpm build"
+    testCommand: "pnpm test"
+    linter: "eslint"
+    formatter: "prettier"
+    typecheck: "tsc --noEmit"
+    detect: ["package.json"]
+    scope: ["package.json", "apps/**", "packages/**", "src/**/*.ts", "src/**/*.tsx"]
+
+  - name: dotnet
+    buildCommand: "dotnet build"
+    testCommand: "dotnet test"
+    linter: "dotnet format"
+    formatter: "dotnet format"
+    typecheck: "dotnet build"
+    detect: ["*.sln", "*.csproj", "Directory.Build.props"]
+    scope: ["*.csproj", "src/**/*.cs", "**/*.cs"]
+
+  - name: rust
+    buildCommand: "cargo build"
+    testCommand: "cargo test"
+    linter: "cargo clippy"
+    formatter: "cargo fmt"
+    typecheck: "cargo check"
+    detect: ["Cargo.toml"]
+    scope: ["Cargo.toml", "crates/**", "src/**/*.rs"]
+
+  - name: python
+    buildCommand: "python -m build"
+    testCommand: "python -m pytest"
+    linter: "ruff check"
+    formatter: "black"
+    typecheck: "mypy"
+    detect: ["pyproject.toml", "requirements.txt", "setup.py"]
+    scope: ["pyproject.toml", "**/*.py"]

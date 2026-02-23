@@ -1,0 +1,26 @@
+---
+description: "Project context and conventions for {{repoName}}"
+globs:
+alwaysApply: true
+---
+# Project Context
+
+This repository uses the AgentKit Forge unified agent team framework (v{{version}}).
+
+## Key References
+- UNIFIED_AGENT_TEAMS.md — Team definitions and workflow
+- AGENT_TEAMS.md — Repo-specific team mapping
+- AGENT_BACKLOG.md — Current work items
+
+## Workflow
+1. /discover — Scan codebase
+2. /healthcheck — Validate readiness
+3. /plan — Create implementation plan
+4. /check — Run quality gates
+5. /review — Code review
+
+## Non-negotiables
+- Prefer small, reversible changes
+- Keep builds/tests green
+- Never touch secrets or .env files
+- Always include validation commands in summaries

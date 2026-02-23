@@ -1,0 +1,581 @@
+# =============================================================================
+# commands.yaml — Command definitions for agentkit-forge
+# Canonical source of truth for agentkit-forge
+# Version: 0.1.0
+# =============================================================================
+# Each command defines: name, description, type, flags, and allowed-tools.
+# Types: workflow (multi-step orchestration), team (team-scoped), utility (single action)
+# =============================================================================
+
+commands:
+
+  # ===========================================================================
+  # Workflow Commands — Multi-step orchestration and analysis
+  # ===========================================================================
+
+  - name: orchestrate
+    type: workflow
+    description: >
+      Top-level orchestration command. Assesses the current repository state,
+      identifies work to be done, delegates to appropriate team agents, and
+      synthesizes results. The primary entry point for multi-step workflows.
+    flags:
+      - name: --assess-only
+        description: "Run assessment phase only; do not execute changes"
+        type: boolean
+        default: false
+      - name: --scope
+        description: "Limit orchestration to specific file paths or glob patterns"
+        type: string
+        default: null
+      - name: --dry-run
+        description: "Show planned actions without executing them"
+        type: boolean
+        default: false
+      - name: --team
+        description: "Delegate to a specific team instead of auto-routing"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+      - Write
+      - Edit
+
+  - name: discover
+    type: workflow
+    description: >
+      Scans the repository to build a comprehensive understanding of the project
+      structure, tech stacks in use, team boundaries, and architectural patterns.
+      Outputs a structured discovery report used by other commands.
+    flags:
+      - name: --output
+        description: "Output format: json, yaml, or markdown"
+        type: string
+        default: "yaml"
+      - name: --depth
+        description: "Directory traversal depth limit"
+        type: integer
+        default: 5
+      - name: --include-deps
+        description: "Include dependency analysis in discovery output"
+        type: boolean
+        default: true
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+
+  - name: healthcheck
+    type: workflow
+    description: >
+      Performs a comprehensive health check of the repository: validates builds,
+      runs tests, checks linting, verifies configuration files, and reports on
+      the overall state of the codebase across all detected tech stacks.
+    flags:
+      - name: --stack
+        description: "Check only a specific tech stack (node, dotnet, rust, python)"
+        type: string
+        default: null
+      - name: --fix
+        description: "Attempt to auto-fix discovered issues"
+        type: boolean
+        default: false
+      - name: --verbose
+        description: "Include detailed output for each check"
+        type: boolean
+        default: false
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+
+  - name: review
+    type: workflow
+    description: >
+      Performs a structured code review of staged changes, a specific PR, or a
+      range of commits. Evaluates code quality, adherence to domain rules,
+      security concerns, test coverage, and architectural alignment.
+    flags:
+      - name: --pr
+        description: "GitHub PR number to review"
+        type: integer
+        default: null
+      - name: --range
+        description: "Git commit range to review (e.g., main..HEAD)"
+        type: string
+        default: null
+      - name: --focus
+        description: "Focus area: security, performance, correctness, style, or all"
+        type: string
+        default: "all"
+      - name: --severity
+        description: "Minimum severity to report: info, warning, error, critical"
+        type: string
+        default: "warning"
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+
+  - name: sync-backlog
+    type: workflow
+    description: >
+      Synchronizes the local backlog with GitHub Issues and project boards.
+      Pulls open issues, maps them to teams, updates local tracking documents,
+      and identifies stale or unassigned work items.
+    flags:
+      - name: --direction
+        description: "Sync direction: pull (from GitHub), push (to GitHub), or both"
+        type: string
+        default: "pull"
+      - name: --labels
+        description: "Filter by GitHub labels (comma-separated)"
+        type: string
+        default: null
+      - name: --team
+        description: "Filter issues relevant to a specific team"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: check
+    type: workflow
+    description: >
+      Runs all quality checks for the repository: type checking, linting,
+      formatting validation, and test suites. Returns a unified pass/fail
+      status with detailed breakdowns per check category.
+    flags:
+      - name: --stack
+        description: "Check only a specific tech stack"
+        type: string
+        default: null
+      - name: --fix
+        description: "Auto-fix issues where possible (lint, format)"
+        type: boolean
+        default: false
+      - name: --bail
+        description: "Stop on first failure"
+        type: boolean
+        default: false
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+
+  - name: plan
+    type: workflow
+    description: >
+      Creates a detailed implementation plan for a feature, bug fix, or
+      refactoring task. Analyzes the codebase, identifies affected files and
+      teams, estimates complexity, and produces a step-by-step plan with
+      acceptance criteria.
+    flags:
+      - name: --issue
+        description: "GitHub issue number to plan for"
+        type: integer
+        default: null
+      - name: --output
+        description: "Output format: markdown, yaml, or json"
+        type: string
+        default: "markdown"
+      - name: --depth
+        description: "Planning detail level: high, medium, low"
+        type: string
+        default: "medium"
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+
+  - name: handoff
+    type: workflow
+    description: >
+      Generates a structured handoff document for the current session. Captures
+      what was accomplished, what remains, open questions, and context needed
+      by the next session or developer. Writes to docs/ai_handoffs/.
+    flags:
+      - name: --format
+        description: "Output format: markdown or yaml"
+        type: string
+        default: "markdown"
+      - name: --include-diff
+        description: "Include a summary of all file changes in the handoff"
+        type: boolean
+        default: true
+      - name: --tag
+        description: "Tag for categorizing the handoff (e.g., feature, bugfix, spike)"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Glob
+      - Grep
+      - Bash
+
+  # ===========================================================================
+  # Utility Commands — Single-action tools
+  # ===========================================================================
+
+  - name: build
+    type: utility
+    description: >
+      Builds the project using the detected tech stack's build command. Supports
+      targeting specific packages in a monorepo or building the entire workspace.
+    flags:
+      - name: --stack
+        description: "Force a specific tech stack build command"
+        type: string
+        default: null
+      - name: --package
+        description: "Build a specific package/app in a monorepo"
+        type: string
+        default: null
+      - name: --production
+        description: "Build in production mode"
+        type: boolean
+        default: false
+      - name: --verbose
+        description: "Show verbose build output"
+        type: boolean
+        default: false
+    allowed-tools:
+      - Read
+      - Glob
+      - Bash
+
+  - name: test
+    type: utility
+    description: >
+      Runs the test suite using the detected tech stack's test command. Supports
+      filtering by test file, pattern, or package. Reports pass/fail counts
+      and coverage when available.
+    flags:
+      - name: --stack
+        description: "Force a specific tech stack test command"
+        type: string
+        default: null
+      - name: --filter
+        description: "Filter tests by name or pattern"
+        type: string
+        default: null
+      - name: --coverage
+        description: "Generate coverage report"
+        type: boolean
+        default: false
+      - name: --watch
+        description: "Run tests in watch mode"
+        type: boolean
+        default: false
+      - name: --package
+        description: "Test a specific package/app in a monorepo"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Glob
+      - Bash
+
+  - name: format
+    type: utility
+    description: >
+      Formats code using the detected tech stack's formatter. Can target
+      specific files, directories, or the entire workspace. Reports files
+      that were changed.
+    flags:
+      - name: --stack
+        description: "Force a specific tech stack formatter"
+        type: string
+        default: null
+      - name: --check
+        description: "Check formatting without making changes"
+        type: boolean
+        default: false
+      - name: --path
+        description: "Format only files matching this path or glob"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Glob
+      - Bash
+
+  - name: deploy
+    type: utility
+    description: >
+      Triggers a deployment pipeline or generates deployment artifacts.
+      Validates pre-deployment checks (build, test, lint) before proceeding.
+      Supports dry-run mode for safety.
+    flags:
+      - name: --environment
+        description: "Target environment: dev, staging, production"
+        type: string
+        default: "dev"
+      - name: --dry-run
+        description: "Simulate deployment without executing"
+        type: boolean
+        default: true
+      - name: --skip-checks
+        description: "Skip pre-deployment quality checks (use with caution)"
+        type: boolean
+        default: false
+      - name: --stack
+        description: "Deploy a specific tech stack component"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+
+  - name: security
+    type: utility
+    description: >
+      Runs security-focused analysis: dependency vulnerability scanning,
+      secret detection, OWASP compliance checks, and permission auditing.
+      Generates a security report with severity ratings.
+    flags:
+      - name: --scan-type
+        description: "Scan type: deps, secrets, owasp, permissions, or all"
+        type: string
+        default: "all"
+      - name: --severity
+        description: "Minimum severity to report: low, medium, high, critical"
+        type: string
+        default: "medium"
+      - name: --fix
+        description: "Attempt to auto-fix vulnerabilities (dependency updates)"
+        type: boolean
+        default: false
+      - name: --output
+        description: "Output format: json, markdown, or sarif"
+        type: string
+        default: "markdown"
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+
+  # ===========================================================================
+  # Team Commands — Scoped to team domains defined in teams.yaml
+  # ===========================================================================
+
+  - name: team-backend
+    type: team
+    team: backend
+    description: >
+      Activates the BACKEND team context. Scopes all operations to API,
+      services, and core logic files. Applies backend-specific rules and
+      delegates to backend-specialized agents.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the backend scope"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: team-frontend
+    type: team
+    team: frontend
+    description: >
+      Activates the FRONTEND team context. Scopes all operations to UI,
+      components, and PWA files. Applies frontend-specific rules including
+      WCAG AA accessibility and component patterns.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the frontend scope"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: team-data
+    type: team
+    team: data
+    description: >
+      Activates the DATA team context. Scopes all operations to database,
+      models, and migration files. Applies data-specific rules including
+      migration safety and schema validation.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the data scope"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: team-infra
+    type: team
+    team: infra
+    description: >
+      Activates the INFRA team context. Scopes all operations to IaC, cloud,
+      and Terraform/Bicep files. Applies infrastructure-specific rules
+      including state safety and drift detection.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the infra scope"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: team-devops
+    type: team
+    team: devops
+    description: >
+      Activates the DEVOPS team context. Scopes all operations to CI/CD
+      pipelines, scripts, and Docker configurations. Applies DevOps-specific
+      rules including pipeline validation and container best practices.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the devops scope"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: team-testing
+    type: team
+    team: testing
+    description: >
+      Activates the TESTING team context. Scopes all operations to test files,
+      E2E suites, and integration tests. Applies testing-specific rules
+      including coverage thresholds and test organization patterns.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the testing scope"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: team-security
+    type: team
+    team: security
+    description: >
+      Activates the SECURITY team context. Scopes all operations to auth,
+      compliance, and security middleware files. Applies security-specific
+      rules including secret protection and least-privilege enforcement.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the security scope"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: team-docs
+    type: team
+    team: docs
+    description: >
+      Activates the DOCUMENTATION team context. Scopes all operations to docs,
+      ADRs, and guide files. Applies documentation-specific rules including
+      ADR formatting, link validation, and content structure.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the docs scope"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: team-product
+    type: team
+    team: product
+    description: >
+      Activates the PRODUCT team context. Scopes all operations to PRDs,
+      feature specs, and roadmap files. Applies product-specific rules
+      including PRD templates and acceptance criteria validation.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the product scope"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash
+
+  - name: team-quality
+    type: team
+    team: quality
+    description: >
+      Activates the QUALITY team context. Has access to the entire codebase
+      for cross-cutting concerns: code review, refactoring, bug triage, and
+      reliability improvements.
+    flags:
+      - name: --task
+        description: "Specific task to perform within the quality scope"
+        type: string
+        default: null
+      - name: --focus
+        description: "Focus area: review, refactor, bugs, reliability"
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+      - Bash

@@ -1,0 +1,12 @@
+---
+description: "Orchestration workflow for multi-agent coordination"
+globs:
+alwaysApply: false
+---
+# Orchestration
+
+Follow the 5-phase lifecycle: Discovery → Planning → Implementation → Validation → Ship.
+
+Teams: T1-BACKEND, T2-FRONTEND, T3-DATA, T4-INFRA, T5-DEVOPS, T6-TESTING, T7-SECURITY, T8-DOCS, T9-PRODUCT, T10-QUALITY.
+
+Run agentkit/bin/orchestrate for automated coordination.
