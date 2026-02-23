@@ -56,7 +56,6 @@ export async function runValidate({ agentkitRoot, projectRoot, flags }) {
   const jsonFiles = [
     '.claude/settings.json',
     '.claude/state/schema.json',
-    '.claude/state/orchestrator.json.template',
     'mcp/servers.json',
     'mcp/a2a-config.json',
   ];
@@ -210,7 +209,9 @@ function scanForPatterns(dir, patterns, onMatch, onCount) {
       if (['.md', '.json', '.yaml', '.yml', '.sh', '.ps1', '.mdc', ''].includes(ext)) {
         count++;
         try {
-          const content = readFileSync(full, 'utf-8');
+          let content = readFileSync(full, 'utf-8');
+          // Strip code-fenced blocks to avoid false positives from documentation examples
+          content = content.replace(/```[\s\S]*?```/g, '');
           for (const pattern of patterns) {
             if (pattern.test(content)) {
               onMatch(full, pattern.toString());

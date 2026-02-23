@@ -73,7 +73,7 @@ function getGeneratedHeader(version, repoName, ext) {
 function getCommentStyle(ext) {
   switch (ext) {
     case '.md': case '.mdc': return { start: '<!--', end: '-->' };
-    case '.json': return null; // JSON doesn't support comments
+    case '.json': case '.template': return null; // JSON / template files don't support comments
     case '.yml': case '.yaml': return { start: '#', end: '' };
     case '.sh': return { start: '#', end: '' };
     case '.ps1': return { start: '#', end: '' };
