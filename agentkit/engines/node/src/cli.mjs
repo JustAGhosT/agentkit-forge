@@ -19,7 +19,11 @@ try {
   VERSION = pkg.version || VERSION;
 } catch { /* fallback to 0.0.0 */ }
 
-const VALID_COMMANDS = ['init', 'sync', 'validate', 'discover', 'spec-validate'];
+const VALID_COMMANDS = ['init', 'sync', 'validate', 'discover', 'spec-validate',
+  'orchestrate', 'plan', 'check', 'review', 'handoff'];
+
+// Workflow commands — primarily slash commands for AI tools, but runnable from CLI
+const WORKFLOW_COMMANDS = ['orchestrate', 'plan', 'check', 'review', 'handoff'];
 
 const VALID_FLAGS = {
   init: ['repoName', 'force', 'help'],
@@ -27,6 +31,11 @@ const VALID_FLAGS = {
   validate: ['help'],
   discover: ['output', 'help'],
   'spec-validate': ['help'],
+  orchestrate: ['teams', 'phase', 'help'],
+  plan: ['help'],
+  check: ['help'],
+  review: ['help'],
+  handoff: ['team', 'help'],
 };
 
 const args = process.argv.slice(2);
@@ -63,6 +72,13 @@ Commands:
   validate        Validate generated outputs
   discover        Scan repo to detect tech stacks and structure
   spec-validate   Validate YAML spec files for schema correctness
+
+Workflow Commands (primarily slash commands for AI tools):
+  orchestrate     Multi-team coordination workflow
+  plan            Create implementation plan
+  check           Run quality gates
+  review          Request code review
+  handoff         Hand off work to another team
 
 Options:
   init:
@@ -145,6 +161,23 @@ async function main() {
         const result = runSpecValidation(AGENTKIT_ROOT);
         if (!result.valid) process.exit(1);
         break;
+      }
+      default: {
+        if (WORKFLOW_COMMANDS.includes(command)) {
+          const cmdFile = resolve(PROJECT_ROOT, '.claude', 'commands', `${command}.md`);
+          console.log(`[agentkit:${command}] Workflow command: /${command}`);
+          console.log();
+          console.log(`This is an AI agent slash command. Use it within your AI tool:`);
+          console.log(`  Claude Code:  /${command}`);
+          console.log(`  Cursor:       @${command}`);
+          console.log();
+          if ((await import('fs')).existsSync(cmdFile)) {
+            console.log(`Command definition: .claude/commands/${command}.md`);
+          } else {
+            console.log('Run "agentkit sync" first to generate command files.');
+          }
+          break;
+        }
       }
     }
   } catch (err) {

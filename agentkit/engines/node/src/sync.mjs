@@ -175,10 +175,12 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 
   // --- Cursor templates ---
   syncDirectCopy(templatesDir, 'cursor/rules', tmpDir, '.cursor/rules', vars, version, repoName);
+  syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec);
 
   // --- Windsurf templates ---
   syncDirectCopy(templatesDir, 'windsurf/rules', tmpDir, '.windsurf/rules', vars, version, repoName);
   syncDirectCopy(templatesDir, 'windsurf/workflows', tmpDir, '.windsurf/workflows', vars, version, repoName);
+  syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec);
 
   // --- .ai templates ---
   syncDirectCopy(templatesDir, 'ai', tmpDir, '.ai', vars, version, repoName);
@@ -508,6 +510,74 @@ function syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName) {
     }
 
     writeOutput(resolve(tmpDir, cfg.dest), content);
+  }
+}
+
+function syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec) {
+  if (!teamsSpec.teams) return;
+
+  for (const team of teamsSpec.teams) {
+    const scope = Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || '**/*');
+    const globs = Array.isArray(team.scope) ? team.scope.join(', ') : '';
+    let content = [
+      '---',
+      `description: "Team ${team.name} — ${team.focus}"`,
+      `globs: ${globs}`,
+      'alwaysApply: false',
+      '---',
+      `# Team: ${team.name}`,
+      '',
+      `**Focus**: ${team.focus}`,
+      `**Scope**: ${scope}`,
+      '',
+      '## Responsibilities',
+      `- Own all code within scope: ${scope}`,
+      '- Follow project conventions and quality gates',
+      '- Coordinate with other teams via /orchestrate for cross-cutting changes',
+      '',
+      '## Workflow',
+      '1. Review current backlog in AGENT_BACKLOG.md',
+      '2. Implement changes within team scope',
+      '3. Run /check before committing',
+      '4. Use /handoff when passing work to another team',
+      '',
+    ].join('\n');
+
+    content = renderTemplate(content, { ...vars, repoName });
+    content = insertHeader(content, '.mdc', version, repoName);
+    const fileName = `team-${team.id}.mdc`;
+    writeOutput(resolve(tmpDir, '.cursor', 'rules', fileName), content);
+  }
+}
+
+function syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec) {
+  if (!teamsSpec.teams) return;
+
+  for (const team of teamsSpec.teams) {
+    const scope = Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || '**/*');
+    let content = [
+      `# Team: ${team.name}`,
+      '',
+      `**Focus**: ${team.focus}`,
+      `**Scope**: ${scope}`,
+      '',
+      '## Responsibilities',
+      `- Own all code within scope: ${scope}`,
+      '- Follow project conventions and quality gates',
+      '- Coordinate with other teams via /orchestrate for cross-cutting changes',
+      '',
+      '## Workflow',
+      '1. Review current backlog in AGENT_BACKLOG.md',
+      '2. Implement changes within team scope',
+      '3. Run /check before committing',
+      '4. Use /handoff when passing work to another team',
+      '',
+    ].join('\n');
+
+    content = renderTemplate(content, { ...vars, repoName });
+    content = insertHeader(content, '.md', version, repoName);
+    const fileName = `team-${team.id}.md`;
+    writeOutput(resolve(tmpDir, '.windsurf', 'rules', fileName), content);
   }
 }
 
