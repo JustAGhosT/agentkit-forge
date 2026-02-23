@@ -27,13 +27,13 @@ function buildSteps(stack, flags) {
       console.warn(`[agentkit:check] Skipping non-string formatter value`);
     } else {
       const resolved = resolveFormatter(stack.formatter);
-      if (!isValidCommand(stack.formatter) && !isValidCommand(resolved)) {
+      if (!isValidCommand(resolved.check)) {
         console.warn(`[agentkit:check] Skipping invalid formatter command: ${stack.formatter}`);
       } else {
-        const fixCmd = flags.fix ? `${resolved} --write .` : null;
+        const fixCmd = flags.fix && resolved.fix ? resolved.fix : null;
         steps.push({
           name: 'format',
-          command: `${resolved} --check .`,
+          command: resolved.check,
           fixCommand: fixCmd,
         });
       }
@@ -41,13 +41,14 @@ function buildSteps(stack, flags) {
   }
 
   if (stack.linter) {
-    if (!isValidCommand(stack.linter)) {
+    const resolved = resolveLinter(stack.linter);
+    if (!isValidCommand(resolved.check)) {
       console.warn(`[agentkit:check] Skipping invalid linter command: ${stack.linter}`);
     } else {
-      const fixCmd = flags.fix ? `${stack.linter} --fix .` : null;
+      const fixCmd = flags.fix && resolved.fix ? resolved.fix : null;
       steps.push({
         name: 'lint',
-        command: `${stack.linter} .`,
+        command: resolved.check,
         fixCommand: fixCmd,
       });
     }
@@ -89,15 +90,42 @@ function buildSteps(stack, flags) {
   return steps;
 }
 
+/**
+ * Resolve a formatter shorthand to its check/fix command variants.
+ * Returns an object with { cmd, check, fix } so buildSteps can use
+ * tool-specific CLI syntax instead of hardcoding Prettier-style flags.
+ * @param {string} formatter
+ * @returns {{ cmd: string, check: string, fix: string }}
+ */
 function resolveFormatter(formatter) {
-  // Map shorthand names to full commands
   const map = {
-    prettier: 'npx prettier',
-    black: 'black',
-    'cargo fmt': 'cargo fmt',
-    'dotnet format': 'dotnet format',
+    prettier:        { cmd: 'npx prettier',  check: 'npx prettier --check .',            fix: 'npx prettier --write .' },
+    black:           { cmd: 'black',         check: 'black --check .',                   fix: 'black .' },
+    'cargo fmt':     { cmd: 'cargo fmt',     check: 'cargo fmt -- --check',              fix: 'cargo fmt' },
+    'dotnet format': { cmd: 'dotnet format', check: 'dotnet format --verify-no-changes', fix: 'dotnet format' },
   };
-  return map[formatter] || formatter;
+  const entry = map[formatter];
+  if (entry) return entry;
+  // Unknown formatter — return raw command without appending flags
+  return { cmd: formatter, check: formatter, fix: formatter };
+}
+
+/**
+ * Resolve a linter shorthand to its check/fix command variants.
+ * @param {string} linter
+ * @returns {{ cmd: string, check: string, fix: string | null }}
+ */
+function resolveLinter(linter) {
+  const map = {
+    eslint:          { cmd: 'eslint',        check: 'eslint .',       fix: 'eslint --fix .' },
+    'cargo clippy':  { cmd: 'cargo clippy',  check: 'cargo clippy',   fix: 'cargo clippy --fix' },
+    pylint:          { cmd: 'pylint',        check: 'pylint .',       fix: null },
+    flake8:          { cmd: 'flake8',        check: 'flake8 .',       fix: null },
+  };
+  const entry = map[linter];
+  if (entry) return entry;
+  // Unknown linter — return raw command without appending flags
+  return { cmd: linter, check: linter, fix: null };
 }
 
 // ---------------------------------------------------------------------------
@@ -216,14 +244,22 @@ export async function runCheck({ agentkitRoot, projectRoot, flags = {} }) {
   console.log(`=== Quality Gate: ${overallStatus} ===`);
   console.log('');
 
-  // Results table
-  console.log('Step         Status  Duration');
-  console.log('───────────  ──────  ────────');
+  // Results table — compute column width dynamically
+  let maxLabelLen = 'Step'.length;
   for (const stackResult of allResults) {
     for (const step of stackResult.steps) {
-      const name = `${stackResult.stack}:${step.step}`.padEnd(11);
+      const label = `${stackResult.stack}:${step.step}`;
+      if (label.length > maxLabelLen) maxLabelLen = label.length;
+    }
+  }
+  const pad = maxLabelLen + 2; // 2-char gutter
+  console.log(`${'Step'.padEnd(pad)}Status  Duration`);
+  console.log(`${'─'.repeat(pad - 2)}  ──────  ────────`);
+  for (const stackResult of allResults) {
+    for (const step of stackResult.steps) {
+      const name = `${stackResult.stack}:${step.step}`.padEnd(pad);
       const status = step.status.padEnd(6);
-      console.log(`${name}  ${status}  ${formatDuration(step.durationMs)}`);
+      console.log(`${name}${status}  ${formatDuration(step.durationMs)}`);
     }
   }
 
