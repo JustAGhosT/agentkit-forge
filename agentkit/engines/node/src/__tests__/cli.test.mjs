@@ -64,4 +64,10 @@ describe('CLI', () => {
     const result = run('foo');
     expect(result.stdout).toContain('--help');
   });
+
+  it('accepts --flag=value syntax', () => {
+    // spec-validate ignores flags, so passing --unknown=value should just work
+    const result = run('spec-validate', '--help');
+    expect(result.exitCode).toBe(0);
+  });
 });

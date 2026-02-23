@@ -23,36 +23,47 @@ When the spec and overlay are merged during `agentkit sync`:
 
 ```
 agentkit/
-  spec/               # Canonical defaults
-    commands/
-    rules/
+  spec/               # Canonical defaults (YAML spec files)
+    commands.yaml
+    teams.yaml
+    rules.yaml
     settings.yaml
+    agents.yaml
+    docs.yaml
+  templates/           # Template files rendered by sync
+    claude/
+    cursor/
+    windsurf/
+    ...
   overlays/
     __TEMPLATE__/      # Copied on init
     my-project/        # Your project-specific overlay
-      commands/
-      rules/
-      settings.yaml
+      commands.yaml    # Additional/override commands
+      rules.yaml       # Additional/override rules
+      settings.yaml    # Project-specific settings
 ```
 
 ## Common Customization Patterns
 
 ### 1. Adding a Custom Slash Command
 
-Create a new `.md` file in your overlay's commands directory:
+Add command definitions to your overlay's `commands.yaml`:
 
-```
-agentkit/overlays/<repoName>/commands/my-command.md
+```yaml
+# agentkit/overlays/<repoName>/commands.yaml
+commands:
+  - name: my-command
+    description: "My custom command"
 ```
 
-The file should follow the standard command template format with a frontmatter section defining the command name, description, and any parameters. When you run `agentkit sync`, the command will be generated into `.claude/commands/`.
+Or create a template `.md` file in the templates directory. When you run `agentkit sync`, the command will be generated into `.claude/commands/`.
 
 ### 2. Adding Domain-Specific Rules
 
 Add rules to `rules.yaml` in your overlay directory:
 
 ```yaml
-# agentkit/overlays/<repoName>/rules/rules.yaml
+# agentkit/overlays/<repoName>/rules.yaml
 rules:
   - id: use-repository-pattern
     description: "All data access must go through repository classes"

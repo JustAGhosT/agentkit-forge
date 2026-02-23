@@ -5,7 +5,7 @@
  */
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
-import { execCommand } from './runner.mjs';
+import { execCommand, formatTimestamp } from './runner.mjs';
 import { loadState, appendEvent, readEvents } from './orchestrator.mjs';
 
 // ---------------------------------------------------------------------------
@@ -128,7 +128,7 @@ function generateHandoffDoc(git, state, events, timestamp) {
     lines.push(`## Recent Activity`);
     lines.push(``);
     for (const evt of events) {
-      const ts = evt.timestamp.replace('T', ' ').replace(/\.\d{3}Z$/, '');
+      const ts = formatTimestamp(evt.timestamp);
       lines.push(`- \`${ts}\` ${evt.action}${evt.team ? ` (${evt.team})` : ''}`);
     }
     lines.push(``);

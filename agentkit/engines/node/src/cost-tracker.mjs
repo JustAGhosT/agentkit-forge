@@ -10,6 +10,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync } from 'fs';
 import { resolve, basename } from 'path';
 import { execSync } from 'child_process';
+import { formatTimestamp } from './runner.mjs';
 
 // ---------------------------------------------------------------------------
 // Path helpers
@@ -123,7 +124,13 @@ export function endSession({ agentkitRoot, projectRoot, sessionId }) {
     return null;
   }
 
-  const session = JSON.parse(readFileSync(path, 'utf-8'));
+  let session;
+  try {
+    session = JSON.parse(readFileSync(path, 'utf-8'));
+  } catch {
+    console.warn(`[agentkit:cost] Corrupted session file for ${sessionId}, skipping`);
+    return null;
+  }
   const now = new Date();
   const startTime = new Date(session.startTime);
 
@@ -358,7 +365,7 @@ export async function runCost({ agentkitRoot, projectRoot, flags = {} }) {
     console.log('Session ID               Start                Duration    Files  Status');
     console.log('───────────────────────  ───────────────────  ──────────  ─────  ────────');
     for (const s of sessions.slice(0, 20)) {
-      const start = s.startTime.replace('T', ' ').replace(/\.\d{3}Z$/, '');
+      const start = formatTimestamp(s.startTime);
       const dur = s.durationMs ? formatMs(s.durationMs) : 'active';
       console.log(
         `${(s.sessionId || '').padEnd(23)}  ${start.padEnd(19)}  ${dur.padStart(10)}  ${String(s.filesModified || 0).padStart(5)}  ${s.status}`

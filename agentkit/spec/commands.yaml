@@ -36,6 +36,18 @@ commands:
         description: "Delegate to a specific team instead of auto-routing"
         type: string
         default: null
+      - name: --phase
+        description: "Jump to a specific phase (1-5)"
+        type: integer
+        default: null
+      - name: --status
+        description: "Show current orchestrator state without executing"
+        type: boolean
+        default: false
+      - name: --force-unlock
+        description: "Clear a stale session lock"
+        type: boolean
+        default: false
     allowed-tools:
       - Read
       - Glob
@@ -109,6 +121,10 @@ commands:
         description: "Git commit range to review (e.g., main..HEAD)"
         type: string
         default: null
+      - name: --file
+        description: "Review a specific file"
+        type: string
+        default: null
       - name: --focus
         description: "Focus area: security, performance, correctness, style, or all"
         type: string
@@ -169,6 +185,10 @@ commands:
         description: "Stop on first failure"
         type: boolean
         default: false
+      - name: --fast
+        description: "Skip the build step; only run format + lint + typecheck + test"
+        type: boolean
+        default: false
     allowed-tools:
       - Read
       - Glob
@@ -220,6 +240,10 @@ commands:
         description: "Tag for categorizing the handoff (e.g., feature, bugfix, spike)"
         type: string
         default: null
+      - name: --save
+        description: "Save the handoff document to docs/ai_handoffs/"
+        type: boolean
+        default: false
     allowed-tools:
       - Read
       - Write

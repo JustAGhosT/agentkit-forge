@@ -175,7 +175,13 @@ These seven commands form the core orchestration and lifecycle workflow.
 - You want to fix issues. Healthcheck only reports; it does not fix.
 - You need auto-fix capabilities. Use `/check --fix` instead.
 
-**Flags:** None. Healthcheck runs all checks unconditionally.
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--stack <name>` | Limit checks to a specific tech stack. |
+| `--fix` | Attempt to auto-fix issues found during checks. |
+| `--verbose` | Show detailed output for each check step. |
 
 **Example invocation:**
 
@@ -346,8 +352,11 @@ Lint errors:
 
 | Flag | Description |
 |------|-------------|
+| `--pr <number>` | GitHub PR number to review. |
 | `--range <ref>` | Specify a commit range to review (e.g., `main..HEAD`, `abc123..def456`). |
 | `--file <path>` | Review a specific file instead of the full diff. |
+| `--focus <area>` | Focus area: security, performance, correctness, style, or all. Default: all. |
+| `--severity <level>` | Minimum severity to report: info, warning, error, critical. Default: warning. |
 
 **Example invocation:**
 
@@ -400,6 +409,9 @@ Lint errors:
 | Flag | Description |
 |------|-------------|
 | `--save` | Write the handoff to the archive directory (`docs/ai_handoffs/`) in addition to console output. |
+| `--format <fmt>` | Output format: markdown or yaml. Default: markdown. |
+| `--include-diff` | Include a summary of all file changes in the handoff. |
+| `--tag <tag>` | Tag for categorizing the handoff (e.g., feature, bugfix, spike). |
 
 **Example invocation:**
 
@@ -573,10 +585,19 @@ Runs a comprehensive project-wide audit combining discovery, healthcheck, securi
 
 Displays AI token usage summaries, session costs, and budget status. See [COST_TRACKING.md](./COST_TRACKING.md) for full details on cost tracking configuration.
 
-**Flags:** `--sessions`, `--last <period>`, `--month <YYYY-MM>`
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--summary` | Show recent session overview with durations and file counts. |
+| `--sessions` | List recent sessions. |
+| `--report` | Generate an aggregate monthly usage report. |
+| `--month <YYYY-MM>` | Month for the report (default: current month). |
+| `--format <fmt>` | Export format: json, csv (default: table). |
+| `--last <period>` | Time period for session listing (e.g., 7d, 30d). |
 
 ```
-/cost
+/cost --summary
 /cost --sessions --last 7d
-/cost --month 2026-02
+/cost --report --month 2026-02 --format json
 ```

@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 import yaml from 'js-yaml';
-import { execCommand, commandExists, formatDuration } from './runner.mjs';
+import { execCommand, commandExists, formatDuration, isValidCommand } from './runner.mjs';
 import { appendEvent } from './orchestrator.mjs';
 
 // ---------------------------------------------------------------------------
@@ -23,42 +23,63 @@ function buildSteps(stack, flags) {
   const steps = [];
 
   if (stack.formatter) {
-    const fixCmd = flags.fix ? `${resolveFormatter(stack.formatter)} --write .` : null;
-    steps.push({
-      name: 'format',
-      command: `${resolveFormatter(stack.formatter)} --check .`,
-      fixCommand: fixCmd,
-    });
+    const resolved = resolveFormatter(stack.formatter);
+    if (!isValidCommand(resolved)) {
+      console.warn(`[agentkit:check] Skipping invalid formatter command: ${stack.formatter}`);
+    } else {
+      const fixCmd = flags.fix ? `${resolved} --write .` : null;
+      steps.push({
+        name: 'format',
+        command: `${resolved} --check .`,
+        fixCommand: fixCmd,
+      });
+    }
   }
 
   if (stack.linter) {
-    const fixCmd = flags.fix ? `${stack.linter} --fix .` : null;
-    steps.push({
-      name: 'lint',
-      command: `${stack.linter} .`,
-      fixCommand: fixCmd,
-    });
+    if (!isValidCommand(stack.linter)) {
+      console.warn(`[agentkit:check] Skipping invalid linter command: ${stack.linter}`);
+    } else {
+      const fixCmd = flags.fix ? `${stack.linter} --fix .` : null;
+      steps.push({
+        name: 'lint',
+        command: `${stack.linter} .`,
+        fixCommand: fixCmd,
+      });
+    }
   }
 
   if (stack.typecheck) {
-    steps.push({
-      name: 'typecheck',
-      command: stack.typecheck,
-    });
+    if (!isValidCommand(stack.typecheck)) {
+      console.warn(`[agentkit:check] Skipping invalid typecheck command: ${stack.typecheck}`);
+    } else {
+      steps.push({
+        name: 'typecheck',
+        command: stack.typecheck,
+      });
+    }
   }
 
   if (stack.testCommand) {
-    steps.push({
-      name: 'test',
-      command: stack.testCommand,
-    });
+    if (!isValidCommand(stack.testCommand)) {
+      console.warn(`[agentkit:check] Skipping invalid test command: ${stack.testCommand}`);
+    } else {
+      steps.push({
+        name: 'test',
+        command: stack.testCommand,
+      });
+    }
   }
 
   if (stack.buildCommand && !flags.fast) {
-    steps.push({
-      name: 'build',
-      command: stack.buildCommand,
-    });
+    if (!isValidCommand(stack.buildCommand)) {
+      console.warn(`[agentkit:check] Skipping invalid build command: ${stack.buildCommand}`);
+    } else {
+      steps.push({
+        name: 'build',
+        command: stack.buildCommand,
+      });
+    }
   }
 
   return steps;
@@ -144,8 +165,9 @@ export async function runCheck({ agentkitRoot, projectRoot, flags = {} }) {
       process.stdout.write(`  ${step.name.padEnd(12)} `);
 
       // Check if the base command exists
-      const baseCmd = step.command.split(' ')[0].replace('npx', '').trim();
-      const isNpx = step.command.startsWith('npx ');
+      const parts = step.command.split(' ').filter(Boolean);
+      const isNpx = parts[0] === 'npx';
+      const baseCmd = isNpx ? (parts[1] || '') : parts[0];
 
       let result;
       if (!isNpx && baseCmd && !commandExists(baseCmd)) {

@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 import yaml from 'js-yaml';
-import { execCommand, commandExists, formatDuration } from './runner.mjs';
+import { execCommand, commandExists, formatDuration, isValidCommand } from './runner.mjs';
 import { appendEvent, loadState, saveState } from './orchestrator.mjs';
 
 // ---------------------------------------------------------------------------
@@ -112,6 +112,11 @@ export async function runHealthcheck({ agentkitRoot, projectRoot, flags = {} }) 
 
       for (const check of checks) {
         if (!check.cmd) continue;
+        if (!isValidCommand(check.cmd)) {
+          console.warn(`  ${check.name.padEnd(12)} SKIP (invalid command rejected)`);
+          stackResult.checks.push({ name: check.name, command: check.cmd, status: 'SKIP', exitCode: -1, durationMs: 0 });
+          continue;
+        }
         process.stdout.write(`  ${check.name.padEnd(12)} `);
         const r = execCommand(check.cmd, { cwd: projectRoot, timeout: 120_000 });
         const status = r.exitCode === 0 ? 'PASS' : 'FAIL';

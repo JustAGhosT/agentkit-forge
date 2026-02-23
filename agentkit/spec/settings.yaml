@@ -111,6 +111,15 @@ costTracking:
   # Session-level metrics (duration, commands, files) are tracked via hooks.
 
 # =============================================================================
+# Dependency Management — Automated dependency update configuration
+# =============================================================================
+
+dependencyManagement:
+  tool: renovate             # renovate | dependabot | none
+  schedule: weekly           # weekly | daily | monthly
+  automerge: patch           # major | minor | patch | none
+
+# =============================================================================
 # Hooks — Lifecycle callbacks for session and tool events
 # =============================================================================
 

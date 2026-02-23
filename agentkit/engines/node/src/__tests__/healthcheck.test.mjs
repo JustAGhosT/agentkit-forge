@@ -1,0 +1,96 @@
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { runHealthcheck } from '../healthcheck.mjs';
+import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const AGENTKIT_ROOT = resolve(__dirname, '..', '..', '..', '..');
+const PROJECT_ROOT = resolve(AGENTKIT_ROOT, '..');
+const TEST_ROOT = resolve(__dirname, '..', '..', '..', '..', '..', '.test-healthcheck');
+const STATE_DIR = resolve(TEST_ROOT, '.claude', 'state');
+
+describe('runHealthcheck()', () => {
+  afterEach(() => {
+    if (existsSync(TEST_ROOT)) rmSync(TEST_ROOT, { recursive: true });
+    vi.restoreAllMocks();
+  });
+
+  it('returns structured result with tools list', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    const result = await runHealthcheck({
+      agentkitRoot: AGENTKIT_ROOT,
+      projectRoot: PROJECT_ROOT,
+      flags: {},
+    });
+
+    expect(result).toHaveProperty('timestamp');
+    expect(result).toHaveProperty('tools');
+    expect(result).toHaveProperty('stacks');
+    expect(result).toHaveProperty('agentkit');
+    expect(result).toHaveProperty('overallHealth');
+    expect(Array.isArray(result.tools)).toBe(true);
+    expect(result.tools.length).toBeGreaterThan(0);
+  });
+
+  it('detects node and git as installed tools', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    const result = await runHealthcheck({
+      agentkitRoot: AGENTKIT_ROOT,
+      projectRoot: PROJECT_ROOT,
+      flags: {},
+    });
+
+    const nodeTool = result.tools.find(t => t.name === 'node');
+    expect(nodeTool).toBeDefined();
+    expect(nodeTool.found).toBe(true);
+    expect(nodeTool.version).toMatch(/\d+/);
+
+    const gitTool = result.tools.find(t => t.name === 'git');
+    expect(gitTool).toBeDefined();
+    expect(gitTool.found).toBe(true);
+  });
+
+  it('reports agentkit setup status', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    const result = await runHealthcheck({
+      agentkitRoot: AGENTKIT_ROOT,
+      projectRoot: PROJECT_ROOT,
+      flags: {},
+    });
+
+    expect(result.agentkit).toHaveProperty('hasMarker');
+    expect(result.agentkit).toHaveProperty('hasState');
+    expect(result.agentkit).toHaveProperty('hasCommands');
+    expect(result.agentkit).toHaveProperty('hasHooks');
+  });
+
+  it('handles project root without agentkit setup', async () => {
+    mkdirSync(TEST_ROOT, { recursive: true });
+    mkdirSync(STATE_DIR, { recursive: true });
+    mkdirSync(resolve(TEST_ROOT, '.git'), { recursive: true });
+    writeFileSync(resolve(TEST_ROOT, '.agentkit-repo'), 'test-project', 'utf-8');
+
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    const result = await runHealthcheck({
+      agentkitRoot: AGENTKIT_ROOT,
+      projectRoot: TEST_ROOT,
+      flags: {},
+    });
+
+    expect(result.agentkit.hasMarker).toBe(true);
+    expect(result.agentkit.hasCommands).toBe(false);
+  });
+});

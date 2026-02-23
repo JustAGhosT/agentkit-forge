@@ -54,7 +54,7 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 ### Standard Session Flow
 
 ```
-/orchestrate --assess     → Understand current state
+/orchestrate --assess-only → Understand current state
 /plan                     → Design implementation
 /team-<name>              → Execute with appropriate team
 /check                    → Verify quality gates
@@ -76,14 +76,14 @@ All project documentation follows the unified 8-category structure in `docs/`:
 
 | Category | Purpose |
 |----------|---------|
-| `01_product/` | Product requirements, user stories, roadmap |
-| `02_specs/` | Functional and technical specifications |
-| `03_architecture/` | System design, diagrams, ADRs |
-| `04_api/` | API reference, authentication, examples |
-| `05_operations/` | Deployment, monitoring, incident response |
-| `06_engineering/` | Setup, coding standards, testing |
-| `07_integrations/` | External APIs, webhooks, SDK |
-| `08_reference/` | Glossary, FAQ, changelog, contributing |
+| `01_product/` | Product vision, strategy, personas, metrics |
+| `02_architecture/` | System design, diagrams, ADRs, tech stack |
+| `03_api/` | API reference, authentication, versioning |
+| `04_development/` | Setup, coding standards, testing, contributing |
+| `05_deployment/` | CI/CD, environments, releases, monitoring |
+| `06_security/` | Threat model, compliance, incident response |
+| `07_operations/` | SLAs, on-call, capacity, performance |
+| `08_reference/` | Glossary, acronyms, FAQ, tool config |
 
 ## Safety Rules
 

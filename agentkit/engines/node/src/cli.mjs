@@ -37,8 +37,8 @@ const VALID_FLAGS = {
   'spec-validate': ['help'],
   orchestrate: ['assess-only', 'scope', 'dry-run', 'team', 'phase', 'status', 'force-unlock', 'help'],
   plan: ['issue', 'output', 'depth', 'help'],
-  check: ['fix', 'stack', 'bail', 'help'],
-  review: ['pr', 'range', 'focus', 'severity', 'help'],
+  check: ['fix', 'fast', 'stack', 'bail', 'help'],
+  review: ['pr', 'range', 'file', 'focus', 'severity', 'help'],
   handoff: ['format', 'include-diff', 'tag', 'save', 'help'],
   healthcheck: ['stack', 'fix', 'verbose', 'help'],
   cost: ['summary', 'sessions', 'report', 'month', 'format', 'last', 'help'],
@@ -54,13 +54,19 @@ function parseFlags(args) {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg.startsWith('--')) {
-      const key = arg.slice(2);
-      const next = args[i + 1];
-      if (next && !next.startsWith('--')) {
-        flags[key] = next;
-        i++;
+      const raw = arg.slice(2);
+      // Support --flag=value syntax
+      const eqIdx = raw.indexOf('=');
+      if (eqIdx !== -1) {
+        flags[raw.slice(0, eqIdx)] = raw.slice(eqIdx + 1);
       } else {
-        flags[key] = true;
+        const next = args[i + 1];
+        if (next && !next.startsWith('--')) {
+          flags[raw] = next;
+          i++;
+        } else {
+          flags[raw] = true;
+        }
       }
     }
   }

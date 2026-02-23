@@ -5,7 +5,7 @@
  * This is NOT the AI review — that's the /review slash command.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
-import { resolve, relative, extname } from 'path';
+import { resolve, relative, extname, sep } from 'path';
 import { execCommand, formatDuration } from './runner.mjs';
 import { appendEvent } from './orchestrator.mjs';
 
@@ -38,7 +38,7 @@ function getChangedFiles(projectRoot, flags) {
   if (flags.file) {
     // Constrain to project root to prevent path traversal
     const abs = resolve(projectRoot, flags.file);
-    if (!abs.startsWith(resolve(projectRoot) + '/') && abs !== resolve(projectRoot)) {
+    if (!abs.startsWith(resolve(projectRoot) + sep) && abs !== resolve(projectRoot)) {
       throw new Error(`--file must be within the project root: ${flags.file}`);
     }
     return [flags.file];

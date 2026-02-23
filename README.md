@@ -6,7 +6,7 @@ A Windows-first, polyglot AI-orchestration template repository. Provides a unifi
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 18+
 - pnpm 9+
 - PowerShell 7+ (recommended on Windows) or Bash (Linux/macOS)
 - Optional: .NET SDK 8+, Python 3.11+, Rust/Cargo
@@ -281,7 +281,7 @@ After running `sync`, these directories are created (all gitignored — regenera
 | `.ai/` | Portable multi-IDE rules (Continue, Cursor, Windsurf) |
 | `.github/instructions/` | GitHub Copilot path-specific instructions |
 | `mcp/` | MCP server + A2A protocol configurations |
-| `docs/` | Full 9-category documentation structure |
+| `docs/` | Full 8-category documentation structure |
 | `CLAUDE.md` | Root Claude Code instructions |
 | `UNIFIED_AGENT_TEAMS.md` | Team definitions and routing |
 | `QUALITY_GATES.md` | Quality gate checks per stack |

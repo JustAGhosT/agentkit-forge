@@ -97,7 +97,7 @@ Each line contains:
 Use the CLI to view a summary of recent token usage:
 
 ```bash
-node agentkit-forge/agentkit/engines/node/src/cli.mjs check --cost-summary
+node agentkit-forge/agentkit/engines/node/src/cli.mjs cost --summary
 ```
 
 This outputs a table summarizing usage by day, command, and user.
@@ -154,13 +154,13 @@ agentkit/logs/sessions/session-<sessionId>.json
 To list recent sessions with their costs:
 
 ```bash
-node agentkit-forge/agentkit/engines/node/src/cli.mjs check --sessions --last 7d
+node agentkit-forge/agentkit/engines/node/src/cli.mjs cost --sessions --last 7d
 ```
 
 To view details for a specific session:
 
 ```bash
-node agentkit-forge/agentkit/engines/node/src/cli.mjs check --session abc123
+node agentkit-forge/agentkit/engines/node/src/cli.mjs cost --sessions
 ```
 
 ---
@@ -172,7 +172,7 @@ node agentkit-forge/agentkit/engines/node/src/cli.mjs check --session abc123
 Generate a cost report for a given month:
 
 ```bash
-node agentkit-forge/agentkit/engines/node/src/cli.mjs check --cost-report --month 2025-01
+node agentkit-forge/agentkit/engines/node/src/cli.mjs cost --report --month 2025-01
 ```
 
 ### Report Contents
@@ -214,10 +214,10 @@ Export reports in different formats:
 
 ```bash
 # CSV export for spreadsheets
-node agentkit-forge/agentkit/engines/node/src/cli.mjs check --cost-report --month 2025-01 --format csv > report.csv
+node agentkit-forge/agentkit/engines/node/src/cli.mjs cost --report --month 2025-01 --format csv > report.csv
 
 # JSON export for programmatic processing
-node agentkit-forge/agentkit/engines/node/src/cli.mjs check --cost-report --month 2025-01 --format json > report.json
+node agentkit-forge/agentkit/engines/node/src/cli.mjs cost --report --month 2025-01 --format json > report.json
 ```
 
 ### Automated Monthly Reports
@@ -247,8 +247,8 @@ jobs:
       - name: Generate cost report
         run: |
           LAST_MONTH=$(date -d "last month" +%Y-%m)
-          node agentkit-forge/agentkit/engines/node/src/cli.mjs check \
-            --cost-report --month "$LAST_MONTH" --format json > report.json
+          node agentkit-forge/agentkit/engines/node/src/cli.mjs cost \
+            --report --month "$LAST_MONTH" --format json > report.json
 
       - name: Upload report artifact
         uses: actions/upload-artifact@v4
@@ -272,7 +272,7 @@ Prompt caching reduces costs by reusing previously computed context. AgentKit Fo
 Monitor your cache hit rate:
 
 ```bash
-node agentkit-forge/agentkit/engines/node/src/cli.mjs check --cache-stats
+node agentkit-forge/agentkit/engines/node/src/cli.mjs cost --summary
 ```
 
 Aim for a cache hit rate above 60% for frequently used workflows.

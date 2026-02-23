@@ -11,23 +11,22 @@ documentation category maintained by this repository.
 
 | # | Category | Description |
 |---|----------|-------------|
-| 1 | [Product](./01_product/) | PRD, user stories, roadmap, and personas |
-| 2 | [Specifications](./02_specs/) | Functional, technical, API, and data-model specs |
-| 3 | [Architecture](./03_architecture/) | System overview, diagrams, and decision records |
-| 4 | [API](./04_api/) | API overview, endpoints, auth, and examples |
-| 5 | [Operations](./05_operations/) | Deployment, monitoring, incidents, and troubleshooting |
-| 6 | [Engineering](./06_engineering/) | Setup, standards, testing, git workflow, and security |
-| 7 | [Integrations](./07_integrations/) | External APIs, webhooks, and SDK guides |
-| 8 | [Reference](./08_reference/) | Glossary, FAQ, changelog, and contributing guide |
+| 1 | [Product](./01_product/) | Product vision, strategy, personas, and metrics |
+| 2 | [Architecture](./02_architecture/) | System design, diagrams, ADRs, and tech stack |
+| 3 | [API](./03_api/) | API reference, authentication, versioning, and errors |
+| 4 | [Development](./04_development/) | Setup, coding standards, testing, and contributing |
+| 5 | [Deployment](./05_deployment/) | CI/CD, environments, releases, and monitoring |
+| 6 | [Security](./06_security/) | Threat model, compliance, incident response |
+| 7 | [Operations](./07_operations/) | SLAs, on-call, capacity, and performance |
+| 8 | [Reference](./08_reference/) | Glossary, acronyms, FAQ, and tool config |
 
 ## Quick Links
 
-- [Product Requirements Document](./01_product/01_prd.md)
-- [Technical Specification](./02_specs/02_technical_spec.md)
-- [Architecture Overview](./03_architecture/01_overview.md)
-- [API Endpoints](./04_api/02_endpoints.md)
-- [Development Setup](./06_engineering/01_setup.md)
-- [Changelog](./08_reference/03_changelog.md)
+- [Product Vision](./01_product/vision.md)
+- [Architecture Overview](./02_architecture/overview.md)
+- [API Overview](./03_api/overview.md)
+- [Getting Started](./04_development/getting-started.md)
+- [Changelog](./08_reference/faq.md)
 
 ## Conventions
 

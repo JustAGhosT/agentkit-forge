@@ -167,11 +167,14 @@ overrides:
     scope: "**/*"
 ```
 
-### Running Discovery (Planned)
+### Running Discovery
 
-> **Note:** The `discover` command is defined in the spec but not yet implemented
-> in the CLI. When available, it will automatically detect your repository's tech stack,
-> project structure, and existing conventions.
+The `discover` command scans your repository to detect tech stacks, project structure,
+and existing conventions:
+
+```bash
+node agentkit-forge/agentkit/engines/node/src/cli.mjs discover
+```
 
 ---
 
@@ -201,9 +204,8 @@ After syncing, open your repository in one of your configured AI assistants and 
 3. Rules and guidelines are being followed in generated code
 4. The assistant can navigate and understand the codebase
 
-> **Note:** The `review` and `plan` CLI subcommands are not yet implemented.
-> These exist as slash commands (`.claude/commands/review.md`, `.claude/commands/plan.md`)
-> that AI assistants execute directly — they are not part of the sync engine CLI.
+The `review` and `plan` CLI subcommands are available for automated pre-review checks
+and plan status display. They also exist as slash commands for richer AI-driven workflows.
 
 ---
 

@@ -6,7 +6,7 @@ import {
   readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync,
   statSync, renameSync, rmSync, chmodSync, cpSync
 } from 'fs';
-import { resolve, join, relative, dirname, extname, basename } from 'path';
+import { resolve, join, relative, dirname, extname, basename, sep } from 'path';
 import yaml from 'js-yaml';
 
 // ---------------------------------------------------------------------------
@@ -209,7 +209,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 
   // 5. Atomic swap: move temp outputs to project root
   console.log('[agentkit:sync] Writing outputs...');
-  const resolvedRoot = resolve(projectRoot) + '/';
+  const resolvedRoot = resolve(projectRoot) + sep;
   let count = 0;
   const failedFiles = [];
   for (const srcFile of walkDir(tmpDir)) {

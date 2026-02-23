@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { loadState, appendEvent, readEvents, PHASES } from './orchestrator.mjs';
+import { formatTimestamp } from './runner.mjs';
 
 // ---------------------------------------------------------------------------
 // Phase recommendations
@@ -181,7 +182,7 @@ export async function runPlan({ projectRoot, flags = {} }) {
   if (events.length > 0) {
     console.log('--- Recent Activity ---');
     for (const evt of events) {
-      const ts = evt.timestamp.replace('T', ' ').replace(/\.\d{3}Z$/, '');
+      const ts = formatTimestamp(evt.timestamp);
       console.log(`  ${ts}  ${evt.action}`);
     }
     console.log('');

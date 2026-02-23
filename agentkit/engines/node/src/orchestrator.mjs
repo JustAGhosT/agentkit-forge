@@ -6,6 +6,8 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, unlinkSync, renameSync } from 'fs';
 import { resolve } from 'path';
 import { execSync } from 'child_process';
+import yaml from 'js-yaml';
+import { formatTimestamp } from './runner.mjs';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -19,13 +21,39 @@ const PHASES = {
   5: 'Ship',
 };
 
-const VALID_TEAM_IDS = [
+const DEFAULT_TEAM_IDS = [
   'team-backend', 'team-frontend', 'team-data', 'team-infra', 'team-devops',
   'team-testing', 'team-security', 'team-docs', 'team-product', 'team-quality',
 ];
 
+// Backwards-compatible alias — kept as default, overridable via loadTeamIdsFromSpec()
+let VALID_TEAM_IDS = [...DEFAULT_TEAM_IDS];
+
 const VALID_TEAM_STATUSES = ['idle', 'in_progress', 'blocked', 'done'];
 const LOCK_STALE_MS = 30 * 60 * 1000; // 30 minutes
+
+/**
+ * Load team IDs from teams.yaml spec file.
+ * Falls back to the hardcoded defaults if the file doesn't exist or is invalid.
+ * @param {string} agentkitRoot
+ * @returns {string[]}
+ */
+export function loadTeamIdsFromSpec(agentkitRoot) {
+  try {
+    const teamsPath = resolve(agentkitRoot, 'spec', 'teams.yaml');
+    if (existsSync(teamsPath)) {
+      const spec = yaml.load(readFileSync(teamsPath, 'utf-8'));
+      if (spec.teams && Array.isArray(spec.teams)) {
+        const ids = spec.teams.map(t => t.id).filter(Boolean);
+        if (ids.length > 0) {
+          VALID_TEAM_IDS = ids;
+          return ids;
+        }
+      }
+    }
+  } catch { /* fallback to defaults */ }
+  return DEFAULT_TEAM_IDS;
+}
 
 // ---------------------------------------------------------------------------
 // Path helpers
@@ -157,7 +185,19 @@ export function acquireLock(projectRoot, holder = {}) {
   } catch (err) {
     if (err.code !== 'EEXIST') throw err;
     // Lock file exists — check staleness
-    const existing = JSON.parse(readFileSync(lPath, 'utf-8'));
+    let existing;
+    try {
+      existing = JSON.parse(readFileSync(lPath, 'utf-8'));
+    } catch {
+      // Corrupted lock file — delete and retry
+      try { unlinkSync(lPath); } catch { /* ignore */ }
+      try {
+        writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
+        return { acquired: true };
+      } catch {
+        return { acquired: false, existingLock: null };
+      }
+    }
     const age = Date.now() - new Date(existing.started_at).getTime();
     if (age < LOCK_STALE_MS) {
       return { acquired: false, existingLock: existing };
@@ -168,7 +208,12 @@ export function acquireLock(projectRoot, holder = {}) {
       writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
       return { acquired: true };
     } catch {
-      return { acquired: false, existingLock: existing };
+      // Another process acquired the lock — re-read current holder
+      let currentLock = existing;
+      try {
+        currentLock = JSON.parse(readFileSync(lPath, 'utf-8'));
+      } catch { /* use stale data as fallback */ }
+      return { acquired: false, existingLock: currentLock };
     }
   }
 }
@@ -205,7 +250,13 @@ export function checkLock(projectRoot) {
   if (!existsSync(path)) {
     return { locked: false, stale: false };
   }
-  const lock = JSON.parse(readFileSync(path, 'utf-8'));
+  let lock;
+  try {
+    lock = JSON.parse(readFileSync(path, 'utf-8'));
+  } catch {
+    // Corrupted lock file — treat as unlocked
+    return { locked: false, stale: false };
+  }
   const age = Date.now() - new Date(lock.started_at).getTime();
   return {
     locked: true,
@@ -416,7 +467,7 @@ export function getStatus(projectRoot) {
   if (events.length > 0) {
     lines.push(`--- Recent Events ---`);
     for (const evt of events) {
-      const ts = evt.timestamp.replace('T', ' ').replace(/\.\d{3}Z$/, '');
+      const ts = formatTimestamp(evt.timestamp);
       lines.push(`  ${ts}  ${evt.action}${evt.team ? ` (${evt.team})` : ''}`);
     }
   }
@@ -435,6 +486,9 @@ export function getStatus(projectRoot) {
  * @param {object} opts.flags
  */
 export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
+  // Load team IDs from spec if available (overrides hardcoded defaults)
+  loadTeamIdsFromSpec(agentkitRoot);
+
   // --status: show current state
   if (flags.status) {
     console.log(getStatus(projectRoot));

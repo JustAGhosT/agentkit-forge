@@ -2,10 +2,33 @@
  * AgentKit Forge — Process Execution Helper
  * Shared utility for running shell commands with timeout, output capture, and timing.
  */
-import { execSync, spawnSync } from 'child_process';
+import { spawnSync } from 'child_process';
 
 /**
- * Execute a shell command and capture results.
+ * Parse a command string into [executable, ...args].
+ * Handles simple quoted arguments.
+ * @param {string} cmd
+ * @returns {string[]}
+ */
+function parseCommand(cmd) {
+  const parts = cmd.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [cmd];
+  return parts.map(p => p.replace(/^["']|["']$/g, ''));
+}
+
+/**
+ * Validate a command string against shell injection patterns.
+ * Rejects commands containing shell metacharacters.
+ * @param {string} cmd
+ * @returns {boolean}
+ */
+export function isValidCommand(cmd) {
+  if (!cmd || typeof cmd !== 'string') return false;
+  return !/[$`|;&<>(){}!\\]/.test(cmd);
+}
+
+/**
+ * Execute a command and capture results.
+ * Uses spawnSync with argument arrays to avoid shell injection.
  * @param {string} cmd - Command to run
  * @param {object} opts
  * @param {string} opts.cwd - Working directory
@@ -14,28 +37,32 @@ import { execSync, spawnSync } from 'child_process';
  */
 export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
   const start = Date.now();
-  try {
-    const stdout = execSync(cmd, {
-      cwd,
-      timeout,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, FORCE_COLOR: '0' },
-    });
+  const [executable, ...args] = parseCommand(cmd);
+  const result = spawnSync(executable, args, {
+    cwd,
+    timeout,
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: { ...process.env, FORCE_COLOR: '0' },
+    // On Windows, use shell to resolve .cmd/.bat executables (e.g. npx.cmd)
+    shell: process.platform === 'win32',
+  });
+
+  if (result.error) {
     return {
-      exitCode: 0,
-      stdout: stdout || '',
-      stderr: '',
-      durationMs: Date.now() - start,
-    };
-  } catch (err) {
-    return {
-      exitCode: err.status ?? 1,
-      stdout: err.stdout || '',
-      stderr: err.stderr || '',
+      exitCode: 1,
+      stdout: '',
+      stderr: result.error.message,
       durationMs: Date.now() - start,
     };
   }
+
+  return {
+    exitCode: result.status ?? 1,
+    stdout: result.stdout || '',
+    stderr: result.stderr || '',
+    durationMs: Date.now() - start,
+  };
 }
 
 /**
@@ -62,4 +89,14 @@ export function formatDuration(ms) {
   const m = Math.floor(totalSeconds / 60);
   const remainS = totalSeconds % 60;
   return `${m}m ${remainS}s`;
+}
+
+/**
+ * Format an ISO timestamp for display (strips T separator and milliseconds).
+ * "2026-02-23T17:30:00.123Z" → "2026-02-23 17:30:00"
+ * @param {string} isoTimestamp
+ * @returns {string}
+ */
+export function formatTimestamp(isoTimestamp) {
+  return isoTimestamp.replace('T', ' ').replace(/\.\d+Z$/, '');
 }
