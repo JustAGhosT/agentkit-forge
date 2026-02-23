@@ -85,7 +85,13 @@ if [[ -n "$AGENTKIT_ROOT" ]] && command -v node &>/dev/null; then
 
     git_user=""
     if command -v git &>/dev/null; then
-        git_user=$(git -C "$CWD" config user.email 2>/dev/null || echo "unknown")
+        _raw_email=$(git -C "$CWD" config user.email 2>/dev/null || echo "")
+        if [[ -n "$_raw_email" ]]; then
+            # Hash the email for privacy — avoids logging PII in shared repos/CI
+            git_user=$(echo -n "$_raw_email" | sha256sum 2>/dev/null | cut -c1-12 || echo "unknown")
+        else
+            git_user="unknown"
+        fi
     fi
 
     if command -v jq &>/dev/null; then

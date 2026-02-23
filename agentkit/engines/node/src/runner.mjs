@@ -11,8 +11,15 @@ import { spawnSync } from 'child_process';
  * @returns {string[]}
  */
 function parseCommand(cmd) {
-  const parts = cmd.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [cmd];
-  return parts.map(p => p.replace(/^["']|["']$/g, ''));
+  const regex = /(?:[^\s"']+|"[^"]*"|'[^']*')+/g;
+  const parts = [];
+  let match;
+  while ((match = regex.exec(cmd)) !== null) {
+    // Strip quotes from each quoted segment while preserving content.
+    // Handles --format="%h %s" → --format=%h %s (not just boundary quotes).
+    parts.push(match[0].replace(/"([^"]*)"|'([^']*)'/g, '$1$2'));
+  }
+  return parts.length > 0 ? parts : [];
 }
 
 /**
@@ -23,7 +30,7 @@ function parseCommand(cmd) {
  */
 export function isValidCommand(cmd) {
   if (!cmd || typeof cmd !== 'string') return false;
-  return !/[$`|;&<>(){}!\\]/.test(cmd);
+  return !/[$`|;&<>(){}!\\\r\n]/.test(cmd);
 }
 
 /**
@@ -37,7 +44,11 @@ export function isValidCommand(cmd) {
  */
 export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
   const start = Date.now();
-  const [executable, ...args] = parseCommand(cmd);
+  const parsed = parseCommand(cmd);
+  if (parsed.length === 0) {
+    return { exitCode: 1, stdout: '', stderr: 'Empty command', durationMs: 0 };
+  }
+  const [executable, ...args] = parsed;
   const result = spawnSync(executable, args, {
     cwd,
     timeout,
@@ -103,5 +114,5 @@ export function formatDuration(ms) {
  * @returns {string}
  */
 export function formatTimestamp(isoTimestamp) {
-  return isoTimestamp.replace('T', ' ').replace(/\.\d+Z$/, '');
+  return isoTimestamp.replace('T', ' ').replace(/(\.\d+)?Z$/, '');
 }

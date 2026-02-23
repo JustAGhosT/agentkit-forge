@@ -135,6 +135,6 @@ describe('formatTimestamp()', () => {
   });
 
   it('handles timestamps without milliseconds', () => {
-    expect(formatTimestamp('2026-02-23T17:30:00Z')).toBe('2026-02-23 17:30:00Z');
+    expect(formatTimestamp('2026-02-23T17:30:00Z')).toBe('2026-02-23 17:30:00');
   });
 });

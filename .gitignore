@@ -43,7 +43,7 @@ node_modules/
 # Agentkit internal
 agentkit/.tmp/
 agentkit/.bak/
-agentkit/logs/
+agentkit/logs/*
 !agentkit/logs/.gitkeep
 
 # Repo identity marker (created by init)

@@ -96,7 +96,7 @@ function generateHandoffDoc(git, state, events, timestamp) {
   }
 
   // Team progress
-  const activeTeams = Object.entries(state.team_progress)
+  const activeTeams = Object.entries(state.team_progress ?? {})
     .filter(([_, t]) => t.status !== 'idle');
 
   if (activeTeams.length > 0) {

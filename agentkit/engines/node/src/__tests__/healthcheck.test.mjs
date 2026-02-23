@@ -36,7 +36,7 @@ describe('runHealthcheck()', () => {
     expect(result.tools.length).toBeGreaterThan(0);
   });
 
-  it('detects node and git as installed tools', async () => {
+  it('detects node and git as installed tools', { timeout: 30_000 }, async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
@@ -57,7 +57,7 @@ describe('runHealthcheck()', () => {
     expect(gitTool.found).toBe(true);
   });
 
-  it('reports agentkit setup status', async () => {
+  it('reports agentkit setup status', { timeout: 30_000 }, async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);

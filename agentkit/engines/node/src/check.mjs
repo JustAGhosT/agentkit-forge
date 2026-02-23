@@ -25,16 +25,18 @@ function buildSteps(stack, flags) {
   if (stack.formatter) {
     if (typeof stack.formatter !== 'string' || !stack.formatter.trim()) {
       console.warn(`[agentkit:check] Skipping non-string formatter value`);
-    } else if (!isValidCommand(stack.formatter) && !isValidCommand(resolveFormatter(stack.formatter))) {
-      console.warn(`[agentkit:check] Skipping invalid formatter command: ${stack.formatter}`);
     } else {
       const resolved = resolveFormatter(stack.formatter);
-      const fixCmd = flags.fix ? `${resolved} --write .` : null;
-      steps.push({
-        name: 'format',
-        command: `${resolved} --check .`,
-        fixCommand: fixCmd,
-      });
+      if (!isValidCommand(stack.formatter) && !isValidCommand(resolved)) {
+        console.warn(`[agentkit:check] Skipping invalid formatter command: ${stack.formatter}`);
+      } else {
+        const fixCmd = flags.fix ? `${resolved} --write .` : null;
+        steps.push({
+          name: 'format',
+          command: `${resolved} --check .`,
+          fixCommand: fixCmd,
+        });
+      }
     }
   }
 
@@ -178,7 +180,10 @@ export async function runCheck({ agentkitRoot, projectRoot, flags = {} }) {
       } else {
         // If --fix and we have a fix command, run that first
         if (flags.fix && step.fixCommand) {
-          execCommand(step.fixCommand, { cwd: projectRoot });
+          const fixResult = execCommand(step.fixCommand, { cwd: projectRoot });
+          if (fixResult.exitCode !== 0) {
+            console.warn(`  fix command failed (exit ${fixResult.exitCode})`);
+          }
         }
         result = execCommand(step.command, { cwd: projectRoot });
         const status = result.exitCode === 0 ? 'PASS' : 'FAIL';

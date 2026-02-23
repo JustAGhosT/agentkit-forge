@@ -516,7 +516,11 @@ export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
   const lockResult = acquireLock(projectRoot);
   if (!lockResult.acquired) {
     const lock = lockResult.existingLock;
-    console.error(`[agentkit:orchestrate] Session locked by PID ${lock.pid} since ${lock.started_at}.`);
+    if (lock) {
+      console.error(`[agentkit:orchestrate] Session locked by PID ${lock.pid} since ${lock.started_at}.`);
+    } else {
+      console.error(`[agentkit:orchestrate] Session lock exists but is corrupted.`);
+    }
     console.error(`Use --force-unlock to override.`);
     process.exit(1);
   }
