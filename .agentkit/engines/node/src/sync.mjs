@@ -4,9 +4,10 @@
  */
 import {
   readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync,
-  statSync, renameSync, rmSync, chmodSync, cpSync
+  statSync, renameSync, rmSync, chmodSync, cpSync, unlinkSync
 } from 'fs';
 import { resolve, join, relative, dirname, extname, basename, sep } from 'path';
+import { createHash } from 'crypto';
 import yaml from 'js-yaml';
 
 // ---------------------------------------------------------------------------
@@ -24,14 +25,25 @@ function readText(filePath) {
 }
 
 /**
- * Renders a template by replacing {{key}} placeholders with values from vars.
+ * Renders a template by:
+ * 1. Resolving {{#if var}}...{{/if}} conditional blocks
+ * 2. Resolving {{#each var}}...{{/each}} iteration blocks
+ * 3. Replacing {{key}} placeholders with values from vars
+ *
  * - Replaces longest keys first to prevent partial matches (e.g., {{versionInfo}} before {{version}})
  * - Sanitizes string values to prevent shell metacharacter injection
  * - Warns on unresolved placeholders when DEBUG is set
  */
 function renderTemplate(template, vars) {
   let result = template;
-  // Sort keys longest-first to prevent partial placeholder collisions
+
+  // Phase 1: Resolve {{#if var}}...{{/if}} blocks (supports nesting)
+  result = resolveConditionals(result, vars);
+
+  // Phase 2: Resolve {{#each var}}...{{/each}} blocks
+  result = resolveEachBlocks(result, vars);
+
+  // Phase 3: Replace {{key}} placeholders
   const sortedKeys = Object.keys(vars).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
     const value = vars[key];
@@ -39,13 +51,260 @@ function renderTemplate(template, vars) {
     const safeValue = typeof value === 'string' ? sanitizeTemplateValue(value) : JSON.stringify(value);
     result = result.split(placeholder).join(safeValue);
   }
-  // Warn about unresolved placeholders
-  const unresolved = result.match(/\{\{[a-zA-Z_][a-zA-Z0-9_]*\}\}/g);
+
+  // Warn about unresolved placeholders (ignore block syntax remnants)
+  const unresolved = result.match(/\{\{(?!#|\/)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g);
   if (unresolved && process.env.DEBUG) {
     const unique = [...new Set(unresolved)];
     console.warn(`[agentkit:sync] Warning: unresolved placeholders: ${unique.join(', ')}`);
   }
   return result;
+}
+
+/**
+ * Resolves {{#if var}}...{{/if}} conditional blocks.
+ * A var is truthy if it exists in vars and is not null, undefined, false, empty string, or empty array.
+ * Supports {{#if var}}...{{else}}...{{/if}} syntax.
+ * Handles nested conditionals via innermost-first resolution.
+ */
+function resolveConditionals(template, vars) {
+  let result = template;
+  // Process innermost #if blocks first (no nested #if inside)
+  const ifRegex = /\{\{#if\s+([a-zA-Z_][a-zA-Z0-9_]*)\}\}((?:(?!\{\{#if\s)(?!\{\{\/if\}\})[\s\S])*?)\{\{\/if\}\}/g;
+  let safety = 50; // prevent infinite loops on malformed templates
+  while (ifRegex.test(result) && safety-- > 0) {
+    result = result.replace(ifRegex, (_, varName, body) => {
+      const isTruthy = evalTruthy(vars[varName]);
+      // Split on {{else}} if present
+      const elseParts = body.split('{{else}}');
+      if (isTruthy) {
+        return elseParts[0];
+      } else {
+        return elseParts.length > 1 ? elseParts[1] : '';
+      }
+    });
+    ifRegex.lastIndex = 0;
+  }
+  return result;
+}
+
+/**
+ * Resolves {{#each var}}...{{/each}} iteration blocks.
+ * Inside the block, {{.}} refers to the current item (for string arrays).
+ * For object arrays, {{.name}}, {{.purpose}} etc. access properties.
+ */
+function resolveEachBlocks(template, vars) {
+  const eachRegex = /\{\{#each\s+([a-zA-Z_][a-zA-Z0-9_]*)\}\}([\s\S]*?)\{\{\/each\}\}/g;
+  return template.replace(eachRegex, (_, varName, body) => {
+    const arr = vars[varName];
+    if (!Array.isArray(arr) || arr.length === 0) return '';
+    return arr.map((item, index) => {
+      let rendered = body;
+      // Replace {{.}} with the item itself (for string arrays)
+      if (typeof item === 'string') {
+        rendered = rendered.split('{{.}}').join(sanitizeTemplateValue(item));
+      } else if (typeof item === 'object' && item !== null) {
+        // Replace {{.prop}} with item.prop
+        rendered = rendered.replace(/\{\{\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g, (__, prop) => {
+          const val = item[prop];
+          if (val === undefined || val === null) return '';
+          return typeof val === 'string' ? sanitizeTemplateValue(val) : JSON.stringify(val);
+        });
+      }
+      // Replace {{@index}} with current index
+      rendered = rendered.split('{{@index}}').join(String(index));
+      return rendered;
+    }).join('');
+  });
+}
+
+/**
+ * Evaluates whether a template variable is "truthy" for {{#if}} blocks.
+ * Falsy: undefined, null, false, '', 0, empty array []
+ * Truthy: everything else (including 'none' — use explicit checks in templates)
+ */
+function evalTruthy(value) {
+  if (value === undefined || value === null || value === false || value === '' || value === 0) return false;
+  if (Array.isArray(value) && value.length === 0) return false;
+  return true;
+}
+
+/**
+ * Flattens a project.yaml object into a flat key→value map suitable for template rendering.
+ * Nested keys become camelCase: project.stack.languages → stackLanguages = "TypeScript, C#"
+ * Boolean fields get has* prefixes: crosscutting.logging.correlationId → hasCorrelationId
+ */
+function flattenProjectYaml(project) {
+  if (!project || typeof project !== 'object') return {};
+  const vars = {};
+
+  // Top-level scalars
+  if (project.name) vars.projectName = project.name;
+  if (project.description) vars.projectDescription = project.description;
+  if (project.phase) vars.projectPhase = project.phase;
+
+  // Stack
+  const stack = project.stack || {};
+  if (Array.isArray(stack.languages)) vars.stackLanguages = stack.languages.join(', ');
+  if (stack.frameworks) {
+    const fw = stack.frameworks;
+    if (Array.isArray(fw.frontend)) vars.stackFrontendFrameworks = fw.frontend.join(', ');
+    if (Array.isArray(fw.backend)) vars.stackBackendFrameworks = fw.backend.join(', ');
+    if (Array.isArray(fw.css)) vars.stackCssFrameworks = fw.css.join(', ');
+  }
+  if (stack.orm) vars.stackOrm = String(stack.orm);
+  if (Array.isArray(stack.database)) vars.stackDatabase = stack.database.join(', ');
+  else if (stack.database) vars.stackDatabase = String(stack.database);
+  if (stack.search) vars.stackSearch = String(stack.search);
+  if (Array.isArray(stack.messaging)) vars.stackMessaging = stack.messaging.join(', ');
+  else if (stack.messaging) vars.stackMessaging = String(stack.messaging);
+
+  // Architecture
+  const arch = project.architecture || {};
+  if (arch.pattern) vars.architecturePattern = arch.pattern;
+  if (arch.apiStyle) vars.architectureApiStyle = arch.apiStyle;
+  vars.monorepo = !!arch.monorepo;
+  vars.hasMonorepo = !!arch.monorepo;
+  if (arch.monorepoTool) vars.monorepoTool = arch.monorepoTool;
+
+  // Documentation
+  const docs = project.documentation || {};
+  vars.hasPrd = !!docs.hasPrd;
+  if (docs.prdPath) vars.prdPath = docs.prdPath;
+  vars.hasAdr = !!docs.hasAdr;
+  if (docs.adrPath) vars.adrPath = docs.adrPath;
+  vars.hasApiSpec = !!docs.hasApiSpec;
+  if (docs.apiSpecPath) vars.apiSpecPath = docs.apiSpecPath;
+  vars.hasTechnicalSpec = !!docs.hasTechnicalSpec;
+  if (docs.technicalSpecPath) vars.technicalSpecPath = docs.technicalSpecPath;
+  vars.hasDesignSystem = !!docs.hasDesignSystem;
+  if (docs.designSystemPath) vars.designSystemPath = docs.designSystemPath;
+  vars.hasStorybook = !!docs.storybook;
+  if (docs.designTokensPath) vars.designTokensPath = docs.designTokensPath;
+
+  // Deployment
+  const deploy = project.deployment || {};
+  if (deploy.cloudProvider) vars.cloudProvider = deploy.cloudProvider;
+  vars.containerized = !!deploy.containerized;
+  vars.hasContainerized = !!deploy.containerized;
+  if (Array.isArray(deploy.environments)) vars.environments = deploy.environments.join(', ');
+  if (deploy.iacTool) vars.iacTool = deploy.iacTool;
+
+  // Process
+  const proc = project.process || {};
+  if (proc.branchStrategy) vars.branchStrategy = proc.branchStrategy;
+  if (proc.commitConvention) vars.commitConvention = proc.commitConvention;
+  if (proc.codeReview) vars.codeReview = proc.codeReview;
+  if (proc.teamSize) vars.teamSize = proc.teamSize;
+
+  // Testing
+  const testing = project.testing || {};
+  if (Array.isArray(testing.unit)) vars.testingUnit = testing.unit.join(', ');
+  if (Array.isArray(testing.integration)) vars.testingIntegration = testing.integration.join(', ');
+  if (Array.isArray(testing.e2e)) vars.testingE2e = testing.e2e.join(', ');
+  if (testing.coverage !== undefined && testing.coverage !== null) vars.testingCoverage = String(testing.coverage);
+
+  // Integrations (kept as array for {{#each}})
+  if (Array.isArray(project.integrations)) {
+    vars.integrations = project.integrations;
+    vars.hasIntegrations = project.integrations.length > 0;
+  }
+
+  // Cross-cutting concerns
+  const cc = project.crosscutting || {};
+  flattenCrosscutting(cc, vars);
+
+  return vars;
+}
+
+/**
+ * Flattens the crosscutting section of project.yaml into template vars.
+ */
+function flattenCrosscutting(cc, vars) {
+  // Logging
+  const logging = cc.logging || {};
+  if (logging.framework && logging.framework !== 'none') {
+    vars.loggingFramework = logging.framework;
+    vars.hasLogging = true;
+  }
+  vars.hasStructuredLogging = !!logging.structured;
+  vars.hasCorrelationId = !!logging.correlationId;
+  if (logging.level) vars.loggingLevel = logging.level;
+  if (Array.isArray(logging.sink)) vars.loggingSinks = logging.sink.join(', ');
+
+  // Error handling
+  const errors = cc.errorHandling || {};
+  if (errors.strategy && errors.strategy !== 'none') {
+    vars.errorStrategy = errors.strategy;
+    vars.hasErrorHandling = true;
+  }
+  vars.hasGlobalHandler = !!errors.globalHandler;
+  vars.hasCustomExceptions = !!errors.customExceptions;
+
+  // Authentication
+  const auth = cc.authentication || {};
+  if (auth.provider && auth.provider !== 'none') {
+    vars.authProvider = auth.provider;
+    vars.hasAuth = true;
+  }
+  if (auth.strategy) vars.authStrategy = auth.strategy;
+  vars.hasRbac = !!auth.rbac;
+  vars.hasMultiTenant = !!auth.multiTenant;
+
+  // Caching
+  const cache = cc.caching || {};
+  if (cache.provider && cache.provider !== 'none') {
+    vars.cachingProvider = cache.provider;
+    vars.hasCaching = true;
+  }
+  if (Array.isArray(cache.patterns)) vars.cachingPatterns = cache.patterns.join(', ');
+  vars.hasDistributedCache = !!cache.distributedCache;
+
+  // API
+  const api = cc.api || {};
+  if (api.versioning && api.versioning !== 'none') {
+    vars.apiVersioning = api.versioning;
+    vars.hasApiVersioning = true;
+  }
+  if (api.pagination && api.pagination !== 'none') {
+    vars.apiPagination = api.pagination;
+    vars.hasApiPagination = true;
+  }
+  if (api.responseFormat) vars.apiResponseFormat = api.responseFormat;
+  vars.hasRateLimiting = !!api.rateLimiting;
+
+  // Database
+  const db = cc.database || {};
+  if (db.migrations && db.migrations !== 'none') {
+    vars.dbMigrations = db.migrations;
+    vars.hasDbMigrations = true;
+  }
+  vars.hasDbSeeding = !!db.seeding;
+  if (db.transactionStrategy && db.transactionStrategy !== 'none') {
+    vars.dbTransactionStrategy = db.transactionStrategy;
+  }
+  vars.hasConnectionPooling = !!db.connectionPooling;
+
+  // Performance
+  const perf = cc.performance || {};
+  vars.hasLazyLoading = !!perf.lazyLoading;
+  vars.hasImageOptimization = !!perf.imageOptimization;
+  if (perf.bundleBudget) vars.bundleBudget = String(perf.bundleBudget);
+
+  // Feature flags
+  const ff = cc.featureFlags || {};
+  if (ff.provider && ff.provider !== 'none') {
+    vars.featureFlagProvider = ff.provider;
+    vars.hasFeatureFlags = true;
+  }
+
+  // Environments
+  const envs = cc.environments || {};
+  if (Array.isArray(envs.naming)) vars.envNames = envs.naming.join(', ');
+  if (envs.configStrategy && envs.configStrategy !== 'none') {
+    vars.envConfigStrategy = envs.configStrategy;
+  }
+  if (envs.envFilePattern) vars.envFilePattern = envs.envFilePattern;
 }
 
 /**
@@ -165,6 +424,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   const settingsSpec = readYaml(resolve(agentkitRoot, 'spec', 'settings.yaml')) || {};
   const agentsSpec = readYaml(resolve(agentkitRoot, 'spec', 'agents.yaml')) || {};
   const docsSpec = readYaml(resolve(agentkitRoot, 'spec', 'docs.yaml')) || {};
+  const projectSpec = readYaml(resolve(agentkitRoot, 'spec', 'project.yaml'));
 
   // 2. Detect overlay
   let repoName = flags?.overlay;
@@ -189,8 +449,10 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     overlaySettings.permissions || {}
   );
 
-  // Template variables
+  // Template variables — start with project.yaml flat vars, then overlay with core vars
+  const projectVars = projectSpec ? flattenProjectYaml(projectSpec) : {};
   const vars = {
+    ...projectVars,
     version,
     repoName: overlaySettings.repoName || repoName,
     defaultBranch: overlaySettings.defaultBranch || 'main',
@@ -248,15 +510,27 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   syncDirectCopy(templatesDir, 'vscode', tmpDir, '.vscode', vars, version, repoName);
   syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName);
 
-  // 5. Atomic swap: move temp outputs to project root
+  // 5. Load previous manifest for stale file cleanup
+  const manifestPath = resolve(agentkitRoot, '.manifest.json');
+  let previousManifest = null;
+  try {
+    if (existsSync(manifestPath)) {
+      previousManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+    }
+  } catch { /* ignore corrupt manifest */ }
+
+  // 6. Atomic swap: move temp outputs to project root & build new manifest
   console.log('[agentkit:sync] Writing outputs...');
   const resolvedRoot = resolve(projectRoot) + sep;
   let count = 0;
   let skippedScaffold = 0;
   const failedFiles = [];
+  const newManifestFiles = {};
   for (const srcFile of walkDir(tmpDir)) {
     const relPath = relative(tmpDir, srcFile);
     const destFile = resolve(projectRoot, relPath);
+    // Normalize to forward slashes for consistent manifest keys
+    const manifestKey = relPath.replace(/\\/g, '/');
 
     // Path traversal protection: ensure all output stays within project root
     if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot)) {
@@ -264,6 +538,11 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       failedFiles.push({ file: relPath, error: 'path traversal blocked' });
       continue;
     }
+
+    // Compute content hash for manifest
+    const fileContent = readFileSync(srcFile);
+    const hash = createHash('sha256').update(fileContent).digest('hex').slice(0, 12);
+    newManifestFiles[manifestKey] = { hash };
 
     // Scaffold-once: skip project-owned files that already exist
     if (isScaffoldOnce(relPath) && existsSync(destFile)) {
@@ -286,7 +565,42 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     }
   }
 
-  // 6. Cleanup temp
+  // 7. Stale file cleanup: delete orphaned files from previous sync
+  let cleanedCount = 0;
+  if (previousManifest?.files) {
+    for (const prevFile of Object.keys(previousManifest.files)) {
+      if (!newManifestFiles[prevFile]) {
+        // File was in previous sync but not in this one — it's orphaned
+        const orphanPath = resolve(projectRoot, prevFile);
+        if (existsSync(orphanPath)) {
+          try {
+            unlinkSync(orphanPath);
+            cleanedCount++;
+            if (process.env.DEBUG) {
+              console.log(`[agentkit:sync] Cleaned stale file: ${prevFile}`);
+            }
+          } catch (err) {
+            console.warn(`[agentkit:sync] Warning: could not clean stale file ${prevFile} — ${err.message}`);
+          }
+        }
+      }
+    }
+  }
+
+  // 8. Write new manifest
+  const newManifest = {
+    generatedAt: new Date().toISOString(),
+    version,
+    repoName: vars.repoName,
+    files: newManifestFiles,
+  };
+  try {
+    writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + '\n', 'utf-8');
+  } catch (err) {
+    console.warn(`[agentkit:sync] Warning: could not write manifest — ${err.message}`);
+  }
+
+  // 9. Cleanup temp
   rmSync(tmpDir, { recursive: true, force: true });
 
   if (failedFiles.length > 0) {
@@ -298,6 +612,9 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   }
   if (skippedScaffold > 0) {
     console.log(`[agentkit:sync] Skipped ${skippedScaffold} project-owned file(s) (already exist).`);
+  }
+  if (cleanedCount > 0) {
+    console.log(`[agentkit:sync] Cleaned ${cleanedCount} stale file(s) from previous sync.`);
   }
   console.log(`[agentkit:sync] Done! Generated ${count} files.`);
 }
@@ -641,4 +958,9 @@ function syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec) {
 // ---------------------------------------------------------------------------
 // Exports for testing
 // ---------------------------------------------------------------------------
-export { renderTemplate, sanitizeTemplateValue, getCommentStyle, getGeneratedHeader, mergePermissions, insertHeader, isScaffoldOnce };
+export {
+  renderTemplate, sanitizeTemplateValue, getCommentStyle, getGeneratedHeader,
+  mergePermissions, insertHeader, isScaffoldOnce,
+  flattenProjectYaml, resolveConditionals, resolveEachBlocks, evalTruthy,
+  flattenCrosscutting,
+};

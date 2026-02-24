@@ -1,0 +1,123 @@
+# =============================================================================
+# project.yaml — Project-level metadata for rich, context-aware AI configs
+# Canonical source of truth for agentkit-forge
+# Version: 0.1.0
+# =============================================================================
+# This file feeds into every generated config (AGENTS.md, CLAUDE.md, WARP.md,
+# GEMINI.md, copilot-instructions.md, etc.) to produce project-specific output
+# instead of generic framework boilerplate.
+#
+# All fields are optional — if missing, sync still works with generic output.
+# Run `agentkit discover` to auto-detect values, or `agentkit init` to fill
+# this interactively.
+# =============================================================================
+
+# Project identity
+name: null                    # e.g. "chaufher", "phoenix", "my-api"
+description: null             # Short project description
+phase: null                   # greenfield | active | maintenance | legacy
+
+# Tech stack (auto-detected + confirmed at init)
+stack:
+  languages: []               # e.g. [typescript, csharp, python]
+  frameworks:
+    frontend: []              # e.g. [next.js, react]
+    backend: []               # e.g. [asp.net-core, express]
+    css: []                   # e.g. [tailwind, sass]
+  orm: null                   # e.g. ef-core, prisma, drizzle, sqlalchemy
+  database: []                # e.g. [postgresql, redis]
+  search: null                # e.g. elasticsearch, meilisearch
+  messaging: []               # e.g. [signalr, rabbitmq]
+
+# Architecture
+architecture:
+  pattern: null               # clean | hexagonal | mvc | microservices | monolith | serverless
+  apiStyle: null              # rest | graphql | grpc | mixed
+  monorepo: false
+  monorepoTool: null          # turborepo | nx | lerna | pnpm-workspaces
+
+# Existing documentation & specs
+documentation:
+  hasPrd: false
+  prdPath: null               # e.g. docs/prd/
+  hasAdr: false
+  adrPath: null               # e.g. docs/adr/
+  hasApiSpec: false
+  apiSpecPath: null            # e.g. docs/api/openapi/
+  hasTechnicalSpec: false
+  technicalSpecPath: null
+  hasDesignSystem: false
+  designSystemPath: null       # e.g. packages/ui/
+  storybook: false
+  designTokensPath: null       # e.g. styles/tokens/
+
+# Deployment & infrastructure
+deployment:
+  cloudProvider: null          # aws | azure | gcp | vercel | netlify | self-hosted | none
+  containerized: false
+  environments: []             # e.g. [dev, staging, prod]
+  iacTool: null                # terraform | bicep | pulumi | cdk | none
+
+# Process & conventions
+process:
+  branchStrategy: null         # trunk-based | github-flow | gitflow
+  commitConvention: null       # conventional | semantic | none
+  codeReview: null             # required-pr | optional | none
+  teamSize: null               # solo | small | medium | large
+
+# Testing strategy
+testing:
+  unit: []                     # e.g. [vitest, xunit]
+  integration: []              # e.g. [playwright]
+  e2e: []                      # e.g. [playwright, cypress]
+  coverage: null               # Target coverage percentage (0-100)
+
+# External integrations (helps agents understand system boundaries)
+integrations: []
+  # - name: Azure AD B2C
+  #   purpose: authentication
+  # - name: PayFast
+  #   purpose: payments
+
+# Cross-cutting concerns (project-specific decisions agents must follow)
+crosscutting:
+  logging:
+    framework: null            # serilog | winston | pino | bunyan | python-logging | log4net | nlog | none
+    structured: false
+    correlationId: false
+    level: null                # trace | debug | information | warning | error | critical
+    sink: []                   # e.g. [console, applicationInsights]
+  errorHandling:
+    strategy: null             # problem-details | custom-envelope | raw | none
+    globalHandler: false
+    customExceptions: false
+    errorCodes: false
+  authentication:
+    provider: null             # azure-ad | azure-ad-b2c | auth0 | firebase | cognito | keycloak | custom-jwt | none
+    strategy: null             # jwt-bearer | cookie | session | api-key | oauth2-code
+    multiTenant: false
+    rbac: false
+  caching:
+    provider: null             # redis | memcached | in-memory | none
+    patterns: []               # e.g. [cache-aside, write-through]
+    distributedCache: false
+  api:
+    versioning: null           # url-segment | header | query-string | media-type | none
+    pagination: null           # cursor | offset | keyset | none
+    responseFormat: null       # envelope | raw | json-api | hal
+    rateLimiting: false
+  database:
+    migrations: null           # code-first | sql-scripts | auto | none
+    seeding: false
+    transactionStrategy: null  # unit-of-work | per-request | manual | none
+    connectionPooling: false
+  performance:
+    bundleBudget: null         # KB limit for frontend bundles
+    lazyLoading: false
+    imageOptimization: false
+  featureFlags:
+    provider: null             # launchdarkly | azure-app-config | unleash | flagsmith | custom | none
+  environments:
+    naming: []                 # e.g. [dev, staging, prod]
+    configStrategy: null       # env-vars | config-files | vault | app-config | none
+    envFilePattern: null       # e.g. .env.example

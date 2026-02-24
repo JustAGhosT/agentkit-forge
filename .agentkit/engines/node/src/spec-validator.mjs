@@ -158,6 +158,174 @@ const settingsSchema = {
 };
 
 // ---------------------------------------------------------------------------
+// Schema: project.yaml — enum value sets
+// ---------------------------------------------------------------------------
+const PROJECT_ENUMS = {
+  phase: ['greenfield', 'active', 'maintenance', 'legacy'],
+  architecturePattern: ['clean', 'hexagonal', 'mvc', 'microservices', 'monolith', 'serverless'],
+  apiStyle: ['rest', 'graphql', 'grpc', 'mixed'],
+  cloudProvider: ['aws', 'azure', 'gcp', 'vercel', 'netlify', 'self-hosted', 'none'],
+  iacTool: ['terraform', 'bicep', 'pulumi', 'cdk', 'none'],
+  branchStrategy: ['trunk-based', 'github-flow', 'gitflow'],
+  commitConvention: ['conventional', 'semantic', 'none'],
+  codeReview: ['required-pr', 'optional', 'none'],
+  teamSize: ['solo', 'small', 'medium', 'large'],
+  loggingFramework: ['serilog', 'winston', 'pino', 'bunyan', 'python-logging', 'log4net', 'nlog', 'none'],
+  loggingLevel: ['trace', 'debug', 'information', 'warning', 'error', 'critical'],
+  errorStrategy: ['problem-details', 'custom-envelope', 'raw', 'none'],
+  authProvider: ['azure-ad', 'azure-ad-b2c', 'auth0', 'firebase', 'cognito', 'keycloak', 'custom-jwt', 'none'],
+  authStrategy: ['jwt-bearer', 'cookie', 'session', 'api-key', 'oauth2-code'],
+  cachingProvider: ['redis', 'memcached', 'in-memory', 'none'],
+  apiVersioning: ['url-segment', 'header', 'query-string', 'media-type', 'none'],
+  apiPagination: ['cursor', 'offset', 'keyset', 'none'],
+  apiResponseFormat: ['envelope', 'raw', 'json-api', 'hal'],
+  dbMigrations: ['code-first', 'sql-scripts', 'auto', 'none'],
+  dbTransactionStrategy: ['unit-of-work', 'per-request', 'manual', 'none'],
+  featureFlagProvider: ['launchdarkly', 'azure-app-config', 'unleash', 'flagsmith', 'custom', 'none'],
+  envConfigStrategy: ['env-vars', 'config-files', 'vault', 'app-config', 'none'],
+};
+
+/**
+ * Validates project.yaml against expected schema.
+ * All fields are optional — returns errors only for values that are present but invalid.
+ * @param {object} project - Parsed project.yaml content
+ * @returns {{ errors: string[], warnings: string[] }}
+ */
+function validateProjectYaml(project) {
+  const errors = [];
+  const warnings = [];
+  if (!project || typeof project !== 'object') return { errors, warnings };
+
+  // Helper: check enum value
+  function checkEnum(value, fieldPath, enumName) {
+    if (value === null || value === undefined) return;
+    const allowed = PROJECT_ENUMS[enumName];
+    if (!allowed.includes(value)) {
+      errors.push(`project.yaml: ${fieldPath} must be one of [${allowed.join(', ')}], got "${value}"`);
+    }
+  }
+
+  // Helper: check array of strings
+  function checkStringArray(value, fieldPath) {
+    if (value === null || value === undefined) return;
+    if (!Array.isArray(value)) {
+      errors.push(`project.yaml: ${fieldPath} must be an array`);
+    }
+  }
+
+  // Top-level
+  checkEnum(project.phase, 'phase', 'phase');
+
+  // Stack
+  const stack = project.stack;
+  if (stack && typeof stack === 'object') {
+    checkStringArray(stack.languages, 'stack.languages');
+    if (stack.frameworks && typeof stack.frameworks === 'object') {
+      checkStringArray(stack.frameworks.frontend, 'stack.frameworks.frontend');
+      checkStringArray(stack.frameworks.backend, 'stack.frameworks.backend');
+      checkStringArray(stack.frameworks.css, 'stack.frameworks.css');
+    }
+    checkStringArray(stack.database, 'stack.database');
+    checkStringArray(stack.messaging, 'stack.messaging');
+  }
+
+  // Architecture
+  const arch = project.architecture;
+  if (arch && typeof arch === 'object') {
+    checkEnum(arch.pattern, 'architecture.pattern', 'architecturePattern');
+    checkEnum(arch.apiStyle, 'architecture.apiStyle', 'apiStyle');
+  }
+
+  // Deployment
+  const deploy = project.deployment;
+  if (deploy && typeof deploy === 'object') {
+    checkEnum(deploy.cloudProvider, 'deployment.cloudProvider', 'cloudProvider');
+    checkStringArray(deploy.environments, 'deployment.environments');
+    checkEnum(deploy.iacTool, 'deployment.iacTool', 'iacTool');
+  }
+
+  // Process
+  const proc = project.process;
+  if (proc && typeof proc === 'object') {
+    checkEnum(proc.branchStrategy, 'process.branchStrategy', 'branchStrategy');
+    checkEnum(proc.commitConvention, 'process.commitConvention', 'commitConvention');
+    checkEnum(proc.codeReview, 'process.codeReview', 'codeReview');
+    checkEnum(proc.teamSize, 'process.teamSize', 'teamSize');
+  }
+
+  // Testing
+  const testing = project.testing;
+  if (testing && typeof testing === 'object') {
+    checkStringArray(testing.unit, 'testing.unit');
+    checkStringArray(testing.integration, 'testing.integration');
+    checkStringArray(testing.e2e, 'testing.e2e');
+    if (testing.coverage !== null && testing.coverage !== undefined) {
+      if (typeof testing.coverage !== 'number') {
+        errors.push('project.yaml: testing.coverage must be a number');
+      } else if (testing.coverage < 0 || testing.coverage > 100) {
+        errors.push(`project.yaml: testing.coverage must be 0-100, got ${testing.coverage}`);
+      }
+    }
+  }
+
+  // Integrations
+  if (project.integrations !== null && project.integrations !== undefined) {
+    if (!Array.isArray(project.integrations)) {
+      errors.push('project.yaml: integrations must be an array');
+    } else {
+      for (let i = 0; i < project.integrations.length; i++) {
+        const integ = project.integrations[i];
+        if (!integ || typeof integ !== 'object') {
+          errors.push(`project.yaml: integrations[${i}] must be an object`);
+          continue;
+        }
+        if (!integ.name) errors.push(`project.yaml: integrations[${i}].name is required`);
+        if (!integ.purpose) errors.push(`project.yaml: integrations[${i}].purpose is required`);
+      }
+    }
+  }
+
+  // Cross-cutting concerns
+  const cc = project.crosscutting;
+  if (cc && typeof cc === 'object') {
+    if (cc.logging && typeof cc.logging === 'object') {
+      checkEnum(cc.logging.framework, 'crosscutting.logging.framework', 'loggingFramework');
+      checkEnum(cc.logging.level, 'crosscutting.logging.level', 'loggingLevel');
+      checkStringArray(cc.logging.sink, 'crosscutting.logging.sink');
+    }
+    if (cc.errorHandling && typeof cc.errorHandling === 'object') {
+      checkEnum(cc.errorHandling.strategy, 'crosscutting.errorHandling.strategy', 'errorStrategy');
+    }
+    if (cc.authentication && typeof cc.authentication === 'object') {
+      checkEnum(cc.authentication.provider, 'crosscutting.authentication.provider', 'authProvider');
+      checkEnum(cc.authentication.strategy, 'crosscutting.authentication.strategy', 'authStrategy');
+    }
+    if (cc.caching && typeof cc.caching === 'object') {
+      checkEnum(cc.caching.provider, 'crosscutting.caching.provider', 'cachingProvider');
+      checkStringArray(cc.caching.patterns, 'crosscutting.caching.patterns');
+    }
+    if (cc.api && typeof cc.api === 'object') {
+      checkEnum(cc.api.versioning, 'crosscutting.api.versioning', 'apiVersioning');
+      checkEnum(cc.api.pagination, 'crosscutting.api.pagination', 'apiPagination');
+      checkEnum(cc.api.responseFormat, 'crosscutting.api.responseFormat', 'apiResponseFormat');
+    }
+    if (cc.database && typeof cc.database === 'object') {
+      checkEnum(cc.database.migrations, 'crosscutting.database.migrations', 'dbMigrations');
+      checkEnum(cc.database.transactionStrategy, 'crosscutting.database.transactionStrategy', 'dbTransactionStrategy');
+    }
+    if (cc.featureFlags && typeof cc.featureFlags === 'object') {
+      checkEnum(cc.featureFlags.provider, 'crosscutting.featureFlags.provider', 'featureFlagProvider');
+    }
+    if (cc.environments && typeof cc.environments === 'object') {
+      checkStringArray(cc.environments.naming, 'crosscutting.environments.naming');
+      checkEnum(cc.environments.configStrategy, 'crosscutting.environments.configStrategy', 'envConfigStrategy');
+    }
+  }
+
+  return { errors, warnings };
+}
+
+// ---------------------------------------------------------------------------
 // Cross-spec validation
 // ---------------------------------------------------------------------------
 
@@ -266,6 +434,21 @@ export function validateSpec(agentkitRoot) {
   const settings = loadYaml('settings.yaml');
   const aliases = loadYaml('aliases.yaml');
   const docs = loadYaml('docs.yaml');
+
+  // project.yaml is optional — only validate if present
+  const projectPath = resolve(specDir, 'project.yaml');
+  if (existsSync(projectPath)) {
+    try {
+      const project = yaml.load(readFileSync(projectPath, 'utf-8'));
+      if (project && typeof project === 'object') {
+        const projectResult = validateProjectYaml(project);
+        errors.push(...projectResult.errors);
+        warnings.push(...projectResult.warnings);
+      }
+    } catch (err) {
+      errors.push(`project.yaml: YAML parse error — ${err.message}`);
+    }
+  }
 
   // Validate teams.yaml
   if (teams) {
@@ -383,4 +566,4 @@ export function runSpecValidation(agentkitRoot) {
 }
 
 // Export validate for testing
-export { validate, validateCrossReferences };
+export { validate, validateCrossReferences, validateProjectYaml, PROJECT_ENUMS };
