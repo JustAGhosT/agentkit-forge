@@ -183,6 +183,7 @@ const PROJECT_ENUMS = {
   dbTransactionStrategy: ['unit-of-work', 'per-request', 'manual', 'none'],
   featureFlagProvider: ['launchdarkly', 'azure-app-config', 'unleash', 'flagsmith', 'custom', 'none'],
   envConfigStrategy: ['env-vars', 'config-files', 'vault', 'app-config', 'none'],
+  monorepoTool: ['turborepo', 'nx', 'lerna', 'pnpm-workspaces'],
 };
 
 /**
@@ -198,7 +199,7 @@ function validateProjectYaml(project) {
 
   // Helper: check enum value
   function checkEnum(value, fieldPath, enumName) {
-    if (value === null || value === undefined) return;
+    if (value === null || value === undefined || value === '') return;
     const allowed = PROJECT_ENUMS[enumName];
     if (!allowed.includes(value)) {
       errors.push(`project.yaml: ${fieldPath} must be one of [${allowed.join(', ')}], got "${value}"`);
@@ -234,6 +235,7 @@ function validateProjectYaml(project) {
   if (arch && typeof arch === 'object') {
     checkEnum(arch.pattern, 'architecture.pattern', 'architecturePattern');
     checkEnum(arch.apiStyle, 'architecture.apiStyle', 'apiStyle');
+    checkEnum(arch.monorepoTool, 'architecture.monorepoTool', 'monorepoTool');
   }
 
   // Deployment

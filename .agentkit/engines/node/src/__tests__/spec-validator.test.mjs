@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validate, validateCrossReferences, validateSpec } from '../spec-validator.mjs';
+import { validate, validateCrossReferences, validateSpec, validateProjectYaml, PROJECT_ENUMS } from '../spec-validator.mjs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -126,5 +126,205 @@ describe('validateSpec() on real spec files', () => {
       console.error('Spec validation errors:', result.errors);
     }
     expect(result.valid).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PROJECT_ENUMS
+// ---------------------------------------------------------------------------
+describe('PROJECT_ENUMS', () => {
+  it('exports a non-empty object', () => {
+    expect(typeof PROJECT_ENUMS).toBe('object');
+    expect(Object.keys(PROJECT_ENUMS).length).toBeGreaterThan(0);
+  });
+
+  it('phase enum contains expected values', () => {
+    expect(PROJECT_ENUMS.phase).toContain('greenfield');
+    expect(PROJECT_ENUMS.phase).toContain('active');
+    expect(PROJECT_ENUMS.phase).toContain('maintenance');
+    expect(PROJECT_ENUMS.phase).toContain('legacy');
+  });
+
+  it('authProvider enum contains common providers', () => {
+    expect(PROJECT_ENUMS.authProvider).toContain('azure-ad');
+    expect(PROJECT_ENUMS.authProvider).toContain('azure-ad-b2c');
+    expect(PROJECT_ENUMS.authProvider).toContain('auth0');
+    expect(PROJECT_ENUMS.authProvider).toContain('none');
+  });
+
+  it('cloudProvider enum contains common cloud providers', () => {
+    expect(PROJECT_ENUMS.cloudProvider).toContain('aws');
+    expect(PROJECT_ENUMS.cloudProvider).toContain('azure');
+    expect(PROJECT_ENUMS.cloudProvider).toContain('gcp');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateProjectYaml
+// ---------------------------------------------------------------------------
+describe('validateProjectYaml', () => {
+  it('returns no errors for null input', () => {
+    const { errors } = validateProjectYaml(null);
+    expect(errors).toEqual([]);
+  });
+
+  it('returns no errors for empty object', () => {
+    const { errors } = validateProjectYaml({});
+    expect(errors).toEqual([]);
+  });
+
+  it('passes for a fully valid project.yaml', () => {
+    const { errors } = validateProjectYaml({
+      phase: 'active',
+      stack: {
+        languages: ['TypeScript'],
+        frameworks: { frontend: ['React'], backend: ['Express'], css: ['Tailwind'] },
+        database: ['postgres'],
+        messaging: ['redis'],
+      },
+      architecture: { pattern: 'clean', apiStyle: 'rest' },
+      deployment: { cloudProvider: 'azure', environments: ['dev', 'prod'], iacTool: 'bicep' },
+      process: {
+        branchStrategy: 'trunk-based',
+        commitConvention: 'conventional',
+        codeReview: 'required-pr',
+        teamSize: 'small',
+      },
+      testing: { unit: ['vitest'], integration: [], e2e: [], coverage: 80 },
+      integrations: [{ name: 'Stripe', purpose: 'payments' }],
+      crosscutting: {
+        logging: { framework: 'serilog', level: 'information', sink: ['console'] },
+        authentication: { provider: 'auth0', strategy: 'jwt-bearer' },
+        caching: { provider: 'redis', patterns: ['cache-aside'] },
+        api: { versioning: 'url-segment', pagination: 'cursor', responseFormat: 'envelope' },
+        database: { migrations: 'code-first', transactionStrategy: 'unit-of-work' },
+        featureFlags: { provider: 'launchdarkly' },
+        environments: { naming: ['dev', 'prod'], configStrategy: 'env-vars' },
+      },
+    });
+    expect(errors).toEqual([]);
+  });
+
+  it('returns error for invalid phase enum', () => {
+    const { errors } = validateProjectYaml({ phase: 'invalid-phase' });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('phase');
+  });
+
+  it('returns error for invalid architecture.pattern enum', () => {
+    const { errors } = validateProjectYaml({ architecture: { pattern: 'bad-pattern' } });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('architecture.pattern');
+  });
+
+  it('returns error for invalid cloudProvider enum', () => {
+    const { errors } = validateProjectYaml({ deployment: { cloudProvider: 'oracle' } });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('deployment.cloudProvider');
+  });
+
+  it('returns error when stack.languages is not an array', () => {
+    const { errors } = validateProjectYaml({ stack: { languages: 'TypeScript' } });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('stack.languages');
+  });
+
+  it('returns error for testing.coverage out of range', () => {
+    const { errors } = validateProjectYaml({ testing: { coverage: 150 } });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('testing.coverage');
+  });
+
+  it('returns error for testing.coverage as non-number', () => {
+    const { errors } = validateProjectYaml({ testing: { coverage: '80%' } });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('testing.coverage');
+  });
+
+  it('returns error when integrations is not an array', () => {
+    const { errors } = validateProjectYaml({ integrations: 'not-array' });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('integrations');
+  });
+
+  it('returns error for integration entry missing name', () => {
+    const { errors } = validateProjectYaml({ integrations: [{ purpose: 'auth' }] });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('integrations[0].name');
+  });
+
+  it('returns error for integration entry missing purpose', () => {
+    const { errors } = validateProjectYaml({ integrations: [{ name: 'Auth0' }] });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('integrations[0].purpose');
+  });
+
+  it('returns error for invalid crosscutting.logging.framework enum', () => {
+    const { errors } = validateProjectYaml({
+      crosscutting: { logging: { framework: 'log4j' } },
+    });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('crosscutting.logging.framework');
+  });
+
+  it('returns error for invalid crosscutting.authentication.provider enum', () => {
+    const { errors } = validateProjectYaml({
+      crosscutting: { authentication: { provider: 'okta' } },
+    });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('crosscutting.authentication.provider');
+  });
+
+  it('returns error for invalid crosscutting.featureFlags.provider enum', () => {
+    const { errors } = validateProjectYaml({
+      crosscutting: { featureFlags: { provider: 'optimizely' } },
+    });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('crosscutting.featureFlags.provider');
+  });
+
+  it('does not error on optional fields that are absent', () => {
+    const { errors } = validateProjectYaml({ name: 'MyApp' });
+    expect(errors).toEqual([]);
+  });
+
+  it('accepts all valid enum values for phase', () => {
+    for (const v of PROJECT_ENUMS.phase) {
+      expect(validateProjectYaml({ phase: v }).errors).toEqual([]);
+    }
+  });
+
+  it('accepts null/undefined optional enum fields without error', () => {
+    const { errors } = validateProjectYaml({ phase: null, architecture: { pattern: null } });
+    expect(errors).toEqual([]);
+  });
+
+  it('accepts empty string for enum fields without error', () => {
+    const { errors } = validateProjectYaml({ phase: '' });
+    expect(errors).toEqual([]);
+  });
+
+  it('validates architecture.monorepoTool enum', () => {
+    const { errors: ok } = validateProjectYaml({ architecture: { monorepoTool: 'nx' } });
+    expect(ok).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({ architecture: { monorepoTool: 'invalid' } });
+    expect(bad.some(e => e.includes('monorepoTool'))).toBe(true);
+  });
+
+  it('validates architecture.apiStyle enum', () => {
+    const { errors: ok } = validateProjectYaml({ architecture: { apiStyle: 'rest' } });
+    expect(ok).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({ architecture: { apiStyle: 'soap' } });
+    expect(bad.some(e => e.includes('apiStyle'))).toBe(true);
+  });
+
+  it('validates testing.coverage boundary values', () => {
+    expect(validateProjectYaml({ testing: { coverage: 0 } }).errors).toEqual([]);
+    expect(validateProjectYaml({ testing: { coverage: 100 } }).errors).toEqual([]);
+
+    const { errors: neg } = validateProjectYaml({ testing: { coverage: -1 } });
+    expect(neg.some(e => e.includes('coverage'))).toBe(true);
   });
 });
