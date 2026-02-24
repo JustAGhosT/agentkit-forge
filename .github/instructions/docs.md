@@ -18,7 +18,7 @@ Apply these rules when editing files in `docs/`, `*.md`, or `*.mdx`.
 
 When creating an ADR, use this template:
 
-```
+```markdown
 # ADR-NNNN: Title
 
 ## Status
