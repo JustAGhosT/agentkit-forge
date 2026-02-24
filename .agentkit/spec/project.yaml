@@ -13,64 +13,105 @@
 # =============================================================================
 
 # Project identity
-name: null                    # e.g. "chaufher", "phoenix", "my-api"
-description: null             # Short project description
-phase: null                   # greenfield | active | maintenance | legacy
+name: null # e.g. "chaufher", "phoenix", "my-api"
+description: null # Short project description
+phase: null # greenfield | active | maintenance | legacy
 
 # Tech stack (auto-detected + confirmed at init)
 stack:
-  languages: []               # e.g. [typescript, csharp, python]
+  languages: [] # e.g. [typescript, csharp, python]
   frameworks:
-    frontend: []              # e.g. [next.js, react]
-    backend: []               # e.g. [asp.net-core, express]
-    css: []                   # e.g. [tailwind, sass]
-  orm: null                   # e.g. ef-core, prisma, drizzle, sqlalchemy
-  database: []                # e.g. [postgresql, redis]
-  search: null                # e.g. elasticsearch, meilisearch
-  messaging: []               # e.g. [signalr, rabbitmq]
+    frontend: [] # e.g. [next.js, react]
+    backend: [] # e.g. [asp.net-core, express]
+    css: [] # e.g. [tailwind, sass]
+  orm: null # e.g. ef-core, prisma, drizzle, sqlalchemy
+  database: [] # e.g. [postgresql, redis]
+  search: null # e.g. elasticsearch, meilisearch
+  messaging: [] # e.g. [signalr, rabbitmq]
 
 # Architecture
 architecture:
-  pattern: null               # clean | hexagonal | mvc | microservices | monolith | serverless
-  apiStyle: null              # rest | graphql | grpc | mixed
+  pattern: null # clean | hexagonal | mvc | microservices | monolith | serverless
+  apiStyle: null # rest | graphql | grpc | mixed
   monorepo: false
-  monorepoTool: null          # turborepo | nx | lerna | pnpm-workspaces
+  monorepoTool: null # turborepo | nx | lerna | pnpm-workspaces
 
 # Existing documentation & specs
 documentation:
   hasPrd: false
-  prdPath: null               # e.g. docs/prd/
+  prdPath: null # e.g. docs/prd/
   hasAdr: false
-  adrPath: null               # e.g. docs/adr/
+  adrPath: null # e.g. docs/adr/
   hasApiSpec: false
-  apiSpecPath: null            # e.g. docs/api/openapi/
+  apiSpecPath: null # e.g. docs/api/openapi/
   hasTechnicalSpec: false
   technicalSpecPath: null
   hasDesignSystem: false
-  designSystemPath: null       # e.g. packages/ui/
+  designSystemPath: null # e.g. packages/ui/
   storybook: false
-  designTokensPath: null       # e.g. styles/tokens/
+  designTokensPath: null # e.g. styles/tokens/
 
 # Deployment & infrastructure
 deployment:
-  cloudProvider: null          # aws | azure | gcp | vercel | netlify | self-hosted | none
+  cloudProvider: null # aws | azure | gcp | vercel | netlify | self-hosted | none
   containerized: false
-  environments: []             # e.g. [dev, staging, prod]
-  iacTool: null                # terraform | bicep | pulumi | cdk | none
+  environments: [] # e.g. [dev, staging, prod]
+  iacTool: null # terraform | bicep | pulumi | cdk | terragrunt | none
+
+# Infrastructure — IaC conventions, naming, and resource management
+infrastructure:
+  namingConvention: null # e.g. "{org}-{env}-{project}-{resourcetype}-{region}"
+  defaultRegion: null # e.g. southafricanorth, eastus, westeurope
+  org: null # e.g. nl, contoso — the org prefix used in resource names
+  iacToolchain: [] # e.g. [terraform, terragrunt]
+  stateBackend: null # azurerm | s3 | gcs | consul | local | none
+  modulesRepo: null # e.g. git::https://github.com/org/tf-modules.git
+  lockProvider: null # blob-lease | dynamodb | consul | none
+  tagging:
+    mandatory: [] # e.g. [environment, project, owner, cost-center]
+    optional: [] # e.g. [team, created-by]
+
+# Observability — monitoring, alerting, and tracing defaults
+observability:
+  monitoring:
+    provider: null # azure-monitor | datadog | prometheus | grafana-cloud | cloudwatch | none
+    dashboards: false
+  alerting:
+    provider: null # azure-monitor | pagerduty | opsgenie | grafana | none
+    channels: [] # e.g. [email, slack, teams]
+  tracing:
+    provider: null # application-insights | jaeger | zipkin | otel-collector | none
+    samplingRate: null # 0.0–1.0, e.g. 0.1 for 10%
+  logging:
+    centralised: false # whether logs are shipped to a central store
+    retentionDays: null # e.g. 30, 90, 365
+
+# Compliance — governance, DR, and audit policies
+compliance:
+  framework: null # soc2 | iso27001 | pci-dss | hipaa | gdpr | internal | none
+  disasterRecovery:
+    rpoHours: null # Recovery Point Objective in hours
+    rtoHours: null # Recovery Time Objective in hours
+    backupSchedule: null # daily | weekly | continuous | none
+    geoRedundancy: false
+  audit:
+    enabled: false
+    appendOnly: false # append-only event log for critical tables
+    eventBus: null # service-bus | event-hub | sns | none
 
 # Process & conventions
 process:
-  branchStrategy: null         # trunk-based | github-flow | gitflow
-  commitConvention: null       # conventional | semantic | none
-  codeReview: null             # required-pr | optional | none
-  teamSize: null               # solo | small | medium | large
+  branchStrategy: null # trunk-based | github-flow | gitflow
+  commitConvention: null # conventional | semantic | none
+  codeReview: null # required-pr | optional | none
+  teamSize: null # solo | small | medium | large
 
 # Testing strategy
 testing:
-  unit: []                     # e.g. [vitest, xunit]
-  integration: []              # e.g. [playwright]
-  e2e: []                      # e.g. [playwright, cypress]
-  coverage: null               # Target coverage percentage (0-100)
+  unit: [] # e.g. [vitest, xunit]
+  integration: [] # e.g. [playwright]
+  e2e: [] # e.g. [playwright, cypress]
+  coverage: null # Target coverage percentage (0-100)
 
 # External integrations (helps agents understand system boundaries)
 # Uncomment and add entries to describe external system boundaries:
@@ -84,42 +125,42 @@ integrations: []
 # Cross-cutting concerns (project-specific decisions agents must follow)
 crosscutting:
   logging:
-    framework: null            # serilog | winston | pino | bunyan | python-logging | log4net | nlog | none
+    framework: null # serilog | winston | pino | bunyan | python-logging | log4net | nlog | none
     structured: false
     correlationId: false
-    level: null                # trace | debug | information | warning | error | critical
-    sink: []                   # e.g. [console, applicationInsights]
+    level: null # trace | debug | information | warning | error | critical
+    sink: [] # e.g. [console, applicationInsights]
   errorHandling:
-    strategy: null             # problem-details | custom-envelope | raw | none
+    strategy: null # problem-details | custom-envelope | raw | none
     globalHandler: false
     customExceptions: false
     errorCodes: false
   authentication:
-    provider: null             # azure-ad | azure-ad-b2c | auth0 | firebase | cognito | keycloak | custom-jwt | none
-    strategy: null             # jwt-bearer | cookie | session | api-key | oauth2-code
+    provider: null # azure-ad | azure-ad-b2c | auth0 | firebase | cognito | keycloak | custom-jwt | none
+    strategy: null # jwt-bearer | cookie | session | api-key | oauth2-code
     multiTenant: false
     rbac: false
   caching:
-    provider: null             # redis | memcached | in-memory | none
-    patterns: []               # e.g. [cache-aside, write-through]
+    provider: null # redis | memcached | in-memory | none
+    patterns: [] # e.g. [cache-aside, write-through]
     distributedCache: false
   api:
-    versioning: null           # url-segment | header | query-string | media-type | none
-    pagination: null           # cursor | offset | keyset | none
-    responseFormat: null       # envelope | raw | json-api | hal
+    versioning: null # url-segment | header | query-string | media-type | none
+    pagination: null # cursor | offset | keyset | none
+    responseFormat: null # envelope | raw | json-api | hal
     rateLimiting: false
   database:
-    migrations: null           # code-first | sql-scripts | auto | none
+    migrations: null # code-first | sql-scripts | auto | none
     seeding: false
-    transactionStrategy: null  # unit-of-work | per-request | manual | none
+    transactionStrategy: null # unit-of-work | per-request | manual | none
     connectionPooling: false
   performance:
-    bundleBudget: null         # KB limit for frontend bundles
+    bundleBudget: null # KB limit for frontend bundles
     lazyLoading: false
     imageOptimization: false
   featureFlags:
-    provider: null             # launchdarkly | azure-app-config | unleash | flagsmith | custom | none
+    provider: null # launchdarkly | azure-app-config | unleash | flagsmith | custom | none
   environments:
-    naming: []                 # e.g. [dev, staging, prod]
-    configStrategy: null       # env-vars | config-files | vault | app-config | none
-    envFilePattern: null       # e.g. .env.example
+    naming: [] # e.g. [dev, staging, prod]
+    configStrategy: null # env-vars | config-files | vault | app-config | none
+    envFilePattern: null # e.g. .env.example

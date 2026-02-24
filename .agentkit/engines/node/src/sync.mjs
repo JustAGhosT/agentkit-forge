@@ -200,6 +200,70 @@ function flattenProjectYaml(project) {
   if (Array.isArray(deploy.environments)) vars.environments = deploy.environments.join(', ');
   if (deploy.iacTool) vars.iacTool = deploy.iacTool;
 
+  // Infrastructure
+  const infra = project.infrastructure || {};
+  if (infra.namingConvention) vars.infraNamingConvention = infra.namingConvention;
+  if (infra.defaultRegion) vars.infraDefaultRegion = infra.defaultRegion;
+  if (infra.org) vars.infraOrg = infra.org;
+  if (Array.isArray(infra.iacToolchain)) vars.infraIacToolchain = infra.iacToolchain.join(', ');
+  if (infra.stateBackend && infra.stateBackend !== 'none') {
+    vars.infraStateBackend = infra.stateBackend;
+    vars.hasStateBackend = true;
+  }
+  if (infra.modulesRepo) vars.infraModulesRepo = infra.modulesRepo;
+  if (infra.lockProvider && infra.lockProvider !== 'none') vars.infraLockProvider = infra.lockProvider;
+  const tagging = infra.tagging || {};
+  if (Array.isArray(tagging.mandatory) && tagging.mandatory.length > 0) {
+    vars.infraMandatoryTags = tagging.mandatory.join(', ');
+    vars.hasInfraTags = true;
+  }
+  if (Array.isArray(tagging.optional)) vars.infraOptionalTags = tagging.optional.join(', ');
+
+  // Observability
+  const obs = project.observability || {};
+  const mon = obs.monitoring || {};
+  if (mon.provider && mon.provider !== 'none') {
+    vars.monitoringProvider = mon.provider;
+    vars.hasMonitoring = true;
+  }
+  vars.hasMonitoringDashboards = !!mon.dashboards;
+  const alerting = obs.alerting || {};
+  if (alerting.provider && alerting.provider !== 'none') {
+    vars.alertingProvider = alerting.provider;
+    vars.hasAlerting = true;
+  }
+  if (Array.isArray(alerting.channels)) vars.alertingChannels = alerting.channels.join(', ');
+  const tracing = obs.tracing || {};
+  if (tracing.provider && tracing.provider !== 'none') {
+    vars.tracingProvider = tracing.provider;
+    vars.hasTracing = true;
+  }
+  if (tracing.samplingRate !== undefined && tracing.samplingRate !== null) {
+    vars.tracingSamplingRate = String(tracing.samplingRate);
+  }
+  const obsLogging = obs.logging || {};
+  vars.hasCentralisedLogging = !!obsLogging.centralised;
+  if (obsLogging.retentionDays !== undefined && obsLogging.retentionDays !== null) {
+    vars.logRetentionDays = String(obsLogging.retentionDays);
+  }
+
+  // Compliance
+  const comp = project.compliance || {};
+  if (comp.framework && comp.framework !== 'none') {
+    vars.complianceFramework = comp.framework;
+    vars.hasCompliance = true;
+  }
+  const dr = comp.disasterRecovery || {};
+  if (dr.rpoHours !== undefined && dr.rpoHours !== null) vars.drRpoHours = String(dr.rpoHours);
+  if (dr.rtoHours !== undefined && dr.rtoHours !== null) vars.drRtoHours = String(dr.rtoHours);
+  if (dr.backupSchedule && dr.backupSchedule !== 'none') vars.drBackupSchedule = dr.backupSchedule;
+  vars.hasGeoRedundancy = !!dr.geoRedundancy;
+  vars.hasDr = !!(dr.rpoHours || dr.rtoHours || dr.backupSchedule);
+  const audit = comp.audit || {};
+  vars.hasAudit = !!audit.enabled;
+  vars.hasAppendOnlyAudit = !!audit.appendOnly;
+  if (audit.eventBus && audit.eventBus !== 'none') vars.auditEventBus = audit.eventBus;
+
   // Process
   const proc = project.process || {};
   if (proc.branchStrategy) vars.branchStrategy = proc.branchStrategy;

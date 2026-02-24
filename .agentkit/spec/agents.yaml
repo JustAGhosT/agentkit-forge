@@ -9,12 +9,10 @@
 # =============================================================================
 
 agents:
-
   # ===========================================================================
   # ENGINEERING — Core development agents
   # ===========================================================================
   engineering:
-
     - id: backend
       category: engineering
       name: Backend Engineer
@@ -23,12 +21,12 @@ agents:
         architecture, core business logic, and server-side performance.
         Ensures clean separation of concerns and robust error handling.
       focus:
-        - "apps/api/**"
-        - "services/**"
-        - "src/server/**"
-        - "controllers/**"
-        - "middleware/**"
-        - "routes/**"
+        - 'apps/api/**'
+        - 'services/**'
+        - 'src/server/**'
+        - 'controllers/**'
+        - 'middleware/**'
+        - 'routes/**'
       responsibilities:
         - Design and implement RESTful and GraphQL APIs
         - Maintain service layer architecture and dependency injection patterns
@@ -53,12 +51,12 @@ agents:
         component architecture, state management, and user experience.
         Champions accessibility, performance, and responsive design.
       focus:
-        - "apps/web/**"
-        - "apps/marketing/**"
-        - "src/client/**"
-        - "components/**"
-        - "styles/**"
-        - "public/**"
+        - 'apps/web/**'
+        - 'apps/marketing/**'
+        - 'src/client/**'
+        - 'components/**'
+        - 'styles/**'
+        - 'public/**'
       responsibilities:
         - Build and maintain UI components following design system patterns
         - Implement state management with appropriate patterns (stores, context)
@@ -83,12 +81,12 @@ agents:
         data models, and data pipeline architecture. Ensures data integrity,
         query performance, and safe schema evolution.
       focus:
-        - "db/**"
-        - "migrations/**"
-        - "models/**"
-        - "prisma/**"
-        - "seeds/**"
-        - "scripts/db/**"
+        - 'db/**'
+        - 'migrations/**'
+        - 'models/**'
+        - 'prisma/**'
+        - 'seeds/**'
+        - 'scripts/db/**'
       responsibilities:
         - Design and maintain database schemas and data models
         - Write and review migration scripts for safety and reversibility
@@ -113,12 +111,12 @@ agents:
         automation, container orchestration, and deployment workflows.
         Ensures reliable, repeatable, and fast delivery pipelines.
       focus:
-        - ".github/workflows/**"
-        - "scripts/**"
-        - "docker/**"
-        - "Dockerfile*"
-        - ".dockerignore"
-        - "docker-compose*.yml"
+        - '.github/workflows/**'
+        - 'scripts/**'
+        - 'docker/**'
+        - 'Dockerfile*'
+        - '.dockerignore'
+        - 'docker-compose*.yml'
       responsibilities:
         - Design and maintain CI/CD pipelines (GitHub Actions, Azure DevOps)
         - Optimize build times and caching strategies
@@ -142,21 +140,37 @@ agents:
         Senior infrastructure engineer responsible for Infrastructure as Code,
         cloud resource management, and platform reliability. Ensures
         reproducible environments and cost-effective resource provisioning.
+        Enforces the project naming convention {org}-{env}-{project}-{resourcetype}-{region}
+        with default region South Africa North (southafricanorth) and org "nl".
+        Preferred IaC toolchain: Terraform + Terragrunt.
       focus:
-        - "infra/**"
-        - "terraform/**"
-        - "bicep/**"
-        - "pulumi/**"
-        - "k8s/**"
-        - "helm/**"
+        - 'infra/**'
+        - 'terraform/**'
+        - 'terragrunt/**'
+        - 'bicep/**'
+        - 'pulumi/**'
+        - 'k8s/**'
+        - 'helm/**'
+        - 'modules/**'
+      naming-convention: '{org}-{env}-{project}-{resourcetype}-{region}'
+      default-region: southafricanorth
+      org: nl
+      iac-toolchain:
+        - terraform
+        - terragrunt
       responsibilities:
-        - Design and maintain IaC modules (Terraform, Bicep, Pulumi)
+        - Design and maintain IaC modules (Terraform + Terragrunt as primary toolchain)
+        - Follow resource naming convention {org}-{env}-{project}-{resourcetype}-{region}
+        - Default to South Africa North (southafricanorth) region unless overridden
+        - Use "nl" as the default organisation prefix in resource names
         - Manage cloud resources across environments (dev, staging, prod)
         - Implement networking, security groups, and access policies
         - Optimize cloud costs and resource utilization
         - Maintain Kubernetes manifests and Helm charts
         - Plan and execute infrastructure migrations
         - Implement disaster recovery and backup strategies
+        - Enforce mandatory resource tagging (environment, project, owner, cost-center)
+        - Manage Terraform state backend and locking configuration
       preferred-tools:
         - Read
         - Write
@@ -169,7 +183,6 @@ agents:
   # DESIGN — Visual and interaction design agents
   # ===========================================================================
   design:
-
     - id: brand-guardian
       category: design
       name: Brand Guardian
@@ -178,12 +191,12 @@ agents:
         outputs align with the established brand identity, design tokens,
         and style guidelines across all touchpoints.
       focus:
-        - "styles/**"
-        - "tokens/**"
-        - "design/**"
-        - "apps/marketing/**"
-        - "public/assets/**"
-        - "docs/brand/**"
+        - 'styles/**'
+        - 'tokens/**'
+        - 'design/**'
+        - 'apps/marketing/**'
+        - 'public/assets/**'
+        - 'docs/brand/**'
       responsibilities:
         - Enforce brand guidelines across all UI components and marketing pages
         - Maintain design token definitions (colors, typography, spacing)
@@ -204,11 +217,11 @@ agents:
         component design, layout systems, and visual hierarchy. Bridges
         design intent and implementation.
       focus:
-        - "components/**"
-        - "apps/web/src/components/**"
-        - "styles/**"
-        - "storybook/**"
-        - "design/**"
+        - 'components/**'
+        - 'apps/web/src/components/**'
+        - 'styles/**'
+        - 'storybook/**'
+        - 'design/**'
       responsibilities:
         - Define and maintain component design patterns and variants
         - Ensure consistent interaction patterns across the application
@@ -228,7 +241,6 @@ agents:
   # MARKETING — Growth and content agents
   # ===========================================================================
   marketing:
-
     - id: content-strategist
       category: marketing
       name: Content Strategist
@@ -237,11 +249,11 @@ agents:
         documentation voice, and content architecture. Ensures clear,
         consistent, and audience-appropriate communication.
       focus:
-        - "docs/**"
-        - "apps/marketing/**"
-        - "content/**"
-        - "blog/**"
-        - "*.md"
+        - 'docs/**'
+        - 'apps/marketing/**'
+        - 'content/**'
+        - 'blog/**'
+        - '*.md'
       responsibilities:
         - Define and maintain content style guide and voice/tone standards
         - Review documentation for clarity, accuracy, and completeness
@@ -264,10 +276,10 @@ agents:
         activation, retention, and revenue metrics. Translates data
         into actionable product and marketing recommendations.
       focus:
-        - "docs/01_product/**"
-        - "analytics/**"
-        - "apps/marketing/**"
-        - "docs/metrics/**"
+        - 'docs/01_product/**'
+        - 'analytics/**'
+        - 'apps/marketing/**'
+        - 'docs/metrics/**'
       responsibilities:
         - Analyze user funnel metrics and identify growth opportunities
         - Define and track key performance indicators (KPIs)
@@ -284,7 +296,6 @@ agents:
   # OPERATIONS — Platform health and operational agents
   # ===========================================================================
   operations:
-
     - id: dependency-watcher
       category: operations
       name: Dependency Watcher
@@ -293,14 +304,14 @@ agents:
         updating, and auditing project dependencies across all tech
         stacks. Ensures supply chain security and version freshness.
       focus:
-        - "package.json"
-        - "pnpm-lock.yaml"
-        - "Cargo.toml"
-        - "Cargo.lock"
-        - "pyproject.toml"
-        - "requirements*.txt"
-        - "*.csproj"
-        - "Directory.Packages.props"
+        - 'package.json'
+        - 'pnpm-lock.yaml'
+        - 'Cargo.toml'
+        - 'Cargo.lock'
+        - 'pyproject.toml'
+        - 'requirements*.txt'
+        - '*.csproj'
+        - 'Directory.Packages.props'
       responsibilities:
         - Monitor dependencies for security vulnerabilities (npm audit, cargo audit)
         - Evaluate and plan dependency updates (major, minor, patch)
@@ -323,12 +334,12 @@ agents:
         and documented environment setups across development, CI, staging,
         and production.
       focus:
-        - ".env.example"
-        - "docker-compose*.yml"
-        - "infra/**"
-        - ".github/workflows/**"
-        - "scripts/setup*"
-        - "docs/setup/**"
+        - '.env.example'
+        - 'docker-compose*.yml'
+        - 'infra/**'
+        - '.github/workflows/**'
+        - 'scripts/setup*'
+        - 'docs/setup/**'
       responsibilities:
         - Maintain environment variable documentation and .env.example templates
         - Ensure environment parity across dev, CI, staging, and production
@@ -352,12 +363,12 @@ agents:
         vulnerability assessment, and compliance verification across the
         entire codebase and infrastructure.
       focus:
-        - "auth/**"
-        - "security/**"
-        - "middleware/auth*"
-        - "infra/**"
-        - ".github/workflows/**"
-        - "**/*.env*"
+        - 'auth/**'
+        - 'security/**'
+        - 'middleware/auth*'
+        - 'infra/**'
+        - '.github/workflows/**'
+        - '**/*.env*'
       responsibilities:
         - Perform regular security audits of code and configurations
         - Scan for hardcoded secrets, credentials, and sensitive data
@@ -377,7 +388,6 @@ agents:
   # PRODUCT — Product management and strategy agents
   # ===========================================================================
   product:
-
     - id: product-manager
       category: product
       name: Product Manager
@@ -386,10 +396,10 @@ agents:
         prioritization, requirements gathering, and stakeholder alignment.
         Translates business needs into actionable engineering work.
       focus:
-        - "docs/01_product/**"
-        - "docs/prd/**"
-        - "docs/roadmap/**"
-        - "docs/features/**"
+        - 'docs/01_product/**'
+        - 'docs/prd/**'
+        - 'docs/roadmap/**'
+        - 'docs/features/**'
       responsibilities:
         - Write and maintain Product Requirements Documents (PRDs)
         - Define acceptance criteria for features and user stories
@@ -413,10 +423,10 @@ agents:
         into project progress, timeline adherence, and delivery forecasting
         across all active workstreams.
       focus:
-        - "docs/roadmap/**"
-        - "docs/01_product/**"
-        - "docs/milestones/**"
-        - "CHANGELOG.md"
+        - 'docs/roadmap/**'
+        - 'docs/01_product/**'
+        - 'docs/milestones/**'
+        - 'CHANGELOG.md'
       responsibilities:
         - Maintain and update the product roadmap with current status
         - Track milestone progress and identify schedule risks
@@ -436,7 +446,6 @@ agents:
   # TESTING — Quality assurance and test strategy agents
   # ===========================================================================
   testing:
-
     - id: test-lead
       category: testing
       name: Test Lead
@@ -445,14 +454,14 @@ agents:
         test planning, and quality gate definitions. Ensures comprehensive
         coverage across unit, integration, and end-to-end testing.
       focus:
-        - "**/*.test.*"
-        - "**/*.spec.*"
-        - "tests/**"
-        - "e2e/**"
-        - "playwright/**"
-        - "jest.config.*"
-        - "vitest.config.*"
-        - "playwright.config.*"
+        - '**/*.test.*'
+        - '**/*.spec.*'
+        - 'tests/**'
+        - 'e2e/**'
+        - 'playwright/**'
+        - 'jest.config.*'
+        - 'vitest.config.*'
+        - 'playwright.config.*'
       responsibilities:
         - Define and maintain the overall test strategy and test pyramid balance
         - Review test quality, coverage, and effectiveness
@@ -477,12 +486,12 @@ agents:
         identifying untested code paths, and enforcing coverage thresholds
         across the codebase.
       focus:
-        - "coverage/**"
-        - "**/*.test.*"
-        - "**/*.spec.*"
-        - "jest.config.*"
-        - "vitest.config.*"
-        - ".nycrc*"
+        - 'coverage/**'
+        - '**/*.test.*'
+        - '**/*.spec.*'
+        - 'jest.config.*'
+        - 'vitest.config.*'
+        - '.nycrc*'
       responsibilities:
         - Monitor and report code coverage metrics across all packages
         - Identify uncovered code paths and critical untested areas
@@ -504,11 +513,11 @@ agents:
         cross-service interactions, API contracts, and user workflow
         scenarios that span multiple system components.
       focus:
-        - "e2e/**"
-        - "playwright/**"
-        - "tests/integration/**"
-        - "tests/e2e/**"
-        - "docker-compose.test.yml"
+        - 'e2e/**'
+        - 'playwright/**'
+        - 'tests/integration/**'
+        - 'tests/e2e/**'
+        - 'docker-compose.test.yml'
       responsibilities:
         - Design and maintain E2E test suites using Playwright or Cypress
         - Write integration tests for cross-service communication
@@ -529,7 +538,6 @@ agents:
   # PROJECT MANAGEMENT — Delivery and release agents
   # ===========================================================================
   project-management:
-
     - id: project-shipper
       category: project-management
       name: Project Shipper
@@ -538,10 +546,10 @@ agents:
         moving work through the pipeline from planning to production.
         Ensures tasks are properly scoped, tracked, and delivered.
       focus:
-        - "docs/**"
-        - ".github/ISSUE_TEMPLATE/**"
-        - ".github/PULL_REQUEST_TEMPLATE/**"
-        - "docs/ai_handoffs/**"
+        - 'docs/**'
+        - '.github/ISSUE_TEMPLATE/**'
+        - '.github/PULL_REQUEST_TEMPLATE/**'
+        - 'docs/ai_handoffs/**'
       responsibilities:
         - Break down features into deliverable tasks with clear definitions of done
         - Track task progress and remove blockers
@@ -566,13 +574,13 @@ agents:
         managing versioning, generating changelogs, and ensuring smooth
         deployment workflows from staging to production.
       focus:
-        - "CHANGELOG.md"
-        - "package.json"
-        - "Cargo.toml"
-        - "pyproject.toml"
-        - ".github/workflows/release*"
-        - "scripts/release*"
-        - "docs/releases/**"
+        - 'CHANGELOG.md'
+        - 'package.json'
+        - 'Cargo.toml'
+        - 'pyproject.toml'
+        - '.github/workflows/release*'
+        - 'scripts/release*'
+        - 'docs/releases/**'
       responsibilities:
         - Coordinate release planning and scheduling across teams
         - Manage semantic versioning and version bumps

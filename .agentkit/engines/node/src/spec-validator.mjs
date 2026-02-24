@@ -3,9 +3,9 @@
  * Validates YAML spec files against expected schemas before sync.
  * Catches malformed configs early — before they produce broken output.
  */
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { existsSync, readFileSync } from 'fs';
 import yaml from 'js-yaml';
+import { resolve } from 'path';
 
 // ---------------------------------------------------------------------------
 // Schema definitions (lightweight — no external deps needed)
@@ -165,15 +165,33 @@ const PROJECT_ENUMS = {
   architecturePattern: ['clean', 'hexagonal', 'mvc', 'microservices', 'monolith', 'serverless'],
   apiStyle: ['rest', 'graphql', 'grpc', 'mixed'],
   cloudProvider: ['aws', 'azure', 'gcp', 'vercel', 'netlify', 'self-hosted', 'none'],
-  iacTool: ['terraform', 'bicep', 'pulumi', 'cdk', 'none'],
+  iacTool: ['terraform', 'bicep', 'pulumi', 'cdk', 'terragrunt', 'none'],
   branchStrategy: ['trunk-based', 'github-flow', 'gitflow'],
   commitConvention: ['conventional', 'semantic', 'none'],
   codeReview: ['required-pr', 'optional', 'none'],
   teamSize: ['solo', 'small', 'medium', 'large'],
-  loggingFramework: ['serilog', 'winston', 'pino', 'bunyan', 'python-logging', 'log4net', 'nlog', 'none'],
+  loggingFramework: [
+    'serilog',
+    'winston',
+    'pino',
+    'bunyan',
+    'python-logging',
+    'log4net',
+    'nlog',
+    'none',
+  ],
   loggingLevel: ['trace', 'debug', 'information', 'warning', 'error', 'critical'],
   errorStrategy: ['problem-details', 'custom-envelope', 'raw', 'none'],
-  authProvider: ['azure-ad', 'azure-ad-b2c', 'auth0', 'firebase', 'cognito', 'keycloak', 'custom-jwt', 'none'],
+  authProvider: [
+    'azure-ad',
+    'azure-ad-b2c',
+    'auth0',
+    'firebase',
+    'cognito',
+    'keycloak',
+    'custom-jwt',
+    'none',
+  ],
   authStrategy: ['jwt-bearer', 'cookie', 'session', 'api-key', 'oauth2-code'],
   cachingProvider: ['redis', 'memcached', 'in-memory', 'none'],
   apiVersioning: ['url-segment', 'header', 'query-string', 'media-type', 'none'],
@@ -181,9 +199,34 @@ const PROJECT_ENUMS = {
   apiResponseFormat: ['envelope', 'raw', 'json-api', 'hal'],
   dbMigrations: ['code-first', 'sql-scripts', 'auto', 'none'],
   dbTransactionStrategy: ['unit-of-work', 'per-request', 'manual', 'none'],
-  featureFlagProvider: ['launchdarkly', 'azure-app-config', 'unleash', 'flagsmith', 'custom', 'none'],
+  featureFlagProvider: [
+    'launchdarkly',
+    'azure-app-config',
+    'unleash',
+    'flagsmith',
+    'custom',
+    'none',
+  ],
   envConfigStrategy: ['env-vars', 'config-files', 'vault', 'app-config', 'none'],
   monorepoTool: ['turborepo', 'nx', 'lerna', 'pnpm-workspaces'],
+  // Infrastructure
+  infraStateBackend: ['azurerm', 's3', 'gcs', 'consul', 'local', 'none'],
+  infraLockProvider: ['blob-lease', 'dynamodb', 'consul', 'none'],
+  // Observability
+  monitoringProvider: [
+    'azure-monitor',
+    'datadog',
+    'prometheus',
+    'grafana-cloud',
+    'cloudwatch',
+    'none',
+  ],
+  alertingProvider: ['azure-monitor', 'pagerduty', 'opsgenie', 'grafana', 'none'],
+  tracingProvider: ['application-insights', 'jaeger', 'zipkin', 'otel-collector', 'none'],
+  // Compliance
+  complianceFramework: ['soc2', 'iso27001', 'pci-dss', 'hipaa', 'gdpr', 'internal', 'none'],
+  backupSchedule: ['daily', 'weekly', 'continuous', 'none'],
+  auditEventBus: ['service-bus', 'event-hub', 'sns', 'none'],
 };
 
 /**
@@ -202,7 +245,9 @@ function validateProjectYaml(project) {
     if (value === null || value === undefined || value === '') return;
     const allowed = PROJECT_ENUMS[enumName];
     if (!allowed.includes(value)) {
-      errors.push(`project.yaml: ${fieldPath} must be one of [${allowed.join(', ')}], got "${value}"`);
+      errors.push(
+        `project.yaml: ${fieldPath} must be one of [${allowed.join(', ')}], got "${value}"`
+      );
     }
   }
 
@@ -244,6 +289,72 @@ function validateProjectYaml(project) {
     checkEnum(deploy.cloudProvider, 'deployment.cloudProvider', 'cloudProvider');
     checkStringArray(deploy.environments, 'deployment.environments');
     checkEnum(deploy.iacTool, 'deployment.iacTool', 'iacTool');
+  }
+
+  // Infrastructure
+  const infra = project.infrastructure;
+  if (infra && typeof infra === 'object') {
+    checkStringArray(infra.iacToolchain, 'infrastructure.iacToolchain');
+    checkEnum(infra.stateBackend, 'infrastructure.stateBackend', 'infraStateBackend');
+    checkEnum(infra.lockProvider, 'infrastructure.lockProvider', 'infraLockProvider');
+    if (infra.tagging && typeof infra.tagging === 'object') {
+      checkStringArray(infra.tagging.mandatory, 'infrastructure.tagging.mandatory');
+      checkStringArray(infra.tagging.optional, 'infrastructure.tagging.optional');
+    }
+  }
+
+  // Observability
+  const obs = project.observability;
+  if (obs && typeof obs === 'object') {
+    if (obs.monitoring && typeof obs.monitoring === 'object') {
+      checkEnum(obs.monitoring.provider, 'observability.monitoring.provider', 'monitoringProvider');
+    }
+    if (obs.alerting && typeof obs.alerting === 'object') {
+      checkEnum(obs.alerting.provider, 'observability.alerting.provider', 'alertingProvider');
+      checkStringArray(obs.alerting.channels, 'observability.alerting.channels');
+    }
+    if (obs.tracing && typeof obs.tracing === 'object') {
+      checkEnum(obs.tracing.provider, 'observability.tracing.provider', 'tracingProvider');
+      if (obs.tracing.samplingRate !== null && obs.tracing.samplingRate !== undefined) {
+        if (typeof obs.tracing.samplingRate !== 'number') {
+          errors.push('project.yaml: observability.tracing.samplingRate must be a number');
+        } else if (obs.tracing.samplingRate < 0 || obs.tracing.samplingRate > 1) {
+          errors.push(
+            `project.yaml: observability.tracing.samplingRate must be 0.0-1.0, got ${obs.tracing.samplingRate}`
+          );
+        }
+      }
+    }
+    if (obs.logging && typeof obs.logging === 'object') {
+      if (obs.logging.retentionDays !== null && obs.logging.retentionDays !== undefined) {
+        if (typeof obs.logging.retentionDays !== 'number') {
+          errors.push('project.yaml: observability.logging.retentionDays must be a number');
+        } else if (obs.logging.retentionDays < 1) {
+          errors.push(
+            `project.yaml: observability.logging.retentionDays must be >= 1, got ${obs.logging.retentionDays}`
+          );
+        }
+      }
+    }
+  }
+
+  // Compliance
+  const comp = project.compliance;
+  if (comp && typeof comp === 'object') {
+    checkEnum(comp.framework, 'compliance.framework', 'complianceFramework');
+    if (comp.disasterRecovery && typeof comp.disasterRecovery === 'object') {
+      const dr = comp.disasterRecovery;
+      if (dr.rpoHours !== null && dr.rpoHours !== undefined && typeof dr.rpoHours !== 'number') {
+        errors.push('project.yaml: compliance.disasterRecovery.rpoHours must be a number');
+      }
+      if (dr.rtoHours !== null && dr.rtoHours !== undefined && typeof dr.rtoHours !== 'number') {
+        errors.push('project.yaml: compliance.disasterRecovery.rtoHours must be a number');
+      }
+      checkEnum(dr.backupSchedule, 'compliance.disasterRecovery.backupSchedule', 'backupSchedule');
+    }
+    if (comp.audit && typeof comp.audit === 'object') {
+      checkEnum(comp.audit.eventBus, 'compliance.audit.eventBus', 'auditEventBus');
+    }
   }
 
   // Process
@@ -313,14 +424,26 @@ function validateProjectYaml(project) {
     }
     if (cc.database && typeof cc.database === 'object') {
       checkEnum(cc.database.migrations, 'crosscutting.database.migrations', 'dbMigrations');
-      checkEnum(cc.database.transactionStrategy, 'crosscutting.database.transactionStrategy', 'dbTransactionStrategy');
+      checkEnum(
+        cc.database.transactionStrategy,
+        'crosscutting.database.transactionStrategy',
+        'dbTransactionStrategy'
+      );
     }
     if (cc.featureFlags && typeof cc.featureFlags === 'object') {
-      checkEnum(cc.featureFlags.provider, 'crosscutting.featureFlags.provider', 'featureFlagProvider');
+      checkEnum(
+        cc.featureFlags.provider,
+        'crosscutting.featureFlags.provider',
+        'featureFlagProvider'
+      );
     }
     if (cc.environments && typeof cc.environments === 'object') {
       checkStringArray(cc.environments.naming, 'crosscutting.environments.naming');
-      checkEnum(cc.environments.configStrategy, 'crosscutting.environments.configStrategy', 'envConfigStrategy');
+      checkEnum(
+        cc.environments.configStrategy,
+        'crosscutting.environments.configStrategy',
+        'envConfigStrategy'
+      );
     }
   }
 
@@ -337,16 +460,18 @@ function validateCrossReferences(specs) {
   const { teams, commands, agents } = specs;
 
   // Verify team commands reference valid team IDs
-  const teamIds = new Set((teams?.teams || []).map(t => t.id));
-  for (const cmd of (commands?.commands || [])) {
+  const teamIds = new Set((teams?.teams || []).map((t) => t.id));
+  for (const cmd of commands?.commands || []) {
     if (cmd.type === 'team' && cmd.team && !teamIds.has(cmd.team)) {
-      errors.push(`commands.yaml: command "${cmd.name}" references team "${cmd.team}" which is not defined in teams.yaml`);
+      errors.push(
+        `commands.yaml: command "${cmd.name}" references team "${cmd.team}" which is not defined in teams.yaml`
+      );
     }
   }
 
   // Check for duplicate team IDs
   const seenTeamIds = new Set();
-  for (const team of (teams?.teams || [])) {
+  for (const team of teams?.teams || []) {
     if (seenTeamIds.has(team.id)) {
       errors.push(`teams.yaml: duplicate team id "${team.id}"`);
     }
@@ -355,7 +480,7 @@ function validateCrossReferences(specs) {
 
   // Check for duplicate command names
   const seenCommandNames = new Set();
-  for (const cmd of (commands?.commands || [])) {
+  for (const cmd of commands?.commands || []) {
     if (seenCommandNames.has(cmd.name)) {
       errors.push(`commands.yaml: duplicate command name "${cmd.name}"`);
     }
@@ -378,18 +503,20 @@ function validateCrossReferences(specs) {
 
   // Check for duplicate rule convention IDs
   const seenRuleIds = new Set();
-  for (const domain of (specs.rules?.rules || [])) {
-    for (const conv of (domain.conventions || [])) {
+  for (const domain of specs.rules?.rules || []) {
+    for (const conv of domain.conventions || []) {
       if (seenRuleIds.has(conv.id)) {
-        errors.push(`rules.yaml: duplicate convention id "${conv.id}" (in domain "${domain.domain}")`);
+        errors.push(
+          `rules.yaml: duplicate convention id "${conv.id}" (in domain "${domain.domain}")`
+        );
       }
       seenRuleIds.add(conv.id);
     }
   }
 
   // Validate that allowed-tools in commands only reference known tools
-  for (const cmd of (commands?.commands || [])) {
-    for (const tool of (cmd['allowed-tools'] || [])) {
+  for (const cmd of commands?.commands || []) {
+    for (const tool of cmd['allowed-tools'] || []) {
       if (!VALID_TOOLS.includes(tool)) {
         errors.push(`commands.yaml: command "${cmd.name}" references unknown tool "${tool}"`);
       }
@@ -466,7 +593,9 @@ export function validateSpec(agentkitRoot) {
         errors.push('teams.yaml: "techStacks" must be an array');
       } else {
         for (let i = 0; i < teams.techStacks.length; i++) {
-          errors.push(...validate(teams.techStacks[i], techStackSchema, `teams.yaml.techStacks[${i}]`));
+          errors.push(
+            ...validate(teams.techStacks[i], techStackSchema, `teams.yaml.techStacks[${i}]`)
+          );
         }
       }
     }
@@ -483,7 +612,9 @@ export function validateSpec(agentkitRoot) {
           continue;
         }
         for (let i = 0; i < agentList.length; i++) {
-          errors.push(...validate(agentList[i], agentSchema, `agents.yaml.agents.${category}[${i}]`));
+          errors.push(
+            ...validate(agentList[i], agentSchema, `agents.yaml.agents.${category}[${i}]`)
+          );
         }
       }
     }
@@ -495,7 +626,9 @@ export function validateSpec(agentkitRoot) {
       errors.push('commands.yaml: missing or invalid "commands" array');
     } else {
       for (let i = 0; i < commands.commands.length; i++) {
-        errors.push(...validate(commands.commands[i], commandSchema, `commands.yaml.commands[${i}]`));
+        errors.push(
+          ...validate(commands.commands[i], commandSchema, `commands.yaml.commands[${i}]`)
+        );
       }
     }
   }
@@ -521,12 +654,14 @@ export function validateSpec(agentkitRoot) {
     if (!aliases.aliases || typeof aliases.aliases !== 'object') {
       errors.push('aliases.yaml: missing or invalid "aliases" object');
     } else {
-      const commandNames = new Set((commands?.commands || []).map(c => `/${c.name}`));
+      const commandNames = new Set((commands?.commands || []).map((c) => `/${c.name}`));
       for (const [alias, target] of Object.entries(aliases.aliases)) {
         // Extract base command from target (e.g., "/orchestrate --assess-only" → "/orchestrate")
         const baseTarget = target.split(' ')[0];
         if (!commandNames.has(baseTarget)) {
-          warnings.push(`aliases.yaml: alias "${alias}" targets "${baseTarget}" which is not a known command`);
+          warnings.push(
+            `aliases.yaml: alias "${alias}" targets "${baseTarget}" which is not a known command`
+          );
         }
       }
     }
@@ -561,11 +696,13 @@ export function runSpecValidation(agentkitRoot) {
   if (result.valid) {
     console.log(`[agentkit:spec-validate] PASSED (${result.warnings.length} warning(s))`);
   } else {
-    console.error(`[agentkit:spec-validate] FAILED: ${result.errors.length} error(s), ${result.warnings.length} warning(s)`);
+    console.error(
+      `[agentkit:spec-validate] FAILED: ${result.errors.length} error(s), ${result.warnings.length} warning(s)`
+    );
   }
 
   return result;
 }
 
 // Export validate for testing
-export { validate, validateCrossReferences, validateProjectYaml, PROJECT_ENUMS };
+export { PROJECT_ENUMS, validate, validateCrossReferences, validateProjectYaml };

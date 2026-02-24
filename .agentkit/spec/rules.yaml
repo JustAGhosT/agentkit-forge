@@ -8,7 +8,6 @@
 # =============================================================================
 
 rules:
-
   # ===========================================================================
   # TypeScript / JavaScript
   # ===========================================================================
@@ -17,24 +16,24 @@ rules:
       Standards for all TypeScript and JavaScript code across the repository.
       Covers linting, formatting, type safety, and accessibility.
     applies-to:
-      - "**/*.ts"
-      - "**/*.tsx"
-      - "**/*.js"
-      - "**/*.jsx"
-      - "**/*.mjs"
-      - "**/*.mts"
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.mjs'
+      - '**/*.mts'
     conventions:
       - id: ts-lint
-        rule: "All code must pass ESLint with the project configuration"
+        rule: 'All code must pass ESLint with the project configuration'
         severity: error
         autofix: true
-        tool: "eslint --fix"
+        tool: 'eslint --fix'
 
       - id: ts-format
-        rule: "All code must be formatted with Prettier"
+        rule: 'All code must be formatted with Prettier'
         severity: error
         autofix: true
-        tool: "prettier --write"
+        tool: 'prettier --write'
 
       - id: ts-explicit-types
         rule: >
@@ -60,9 +59,9 @@ rules:
         severity: error
         autofix: false
         applies-to:
-          - "**/*.tsx"
-          - "**/*.jsx"
-          - "components/**"
+          - '**/*.tsx'
+          - '**/*.jsx'
+          - 'components/**'
 
       - id: ts-no-console
         rule: >
@@ -86,9 +85,9 @@ rules:
       Standards for all .NET and C# code. Emphasizes dependency injection,
       clean architecture layering, and API backwards compatibility.
     applies-to:
-      - "**/*.cs"
-      - "**/*.csproj"
-      - "**/*.sln"
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.sln'
     conventions:
       - id: dn-dependency-injection
         rule: >
@@ -131,7 +130,7 @@ rules:
         rule: "All code must pass 'dotnet format' with the project editorconfig"
         severity: error
         autofix: true
-        tool: "dotnet format"
+        tool: 'dotnet format'
 
       - id: dn-nullable
         rule: >
@@ -149,20 +148,20 @@ rules:
       Standards for all Python code. Covers linting, formatting, testing,
       and architectural boundaries for IO.
     applies-to:
-      - "**/*.py"
-      - "pyproject.toml"
+      - '**/*.py'
+      - 'pyproject.toml'
     conventions:
       - id: py-lint
-        rule: "All code must pass ruff check with the project configuration"
+        rule: 'All code must pass ruff check with the project configuration'
         severity: error
         autofix: true
-        tool: "ruff check --fix"
+        tool: 'ruff check --fix'
 
       - id: py-format
-        rule: "All code must be formatted with black"
+        rule: 'All code must be formatted with black'
         severity: error
         autofix: true
-        tool: "black"
+        tool: 'black'
 
       - id: py-test-coverage
         rule: >
@@ -172,7 +171,7 @@ rules:
           for variant testing.
         severity: error
         autofix: false
-        tool: "python -m pytest --cov"
+        tool: 'python -m pytest --cov'
 
       - id: py-io-boundaries
         rule: >
@@ -190,7 +189,7 @@ rules:
           mode for new modules.
         severity: warning
         autofix: false
-        tool: "mypy --strict"
+        tool: 'mypy --strict'
 
       - id: py-docstrings
         rule: >
@@ -208,8 +207,8 @@ rules:
       Standards for all Rust code. Emphasizes explicit error handling,
       safety, and toolchain compliance.
     applies-to:
-      - "**/*.rs"
-      - "Cargo.toml"
+      - '**/*.rs'
+      - 'Cargo.toml'
     conventions:
       - id: rs-error-handling
         rule: >
@@ -229,9 +228,9 @@ rules:
         severity: error
         autofix: false
         exceptions:
-          - "**/*.test.rs"
-          - "**/tests/**"
-          - "**/benches/**"
+          - '**/*.test.rs'
+          - '**/tests/**'
+          - '**/benches/**'
 
       - id: rs-clippy
         rule: >
@@ -240,13 +239,13 @@ rules:
           a lint is genuinely inapplicable.
         severity: error
         autofix: false
-        tool: "cargo clippy -- -D warnings"
+        tool: 'cargo clippy -- -D warnings'
 
       - id: rs-fmt
         rule: "All code must be formatted with 'cargo fmt'"
         severity: error
         autofix: true
-        tool: "cargo fmt"
+        tool: 'cargo fmt'
 
       - id: rs-unsafe
         rule: >
@@ -266,6 +265,103 @@ rules:
         autofix: false
 
   # ===========================================================================
+  # Infrastructure as Code (Terraform / Terragrunt)
+  # ===========================================================================
+  - domain: iac
+    description: >
+      Standards for all Infrastructure as Code. Covers Terraform and Terragrunt
+      conventions, resource naming, state management, and module design.
+    applies-to:
+      - '**/*.tf'
+      - '**/*.tfvars'
+      - '**/terragrunt.hcl'
+      - '**/*.hcl'
+      - 'infra/**'
+      - 'terraform/**'
+      - 'terragrunt/**'
+      - 'modules/**'
+    conventions:
+      - id: iac-naming-convention
+        rule: >
+          All cloud resources must follow the naming convention
+          {org}-{env}-{project}-{resourcetype}-{region}. The default org is "nl",
+          the default region is "southafricanorth". Deviations require a comment
+          explaining why. Use locals blocks to compose names from variables.
+        severity: error
+        autofix: false
+
+      - id: iac-toolchain
+        rule: >
+          Use Terraform for resource definitions and Terragrunt for DRY
+          configuration, remote state management, and environment orchestration.
+          All environments must be managed through Terragrunt live configurations.
+        severity: error
+        autofix: false
+
+      - id: iac-state-backend
+        rule: >
+          Terraform state must be stored remotely (Azure Storage / S3 / GCS)
+          with locking enabled. Never commit .tfstate files. State backend
+          configuration must be managed through Terragrunt to avoid duplication.
+        severity: critical
+        autofix: false
+
+      - id: iac-modules
+        rule: >
+          Reusable infrastructure must be extracted into versioned Terraform
+          modules. Modules must have README.md, variables.tf, outputs.tf,
+          and examples/. Pin module versions in consumers — never use unversioned
+          source references.
+        severity: error
+        autofix: false
+
+      - id: iac-tagging
+        rule: >
+          All taggable resources must include mandatory tags: environment,
+          project, owner, and cost-center. Use a shared locals block or
+          Terragrunt inputs to enforce consistent tagging across all resources.
+        severity: error
+        autofix: false
+
+      - id: iac-plan-before-apply
+        rule: >
+          Always run 'terraform plan' (or 'terragrunt plan') and review the
+          diff before applying. CI pipelines must include a plan stage with
+          human approval gate before apply. Never use -auto-approve in
+          production environments.
+        severity: critical
+        autofix: false
+
+      - id: iac-no-hardcoded-secrets
+        rule: >
+          Never hardcode secrets, connection strings, or credentials in .tf
+          or .hcl files. Use Key Vault / Secrets Manager references, or pass
+          secrets via environment variables in CI. Sensitive variables must
+          be marked sensitive = true.
+        severity: critical
+        autofix: false
+
+      - id: iac-fmt
+        rule: "All Terraform code must pass 'terraform fmt -check'"
+        severity: error
+        autofix: true
+        tool: 'terraform fmt'
+
+      - id: iac-validate
+        rule: "All Terraform configurations must pass 'terraform validate'"
+        severity: error
+        autofix: false
+        tool: 'terraform validate'
+
+      - id: iac-drift-detection
+        rule: >
+          Infrastructure drift must be detected and corrected. Do not manually
+          modify resources managed by Terraform. If manual changes are necessary,
+          import them into state immediately and update the configuration.
+        severity: error
+        autofix: false
+
+  # ===========================================================================
   # Security
   # ===========================================================================
   - domain: security
@@ -273,7 +369,7 @@ rules:
       Cross-cutting security rules that apply to all code in the repository.
       These rules take precedence over domain-specific rules when they conflict.
     applies-to:
-      - "**/*"
+      - '**/*'
     conventions:
       - id: sec-no-secrets
         rule: >
@@ -334,11 +430,11 @@ rules:
       Standards for blockchain integrations including Solana, EtherLink, and
       x402 payment protocol patterns.
     applies-to:
-      - "**/*.sol"
-      - "**/blockchain/**"
-      - "**/web3/**"
-      - "**/contracts/**"
-      - "**/programs/**"
+      - '**/*.sol'
+      - '**/blockchain/**'
+      - '**/web3/**'
+      - '**/contracts/**'
+      - '**/programs/**'
     conventions:
       - id: bc-solana
         rule: >
