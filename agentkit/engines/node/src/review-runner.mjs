@@ -10,7 +10,8 @@ import { execCommand, formatDuration } from './runner.mjs';
 import { appendEvent } from './orchestrator.mjs';
 
 // ---------------------------------------------------------------------------
-// Secret patterns
+// Secret patterns — compiled once at module level to avoid per-call overhead.
+// The /g flag is safe with String.prototype.match() which resets lastIndex.
 // ---------------------------------------------------------------------------
 
 // Note: patterns use /g so String.prototype.match() returns all occurrences.
@@ -48,7 +49,12 @@ function getChangedFiles(projectRoot, flags) {
     // Intentionally restrictive: blocks @{...} reflog syntax and special chars that
     // could be interpreted by cmd.exe on Windows (where shell:true is used).
     // Allowed: alphanumeric, dots, dashes, slashes, colons, carets, tildes, and .. / ... range operators.
-    if (!/^[a-zA-Z0-9._\-/:^~@]+(?:\.{2,3}[a-zA-Z0-9._\-/:^~@]+)?$/.test(flags.range) || /[@][{]/.test(flags.range)) {
+    // Max 256 chars to prevent abuse via extremely long inputs.
+    if (
+      flags.range.length > 256 ||
+      !/^[a-zA-Z0-9._\-/:^~@]+(?:\.{2,3}[a-zA-Z0-9._\-/:^~@]+)?$/.test(flags.range) ||
+      /[@][{]/.test(flags.range)
+    ) {
       throw new Error(`Invalid --range value: ${flags.range}`);
     }
     const r = execCommand(`git diff --name-only ${flags.range}`, { cwd: projectRoot });

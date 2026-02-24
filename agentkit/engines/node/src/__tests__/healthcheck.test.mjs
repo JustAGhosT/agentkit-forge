@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { runHealthcheck } from '../healthcheck.mjs';
+import * as runner from '../runner.mjs';
+import * as orchestrator from '../orchestrator.mjs';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -12,18 +14,36 @@ const STATE_DIR = resolve(TEST_ROOT, '.claude', 'state');
 
 describe('runHealthcheck()', () => {
   afterEach(() => {
-    if (existsSync(TEST_ROOT)) rmSync(TEST_ROOT, { recursive: true });
+    if (existsSync(TEST_ROOT)) rmSync(TEST_ROOT, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
     vi.restoreAllMocks();
   });
 
-  it('returns structured result with tools list', { timeout: 30_000 }, async () => {
+  it('returns structured result with tools list', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
+    // Mock tool checks to avoid spawning real processes — this test only
+    // verifies result shape, not actual tool detection (tests below cover that).
+    // Real spawns are slow on cold CI caches and hold directory handles that
+    // cause EBUSY on Windows cleanup.
+    vi.spyOn(runner, 'commandExists').mockImplementation(
+      (cmd) => cmd === 'node' || cmd === 'git',
+    );
+    vi.spyOn(runner, 'execCommand').mockReturnValue({
+      exitCode: 0, stdout: 'v20.0.0\n', stderr: '', durationMs: 5,
+    });
+
+    // Prevent orchestrator from writing state files into TEST_ROOT.
+    vi.spyOn(orchestrator, 'loadState').mockReturnValue({});
+    vi.spyOn(orchestrator, 'saveState').mockImplementation(() => {});
+    vi.spyOn(orchestrator, 'appendEvent').mockImplementation(() => {});
+
+    mkdirSync(TEST_ROOT, { recursive: true });
+
     const result = await runHealthcheck({
       agentkitRoot: AGENTKIT_ROOT,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: TEST_ROOT,
       flags: {},
     });
 
