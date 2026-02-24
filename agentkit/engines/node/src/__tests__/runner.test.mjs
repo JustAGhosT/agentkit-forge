@@ -53,9 +53,9 @@ describe('execCommand()', () => {
   });
 
   it('does not interpret shell metacharacters as command separators', () => {
-    // With spawnSync (no shell), semicolons are literal args, not command separators
+    // spawnSync passes args as an array — semicolons are literal, not separators.
+    // On Windows (shell:true), Node auto-escapes each arg for cmd.exe.
     const result = execCommand('echo safe; echo injected');
-    // echo treats all args literally — output is one line, not two separate commands
     const lines = result.stdout.trim().split('\n');
     expect(lines).toHaveLength(1); // Only one echo, not two
     expect(lines[0]).toContain('safe;'); // Semicolon is literal text

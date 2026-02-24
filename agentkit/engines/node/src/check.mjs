@@ -29,6 +29,8 @@ function buildSteps(stack, flags) {
       const resolved = resolveFormatter(stack.formatter);
       if (!isValidCommand(resolved.check)) {
         console.warn(`[agentkit:check] Skipping invalid formatter command: ${stack.formatter}`);
+      } else if (!isAllowedFormatter(resolved)) {
+        console.warn(`[agentkit:check] Skipping unrecognized formatter: ${stack.formatter}`);
       } else {
         const fixCmd = flags.fix && resolved.fix ? resolved.fix : null;
         steps.push({
@@ -90,6 +92,20 @@ function buildSteps(stack, flags) {
   return steps;
 }
 
+// Allowed formatter base executables. Values from the YAML spec must resolve to
+// one of these (after resolveFormatter mapping) to prevent a compromised spec
+// from executing arbitrary binaries.
+const ALLOWED_FORMATTER_BASES = new Set([
+  'prettier', 'black', 'cargo', 'dotnet', 'gofmt', 'rustfmt',
+  'clang-format', 'autopep8', 'yapf', 'isort', 'shfmt', 'stylua',
+]);
+
+// Packages allowed to run via npx. 'npx' alone is too broad — a compromised
+// spec could set formatter: "npx malicious-package" and pass the base check.
+const ALLOWED_NPX_PACKAGES = new Set([
+  'prettier',
+]);
+
 /**
  * Resolve a formatter shorthand to its check/fix command variants.
  * Returns an object with { cmd, check, fix } so buildSteps can use
@@ -126,6 +142,23 @@ function resolveLinter(linter) {
   if (entry) return entry;
   // Unknown linter — return raw command without appending flags
   return { cmd: linter, check: linter, fix: null };
+}
+
+/**
+ * Check if a resolved formatter command uses an allowed base executable.
+ * When the base is 'npx', the package argument (second token) must also
+ * appear in ALLOWED_NPX_PACKAGES to prevent arbitrary package execution.
+ * @param {{ cmd: string, check: string, fix: string }} resolved - The resolved formatter object
+ * @returns {boolean}
+ */
+function isAllowedFormatter(resolved) {
+  const parts = resolved.cmd.split(/\s+/);
+  const base = parts[0];
+  if (base === 'npx') {
+    const pkg = parts[1] || '';
+    return ALLOWED_NPX_PACKAGES.has(pkg);
+  }
+  return ALLOWED_FORMATTER_BASES.has(base);
 }
 
 // ---------------------------------------------------------------------------
