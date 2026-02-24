@@ -152,7 +152,7 @@ export async function runHealthcheck({ agentkitRoot, projectRoot, flags = {} }) 
       toolsFound: results.tools.filter(t => t.found).length,
       stacksChecked: results.stacks.length,
     });
-  } catch { /* best-effort */ }
+  } catch (err) { console.warn(`[agentkit:healthcheck] State update failed: ${err.message}`); }
 
   return results;
 }

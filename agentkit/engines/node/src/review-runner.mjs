@@ -181,7 +181,7 @@ function scanTodos(projectRoot, files) {
             severity: 'LOW',
             file,
             line: i + 1,
-            text: matches[0].trim().slice(0, 100),
+            text: matches[0].trim().length > 100 ? matches[0].trim().slice(0, 100) + '...' : matches[0].trim(),
           });
         }
       }
@@ -280,7 +280,7 @@ export async function runReview({ agentkitRoot /* kept for interface compatibili
       secretFindings: secrets.length,
       status,
     });
-  } catch { /* best-effort */ }
+  } catch (err) { console.warn(`[agentkit:review] Event logging failed: ${err.message}`); }
 
   return {
     files: changedFiles.length,

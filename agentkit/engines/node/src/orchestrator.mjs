@@ -26,8 +26,9 @@ const DEFAULT_TEAM_IDS = [
   'team-testing', 'team-security', 'team-docs', 'team-product', 'team-quality',
 ];
 
-// Backwards-compatible alias — kept as default, overridable via loadTeamIdsFromSpec()
+// Overridable via loadTeamIdsFromSpec(). Starts with defaults; initialized on first use.
 let VALID_TEAM_IDS = [...DEFAULT_TEAM_IDS];
+let _teamIdsInitialized = false;
 
 const VALID_TEAM_STATUSES = ['idle', 'in_progress', 'blocked', 'done'];
 const LOCK_STALE_MS = 30 * 60 * 1000; // 30 minutes
@@ -47,12 +48,28 @@ export function loadTeamIdsFromSpec(agentkitRoot) {
         const ids = spec.teams.map(t => t.id).filter(Boolean);
         if (ids.length > 0) {
           VALID_TEAM_IDS = ids;
+          _teamIdsInitialized = true;
           return ids;
         }
       }
     }
-  } catch { /* fallback to defaults */ }
+  } catch (err) {
+    console.warn(`[agentkit:orchestrate] Could not load teams from spec: ${err.message}`);
+  }
+  _teamIdsInitialized = true;
   return DEFAULT_TEAM_IDS;
+}
+
+/**
+ * Ensure team IDs are loaded from spec. Idempotent — only loads once.
+ * Call this from any function that uses VALID_TEAM_IDS to ensure spec
+ * teams are loaded even if runOrchestrate hasn't been called yet.
+ * @param {string} agentkitRoot
+ */
+export function ensureTeamIds(agentkitRoot) {
+  if (!_teamIdsInitialized) {
+    loadTeamIdsFromSpec(agentkitRoot);
+  }
 }
 
 // ---------------------------------------------------------------------------

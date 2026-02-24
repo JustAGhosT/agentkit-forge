@@ -242,7 +242,11 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   rmSync(tmpDir, { recursive: true, force: true });
 
   if (failedFiles.length > 0) {
-    console.error(`[agentkit:sync] Warning: ${failedFiles.length} file(s) failed to write.`);
+    console.error(`[agentkit:sync] Error: ${failedFiles.length} file(s) failed to write:`);
+    for (const f of failedFiles) {
+      console.error(`  - ${f.file}: ${f.error}`);
+    }
+    throw new Error(`Sync completed with ${failedFiles.length} write failure(s)`);
   }
   console.log(`[agentkit:sync] Done! Generated ${count} files.`);
 }

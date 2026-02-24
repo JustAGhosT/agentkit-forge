@@ -74,29 +74,48 @@ function readBacklog(projectRoot) {
   if (!existsSync(backlogPath)) return null;
 
   const content = readFileSync(backlogPath, 'utf-8');
-  // Simple parsing: extract table rows from the Active Sprint section
   const lines = content.split('\n');
   const items = [];
   let inTable = false;
+  let headerCols = null;
 
   for (const line of lines) {
-    if (line.includes('| ID ') || line.includes('|---')) {
-      inTable = true;
+    const trimmed = line.trim();
+
+    // Detect table header row (contains at least two pipe-delimited cells)
+    if (!inTable && trimmed.startsWith('|') && (trimmed.includes(' ID ') || trimmed.includes(' id '))) {
+      headerCols = trimmed.split('|').map(c => c.trim().toLowerCase()).filter(Boolean);
       continue;
     }
-    if (inTable && line.startsWith('|')) {
-      const cells = line.split('|').map(c => c.trim()).filter(Boolean);
-      if (cells.length >= 3) {
+
+    // Skip separator rows like |---|---|
+    if (trimmed.match(/^\|[\s-:|]+\|$/)) {
+      if (headerCols) inTable = true;
+      continue;
+    }
+
+    if (inTable && trimmed.startsWith('|')) {
+      const cells = trimmed.split('|').map(c => c.trim()).filter(Boolean);
+      if (cells.length >= 2) {
+        // Map cells by header position if available, otherwise positional fallback
+        const idIdx = headerCols ? headerCols.indexOf('id') : 0;
+        const titleIdx = headerCols ? Math.max(headerCols.indexOf('title'), headerCols.indexOf('description'), headerCols.indexOf('what')) : 1;
+        const statusIdx = headerCols ? headerCols.indexOf('status') : 2;
+        const teamIdx = headerCols ? headerCols.indexOf('team') : 3;
+        const priorityIdx = headerCols ? headerCols.indexOf('priority') : 4;
+
         items.push({
-          id: cells[0],
-          title: cells[1],
-          status: cells[2],
-          team: cells[3] || '',
-          priority: cells[4] || '',
+          id: cells[idIdx >= 0 ? idIdx : 0] || '',
+          title: cells[titleIdx >= 0 ? titleIdx : 1] || '',
+          status: cells[statusIdx >= 0 ? statusIdx : 2] || '',
+          team: cells[teamIdx >= 0 ? teamIdx : 3] || '',
+          priority: cells[priorityIdx >= 0 ? priorityIdx : 4] || '',
         });
       }
-    } else if (inTable && !line.startsWith('|')) {
+    } else if (inTable && !trimmed.startsWith('|')) {
+      // End of current table; allow parsing further tables in the same file
       inTable = false;
+      headerCols = null;
     }
   }
 
@@ -194,7 +213,7 @@ export async function runPlan({ projectRoot, flags = {} }) {
   // Log event
   try {
     appendEvent(projectRoot, 'plan_viewed', { phase, phase_name: state.phase_name });
-  } catch { /* best-effort */ }
+  } catch (err) { console.warn(`[agentkit:plan] Event logging failed: ${err.message}`); }
 
   return {
     phase,
