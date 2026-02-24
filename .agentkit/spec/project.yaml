@@ -73,11 +73,13 @@ testing:
   coverage: null               # Target coverage percentage (0-100)
 
 # External integrations (helps agents understand system boundaries)
+# Uncomment and add entries to describe external system boundaries:
+# integrations:
+#   - name: Azure AD B2C
+#     purpose: authentication
+#   - name: PayFast
+#     purpose: payments
 integrations: []
-  # - name: Azure AD B2C
-  #   purpose: authentication
-  # - name: PayFast
-  #   purpose: payments
 
 # Cross-cutting concerns (project-specific decisions agents must follow)
 crosscutting:
