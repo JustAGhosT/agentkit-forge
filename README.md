@@ -1,6 +1,6 @@
 # AgentKit Forge
 
-A Windows-first, polyglot AI-orchestration template repository. Provides a unified agent team framework supporting Claude Code, Cursor, Windsurf, Copilot, and Continue — with MCP/A2A protocol support.
+A universal AI-orchestration template repository. Generates tool-specific configs from a single YAML spec for **15+ AI coding tools** — Claude Code, Cursor, Windsurf, Copilot, Codex, Gemini, Warp, Cline, Roo Code, Continue, Jules, Amp, Factory, and more. Windows-first with polyglot support and MCP/A2A protocol integration.
 
 ## Quick Start
 
@@ -87,7 +87,13 @@ renderTargets:
   - cursor
   - windsurf
   - copilot
+  - gemini
+  - codex
+  - warp
+  - cline
+  - roo
   - ai
+  - mcp
 ```
 
 Remove render targets you don't need. For example, a team using only Claude Code and Cursor:
@@ -158,9 +164,19 @@ Append the AgentKit Forge ignore rules to your existing `.gitignore`. The key en
 /.cursor/
 /.windsurf/
 /.ai/
+/.gemini/
+/.agents/
+/.clinerules/
+/.roo/
 /mcp/
 /.github/workflows/ai-framework-ci.yml
+/.github/prompts/
+/.github/agents/
+/.github/chatmodes/
+/AGENTS.md
 /CLAUDE.md
+/GEMINI.md
+/WARP.md
 /UNIFIED_AGENT_TEAMS.md
 /AGENT_TEAMS.md
 /QUALITY_GATES.md
@@ -260,16 +276,26 @@ After running `sync`, these are created in your project root:
 
 **Always-regenerate** (gitignored — regenerated every sync):
 
-| Directory | Purpose |
-|-----------|---------|
-| `.claude/` | Claude Code: commands, hooks, agents, rules, state |
-| `.cursor/` | Cursor IDE: rules (.mdc format) |
-| `.windsurf/` | Windsurf IDE: rules + workflows |
-| `.ai/` | Portable multi-IDE rules (Continue, Cursor, Windsurf) |
-| `mcp/` | MCP server + A2A protocol configurations |
-| `CLAUDE.md` | Root Claude Code instructions |
-| `UNIFIED_AGENT_TEAMS.md` | Team definitions and routing |
-| `QUALITY_GATES.md` | Quality gate checks per stack |
+| Output | Tool(s) | Purpose |
+|--------|---------|---------|
+| `AGENTS.md` | Universal | Agent instruction file (Linux Foundation standard) — read by Codex, Jules, Copilot, Cline, Roo, Amp, Factory, and more |
+| `CLAUDE.md` | Claude Code | Root Claude Code instructions with project context |
+| `GEMINI.md` | Gemini | Gemini Code Assist / CLI context file |
+| `WARP.md` | Warp | Warp terminal/IDE context file |
+| `.claude/` | Claude Code | Commands, skills, hooks, agents, rules, state, settings |
+| `.cursor/` | Cursor | Rules (.mdc), team rules, slash commands |
+| `.windsurf/` | Windsurf | Rules + workflows |
+| `.github/prompts/` | Copilot | Reusable prompt files (slash commands) |
+| `.github/agents/` | Copilot | Custom agent definitions |
+| `.github/chatmodes/` | Copilot | Team-scoped chat modes |
+| `.gemini/` | Gemini | Styleguide + code review config |
+| `.agents/skills/` | Codex | Open Agent Skills (SKILL.md format) |
+| `.clinerules/` | Cline | Project rules per domain |
+| `.roo/rules/` | Roo Code | Project rules per domain |
+| `.ai/` | Continue | Portable multi-IDE rules |
+| `mcp/` | MCP/A2A | Server + protocol configurations |
+| `UNIFIED_AGENT_TEAMS.md` | All | Team definitions and routing |
+| `QUALITY_GATES.md` | All | Quality gate checks per stack |
 
 **Scaffold-once** (committed — generated once, then you own them):
 
@@ -311,19 +337,43 @@ After running `sync`, these are created in your project root:
 | T9 | PRODUCT | Features, PRDs, roadmap |
 | T10 | QUALITY | Code review, refactoring, bugs |
 
+## Supported Tools
+
+See **[TOOLS.md](.agentkit/docs/TOOLS.md)** for detailed documentation on each tool.
+
+**First-class support (dedicated templates + sync functions):**
+- **Claude Code** — CLAUDE.md, .claude/ (commands, skills, agents, hooks, rules)
+- **OpenAI Codex** — .agents/skills/ (SKILL.md open standard)
+- **GitHub Copilot** — .github/ (copilot-instructions, prompts, agents, chatmodes)
+- **Cursor** — .cursor/ (rules, commands)
+- **Windsurf** — .windsurf/ (rules, workflows)
+- **Gemini CLI / Code Assist** — GEMINI.md, .gemini/ (styleguide, config)
+- **Warp** — WARP.md
+- **Cline** — .clinerules/
+- **Roo Code** — .roo/rules/
+- **Continue** — .ai/ (continuerules)
+
+**Covered via AGENTS.md (universal standard, no dedicated templates needed):**
+- Google Jules, Amp, Factory, OpenCode, Amazon Q Developer, Sourcegraph Cody, Aider
+
 ## Architecture
 
 ```
 .agentkit/          ← Canonical source of truth (committed, hidden)
-├── spec/           ← Team, command, rule definitions (YAML)
-├── templates/      ← Output templates per tool
+├── spec/           ← Team, command, rule, project definitions (YAML)
+├── templates/      ← Output templates per tool (15+ tools)
 ├── overlays/       ← Per-repo customizations
 ├── engines/node/   ← Sync engine (Node.js)
 └── bin/            ← Windows-first command surface (.ps1 + .cmd)
 
+AGENTS.md           ← Universal (always generated)
 .claude/            ← Generated (not committed)
 .cursor/            ← Generated (not committed)
 .windsurf/          ← Generated (not committed)
+.gemini/            ← Generated (not committed)
+.agents/            ← Generated (not committed)
+.clinerules/        ← Generated (not committed)
+.roo/               ← Generated (not committed)
 ```
 
 ## Overlay System
