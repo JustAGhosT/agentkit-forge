@@ -287,7 +287,7 @@ export async function runCheck({ agentkitRoot, projectRoot, flags = {} }) {
   }
   const pad = maxLabelLen + 2; // 2-char gutter
   console.log(`${'Step'.padEnd(pad)}Status  Duration`);
-  console.log(`${'─'.repeat(pad - 2)}  ──────  ────────`);
+  console.log(`${'─'.repeat(pad)}  ──────  ────────`);
   for (const stackResult of allResults) {
     for (const step of stackResult.steps) {
       const name = `${stackResult.stack}:${step.step}`.padEnd(pad);
