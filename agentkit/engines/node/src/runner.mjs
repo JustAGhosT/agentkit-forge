@@ -44,6 +44,15 @@ export function isValidCommand(cmd) {
  */
 export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
   const start = Date.now();
+
+  // SECURITY (defense-in-depth): On Windows, shell:true is required to resolve
+  // .cmd/.bat executables (e.g. npx.cmd), which means cmd.exe interprets the
+  // command. Reject commands containing shell metacharacters at this level so
+  // even if a caller forgets to validate, injection is blocked.
+  if (process.platform === 'win32' && !isValidCommand(cmd)) {
+    return { exitCode: 1, stdout: '', stderr: 'Blocked: command contains shell metacharacters', durationMs: 0 };
+  }
+
   const parsed = parseCommand(cmd);
   if (parsed.length === 0) {
     return { exitCode: 1, stdout: '', stderr: 'Empty command', durationMs: 0 };
@@ -55,12 +64,8 @@ export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, FORCE_COLOR: '0' },
-    // SECURITY: On Windows, shell:true is required to resolve .cmd/.bat executables
-    // (e.g. npx.cmd). This means cmd.exe interprets the command string, but injection
-    // is mitigated by: (1) parseCommand() splits into [executable, ...args] so
-    // metacharacters in arguments are individually quoted by Node's child_process,
-    // and (2) callers must validate inputs with isValidCommand() which rejects
-    // shell metacharacters ($`|;&<>(){}!\) before reaching this point.
+    // On Windows, shell:true is needed for .cmd/.bat resolution. Metacharacter
+    // injection is blocked by the isValidCommand() guard above.
     shell: process.platform === 'win32',
   });
 
