@@ -21,7 +21,7 @@ try {
 
 const VALID_COMMANDS = ['init', 'sync', 'validate', 'discover', 'spec-validate',
   'orchestrate', 'plan', 'check', 'review', 'handoff', 'healthcheck', 'cost',
-  'project-review'];
+  'project-review', 'add', 'remove', 'list'];
 
 // Workflow commands with runtime handlers
 const WORKFLOW_COMMANDS = ['orchestrate', 'plan', 'check', 'review', 'handoff', 'healthcheck'];
@@ -30,8 +30,8 @@ const WORKFLOW_COMMANDS = ['orchestrate', 'plan', 'check', 'review', 'handoff', 
 const SLASH_ONLY_COMMANDS = ['project-review'];
 
 const VALID_FLAGS = {
-  init: ['repoName', 'force', 'help'],
-  sync: ['overlay', 'only', 'help'],
+  init: ['repoName', 'force', 'non-interactive', 'ci', 'preset', 'help'],
+  sync: ['overlay', 'only', 'dry-run', 'help'],
   validate: ['help'],
   discover: ['output', 'depth', 'include-deps', 'help'],
   'spec-validate': ['help'],
@@ -43,6 +43,9 @@ const VALID_FLAGS = {
   healthcheck: ['stack', 'fix', 'verbose', 'help'],
   cost: ['summary', 'sessions', 'report', 'month', 'format', 'last', 'help'],
   'project-review': ['scope', 'focus', 'phase', 'help'],
+  add: ['help'],
+  remove: ['clean', 'help'],
+  list: ['help'],
 };
 
 const args = process.argv.slice(2);
@@ -50,7 +53,7 @@ const command = args[0];
 const commandArgs = args.slice(1);
 
 function parseFlags(args) {
-  const flags = {};
+  const flags = { _args: [] };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg.startsWith('--')) {
@@ -68,6 +71,9 @@ function parseFlags(args) {
           flags[raw] = true;
         }
       }
+    } else {
+      // Positional argument (tool names for add/remove)
+      flags._args.push(arg);
     }
   }
   return flags;
@@ -81,11 +87,20 @@ Usage: node cli.mjs <command> [options]
 
 Commands:
   init            Initialize repo overlay from template
+                  --non-interactive   Skip prompts, use auto-detected defaults
+                  --preset <name>     Use preset: minimal, full, team
+                  --ci                Alias for --non-interactive
   sync            Render all AI tool configs from spec + overlay
                   --only <targets>    Sync only specific targets (comma-separated)
   validate        Validate generated outputs
   discover        Scan repo to detect tech stacks and structure
   spec-validate   Validate YAML spec files for schema correctness
+
+Tool Management:
+  add <tool...>   Add AI tool(s) to render targets and sync
+  remove <tool>   Remove AI tool from render targets
+                  --clean             Also delete generated files
+  list            Show enabled and available AI tools
 
 Workflow Commands:
   orchestrate     Multi-team coordination workflow (state machine)
@@ -160,6 +175,7 @@ async function main() {
   // Warn on unrecognised flags
   const validForCommand = VALID_FLAGS[command] || [];
   for (const key of Object.keys(flags)) {
+    if (key === '_args') continue;
     if (!validForCommand.includes(key)) {
       console.warn(`[agentkit:${command}] Warning: unrecognised flag --${key} (ignored)`);
     }
@@ -234,6 +250,21 @@ async function main() {
       case 'cost': {
         const { runCost } = await import('./cost-tracker.mjs');
         await runCost({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'add': {
+        const { runAdd } = await import('./tool-manager.mjs');
+        await runAdd({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'remove': {
+        const { runRemove } = await import('./tool-manager.mjs');
+        await runRemove({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'list': {
+        const { runList } = await import('./tool-manager.mjs');
+        await runList({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
         break;
       }
       default: {
