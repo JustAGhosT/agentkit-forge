@@ -189,7 +189,7 @@ function scanTodos(projectRoot, files) {
  * @param {object} opts.flags - --range, --file
  * @returns {object}
  */
-export async function runReview({ agentkitRoot /* kept for interface compatibility with runCheck */, projectRoot, flags = {} }) {
+export async function runReview({ agentkitRoot /* kept for interface compatibility with other runner functions */, projectRoot, flags = {} }) {
   console.log('[agentkit:review] Running automated review checks...');
   console.log('');
 
