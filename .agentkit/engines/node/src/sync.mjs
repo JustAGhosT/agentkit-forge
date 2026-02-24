@@ -52,8 +52,8 @@ function renderTemplate(template, vars) {
     result = result.split(placeholder).join(safeValue);
   }
 
-  // Warn about unresolved placeholders (ignore block syntax remnants)
-  const unresolved = result.match(/\{\{(?!#|\/)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g);
+  // Warn about unresolved placeholders (ignore block syntax remnants, including {{else}})
+  const unresolved = result.match(/\{\{(?!#|\/|else\}\})([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g);
   if (unresolved && process.env.DEBUG) {
     const unique = [...new Set(unresolved)];
     console.warn(`[agentkit:sync] Warning: unresolved placeholders: ${unique.join(', ')}`);
@@ -75,15 +75,25 @@ function resolveConditionals(template, vars) {
   while (ifRegex.test(result) && safety-- > 0) {
     result = result.replace(ifRegex, (_, varName, body) => {
       const isTruthy = evalTruthy(vars[varName]);
-      // Split on {{else}} if present
-      const elseParts = body.split('{{else}}');
-      if (isTruthy) {
-        return elseParts[0];
-      } else {
-        return elseParts.length > 1 ? elseParts[1] : '';
+      // Split only on the first {{else}} to avoid matching multiple occurrences
+      const elseMarker = '{{else}}';
+      const elseIndex = body.indexOf(elseMarker);
+      if (elseIndex === -1) {
+        return isTruthy ? body : '';
       }
+      return isTruthy ? body.slice(0, elseIndex) : body.slice(elseIndex + elseMarker.length);
     });
     ifRegex.lastIndex = 0;
+  }
+  // Warn if safety limit was hit and there are still unresolved {{#if}} blocks
+  if (safety <= 0) {
+    ifRegex.lastIndex = 0;
+    if (ifRegex.test(result)) {
+      console.warn(
+        'resolveConditionals: safety limit reached while processing template. ' +
+        'Template may contain malformed or deeply nested {{#if}} blocks; output may be partially rendered.'
+      );
+    }
   }
   return result;
 }
@@ -577,6 +587,11 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       if (!newManifestFiles[prevFile]) {
         // File was in previous sync but not in this one — it's orphaned
         const orphanPath = resolve(projectRoot, prevFile);
+        // Path traversal protection: ensure orphan path stays within project root
+        if (!orphanPath.startsWith(resolvedRoot) && orphanPath !== resolve(projectRoot)) {
+          console.warn(`[agentkit:sync] BLOCKED: path traversal in manifest — ${prevFile}`);
+          continue;
+        }
         if (existsSync(orphanPath)) {
           try {
             unlinkSync(orphanPath);
@@ -629,7 +644,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 // ---------------------------------------------------------------------------
 
 /** All known render target names. */
-const ALL_RENDER_TARGETS = ['claude', 'cursor', 'windsurf', 'copilot', 'gemini', 'codex', 'warp', 'cline', 'roo', 'ai', 'mcp'];
+const ALL_RENDER_TARGETS = ['claude', 'cursor', 'windsurf', 'copilot', 'ai', 'mcp'];
 
 /**
  * Resolves the active render targets from overlay settings + CLI flags.
@@ -641,6 +656,10 @@ function resolveRenderTargets(overlayTargets, flags) {
   // --only flag overrides everything
   if (flags?.only) {
     const onlyTargets = String(flags.only).split(',').map(t => t.trim()).filter(Boolean);
+    const unknown = onlyTargets.filter(t => !ALL_RENDER_TARGETS.includes(t));
+    if (unknown.length > 0) {
+      console.warn(`[agentkit:sync] Warning: unknown render target(s): ${unknown.join(', ')}. Valid: ${ALL_RENDER_TARGETS.join(', ')}`);
+    }
     return new Set(onlyTargets);
   }
   // Overlay renderTargets

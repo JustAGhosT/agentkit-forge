@@ -92,7 +92,6 @@ Commands:
                   --ci                Alias for --non-interactive
   sync            Render all AI tool configs from spec + overlay
                   --only <targets>    Sync only specific targets (comma-separated)
-                  --dry-run           Show what would be generated without writing
   validate        Validate generated outputs
   discover        Scan repo to detect tech stacks and structure
   spec-validate   Validate YAML spec files for schema correctness
