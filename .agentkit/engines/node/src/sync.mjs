@@ -485,6 +485,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   const templatesDir = resolve(agentkitRoot, 'templates');
 
   // --- Always-on outputs (not gated by renderTargets) ---
+  syncAgentsMd(templatesDir, tmpDir, vars, version, repoName);
   syncRootDocs(templatesDir, tmpDir, vars, version, repoName);
   syncGitHub(templatesDir, tmpDir, vars, version, repoName);
   syncDirectCopy(templatesDir, 'docs', tmpDir, 'docs', vars, version, repoName);
@@ -644,7 +645,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 // ---------------------------------------------------------------------------
 
 /** All known render target names. */
-const ALL_RENDER_TARGETS = ['claude', 'cursor', 'windsurf', 'copilot', 'ai', 'mcp'];
+const ALL_RENDER_TARGETS = ['claude', 'cursor', 'windsurf', 'copilot', 'gemini', 'codex', 'warp', 'cline', 'roo', 'ai', 'mcp'];
 
 /**
  * Resolves the active render targets from overlay settings + CLI flags.
@@ -898,12 +899,26 @@ function syncRootDocs(templatesDir, tmpDir, vars, version, repoName) {
   }
 }
 
+function syncAgentsMd(templatesDir, tmpDir, vars, version, repoName) {
+  const agentsMdPath = resolve(templatesDir, 'root', 'AGENTS.md');
+  if (!existsSync(agentsMdPath)) return;
+
+  let content = readFileSync(agentsMdPath, 'utf-8');
+  content = renderTemplate(content, { ...vars, repoName });
+  // Clean up blank lines left by unresolved conditionals
+  content = content.replace(/\n{3,}/g, '\n\n');
+  content = insertHeader(content, '.md', version, repoName);
+  writeOutput(resolve(tmpDir, 'AGENTS.md'), content);
+}
+
 function syncClaudeMd(templatesDir, tmpDir, vars, version, repoName) {
   const claudeMdPath = resolve(templatesDir, 'claude', 'CLAUDE.md');
   if (!existsSync(claudeMdPath)) return;
 
   let content = readFileSync(claudeMdPath, 'utf-8');
   content = renderTemplate(content, { ...vars, repoName });
+  // Clean up blank lines left by unresolved conditionals
+  content = content.replace(/\n{3,}/g, '\n\n');
   content = insertHeader(content, '.md', version, repoName);
   writeOutput(resolve(tmpDir, 'CLAUDE.md'), content);
 }
