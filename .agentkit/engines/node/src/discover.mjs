@@ -64,6 +64,134 @@ const STACK_DETECTORS = [
 ];
 
 // ---------------------------------------------------------------------------
+// Framework detection (§11a)
+// ---------------------------------------------------------------------------
+
+const FRAMEWORK_DETECTORS = {
+  frontend: [
+    { name: 'react', label: 'React', deps: ['react'], configs: [] },
+    { name: 'next.js', label: 'Next.js', deps: ['next'], configs: ['next.config.js', 'next.config.mjs', 'next.config.ts'] },
+    { name: 'vue', label: 'Vue', deps: ['vue'], configs: ['vue.config.js'] },
+    { name: 'angular', label: 'Angular', deps: ['@angular/core'], configs: ['angular.json'] },
+    { name: 'svelte', label: 'Svelte', deps: ['svelte'], configs: ['svelte.config.js', 'svelte.config.ts'] },
+    { name: 'astro', label: 'Astro', deps: ['astro'], configs: ['astro.config.mjs', 'astro.config.ts'] },
+  ],
+  backend: [
+    { name: 'express', label: 'Express', deps: ['express'], configs: [] },
+    { name: 'nestjs', label: 'NestJS', deps: ['@nestjs/core'], configs: ['nest-cli.json'] },
+    { name: 'fastify', label: 'Fastify', deps: ['fastify'], configs: [] },
+    { name: 'asp.net-core', label: 'ASP.NET Core', deps: [], markers: ['Program.cs'], csprojRefs: ['Microsoft.AspNetCore'] },
+    { name: 'fastapi', label: 'FastAPI', deps: ['fastapi'], configs: [] },
+    { name: 'django', label: 'Django', deps: ['django'], configs: ['manage.py'] },
+    { name: 'flask', label: 'Flask', deps: ['flask'], configs: [] },
+    { name: 'spring-boot', label: 'Spring Boot', deps: [], pomRefs: ['spring-boot'] },
+    { name: 'rails', label: 'Rails', deps: [], gemfileRefs: ['rails'] },
+    { name: 'axum', label: 'Axum', deps: [], cargoRefs: ['axum'] },
+    { name: 'actix', label: 'Actix', deps: [], cargoRefs: ['actix-web'] },
+  ],
+  css: [
+    { name: 'tailwind', label: 'Tailwind CSS', deps: ['tailwindcss'], configs: ['tailwind.config.js', 'tailwind.config.ts', 'tailwind.config.mjs'] },
+    { name: 'sass', label: 'SASS/SCSS', deps: ['sass', 'node-sass'], fileExt: '.scss' },
+    { name: 'styled-components', label: 'Styled Components', deps: ['styled-components'], configs: [] },
+    { name: 'emotion', label: 'Emotion', deps: ['@emotion/react'], configs: [] },
+  ],
+  orm: [
+    { name: 'prisma', label: 'Prisma', deps: ['prisma', '@prisma/client'], configs: ['prisma/schema.prisma'] },
+    { name: 'typeorm', label: 'TypeORM', deps: ['typeorm'], configs: ['ormconfig.json', 'ormconfig.ts', 'ormconfig.js'] },
+    { name: 'drizzle', label: 'Drizzle', deps: ['drizzle-orm'], configs: ['drizzle.config.ts', 'drizzle.config.js'] },
+    { name: 'ef-core', label: 'Entity Framework Core', deps: [], csprojRefs: ['Microsoft.EntityFrameworkCore'] },
+    { name: 'sqlalchemy', label: 'SQLAlchemy', deps: ['sqlalchemy'], configs: [] },
+    { name: 'diesel', label: 'Diesel', deps: [], configs: ['diesel.toml'], cargoRefs: ['diesel'] },
+    { name: 'sequelize', label: 'Sequelize', deps: ['sequelize'], configs: ['.sequelizerc'] },
+  ],
+  stateManagement: [
+    { name: 'redux', label: 'Redux', deps: ['@reduxjs/toolkit', 'redux'] },
+    { name: 'zustand', label: 'Zustand', deps: ['zustand'] },
+    { name: 'pinia', label: 'Pinia', deps: ['pinia'] },
+    { name: 'mobx', label: 'MobX', deps: ['mobx'] },
+    { name: 'jotai', label: 'Jotai', deps: ['jotai'] },
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// Testing tool detection (§11b)
+// ---------------------------------------------------------------------------
+
+const TESTING_DETECTORS = [
+  { name: 'vitest', label: 'Vitest', deps: ['vitest'], configs: ['vitest.config.ts', 'vitest.config.js', 'vitest.config.mjs'] },
+  { name: 'jest', label: 'Jest', deps: ['jest'], configs: ['jest.config.ts', 'jest.config.js', 'jest.config.mjs'] },
+  { name: 'playwright', label: 'Playwright', deps: ['@playwright/test', 'playwright'], configs: ['playwright.config.ts', 'playwright.config.js'] },
+  { name: 'cypress', label: 'Cypress', deps: ['cypress'], configs: ['cypress.config.ts', 'cypress.config.js'] },
+  { name: 'xunit', label: 'xUnit', deps: [], csprojRefs: ['xunit'] },
+  { name: 'nunit', label: 'NUnit', deps: [], csprojRefs: ['NUnit'] },
+  { name: 'pytest', label: 'pytest', deps: ['pytest'], configs: ['conftest.py'] },
+  { name: 'mocha', label: 'Mocha', deps: ['mocha'], configs: ['.mocharc.yml', '.mocharc.json'] },
+];
+
+// ---------------------------------------------------------------------------
+// Documentation artifact detection (§11c)
+// ---------------------------------------------------------------------------
+
+const DOC_ARTIFACT_DETECTORS = [
+  { name: 'prd', label: 'PRDs', dirs: ['docs/prd', 'docs/PRD'], files: ['PRD.md', 'docs/PRD.md'] },
+  { name: 'adr', label: 'ADRs', dirs: ['adr', 'docs/adr', 'docs/02_architecture/ADR'], files: ['ARCHITECTURE.md', 'docs/architecture.md'] },
+  { name: 'apiSpec', label: 'API Specs', dirs: ['docs/api', 'docs/03_api'], files: ['openapi.yaml', 'openapi.yml', 'openapi.json', 'swagger.json', 'swagger.yaml'] },
+  { name: 'technicalSpec', label: 'Technical Specs', dirs: ['docs/specs', 'docs/technical'], files: ['TECHNICAL.md', 'docs/technical.md'] },
+];
+
+// ---------------------------------------------------------------------------
+// Design system detection (§11d)
+// ---------------------------------------------------------------------------
+
+const DESIGN_SYSTEM_DETECTORS = [
+  { name: 'storybook', label: 'Storybook', dirs: ['.storybook'] },
+  { name: 'figma-tokens', label: 'Figma Tokens', files: ['figma-tokens.json'], dirs: ['.figma'] },
+  { name: 'design-tokens', label: 'Design Tokens', dirs: ['tokens', 'design-tokens', 'styles/tokens'] },
+  { name: 'component-library', label: 'Component Library', dirs: ['packages/ui', 'packages/components'] },
+];
+
+// ---------------------------------------------------------------------------
+// Cross-cutting concern detection (§11f)
+// ---------------------------------------------------------------------------
+
+const CROSSCUTTING_DETECTORS = {
+  logging: [
+    { name: 'serilog', label: 'Serilog', csprojRefs: ['Serilog'] },
+    { name: 'winston', label: 'Winston', deps: ['winston'] },
+    { name: 'pino', label: 'Pino', deps: ['pino'] },
+    { name: 'bunyan', label: 'Bunyan', deps: ['bunyan'] },
+    { name: 'log4net', label: 'log4net', csprojRefs: ['log4net'] },
+    { name: 'nlog', label: 'NLog', csprojRefs: ['NLog'] },
+  ],
+  authentication: [
+    { name: 'azure-ad-b2c', label: 'Azure AD B2C', csprojRefs: ['Microsoft.Identity.Web'], deps: ['@azure/msal-browser', '@azure/msal-node', '@azure/msal-react'] },
+    { name: 'azure-ad', label: 'Azure AD', csprojRefs: ['Microsoft.Identity.Web'] },
+    { name: 'auth0', label: 'Auth0', deps: ['auth0', '@auth0/nextjs-auth0', '@auth0/auth0-react'] },
+    { name: 'firebase', label: 'Firebase Auth', deps: ['firebase-admin', 'firebase'] },
+    { name: 'cognito', label: 'AWS Cognito', deps: ['aws-amplify', '@aws-amplify/auth'] },
+    { name: 'keycloak', label: 'Keycloak', deps: ['keycloak-js', 'keycloak-connect'] },
+    { name: 'custom-jwt', label: 'JWT', deps: ['jsonwebtoken'], csprojRefs: ['System.IdentityModel.Tokens.Jwt'] },
+  ],
+  caching: [
+    { name: 'redis', label: 'Redis', deps: ['ioredis', 'redis'], csprojRefs: ['StackExchange.Redis'] },
+    { name: 'memcached', label: 'Memcached', deps: ['memcached', 'memjs'] },
+  ],
+  errorHandling: [
+    { name: 'problem-details', label: 'Problem Details (RFC 7807)', csprojRefs: ['Hellang.Middleware.ProblemDetails', 'Microsoft.AspNetCore.Http.Results'] },
+  ],
+  apiPatterns: [
+    { name: 'api-versioning', label: 'API Versioning', csprojRefs: ['Asp.Versioning'], deps: ['express-api-versioning'] },
+    { name: 'swagger', label: 'Swagger/OpenAPI', csprojRefs: ['Swashbuckle'], deps: ['@nestjs/swagger', 'swagger-ui-express'] },
+  ],
+  featureFlags: [
+    { name: 'launchdarkly', label: 'LaunchDarkly', deps: ['launchdarkly-node-server-sdk', 'launchdarkly-js-client-sdk'] },
+    { name: 'azure-app-config', label: 'Azure App Config', csprojRefs: ['Microsoft.Azure.AppConfiguration'], deps: ['@azure/app-configuration'] },
+    { name: 'unleash', label: 'Unleash', deps: ['unleash-client'] },
+    { name: 'flagsmith', label: 'Flagsmith', deps: ['flagsmith'] },
+  ],
+};
+
+// ---------------------------------------------------------------------------
 // Infrastructure detection
 // ---------------------------------------------------------------------------
 
@@ -182,6 +310,148 @@ function detectMonorepo(projectRoot) {
 }
 
 // ---------------------------------------------------------------------------
+// Enhanced detection helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Reads package.json and returns a Set of all dependency names.
+ * Merges dependencies, devDependencies, peerDependencies.
+ */
+function getNodeDeps(projectRoot) {
+  const deps = new Set();
+  try {
+    const pkg = JSON.parse(readFileSync(resolve(projectRoot, 'package.json'), 'utf-8'));
+    for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
+      if (pkg[section]) {
+        for (const dep of Object.keys(pkg[section])) deps.add(dep);
+      }
+    }
+  } catch { /* no package.json or parse error */ }
+  return deps;
+}
+
+/**
+ * Reads all .csproj files (top 3 levels) and returns concatenated content for ref matching.
+ */
+function getCsprojContent(projectRoot) {
+  let content = '';
+  function walk(dir, depth) {
+    if (depth > 3) return;
+    try {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name.startsWith('.') || SKIP_DIRS.has(entry.name)) continue;
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full, depth + 1);
+        } else if (entry.name.endsWith('.csproj')) {
+          try { content += readFileSync(full, 'utf-8') + '\n'; } catch { /* skip */ }
+        }
+      }
+    } catch { /* permission errors */ }
+  }
+  walk(projectRoot, 0);
+  return content;
+}
+
+/**
+ * Reads Cargo.toml and returns its content for dependency matching.
+ */
+function getCargoContent(projectRoot) {
+  try {
+    return readFileSync(resolve(projectRoot, 'Cargo.toml'), 'utf-8');
+  } catch { return ''; }
+}
+
+/**
+ * Reads Gemfile and returns its content for gem matching.
+ */
+function getGemfileContent(projectRoot) {
+  try {
+    return readFileSync(resolve(projectRoot, 'Gemfile'), 'utf-8');
+  } catch { return ''; }
+}
+
+/**
+ * Reads pom.xml and returns its content for dependency matching.
+ */
+function getPomContent(projectRoot) {
+  try {
+    return readFileSync(resolve(projectRoot, 'pom.xml'), 'utf-8');
+  } catch { return ''; }
+}
+
+/**
+ * Reads pyproject.toml/requirements.txt and returns a Set of Python dependency names.
+ */
+function getPythonDeps(projectRoot) {
+  const deps = new Set();
+  // pyproject.toml
+  try {
+    const content = readFileSync(resolve(projectRoot, 'pyproject.toml'), 'utf-8');
+    // Simple extraction: lines with package names in dependencies section
+    const matches = content.matchAll(/["']([a-zA-Z0-9_-]+)["']/g);
+    for (const m of matches) deps.add(m[1].toLowerCase());
+  } catch { /* skip */ }
+  // requirements.txt
+  try {
+    const content = readFileSync(resolve(projectRoot, 'requirements.txt'), 'utf-8');
+    for (const line of content.split('\n')) {
+      const pkg = line.trim().split(/[>=<\[!;#]/)[0].trim();
+      if (pkg) deps.add(pkg.toLowerCase());
+    }
+  } catch { /* skip */ }
+  return deps;
+}
+
+/**
+ * Detects frameworks from a detector list using cached dependency data.
+ */
+function detectFromList(detectors, { nodeDeps, csprojContent, cargoContent, gemfileContent, pomContent, pythonDeps, projectRoot }) {
+  const found = [];
+  for (const d of detectors) {
+    let matched = false;
+    // Check Node.js deps
+    if (d.deps?.length && nodeDeps.size > 0) {
+      if (d.deps.some(dep => nodeDeps.has(dep))) matched = true;
+    }
+    // Check config files
+    if (!matched && d.configs?.length) {
+      if (d.configs.some(c => existsSync(resolve(projectRoot, c)))) matched = true;
+    }
+    // Check markers (plain files)
+    if (!matched && d.markers?.length) {
+      if (d.markers.some(m => existsSync(resolve(projectRoot, m)))) matched = true;
+    }
+    // Check .csproj references
+    if (!matched && d.csprojRefs?.length && csprojContent) {
+      if (d.csprojRefs.some(ref => csprojContent.includes(ref))) matched = true;
+    }
+    // Check Cargo.toml references
+    if (!matched && d.cargoRefs?.length && cargoContent) {
+      if (d.cargoRefs.some(ref => cargoContent.includes(ref))) matched = true;
+    }
+    // Check Gemfile references
+    if (!matched && d.gemfileRefs?.length && gemfileContent) {
+      if (d.gemfileRefs.some(ref => gemfileContent.includes(ref))) matched = true;
+    }
+    // Check pom.xml references
+    if (!matched && d.pomRefs?.length && pomContent) {
+      if (d.pomRefs.some(ref => pomContent.includes(ref))) matched = true;
+    }
+    // Check Python deps
+    if (!matched && d.deps?.length && pythonDeps.size > 0) {
+      if (d.deps.some(dep => pythonDeps.has(dep.toLowerCase()))) matched = true;
+    }
+    // Check file extensions (e.g. .scss files)
+    if (!matched && d.fileExt) {
+      if (countFilesByExt(projectRoot, [d.fileExt], 2, 5) > 0) matched = true;
+    }
+    if (matched) found.push({ name: d.name, label: d.label });
+  }
+  return found;
+}
+
+// ---------------------------------------------------------------------------
 // Core discovery logic
 // ---------------------------------------------------------------------------
 
@@ -193,6 +463,11 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
     projectRoot: projectRoot,
     repository: {},
     techStacks: [],
+    frameworks: { frontend: [], backend: [], css: [], orm: [], stateManagement: [] },
+    testing: [],
+    documentation: [],
+    designSystem: [],
+    crosscutting: { logging: [], authentication: [], caching: [], errorHandling: [], apiPatterns: [], featureFlags: [] },
     infrastructure: [],
     cicd: [],
     monorepo: { detected: false, tools: [] },
@@ -228,6 +503,86 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   if (report.techStacks.length > 0) {
     const primary = report.techStacks.reduce((a, b) => a.fileCount > b.fileCount ? a : b);
     report.primaryStack = primary.name;
+  }
+
+  // --- Cache dependency data for framework detection ---
+  const nodeDeps = getNodeDeps(projectRoot);
+  const csprojContent = getCsprojContent(projectRoot);
+  const cargoContent = getCargoContent(projectRoot);
+  const gemfileContent = getGemfileContent(projectRoot);
+  const pomContent = getPomContent(projectRoot);
+  const pythonDeps = getPythonDeps(projectRoot);
+  const depContext = { nodeDeps, csprojContent, cargoContent, gemfileContent, pomContent, pythonDeps, projectRoot };
+
+  // --- Framework detection (§11a) ---
+  for (const [category, detectors] of Object.entries(FRAMEWORK_DETECTORS)) {
+    const found = detectFromList(detectors, depContext);
+    if (found.length > 0) {
+      report.frameworks[category] = found.map(f => f.name);
+    }
+  }
+
+  // --- Testing tool detection (§11b) ---
+  const testingFound = detectFromList(TESTING_DETECTORS, depContext);
+  report.testing = testingFound.map(t => t.name);
+
+  // --- Documentation artifact detection (§11c) ---
+  for (const detector of DOC_ARTIFACT_DETECTORS) {
+    let foundPath = null;
+    // Check directories
+    if (detector.dirs) {
+      for (const dir of detector.dirs) {
+        if (existsSync(resolve(projectRoot, dir))) {
+          foundPath = dir;
+          break;
+        }
+      }
+    }
+    // Check files
+    if (!foundPath && detector.files) {
+      for (const file of detector.files) {
+        if (existsSync(resolve(projectRoot, file))) {
+          foundPath = file;
+          break;
+        }
+      }
+    }
+    if (foundPath) {
+      report.documentation.push({ name: detector.name, label: detector.label, path: foundPath });
+    }
+  }
+
+  // --- Design system detection (§11d) ---
+  for (const detector of DESIGN_SYSTEM_DETECTORS) {
+    let found = false;
+    if (detector.dirs) {
+      for (const dir of detector.dirs) {
+        if (existsSync(resolve(projectRoot, dir))) { found = true; break; }
+      }
+    }
+    if (!found && detector.files) {
+      for (const file of detector.files) {
+        if (existsSync(resolve(projectRoot, file))) { found = true; break; }
+      }
+    }
+    if (found) {
+      report.designSystem.push(detector.name);
+    }
+  }
+
+  // --- Cross-cutting concern detection (§11f) ---
+  for (const [concern, detectors] of Object.entries(CROSSCUTTING_DETECTORS)) {
+    const found = detectFromList(detectors, depContext);
+    if (found.length > 0) {
+      report.crosscutting[concern] = found.map(f => f.name);
+    }
+  }
+
+  // --- Environment config detection ---
+  if (existsSync(resolve(projectRoot, '.env.example'))) {
+    report.crosscutting.envConfig = 'env-vars';
+  } else if (existsSync(resolve(projectRoot, 'appsettings.json'))) {
+    report.crosscutting.envConfig = 'config-files';
   }
 
   // --- Infrastructure detection ---
@@ -268,6 +623,9 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   if (!report.repository.agentkitOverlay) {
     report.recommendations.push('No .agentkit-repo marker found. Run "agentkit init" to set up an overlay.');
   }
+  if (report.testing.length === 0 && report.techStacks.length > 0) {
+    report.recommendations.push('No testing frameworks detected. Consider adding tests with vitest, jest, pytest, or xUnit.');
+  }
 
   // --- Output ---
   const format = flags?.output || 'yaml';
@@ -282,7 +640,8 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
 
   console.log('');
   console.log(output);
-  console.log(`[agentkit:discover] Found ${report.techStacks.length} tech stack(s), ${report.infrastructure.length} infra tool(s), ${report.cicd.length} CI/CD system(s).`);
+  const fwCount = Object.values(report.frameworks).flat().length;
+  console.log(`[agentkit:discover] Found ${report.techStacks.length} tech stack(s), ${fwCount} framework(s), ${report.testing.length} test tool(s), ${report.infrastructure.length} infra tool(s), ${report.cicd.length} CI/CD system(s).`);
 
   return report;
 }

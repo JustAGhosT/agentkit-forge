@@ -459,7 +459,13 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     primaryStack: overlaySettings.primaryStack || 'auto',
   };
 
+  // Resolve render targets — determines which tool outputs to generate
+  let targets = resolveRenderTargets(overlaySettings.renderTargets, flags);
+
   console.log(`[agentkit:sync] Repo: ${vars.repoName}, Version: ${version}`);
+  if (flags?.only) {
+    console.log(`[agentkit:sync] Syncing only: ${[...targets].join(', ')}`);
+  }
 
   // 4. Render templates to temp directory
   const tmpDir = resolve(agentkitRoot, '.tmp');
@@ -468,47 +474,46 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 
   const templatesDir = resolve(agentkitRoot, 'templates');
 
-  // --- Claude templates ---
-  syncDirectCopy(templatesDir, 'claude/hooks', tmpDir, '.claude/hooks', vars, version, repoName);
-  syncClaudeSettings(templatesDir, tmpDir, vars, version, mergedPermissions, settingsSpec);
-  syncClaudeCommands(templatesDir, tmpDir, vars, version, repoName, teamsSpec, commandsSpec);
-  syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec);
-  syncDirectCopy(templatesDir, 'claude/rules', tmpDir, '.claude/rules', vars, version, repoName);
-  syncDirectCopy(templatesDir, 'claude/state', tmpDir, '.claude/state', vars, version, repoName);
-
-  // --- Cursor templates ---
-  syncDirectCopy(templatesDir, 'cursor/rules', tmpDir, '.cursor/rules', vars, version, repoName);
-  syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec);
-
-  // --- Windsurf templates ---
-  syncDirectCopy(templatesDir, 'windsurf/rules', tmpDir, '.windsurf/rules', vars, version, repoName);
-  syncDirectCopy(templatesDir, 'windsurf/workflows', tmpDir, '.windsurf/workflows', vars, version, repoName);
-  syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec);
-
-  // --- .ai templates ---
-  syncDirectCopy(templatesDir, 'ai', tmpDir, '.ai', vars, version, repoName);
-
-  // --- Copilot templates ---
-  syncCopilot(templatesDir, tmpDir, vars, version, repoName);
-
-  // --- MCP templates ---
-  syncDirectCopy(templatesDir, 'mcp', tmpDir, 'mcp', vars, version, repoName);
-
-  // --- GitHub templates ---
-  syncGitHub(templatesDir, tmpDir, vars, version, repoName);
-
-  // --- Root docs ---
+  // --- Always-on outputs (not gated by renderTargets) ---
   syncRootDocs(templatesDir, tmpDir, vars, version, repoName);
-
-  // --- Claude.md (special: goes to project root) ---
-  syncClaudeMd(templatesDir, tmpDir, vars, version, repoName);
-
-  // --- Docs structure ---
+  syncGitHub(templatesDir, tmpDir, vars, version, repoName);
   syncDirectCopy(templatesDir, 'docs', tmpDir, 'docs', vars, version, repoName);
-
-  // --- VS Code + editor configs ---
   syncDirectCopy(templatesDir, 'vscode', tmpDir, '.vscode', vars, version, repoName);
   syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName);
+
+  // --- Gated by renderTargets ---
+  if (targets.has('claude')) {
+    syncDirectCopy(templatesDir, 'claude/hooks', tmpDir, '.claude/hooks', vars, version, repoName);
+    syncClaudeSettings(templatesDir, tmpDir, vars, version, mergedPermissions, settingsSpec);
+    syncClaudeCommands(templatesDir, tmpDir, vars, version, repoName, teamsSpec, commandsSpec);
+    syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec);
+    syncDirectCopy(templatesDir, 'claude/rules', tmpDir, '.claude/rules', vars, version, repoName);
+    syncDirectCopy(templatesDir, 'claude/state', tmpDir, '.claude/state', vars, version, repoName);
+    syncClaudeMd(templatesDir, tmpDir, vars, version, repoName);
+  }
+
+  if (targets.has('cursor')) {
+    syncDirectCopy(templatesDir, 'cursor/rules', tmpDir, '.cursor/rules', vars, version, repoName);
+    syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec);
+  }
+
+  if (targets.has('windsurf')) {
+    syncDirectCopy(templatesDir, 'windsurf/rules', tmpDir, '.windsurf/rules', vars, version, repoName);
+    syncDirectCopy(templatesDir, 'windsurf/workflows', tmpDir, '.windsurf/workflows', vars, version, repoName);
+    syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec);
+  }
+
+  if (targets.has('ai')) {
+    syncDirectCopy(templatesDir, 'ai', tmpDir, '.ai', vars, version, repoName);
+  }
+
+  if (targets.has('copilot')) {
+    syncCopilot(templatesDir, tmpDir, vars, version, repoName);
+  }
+
+  if (targets.has('mcp')) {
+    syncDirectCopy(templatesDir, 'mcp', tmpDir, 'mcp', vars, version, repoName);
+  }
 
   // 5. Load previous manifest for stale file cleanup
   const manifestPath = resolve(agentkitRoot, '.manifest.json');
@@ -622,6 +627,29 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 // ---------------------------------------------------------------------------
 // Sync helpers
 // ---------------------------------------------------------------------------
+
+/** All known render target names. */
+const ALL_RENDER_TARGETS = ['claude', 'cursor', 'windsurf', 'copilot', 'gemini', 'codex', 'warp', 'cline', 'roo', 'ai', 'mcp'];
+
+/**
+ * Resolves the active render targets from overlay settings + CLI flags.
+ * - If --only flag is set, use only those targets (comma-separated)
+ * - If renderTargets is defined and non-empty in overlay, use those
+ * - If renderTargets is missing/empty, default to ALL (backward compat)
+ */
+function resolveRenderTargets(overlayTargets, flags) {
+  // --only flag overrides everything
+  if (flags?.only) {
+    const onlyTargets = String(flags.only).split(',').map(t => t.trim()).filter(Boolean);
+    return new Set(onlyTargets);
+  }
+  // Overlay renderTargets
+  if (Array.isArray(overlayTargets) && overlayTargets.length > 0) {
+    return new Set(overlayTargets);
+  }
+  // Default: generate everything (backward compatibility)
+  return new Set(ALL_RENDER_TARGETS);
+}
 
 function mergePermissions(base, overlay) {
   const allow = [...new Set([...(base.allow || []), ...(overlay.allow || [])])];
@@ -962,5 +990,5 @@ export {
   renderTemplate, sanitizeTemplateValue, getCommentStyle, getGeneratedHeader,
   mergePermissions, insertHeader, isScaffoldOnce,
   flattenProjectYaml, resolveConditionals, resolveEachBlocks, evalTruthy,
-  flattenCrosscutting,
+  flattenCrosscutting, resolveRenderTargets, ALL_RENDER_TARGETS,
 };
