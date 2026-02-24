@@ -21,9 +21,13 @@ describe('runHealthcheck()', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
+    // Use a temp directory without stack markers (package.json, Cargo.toml, etc.)
+    // so the healthcheck skips expensive build/test/lint commands that cause timeouts.
+    mkdirSync(TEST_ROOT, { recursive: true });
+
     const result = await runHealthcheck({
       agentkitRoot: AGENTKIT_ROOT,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: TEST_ROOT,
       flags: {},
     });
 
