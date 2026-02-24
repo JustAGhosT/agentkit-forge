@@ -52,8 +52,8 @@ function renderTemplate(template, vars) {
     result = result.split(placeholder).join(safeValue);
   }
 
-  // Warn about unresolved placeholders (ignore block syntax remnants)
-  const unresolved = result.match(/\{\{(?!#|\/)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g);
+  // Warn about unresolved placeholders (ignore block syntax remnants, including {{else}})
+  const unresolved = result.match(/\{\{(?!#|\/|else\}\})([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g);
   if (unresolved && process.env.DEBUG) {
     const unique = [...new Set(unresolved)];
     console.warn(`[agentkit:sync] Warning: unresolved placeholders: ${unique.join(', ')}`);
@@ -75,15 +75,24 @@ function resolveConditionals(template, vars) {
   while (ifRegex.test(result) && safety-- > 0) {
     result = result.replace(ifRegex, (_, varName, body) => {
       const isTruthy = evalTruthy(vars[varName]);
-      // Split on {{else}} if present
-      const elseParts = body.split('{{else}}');
-      if (isTruthy) {
-        return elseParts[0];
-      } else {
-        return elseParts.length > 1 ? elseParts[1] : '';
+      // Split only on the first {{else}} to avoid matching multiple occurrences
+      const elseMarker = '{{else}}';
+      const elseIndex = body.indexOf(elseMarker);
+      if (elseIndex === -1) {
+        return isTruthy ? body : '';
       }
+      return isTruthy ? body.slice(0, elseIndex) : body.slice(elseIndex + elseMarker.length);
     });
     ifRegex.lastIndex = 0;
+  }
+  if (safety <= 0 && process.env.DEBUG) {
+    const unresolvedIfRegex = /\{\{#if\s+([a-zA-Z_][a-zA-Z0-9_]*)\}\}/;
+    if (unresolvedIfRegex.test(result)) {
+      console.warn(
+        'AgentKit Forge: unresolved {{#if}} blocks remain after hitting the safety limit. ' +
+        'The template may be malformed or excessively nested.'
+      );
+    }
   }
   return result;
 }
@@ -144,6 +153,9 @@ function flattenProjectYaml(project) {
   if (project.phase) vars.projectPhase = project.phase;
 
   // Stack
+  // NOTE: For arrays (e.g., languages, database), vars are set to the joined string (or '' for empty).
+  // Both undefined and '' are falsy for {{#if}} and produce empty output for {{#each}},
+  // so template behaviour is the same whether the field is absent or empty.
   const stack = project.stack || {};
   if (Array.isArray(stack.languages)) vars.stackLanguages = stack.languages.join(', ');
   if (stack.frameworks) {
@@ -153,6 +165,9 @@ function flattenProjectYaml(project) {
     if (Array.isArray(fw.css)) vars.stackCssFrameworks = fw.css.join(', ');
   }
   if (stack.orm) vars.stackOrm = String(stack.orm);
+  // `database` and `messaging` are defined as arrays in the spec; non-array values
+  // should be caught by validation. These else-if branches are intentional defensive
+  // fallbacks for partial/legacy configs where a string was provided instead of an array.
   if (Array.isArray(stack.database)) vars.stackDatabase = stack.database.join(', ');
   else if (stack.database) vars.stackDatabase = String(stack.database);
   if (stack.search) vars.stackSearch = String(stack.search);
