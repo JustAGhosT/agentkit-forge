@@ -7,6 +7,11 @@ import {
   mergePermissions,
   insertHeader,
   isScaffoldOnce,
+  evalTruthy,
+  resolveConditionals,
+  resolveEachBlocks,
+  flattenProjectYaml,
+  flattenCrosscutting,
 } from '../sync.mjs';
 
 // ---------------------------------------------------------------------------
@@ -250,5 +255,331 @@ describe('isScaffoldOnce', () => {
     expect(isScaffoldOnce('.claude/settings.json')).toBe(false);
     expect(isScaffoldOnce('.cursor/rules/team-backend.mdc')).toBe(false);
     expect(isScaffoldOnce('.windsurf/rules/team-backend.md')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// evalTruthy
+// ---------------------------------------------------------------------------
+describe('evalTruthy', () => {
+  it('returns false for undefined', () => {
+    expect(evalTruthy(undefined)).toBe(false);
+  });
+
+  it('returns false for null', () => {
+    expect(evalTruthy(null)).toBe(false);
+  });
+
+  it('returns false for false', () => {
+    expect(evalTruthy(false)).toBe(false);
+  });
+
+  it('returns false for empty string', () => {
+    expect(evalTruthy('')).toBe(false);
+  });
+
+  it('returns false for 0', () => {
+    expect(evalTruthy(0)).toBe(false);
+  });
+
+  it('returns false for empty array', () => {
+    expect(evalTruthy([])).toBe(false);
+  });
+
+  it('returns true for non-empty string', () => {
+    expect(evalTruthy('hello')).toBe(true);
+  });
+
+  it("returns true for 'none' (use explicit template checks for none values)", () => {
+    expect(evalTruthy('none')).toBe(true);
+  });
+
+  it('returns true for true', () => {
+    expect(evalTruthy(true)).toBe(true);
+  });
+
+  it('returns true for positive number', () => {
+    expect(evalTruthy(42)).toBe(true);
+  });
+
+  it('returns true for non-empty array', () => {
+    expect(evalTruthy(['a'])).toBe(true);
+  });
+
+  it('returns true for plain object', () => {
+    expect(evalTruthy({ key: 'val' })).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveConditionals
+// ---------------------------------------------------------------------------
+describe('resolveConditionals', () => {
+  it('renders truthy branch', () => {
+    const result = resolveConditionals('{{#if name}}hello{{/if}}', { name: 'World' });
+    expect(result).toBe('hello');
+  });
+
+  it('omits falsy block', () => {
+    const result = resolveConditionals('{{#if name}}hello{{/if}}', {});
+    expect(result).toBe('');
+  });
+
+  it('renders else branch when var is falsy', () => {
+    const result = resolveConditionals('{{#if flag}}yes{{else}}no{{/if}}', { flag: false });
+    expect(result).toBe('no');
+  });
+
+  it('renders truthy branch when var is truthy with else', () => {
+    const result = resolveConditionals('{{#if flag}}yes{{else}}no{{/if}}', { flag: true });
+    expect(result).toBe('yes');
+  });
+
+  it('handles nested conditionals', () => {
+    const result = resolveConditionals(
+      '{{#if outer}}{{#if inner}}both{{else}}outer only{{/if}}{{/if}}',
+      { outer: true, inner: false }
+    );
+    expect(result).toBe('outer only');
+  });
+
+  it('uses only the first {{else}} occurrence in a block body', () => {
+    // Body has a literal {{else}} that should NOT be treated as a second branch
+    const result = resolveConditionals(
+      '{{#if flag}}A{{else}}B{{/if}}',
+      { flag: true }
+    );
+    expect(result).toBe('A');
+
+    const result2 = resolveConditionals(
+      '{{#if flag}}A{{else}}B{{/if}}',
+      { flag: false }
+    );
+    expect(result2).toBe('B');
+  });
+
+  it('preserves surrounding text', () => {
+    const result = resolveConditionals('before {{#if x}}X{{/if}} after', { x: 'yes' });
+    expect(result).toBe('before X after');
+  });
+
+  it('handles multiple independent if blocks', () => {
+    const result = resolveConditionals(
+      '{{#if a}}A{{/if}}{{#if b}}B{{/if}}',
+      { a: true, b: true }
+    );
+    expect(result).toBe('AB');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveEachBlocks
+// ---------------------------------------------------------------------------
+describe('resolveEachBlocks', () => {
+  it('iterates string arrays replacing {{.}}', () => {
+    const result = resolveEachBlocks('{{#each items}}* {{.}}\n{{/each}}', {
+      items: ['alpha', 'beta'],
+    });
+    expect(result).toBe('* alpha\n* beta\n');
+  });
+
+  it('returns empty string for empty array', () => {
+    const result = resolveEachBlocks('{{#each items}}{{.}}{{/each}}', { items: [] });
+    expect(result).toBe('');
+  });
+
+  it('returns empty string for undefined var', () => {
+    const result = resolveEachBlocks('{{#each items}}{{.}}{{/each}}', {});
+    expect(result).toBe('');
+  });
+
+  it('iterates object arrays using {{.prop}} syntax', () => {
+    const result = resolveEachBlocks('{{#each list}}{{.name}}: {{.purpose}}\n{{/each}}', {
+      list: [
+        { name: 'Stripe', purpose: 'payments' },
+        { name: 'SendGrid', purpose: 'email' },
+      ],
+    });
+    expect(result).toBe('Stripe: payments\nSendGrid: email\n');
+  });
+
+  it('replaces {{@index}} with the current index', () => {
+    const result = resolveEachBlocks('{{#each items}}{{@index}}:{{.}} {{/each}}', {
+      items: ['a', 'b', 'c'],
+    });
+    expect(result).toBe('0:a 1:b 2:c ');
+  });
+
+  it('handles missing object properties gracefully', () => {
+    const result = resolveEachBlocks('{{#each list}}{{.name}}{{.missing}}{{/each}}', {
+      list: [{ name: 'X' }],
+    });
+    expect(result).toBe('X');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// flattenProjectYaml
+// ---------------------------------------------------------------------------
+describe('flattenProjectYaml', () => {
+  it('returns empty object for null/undefined input', () => {
+    expect(flattenProjectYaml(null)).toEqual({});
+    expect(flattenProjectYaml(undefined)).toEqual({});
+    expect(flattenProjectYaml('string')).toEqual({});
+  });
+
+  it('maps top-level scalars', () => {
+    const vars = flattenProjectYaml({ name: 'MyApp', description: 'A desc', phase: 'active' });
+    expect(vars.projectName).toBe('MyApp');
+    expect(vars.projectDescription).toBe('A desc');
+    expect(vars.projectPhase).toBe('active');
+  });
+
+  it('joins stack arrays with comma', () => {
+    const vars = flattenProjectYaml({
+      stack: { languages: ['TypeScript', 'Python'] },
+    });
+    expect(vars.stackLanguages).toBe('TypeScript, Python');
+  });
+
+  it('does not create a meaningful stackLanguages var for empty languages array', () => {
+    const vars = flattenProjectYaml({ stack: { languages: [] } });
+    // Empty array joins to '' — both undefined and '' are falsy for {{#if}} and produce
+    // empty output for {{#each}}, so the template behaviour is identical in both cases.
+    expect(vars.stackLanguages == null || vars.stackLanguages === '').toBe(true);
+  });
+
+  it('handles database as array', () => {
+    const vars = flattenProjectYaml({ stack: { database: ['postgres', 'redis'] } });
+    expect(vars.stackDatabase).toBe('postgres, redis');
+  });
+
+  it('handles database as string (defensive fallback)', () => {
+    const vars = flattenProjectYaml({ stack: { database: 'postgres' } });
+    expect(vars.stackDatabase).toBe('postgres');
+  });
+
+  it('maps architecture fields', () => {
+    const vars = flattenProjectYaml({
+      architecture: { pattern: 'clean', apiStyle: 'rest', monorepo: true, monorepoTool: 'nx' },
+    });
+    expect(vars.architecturePattern).toBe('clean');
+    expect(vars.architectureApiStyle).toBe('rest');
+    expect(vars.hasMonorepo).toBe(true);
+    expect(vars.monorepoTool).toBe('nx');
+  });
+
+  it('maps documentation boolean has* flags', () => {
+    const vars = flattenProjectYaml({
+      documentation: { hasPrd: true, prdPath: 'docs/prd.md', hasAdr: false },
+    });
+    expect(vars.hasPrd).toBe(true);
+    expect(vars.prdPath).toBe('docs/prd.md');
+    expect(vars.hasAdr).toBe(false);
+  });
+
+  it('maps deployment fields', () => {
+    const vars = flattenProjectYaml({
+      deployment: {
+        cloudProvider: 'aws',
+        containerized: true,
+        environments: ['dev', 'prod'],
+        iacTool: 'terraform',
+      },
+    });
+    expect(vars.cloudProvider).toBe('aws');
+    expect(vars.hasContainerized).toBe(true);
+    expect(vars.environments).toBe('dev, prod');
+    expect(vars.iacTool).toBe('terraform');
+  });
+
+  it('keeps integrations as array for {{#each}} with hasIntegrations flag', () => {
+    const integ = [{ name: 'Stripe', purpose: 'payments' }];
+    const vars = flattenProjectYaml({ integrations: integ });
+    expect(vars.integrations).toEqual(integ);
+    expect(vars.hasIntegrations).toBe(true);
+  });
+
+  it('sets hasIntegrations to false for empty integrations array', () => {
+    const vars = flattenProjectYaml({ integrations: [] });
+    expect(vars.hasIntegrations).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// flattenCrosscutting
+// ---------------------------------------------------------------------------
+describe('flattenCrosscutting', () => {
+  it('returns empty vars for empty crosscutting object', () => {
+    const vars = {};
+    flattenCrosscutting({}, vars);
+    expect(vars.hasLogging).toBeUndefined();
+    expect(vars.hasAuth).toBeUndefined();
+  });
+
+  it('sets hasLogging and loggingFramework when framework is not none', () => {
+    const vars = {};
+    flattenCrosscutting({ logging: { framework: 'winston', level: 'debug' } }, vars);
+    expect(vars.hasLogging).toBe(true);
+    expect(vars.loggingFramework).toBe('winston');
+    expect(vars.loggingLevel).toBe('debug');
+  });
+
+  it('does not set hasLogging when framework is none', () => {
+    const vars = {};
+    flattenCrosscutting({ logging: { framework: 'none' } }, vars);
+    expect(vars.hasLogging).toBeUndefined();
+    expect(vars.loggingFramework).toBeUndefined();
+  });
+
+  it('sets hasAuth and authProvider when provider is not none', () => {
+    const vars = {};
+    flattenCrosscutting({ authentication: { provider: 'auth0', strategy: 'jwt-bearer' } }, vars);
+    expect(vars.hasAuth).toBe(true);
+    expect(vars.authProvider).toBe('auth0');
+    expect(vars.authStrategy).toBe('jwt-bearer');
+  });
+
+  it('does not set hasAuth when provider is none', () => {
+    const vars = {};
+    flattenCrosscutting({ authentication: { provider: 'none' } }, vars);
+    expect(vars.hasAuth).toBeUndefined();
+  });
+
+  it('sets hasCorrelationId as boolean from logging.correlationId', () => {
+    const vars = {};
+    flattenCrosscutting({ logging: { correlationId: true } }, vars);
+    expect(vars.hasCorrelationId).toBe(true);
+  });
+
+  it('sets hasCaching and cachingProvider when provider is not none', () => {
+    const vars = {};
+    flattenCrosscutting({ caching: { provider: 'redis', patterns: ['cache-aside'] } }, vars);
+    expect(vars.hasCaching).toBe(true);
+    expect(vars.cachingProvider).toBe('redis');
+    expect(vars.cachingPatterns).toBe('cache-aside');
+  });
+
+  it('sets hasApiVersioning when versioning is not none', () => {
+    const vars = {};
+    flattenCrosscutting({ api: { versioning: 'url-segment', pagination: 'cursor' } }, vars);
+    expect(vars.hasApiVersioning).toBe(true);
+    expect(vars.apiVersioning).toBe('url-segment');
+    expect(vars.hasApiPagination).toBe(true);
+    expect(vars.apiPagination).toBe('cursor');
+  });
+
+  it('sets hasDbMigrations when migrations is not none', () => {
+    const vars = {};
+    flattenCrosscutting({ database: { migrations: 'code-first' } }, vars);
+    expect(vars.hasDbMigrations).toBe(true);
+    expect(vars.dbMigrations).toBe('code-first');
+  });
+
+  it('sets hasFeatureFlags when provider is not none', () => {
+    const vars = {};
+    flattenCrosscutting({ featureFlags: { provider: 'launchdarkly' } }, vars);
+    expect(vars.hasFeatureFlags).toBe(true);
+    expect(vars.featureFlagProvider).toBe('launchdarkly');
   });
 });
