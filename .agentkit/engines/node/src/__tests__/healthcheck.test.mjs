@@ -137,6 +137,16 @@ describe('runHealthcheck()', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
+    // Mock tool detection to avoid spawning real processes (slow on Windows CI)
+    vi.spyOn(runner, 'commandExists').mockReturnValue(false);
+    vi.spyOn(runner, 'execCommand').mockReturnValue({
+      exitCode: 1, stdout: '', stderr: '', durationMs: 0,
+    });
+
+    vi.spyOn(orchestrator, 'loadState').mockReturnValue({});
+    vi.spyOn(orchestrator, 'saveState').mockImplementation(() => {});
+    vi.spyOn(orchestrator, 'appendEvent').mockImplementation(() => {});
+
     const result = await runHealthcheck({
       agentkitRoot: AGENTKIT_ROOT,
       projectRoot: TEST_ROOT,

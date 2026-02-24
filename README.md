@@ -347,9 +347,14 @@ The `.agentkit/` directory is **not** scaffolding you delete after setup. It sta
 - The CI pipeline validates that your specs and generated outputs stay consistent
 
 **What NOT to commit:**
-- Generated AI tool configs (`.claude/`, `.cursor/`, `.windsurf/`, etc.) are gitignored
+- Always-regenerate AI tool configs (`.claude/`, `.cursor/`, `.windsurf/`, `CLAUDE.md`, etc.) — gitignored, rebuilt every sync
 - `.agentkit/node_modules/` is gitignored
 - `.agentkit/logs/` is gitignored
+
+**What to commit after first sync (scaffold-once):**
+- `docs/`, `AGENT_BACKLOG.md`, `CONTRIBUTING.md`, `SECURITY.md` — generated once, then owned by your project
+- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md` — generated once
+- `.vscode/`, `.editorconfig`, `.prettierrc` — generated once
 
 **First-run expectations:** The first `/orchestrate` run on a new repo will produce a backlog (`AGENT_BACKLOG.md`) that may include items about the agentkit framework itself (e.g., "no app source code exists", "scaffold README"). These are expected for a fresh project — they reflect the consuming repo's current state, not problems with the agentkit.
 
@@ -393,6 +398,8 @@ pnpm -C .agentkit agentkit:validate
 git add .agentkit/ .gitignore .gitattributes
 git commit -m "chore: upgrade agentkit-forge to latest"
 ```
+
+> **Note:** If the upgrade adds new scaffold-once files (docs, templates, editor configs), they will appear as untracked after your first `sync`. This is expected — review them and `git add` the ones you want to keep. Subsequent syncs will not overwrite them.
 
 ### What merges cleanly vs. what needs attention
 

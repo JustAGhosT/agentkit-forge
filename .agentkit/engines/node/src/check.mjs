@@ -323,7 +323,7 @@ export async function runCheck({ agentkitRoot, projectRoot, flags = {} }) {
       })),
       flags: { fix: !!flags.fix, fast: !!flags.fast, stack: flags.stack || null },
     });
-  } catch (err) { console.warn(`[agentkit:check] Event logging failed: ${err.message}`); }
+  } catch (err) { console.warn(`[agentkit:check] Event logging failed: ${err?.message ?? String(err)}`); }
 
   return { stacks: allResults, overallStatus, overallPassed };
 }

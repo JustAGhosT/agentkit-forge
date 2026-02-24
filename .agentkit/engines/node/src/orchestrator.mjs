@@ -54,8 +54,9 @@ export function loadTeamIdsFromSpec(agentkitRoot) {
       }
     }
   } catch (err) {
-    console.warn(`[agentkit:orchestrate] Could not load teams from spec: ${err.message}`);
+    console.warn(`[agentkit:orchestrate] Could not load teams from spec: ${err?.message ?? String(err)}`);
   }
+  VALID_TEAM_IDS = [...DEFAULT_TEAM_IDS];
   _teamIdsInitialized = true;
   return DEFAULT_TEAM_IDS;
 }
@@ -405,7 +406,8 @@ function getNextAction(phase) {
  * @param {string} [notes]
  * @returns {{ state: object, error?: string }}
  */
-export function updateTeamStatus(state, teamId, status, notes) {
+export function updateTeamStatus(state, teamId, status, notes, agentkitRoot) {
+  if (agentkitRoot) ensureTeamIds(agentkitRoot);
   if (!VALID_TEAM_IDS.includes(teamId)) {
     return { state, error: `Unknown team: ${teamId}. Valid teams: ${VALID_TEAM_IDS.join(', ')}` };
   }
@@ -437,7 +439,8 @@ export function updateTeamStatus(state, teamId, status, notes) {
  * @param {string} projectRoot
  * @returns {string}
  */
-export function getStatus(projectRoot) {
+export function getStatus(projectRoot, agentkitRoot) {
+  if (agentkitRoot) ensureTeamIds(agentkitRoot);
   const state = loadState(projectRoot);
   const lockStatus = checkLock(projectRoot);
   const events = readEvents(projectRoot, 5);

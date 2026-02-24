@@ -17,10 +17,12 @@ function getGitState(projectRoot) {
 
   // Current branch
   const branchResult = execCommand('git rev-parse --abbrev-ref HEAD', { cwd: projectRoot });
-  if (branchResult.exitCode !== 0) {
+  if (branchResult.exitCode === 0) {
+    git.branch = branchResult.stdout.trim();
+  } else {
     console.warn('[agentkit:handoff] Could not determine git branch (is this a git repo?)');
+    git.branch = 'unknown';
   }
-  git.branch = branchResult.exitCode === 0 ? branchResult.stdout.trim() : 'unknown';
 
   // Last commit
   const logResult = execCommand('git log -1 --format="%h %s"', { cwd: projectRoot });
@@ -197,7 +199,7 @@ export async function runHandoff({ agentkitRoot, projectRoot, flags = {} }) {
       phase: state.current_phase,
       saved: !!flags.save,
     });
-  } catch (err) { console.warn(`[agentkit:handoff] Event logging failed: ${err.message}`); }
+  } catch (err) { console.warn(`[agentkit:handoff] Event logging failed: ${err?.message ?? String(err)}`); }
 
   return {
     timestamp,

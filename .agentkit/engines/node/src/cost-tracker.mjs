@@ -7,7 +7,7 @@
  * are not available. This tracks operational metrics (session duration, commands
  * run, files modified) which are useful for understanding usage patterns.
  */
-import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, renameSync } from 'fs';
 import { resolve, basename } from 'path';
 import { execSync } from 'child_process';
 import { formatTimestamp } from './runner.mjs';
@@ -24,6 +24,7 @@ import { formatTimestamp } from './runner.mjs';
  * @returns {number}
  */
 function parsePeriodDays(period) {
+  if (typeof period === 'number') return period > 0 ? Math.floor(period) : 7;
   if (typeof period !== 'string') return 7;
   const match = /^(\d+)d?$/i.exec(period.trim());
   if (!match) {
@@ -205,13 +206,16 @@ export function recordCommand(agentkitRoot, command) {
   for (const file of files) {
     try {
       const filePath = resolve(dir, file);
-      const session = JSON.parse(readFileSync(filePath, 'utf-8'));
+      const raw = readFileSync(filePath, 'utf-8');
+      const session = JSON.parse(raw);
       if (session.status === 'active') {
         session.commandsRun = session.commandsRun || [];
         session.commandsRun.push({ command, timestamp: new Date().toISOString() });
-        writeFileSync(filePath, JSON.stringify(session, null, 2) + '\n', 'utf-8');
+        // Atomic write: temp file + rename to prevent partial reads
+        const tmpPath = filePath + '.tmp';
+        writeFileSync(tmpPath, JSON.stringify(session, null, 2) + '\n', 'utf-8');
+        renameSync(tmpPath, filePath);
 
-        // Also log as event for aggregate reporting
         logEvent(agentkitRoot, { event: 'command_run', command, sessionId: session.sessionId });
         return;
       }

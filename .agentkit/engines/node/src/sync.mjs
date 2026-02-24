@@ -117,10 +117,12 @@ const SCAFFOLD_ONCE_GITHUB_FILES = new Set([
  * These are only written on first sync; subsequent syncs skip them if they exist.
  */
 function isScaffoldOnce(relPath) {
-  if (SCAFFOLD_ONCE_ROOT_FILES.has(relPath)) return true;
-  if (SCAFFOLD_ONCE_GITHUB_FILES.has(relPath)) return true;
+  // Normalize Windows backslashes to forward slashes for consistent matching
+  const normalized = relPath.replace(/\\/g, '/');
+  if (SCAFFOLD_ONCE_ROOT_FILES.has(normalized)) return true;
+  if (SCAFFOLD_ONCE_GITHUB_FILES.has(normalized)) return true;
   for (const dir of SCAFFOLD_ONCE_DIRS) {
-    if (relPath.startsWith(dir)) return true;
+    if (normalized.startsWith(dir)) return true;
   }
   return false;
 }

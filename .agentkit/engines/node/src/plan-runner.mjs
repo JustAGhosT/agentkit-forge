@@ -82,10 +82,14 @@ function readBacklog(projectRoot) {
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Detect table header row (contains at least two pipe-delimited cells)
-    if (!inTable && trimmed.startsWith('|') && (trimmed.includes(' ID ') || trimmed.includes(' id '))) {
-      headerCols = trimmed.split('|').map(c => c.trim().toLowerCase()).filter(Boolean);
-      continue;
+    // Detect table header row — match any pipe-delimited header containing common
+    // backlog columns (ID, Priority, Task, Status, Team, etc.)
+    if (!inTable && trimmed.startsWith('|')) {
+      const cols = trimmed.split('|').map(c => c.trim().toLowerCase()).filter(Boolean);
+      if (cols.some(c => c === 'id' || c === 'priority' || c === 'task' || c === 'status')) {
+        headerCols = cols;
+        continue;
+      }
     }
 
     // Skip separator rows like |---|---|
@@ -213,7 +217,7 @@ export async function runPlan({ projectRoot, flags = {} }) {
   // Log event
   try {
     appendEvent(projectRoot, 'plan_viewed', { phase, phase_name: state.phase_name });
-  } catch (err) { console.warn(`[agentkit:plan] Event logging failed: ${err.message}`); }
+  } catch (err) { console.warn(`[agentkit:plan] Event logging failed: ${err?.message ?? String(err)}`); }
 
   return {
     phase,
