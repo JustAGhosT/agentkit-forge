@@ -52,8 +52,8 @@ function renderTemplate(template, vars) {
     result = result.split(placeholder).join(safeValue);
   }
 
-  // Warn about unresolved placeholders (ignore block syntax remnants)
-  const unresolved = result.match(/\{\{(?!#|\/)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g);
+  // Warn about unresolved placeholders (ignore block syntax remnants, including {{else}})
+  const unresolved = result.match(/\{\{(?!#|\/|else\}\})([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g);
   if (unresolved && process.env.DEBUG) {
     const unique = [...new Set(unresolved)];
     console.warn(`[agentkit:sync] Warning: unresolved placeholders: ${unique.join(', ')}`);
@@ -75,13 +75,13 @@ function resolveConditionals(template, vars) {
   while (ifRegex.test(result) && safety-- > 0) {
     result = result.replace(ifRegex, (_, varName, body) => {
       const isTruthy = evalTruthy(vars[varName]);
-      // Split on {{else}} if present
-      const elseParts = body.split('{{else}}');
-      if (isTruthy) {
-        return elseParts[0];
-      } else {
-        return elseParts.length > 1 ? elseParts[1] : '';
+      // Split only on the first {{else}} to avoid matching multiple occurrences
+      const elseMarker = '{{else}}';
+      const elseIndex = body.indexOf(elseMarker);
+      if (elseIndex === -1) {
+        return isTruthy ? body : '';
       }
+      return isTruthy ? body.slice(0, elseIndex) : body.slice(elseIndex + elseMarker.length);
     });
     ifRegex.lastIndex = 0;
   }
