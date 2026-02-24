@@ -29,6 +29,8 @@ function buildSteps(stack, flags) {
       const resolved = resolveFormatter(stack.formatter);
       if (!isValidCommand(stack.formatter) && !isValidCommand(resolved)) {
         console.warn(`[agentkit:check] Skipping invalid formatter command: ${stack.formatter}`);
+      } else if (!isAllowedFormatter(resolved)) {
+        console.warn(`[agentkit:check] Skipping unrecognized formatter: ${stack.formatter}`);
       } else {
         const fixCmd = flags.fix ? `${resolved} --write .` : null;
         steps.push({
@@ -89,6 +91,14 @@ function buildSteps(stack, flags) {
   return steps;
 }
 
+// Allowed formatter base executables. Values from the YAML spec must resolve to
+// one of these (after resolveFormatter mapping) to prevent a compromised spec
+// from executing arbitrary binaries.
+const ALLOWED_FORMATTER_BASES = new Set([
+  'npx', 'prettier', 'black', 'cargo', 'dotnet', 'gofmt', 'rustfmt',
+  'clang-format', 'autopep8', 'yapf', 'isort', 'shfmt', 'stylua',
+]);
+
 function resolveFormatter(formatter) {
   // Map shorthand names to full commands
   const map = {
@@ -98,6 +108,16 @@ function resolveFormatter(formatter) {
     'dotnet format': 'dotnet format',
   };
   return map[formatter] || formatter;
+}
+
+/**
+ * Check if a resolved formatter command uses an allowed base executable.
+ * @param {string} resolved - The resolved formatter command string
+ * @returns {boolean}
+ */
+function isAllowedFormatter(resolved) {
+  const base = resolved.split(/\s+/)[0];
+  return ALLOWED_FORMATTER_BASES.has(base);
 }
 
 // ---------------------------------------------------------------------------

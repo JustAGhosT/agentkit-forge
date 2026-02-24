@@ -111,6 +111,35 @@ describe('review-runner', () => {
       ).rejects.toThrow('Invalid --range value');
     });
 
+    it('rejects excessively long --range values', async () => {
+      setupTestRepo();
+
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const longRange = 'a'.repeat(257) + '..HEAD';
+      await expect(
+        runReview({
+          agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+          projectRoot: TEST_ROOT,
+          flags: { range: longRange },
+        })
+      ).rejects.toThrow('Invalid --range value');
+    });
+
+    it('rejects --range with reflog @{} syntax', async () => {
+      setupTestRepo();
+
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      await expect(
+        runReview({
+          agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+          projectRoot: TEST_ROOT,
+          flags: { range: 'HEAD@{1}..HEAD' },
+        })
+      ).rejects.toThrow('Invalid --range value');
+    });
+
     it('accepts valid range notation', async () => {
       setupTestRepo();
 
