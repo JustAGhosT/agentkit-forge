@@ -21,6 +21,9 @@
     "agentkit:add": "node engines/node/src/cli.mjs add",
     "agentkit:remove": "node engines/node/src/cli.mjs remove",
     "agentkit:list": "node engines/node/src/cli.mjs list",
+    "agentkit:healthcheck": "node engines/node/src/cli.mjs healthcheck",
+    "agentkit:check": "node engines/node/src/cli.mjs check",
+    "agentkit:cost": "node engines/node/src/cli.mjs cost",
     "test": "vitest run",
     "test:watch": "vitest"
   },
