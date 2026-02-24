@@ -94,9 +94,23 @@ const SCAFFOLD_ONCE_ROOT_FILES = new Set([
   'CONTRIBUTING.md',
   'MIGRATIONS.md',
   'SECURITY.md',
+  '.editorconfig',
+  '.prettierrc',
+  '.markdownlint.json',
 ]);
 
-const SCAFFOLD_ONCE_DIRS = ['docs/'];
+const SCAFFOLD_ONCE_DIRS = [
+  'docs/',
+  '.vscode/',
+  '.github/ISSUE_TEMPLATE/',
+  '.github/instructions/',
+];
+
+// GitHub root files that are scaffold-once (matched by full relative path)
+const SCAFFOLD_ONCE_GITHUB_FILES = new Set([
+  '.github/PULL_REQUEST_TEMPLATE.md',
+  '.github/copilot-instructions.md',
+]);
 
 /**
  * Check if a relative path is a scaffold-once file (project-owned content).
@@ -104,6 +118,7 @@ const SCAFFOLD_ONCE_DIRS = ['docs/'];
  */
 function isScaffoldOnce(relPath) {
   if (SCAFFOLD_ONCE_ROOT_FILES.has(relPath)) return true;
+  if (SCAFFOLD_ONCE_GITHUB_FILES.has(relPath)) return true;
   for (const dir of SCAFFOLD_ONCE_DIRS) {
     if (relPath.startsWith(dir)) return true;
   }

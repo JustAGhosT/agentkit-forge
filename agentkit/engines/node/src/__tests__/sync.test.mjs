@@ -216,19 +216,39 @@ describe('isScaffoldOnce', () => {
     expect(isScaffoldOnce('SECURITY.md')).toBe(true);
   });
 
+  it('identifies editor config files', () => {
+    expect(isScaffoldOnce('.editorconfig')).toBe(true);
+    expect(isScaffoldOnce('.prettierrc')).toBe(true);
+    expect(isScaffoldOnce('.markdownlint.json')).toBe(true);
+  });
+
   it('identifies docs/ directory files', () => {
     expect(isScaffoldOnce('docs/README.md')).toBe(true);
     expect(isScaffoldOnce('docs/01_product/overview.md')).toBe(true);
   });
 
-  it('returns false for tool config files', () => {
+  it('identifies .vscode/ directory files', () => {
+    expect(isScaffoldOnce('.vscode/settings.json')).toBe(true);
+    expect(isScaffoldOnce('.vscode/extensions.json')).toBe(true);
+  });
+
+  it('identifies GitHub scaffold-once files', () => {
+    expect(isScaffoldOnce('.github/PULL_REQUEST_TEMPLATE.md')).toBe(true);
+    expect(isScaffoldOnce('.github/copilot-instructions.md')).toBe(true);
+    expect(isScaffoldOnce('.github/ISSUE_TEMPLATE/bug_report.md')).toBe(true);
+    expect(isScaffoldOnce('.github/instructions/docs.md')).toBe(true);
+  });
+
+  it('returns false for always-regenerate AI tool configs', () => {
     expect(isScaffoldOnce('CLAUDE.md')).toBe(false);
     expect(isScaffoldOnce('QUALITY_GATES.md')).toBe(false);
     expect(isScaffoldOnce('UNIFIED_AGENT_TEAMS.md')).toBe(false);
+    expect(isScaffoldOnce('.github/workflows/ai-framework-ci.yml')).toBe(false);
   });
 
   it('returns false for AI tool directories', () => {
     expect(isScaffoldOnce('.claude/settings.json')).toBe(false);
     expect(isScaffoldOnce('.cursor/rules/team-backend.mdc')).toBe(false);
+    expect(isScaffoldOnce('.windsurf/rules/team-backend.md')).toBe(false);
   });
 });
