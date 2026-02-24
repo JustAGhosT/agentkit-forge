@@ -85,6 +85,16 @@ function resolveConditionals(template, vars) {
     });
     ifRegex.lastIndex = 0;
   }
+  // Warn if safety limit was hit and there are still unresolved {{#if}} blocks
+  if (safety <= 0) {
+    ifRegex.lastIndex = 0;
+    if (ifRegex.test(result)) {
+      console.warn(
+        'resolveConditionals: safety limit reached while processing template. ' +
+        'Template may contain malformed or deeply nested {{#if}} blocks; output may be partially rendered.'
+      );
+    }
+  }
   return result;
 }
 
@@ -629,7 +639,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 // ---------------------------------------------------------------------------
 
 /** All known render target names. */
-const ALL_RENDER_TARGETS = ['claude', 'cursor', 'windsurf', 'copilot', 'gemini', 'codex', 'warp', 'cline', 'roo', 'ai', 'mcp'];
+const ALL_RENDER_TARGETS = ['claude', 'cursor', 'windsurf', 'copilot', 'ai', 'mcp'];
 
 /**
  * Resolves the active render targets from overlay settings + CLI flags.

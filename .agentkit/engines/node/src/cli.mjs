@@ -31,7 +31,7 @@ const SLASH_ONLY_COMMANDS = ['project-review'];
 
 const VALID_FLAGS = {
   init: ['repoName', 'force', 'help'],
-  sync: ['overlay', 'only', 'dry-run', 'help'],
+  sync: ['overlay', 'only', 'help'],
   validate: ['help'],
   discover: ['output', 'depth', 'include-deps', 'help'],
   'spec-validate': ['help'],
@@ -83,7 +83,6 @@ Commands:
   init            Initialize repo overlay from template
   sync            Render all AI tool configs from spec + overlay
                   --only <targets>    Sync only specific targets (comma-separated)
-                  --dry-run           Show what would be generated without writing
   validate        Validate generated outputs
   discover        Scan repo to detect tech stacks and structure
   spec-validate   Validate YAML spec files for schema correctness

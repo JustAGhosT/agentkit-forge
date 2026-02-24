@@ -164,7 +164,7 @@ const CROSSCUTTING_DETECTORS = {
     { name: 'nlog', label: 'NLog', csprojRefs: ['NLog'] },
   ],
   authentication: [
-    { name: 'azure-ad-b2c', label: 'Azure AD B2C', csprojRefs: ['Microsoft.Identity.Web'], deps: ['@azure/msal-browser', '@azure/msal-node', '@azure/msal-react'] },
+    { name: 'azure-ad-b2c', label: 'Azure AD B2C', deps: ['@azure/msal-browser', '@azure/msal-node', '@azure/msal-react'] },
     { name: 'azure-ad', label: 'Azure AD', csprojRefs: ['Microsoft.Identity.Web'] },
     { name: 'auth0', label: 'Auth0', deps: ['auth0', '@auth0/nextjs-auth0', '@auth0/auth0-react'] },
     { name: 'firebase', label: 'Firebase Auth', deps: ['firebase-admin', 'firebase'] },
@@ -385,12 +385,69 @@ function getPomContent(projectRoot) {
  */
 function getPythonDeps(projectRoot) {
   const deps = new Set();
-  // pyproject.toml
+  // pyproject.toml — section-aware parsing to avoid false positives
   try {
     const content = readFileSync(resolve(projectRoot, 'pyproject.toml'), 'utf-8');
-    // Simple extraction: lines with package names in dependencies section
-    const matches = content.matchAll(/["']([a-zA-Z0-9_-]+)["']/g);
-    for (const m of matches) deps.add(m[1].toLowerCase());
+    const lines = content.split(/\r?\n/);
+    let inPoetryDeps = false;
+    let inProjectSection = false;
+    let inProjectDepsArray = false;
+    let inProjectOptionalDepsSection = false;
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+
+      // Detect section headers like [tool.poetry.dependencies]
+      const sectionMatch = line.match(/^\[([^\]]+)\]/);
+      if (sectionMatch) {
+        const sectionName = sectionMatch[1].trim();
+        inPoetryDeps = sectionName === 'tool.poetry.dependencies';
+        inProjectSection = sectionName === 'project';
+        inProjectOptionalDepsSection = sectionName === 'project.optional-dependencies';
+        inProjectDepsArray = false;
+        continue;
+      }
+
+      // [tool.poetry.dependencies]: package_name = "^1.2.3"
+      if (inPoetryDeps) {
+        const depMatch = line.match(/^([A-Za-z0-9_-]+)\s*=/);
+        if (depMatch && depMatch[1].toLowerCase() !== 'python') {
+          deps.add(depMatch[1].toLowerCase());
+        }
+        continue;
+      }
+
+      // [project] dependencies = [...]
+      if (inProjectSection) {
+        if (!inProjectDepsArray) {
+          if (/^dependencies\s*=\s*\[/.test(line)) {
+            inProjectDepsArray = true;
+            const arrayPart = line.slice(line.indexOf('['));
+            for (const m of arrayPart.matchAll(/["']([a-zA-Z0-9_-]+)["']/g)) {
+              deps.add(m[1].toLowerCase());
+            }
+            if (line.includes(']')) inProjectDepsArray = false;
+          }
+        } else {
+          for (const m of line.matchAll(/["']([a-zA-Z0-9_-]+)["']/g)) {
+            deps.add(m[1].toLowerCase());
+          }
+          if (line.includes(']')) inProjectDepsArray = false;
+        }
+        continue;
+      }
+
+      // [project.optional-dependencies]: extra = ["pkg1", "pkg2"]
+      if (inProjectOptionalDepsSection) {
+        const eqIndex = line.indexOf('=');
+        if (eqIndex === -1) continue;
+        const afterEq = line.slice(eqIndex + 1);
+        if (!afterEq.includes('[')) continue;
+        for (const m of afterEq.matchAll(/["']([a-zA-Z0-9_-]+)["']/g)) {
+          deps.add(m[1].toLowerCase());
+        }
+      }
+    }
   } catch { /* skip */ }
   // requirements.txt
   try {
