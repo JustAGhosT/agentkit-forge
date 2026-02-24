@@ -107,6 +107,12 @@ function fileExists(projectRoot, pattern) {
   return existsSync(resolve(projectRoot, pattern));
 }
 
+// Directories to skip during discovery — framework internals and build artifacts
+// should not be counted as application source code in consuming repos.
+const SKIP_DIRS = new Set([
+  '.git', 'node_modules', 'dist', 'build', '.next', '.nuxt',
+]);
+
 function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
   let count = 0;
   function walk(currentDir, currentDepth) {
@@ -114,7 +120,9 @@ function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
     if (!existsSync(currentDir)) return;
     try {
       for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
-        if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'dist' || entry.name === 'build' || entry.name === '.git') continue;
+        if (entry.name.startsWith('.') || SKIP_DIRS.has(entry.name)) continue;
+        // Skip agentkit engine internals — framework code, not app code
+        if (currentDepth === 0 && entry.name === 'agentkit') continue;
         const full = join(currentDir, entry.name);
         if (entry.isDirectory()) {
           walk(full, currentDepth + 1);

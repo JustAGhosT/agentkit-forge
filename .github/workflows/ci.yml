@@ -16,18 +16,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: agentkit/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: agentkit/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         working-directory: agentkit
 
       - name: Run tests
-        run: npm test
+        run: pnpm test
         working-directory: agentkit
 
   validate:
@@ -36,12 +40,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: agentkit/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         working-directory: agentkit
 
       - name: Validate spec schemas
@@ -63,7 +73,7 @@ jobs:
       - name: Check for drift
         run: |
           if ! git diff --quiet; then
-            echo "::error::Generated files are out of sync. Run 'npm run agentkit:sync' and commit."
+            echo "::error::Generated files are out of sync. Run 'pnpm -C agentkit agentkit:sync' and commit."
             git diff --stat
             exit 1
           fi
@@ -73,12 +83,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: agentkit/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         working-directory: agentkit
 
       - name: Validate YAML spec files

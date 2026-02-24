@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { runHandoff } from '../handoff.mjs';
+import * as runner from '../runner.mjs';
 import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -44,6 +45,15 @@ function setupTestProject(stateOverrides = {}) {
 describe('runHandoff()', () => {
   beforeEach(() => {
     setupTestProject();
+
+    // Mock git commands to avoid spawning real processes (slow on Windows with shell:true)
+    vi.spyOn(runner, 'execCommand').mockImplementation((cmd) => {
+      if (cmd.includes('rev-parse --abbrev-ref')) return { exitCode: 0, stdout: 'main\n', stderr: '', durationMs: 5 };
+      if (cmd.includes('git log')) return { exitCode: 0, stdout: 'abc1234 Initial commit\n', stderr: '', durationMs: 5 };
+      if (cmd.includes('git status --porcelain')) return { exitCode: 0, stdout: '', stderr: '', durationMs: 5 };
+      if (cmd.includes('git diff')) return { exitCode: 0, stdout: '', stderr: '', durationMs: 5 };
+      return { exitCode: 1, stdout: '', stderr: '', durationMs: 0 };
+    });
   });
 
   afterEach(() => {

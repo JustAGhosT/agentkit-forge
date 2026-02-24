@@ -1,27 +1,24 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { runReview } from '../review-runner.mjs';
+import * as runner from '../runner.mjs';
+import * as orchestrator from '../orchestrator.mjs';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { execSync } from 'child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEST_ROOT = resolve(__dirname, '..', '..', '..', '..', '..', '.test-review');
 const STATE_DIR = resolve(TEST_ROOT, '.claude', 'state');
 
 function setupTestRepo() {
-  if (existsSync(TEST_ROOT)) rmSync(TEST_ROOT, { recursive: true });
+  if (existsSync(TEST_ROOT)) rmSync(TEST_ROOT, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
   mkdirSync(STATE_DIR, { recursive: true });
   writeFileSync(resolve(TEST_ROOT, '.agentkit-repo'), 'test-project', 'utf-8');
-  // Initialize a real git repo so git commands don't bubble up to parent
-  execSync('git init', { cwd: TEST_ROOT, stdio: 'pipe' });
-  execSync('git config user.email "test@test.com"', { cwd: TEST_ROOT, stdio: 'pipe' });
-  execSync('git config user.name "test"', { cwd: TEST_ROOT, stdio: 'pipe' });
-  execSync('git add -A && git commit --allow-empty -m "init"', { cwd: TEST_ROOT, stdio: 'pipe' });
+  mkdirSync(resolve(TEST_ROOT, '.git'), { recursive: true });
 }
 
 function teardownTestRepo() {
-  if (existsSync(TEST_ROOT)) rmSync(TEST_ROOT, { recursive: true });
+  if (existsSync(TEST_ROOT)) rmSync(TEST_ROOT, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
 }
 
 describe('review-runner', () => {
@@ -29,6 +26,17 @@ describe('review-runner', () => {
     teardownTestRepo();
     vi.restoreAllMocks();
   });
+
+  // Mock git commands globally to avoid spawning real processes.
+  // Individual tests override via flags.file so getChangedFiles() returns
+  // the specific file without needing a real git repo.
+  function mockGitAndEvents() {
+    vi.spyOn(runner, 'execCommand').mockImplementation((cmd) => {
+      if (cmd.includes('git diff')) return { exitCode: 0, stdout: '', stderr: '', durationMs: 5 };
+      return { exitCode: 1, stdout: '', stderr: '', durationMs: 0 };
+    });
+    vi.spyOn(orchestrator, 'appendEvent').mockImplementation(() => {});
+  }
 
   describe('secret scanning', () => {
     it('detects AWS access keys', async () => {
@@ -243,11 +251,12 @@ describe('review-runner', () => {
 
     it('accepts valid range notation', async () => {
       setupTestRepo();
+      mockGitAndEvents();
 
       vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      // This won't fail on range validation, but may fail on git (no real repo)
-      // The important thing is it doesn't throw "Invalid --range"
+      // Mock returns no files so the result is SKIP — the important thing
+      // is that it doesn't throw "Invalid --range"
       const result = await runReview({
         agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
         projectRoot: TEST_ROOT,
@@ -297,10 +306,11 @@ describe('review-runner', () => {
   describe('result structure', () => {
     it('returns SKIP when no files found', async () => {
       setupTestRepo();
+      mockGitAndEvents();
 
       vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      // No changed files in a bare test dir
+      // No changed files — mock returns empty diff
       const result = await runReview({
         agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
         projectRoot: TEST_ROOT,

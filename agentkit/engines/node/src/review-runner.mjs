@@ -25,12 +25,15 @@ const SECRET_PATTERNS = [
   { name: 'JWT', pattern: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g },
 ];
 
-// Paths that commonly produce false positives in secret scanning
+// Paths that commonly produce false positives in secret scanning, or that are
+// framework internals (agentkit/) which should not be reported as app issues.
 const SKIP_SECRET_SCAN_PATHS = [
   '/node_modules/',
   '/vendor/',
   '/third_party/',
   '/.git/',
+  '/agentkit/engines/',
+  '/agentkit/templates/',
 ];
 
 const SKIP_SECRET_SCAN_EXTENSIONS = [
@@ -143,11 +146,21 @@ function scanLargeFiles(projectRoot, files, threshold = 500_000) {
   return findings;
 }
 
+// Paths to skip during TODO scanning — agentkit framework internals should not
+// appear as tech debt in consuming repos.
+const SKIP_TODO_SCAN_PATHS = [
+  '/agentkit/engines/',
+  '/agentkit/templates/',
+];
+
 function scanTodos(projectRoot, files) {
   const findings = [];
   const todoPattern = /\b(TODO|FIXME|HACK|XXX|TEMP)\b.*$/gm;
 
   for (const file of files) {
+    const normalised = '/' + file.replace(/\\/g, '/');
+    if (SKIP_TODO_SCAN_PATHS.some(p => normalised.includes(p))) continue;
+
     const fullPath = resolve(projectRoot, file);
     if (!existsSync(fullPath)) continue;
 

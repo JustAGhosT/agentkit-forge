@@ -56,14 +56,30 @@ describe('runHealthcheck()', () => {
     expect(result.tools.length).toBeGreaterThan(0);
   });
 
-  it('detects node and git as installed tools', { timeout: 60_000 }, async () => {
+  it('detects node and git as installed tools', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
+    // Mock tool detection to avoid spawning real processes (slow on Windows with shell:true)
+    vi.spyOn(runner, 'commandExists').mockImplementation(
+      (cmd) => cmd === 'node' || cmd === 'git',
+    );
+    vi.spyOn(runner, 'execCommand').mockImplementation((cmd) => {
+      if (cmd.startsWith('node')) return { exitCode: 0, stdout: 'v20.0.0\n', stderr: '', durationMs: 5 };
+      if (cmd.startsWith('git')) return { exitCode: 0, stdout: 'git version 2.40.0\n', stderr: '', durationMs: 5 };
+      return { exitCode: 1, stdout: '', stderr: 'not found', durationMs: 0 };
+    });
+
+    vi.spyOn(orchestrator, 'loadState').mockReturnValue({});
+    vi.spyOn(orchestrator, 'saveState').mockImplementation(() => {});
+    vi.spyOn(orchestrator, 'appendEvent').mockImplementation(() => {});
+
+    mkdirSync(TEST_ROOT, { recursive: true });
+
     const result = await runHealthcheck({
       agentkitRoot: AGENTKIT_ROOT,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: TEST_ROOT,
       flags: {},
     });
 
@@ -77,14 +93,30 @@ describe('runHealthcheck()', () => {
     expect(gitTool.found).toBe(true);
   });
 
-  it('reports agentkit setup status', { timeout: 60_000 }, async () => {
+  it('reports agentkit setup status', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
+    // Mock tool detection to avoid spawning real processes
+    vi.spyOn(runner, 'commandExists').mockReturnValue(false);
+    vi.spyOn(runner, 'execCommand').mockReturnValue({
+      exitCode: 1, stdout: '', stderr: '', durationMs: 0,
+    });
+
+    vi.spyOn(orchestrator, 'loadState').mockReturnValue({});
+    vi.spyOn(orchestrator, 'saveState').mockImplementation(() => {});
+    vi.spyOn(orchestrator, 'appendEvent').mockImplementation(() => {});
+
+    // Set up a test project with agentkit markers
+    mkdirSync(TEST_ROOT, { recursive: true });
+    mkdirSync(STATE_DIR, { recursive: true });
+    mkdirSync(resolve(TEST_ROOT, '.git'), { recursive: true });
+    writeFileSync(resolve(TEST_ROOT, '.agentkit-repo'), 'test-project', 'utf-8');
+
     const result = await runHealthcheck({
       agentkitRoot: AGENTKIT_ROOT,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: TEST_ROOT,
       flags: {},
     });
 
@@ -92,6 +124,7 @@ describe('runHealthcheck()', () => {
     expect(result.agentkit).toHaveProperty('hasState');
     expect(result.agentkit).toHaveProperty('hasCommands');
     expect(result.agentkit).toHaveProperty('hasHooks');
+    expect(result.agentkit.hasMarker).toBe(true);
   });
 
   it('handles project root without agentkit setup', async () => {

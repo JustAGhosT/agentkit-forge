@@ -339,26 +339,81 @@ Each repo gets its own overlay directory under `agentkit/overlays/<repo-name>/`.
 
 Overlay values take precedence over `agentkit/spec/` defaults. This means the same `agentkit/` directory can power multiple repos with different configurations.
 
-## Keeping Up to Date
+## Lifecycle: Why `agentkit/` Lives in Your Repo
 
-When the upstream AgentKit Forge template gets updates:
+The `agentkit/` directory is **not** scaffolding you delete after setup. It stays committed in your repository as the permanent source of truth for all generated AI tool configs, slash commands, rules, and orchestration logic.
+
+**Why keep it:**
+- Your overlay customizations (`agentkit/overlays/<repo>/`) are repo-specific — they define your project's teams, commands, and rules
+- Every developer runs `pnpm -C agentkit agentkit:sync` after cloning to regenerate their local `.claude/`, `.cursor/`, `.windsurf/`, etc.
+- Upgrades come from merging upstream changes into `agentkit/`, not from re-running an installer
+- The `agentkit/` CI pipeline validates that your specs and generated outputs stay consistent
+
+**What NOT to commit:**
+- Generated outputs (`.claude/`, `.cursor/`, `.windsurf/`, `docs/`, etc.) are gitignored
+- `agentkit/node_modules/` is gitignored
+- `agentkit/logs/` is gitignored
+
+**First-run expectations:** The first `/orchestrate` run on a new repo will produce a backlog (`AGENT_BACKLOG.md`) that may include items about the agentkit framework itself (e.g., "no app source code exists", "scaffold README"). These are expected for a fresh project — they reflect the consuming repo's current state, not problems with the agentkit.
+
+---
+
+## Upgrading AgentKit Forge
+
+AgentKit Forge uses a **git-merge upgrade model**. Your repo's `agentkit/` directory tracks an upstream template, and you pull in updates via merge.
+
+### One-time setup (if not already configured)
 
 ```bash
-# If you used "Use this template" (no git history link)
+# Add the upstream template as a remote
 git remote add agentkit-forge https://github.com/my-org/agentkit-forge.git
-git fetch agentkit-forge
-git merge agentkit-forge/main --allow-unrelated-histories
-
-# If you forked
-git fetch upstream
-git merge upstream/main
 ```
 
-After merging, re-run sync to regenerate outputs:
+### Pulling updates
 
 ```bash
+# Fetch latest changes
+git fetch agentkit-forge
+
+# Merge into your branch
+# Use --allow-unrelated-histories on first merge if you used "Use this template"
+git merge agentkit-forge/main --allow-unrelated-histories
+```
+
+### After merging
+
+```bash
+# Install any new/updated dependencies
 pnpm -C agentkit install
-node agentkit/engines/node/src/cli.mjs sync
+
+# Regenerate all AI tool configs with updated templates
+pnpm -C agentkit agentkit:sync
+
+# Validate everything is consistent
+pnpm -C agentkit agentkit:validate
+
+# Commit the result
+git add agentkit/ .gitignore .gitattributes
+git commit -m "chore: upgrade agentkit-forge to latest"
+```
+
+### What merges cleanly vs. what needs attention
+
+| Component | Merge behaviour |
+|-----------|-----------------|
+| `agentkit/engines/` | Auto-merges unless you modified engine source |
+| `agentkit/spec/` | Auto-merges; new teams/commands appear automatically |
+| `agentkit/templates/` | Auto-merges; new template files appear, existing ones update |
+| `agentkit/overlays/__TEMPLATE__/` | Auto-merges; your repo-specific overlay is untouched |
+| `agentkit/overlays/<your-repo>/` | **Never touched by upstream** — this is your customization |
+| `agentkit/package.json` | May conflict if both sides changed versions — resolve manually |
+
+### Version pinning
+
+The current agentkit version is defined in `agentkit/package.json` → `version`. After upgrading, check the version to confirm the merge landed:
+
+```bash
+node -e "console.log(require('./agentkit/package.json').version)"
 ```
 
 ## License
