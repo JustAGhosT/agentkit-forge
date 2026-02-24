@@ -43,6 +43,71 @@ When the spec and overlay are merged during `agentkit sync`:
       settings.yaml    # Project-specific settings
 ```
 
+## Render Targets
+
+Render targets control which AI tool configs are generated during `sync`. They
+are defined in your overlay's `settings.yaml`:
+
+```yaml
+renderTargets:
+  - claude      # Claude Code — CLAUDE.md, .claude/
+  - cursor      # Cursor IDE — .cursor/
+  - windsurf    # Windsurf IDE — .windsurf/
+  - copilot     # GitHub Copilot — .github/ (prompts, agents, chatmodes)
+  - gemini      # Gemini CLI — GEMINI.md, .gemini/
+  - codex       # OpenAI Codex — .agents/skills/
+  - warp        # Warp terminal — WARP.md
+  - cline       # Cline — .clinerules/
+  - roo         # Roo Code — .roo/rules/
+  - ai          # Continue — .ai/
+  - mcp         # MCP/A2A — mcp/
+```
+
+`AGENTS.md` and root docs are always generated regardless of render targets.
+
+Manage targets incrementally after init:
+
+```bash
+agentkit add cursor windsurf    # Enable tools and sync
+agentkit remove mcp --clean     # Disable tool and delete generated files
+agentkit list                   # Show enabled / available tools
+```
+
+## Presets
+
+The `init` command supports `--preset` to quickly configure render targets:
+
+- **`minimal`** — Claude Code only (`claude`). Good for solo developers.
+- **`full`** — All 11 tools. Maximum compatibility.
+- **`team`** — The big four: Claude, Cursor, Copilot, Windsurf.
+
+```bash
+agentkit init --preset team --non-interactive
+```
+
+## project.yaml
+
+`project.yaml` in `.agentkit/spec/` provides project-level metadata that feeds
+into every generated config. It is populated automatically by `agentkit init`
+(via discovery + wizard) and can be edited manually afterward.
+
+Key sections:
+
+- **Identity** — `name`, `description`, `phase` (greenfield/active/maintenance/legacy)
+- **Stack** — `languages`, `frameworks` (frontend/backend/css), `orm`, `database`
+- **Architecture** — `pattern` (clean/hexagonal/mvc/etc.), `apiStyle`, `monorepo`
+- **Documentation** — Paths to existing PRDs, ADRs, API specs, design systems
+- **Deployment** — `cloudProvider`, `containerized`, `iacTool`, `environments`
+- **Process** — `branchStrategy`, `commitConvention`, `teamSize`
+- **Testing** — `unit`, `integration`, `e2e` tool arrays, `coverage` target
+- **Cross-cutting** — Logging, auth, caching, error handling, feature flags, DB, API patterns
+
+See [PROJECT_YAML_REFERENCE.md](./PROJECT_YAML_REFERENCE.md) for full schema.
+
+During sync, `flattenProjectYaml()` converts this nested structure into flat
+template variables (e.g., `stackLanguages`, `hasAuth`, `loggingFramework`) that
+are injected into every template.
+
 ## Common Customization Patterns
 
 ### 1. Adding a Custom Slash Command

@@ -1,41 +1,63 @@
 # AgentKit Forge
 
-A universal AI-orchestration template repository. Generates tool-specific configs from a single YAML spec for **15+ AI coding tools** — Claude Code, Cursor, Windsurf, Copilot, Codex, Gemini, Warp, Cline, Roo Code, Continue, Jules, Amp, Factory, and more. Windows-first with polyglot support and MCP/A2A protocol integration.
+[![CI](https://github.com/JustAGhosT/agentkit-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/JustAGhosT/agentkit-forge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/Node.js-%3E%3D20-green.svg)](https://nodejs.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9-orange.svg)](https://pnpm.io/)
+
+A universal AI-orchestration template repository. Generates tool-specific configs from a single YAML spec for **15+ AI coding tools** — Claude Code, Cursor, Windsurf, Copilot, Codex, Gemini, Warp, Cline, Roo Code, Continue, Jules, Amp, Factory, and more. Cross-platform (Windows, macOS, Linux) with polyglot support and MCP/A2A protocol integration.
+
+---
+
+## Why
+
+Every AI coding tool has its own config format — `CLAUDE.md`, `.cursor/rules/`, `.windsurf/rules/`, `.github/copilot-instructions.md`, `AGENTS.md`, and more. Maintaining them by hand across a team means duplicated effort, inconsistent context, and drift between tools. When your stack changes, you update one file and forget the other ten.
+
+## What
+
+AgentKit Forge is a **single source of truth** for all your AI tool configurations. You define your project once in YAML (`project.yaml` + spec files), and `sync` generates consistent, project-aware configs for every tool your team uses. It also provides an orchestration layer — slash commands, team routing, quality gates, and session state — that works identically across Claude Code, Cursor, Copilot, and the rest.
+
+## How
+
+```
+.agentkit/spec/project.yaml   ← You describe your project once
+.agentkit/spec/*.yaml          ← Teams, commands, rules, settings
+.agentkit/templates/           ← Templates per tool
+        ↓  agentkit sync
+AGENTS.md, CLAUDE.md, .claude/, .cursor/, .windsurf/,
+.github/prompts/, GEMINI.md, WARP.md, .clinerules/, ...    ← Generated
+```
+
+1. **`agentkit init`** — Scans your repo, asks a few questions, writes `project.yaml`.
+2. **`agentkit sync`** — Renders templates → generates tool configs.
+3. **`agentkit add/remove`** — Incrementally enable or disable tools.
+
+Every developer runs `sync` after cloning. The generated files are gitignored — `.agentkit/` is the committed source of truth.
+
+---
 
 ## Quick Start
 
-### Prerequisites
-
-- Node.js 20+
-- pnpm 9+
-- PowerShell 7+ (recommended on Windows) or Bash (Linux/macOS)
-- Optional: .NET SDK 8+, Python 3.11+, Rust/Cargo
-
-### Windows
-
-```powershell
-# 1. Install agentkit runtime
-pnpm -C .agentkit install
-
-# 2. Initialize for your repo
-.\.agentkit\bin\init.ps1 -RepoName MyProject
-
-# 3. Generate all AI tool configs
-.\.agentkit\bin\sync.ps1
-```
-
-### Linux / macOS
+**Prerequisites:** Node.js 20+ and pnpm 9+.
 
 ```bash
-# 1. Install agentkit runtime
+# Install runtime
 pnpm -C .agentkit install
 
-# 2. Initialize for your repo
-node .agentkit/engines/node/src/cli.mjs init --repoName MyProject
+# Initialize (scans your repo, generates project.yaml, runs sync)
+pnpm -C .agentkit agentkit:init -- --repoName MyProject
 
-# 3. Generate all AI tool configs
-node .agentkit/engines/node/src/cli.mjs sync
+# That's it — init already runs sync. To re-sync later:
+pnpm -C .agentkit agentkit:sync
 ```
+
+For a non-interactive setup (CI or scripting), use `--non-interactive` or `--preset`:
+
+```bash
+pnpm -C .agentkit agentkit:init -- --repoName MyProject --preset team --non-interactive
+```
+
+> **Windows users:** Shell scripts are also available at `.agentkit/bin/*.ps1` and `.agentkit/bin/*.cmd`.
 
 ---
 
@@ -56,22 +78,10 @@ cd my-project
 
 ```bash
 pnpm -C .agentkit install
+pnpm -C .agentkit agentkit:init -- --repoName my-project
 ```
 
-**Windows:**
-```powershell
-.\.agentkit\bin\init.ps1 -RepoName my-project
-```
-
-**Linux/macOS:**
-```bash
-node .agentkit/engines/node/src/cli.mjs init --repoName my-project
-```
-
-This does three things:
-1. Copies `.agentkit/overlays/__TEMPLATE__/` to `.agentkit/overlays/my-project/`
-2. Sets `repoName: my-project` in your overlay's `settings.yaml`
-3. Runs `sync` to generate all AI tool configs
+This copies the template overlay, writes `settings.yaml`, and runs `sync` to generate all AI tool configs.
 
 ### Step 3 — Customize your overlay
 
@@ -111,22 +121,25 @@ Override or extend any spec definition in your overlay files:
 - `.agentkit/overlays/my-project/commands.yaml` — add project-specific slash commands
 - `.agentkit/overlays/my-project/rules.yaml` — add project-specific coding rules
 
-### Step 5 — Start working
+### Step 5 — Manage tools incrementally
 
 ```bash
-# Discover the codebase
-/discover
-
-# Run a health check
-/healthcheck
-
-# Start orchestrated development
-/orchestrate
+pnpm -C .agentkit agentkit:add -- cursor windsurf
+pnpm -C .agentkit agentkit:remove -- mcp --clean
+pnpm -C .agentkit agentkit:list
 ```
 
-### Step 6 — Commit the right files
+### Step 6 — Start working
 
-The `.agentkit/` directory is your source of truth — commit it. Pure AI tool configs (`.claude/`, `.cursor/`, `.windsurf/`, etc.) are gitignored and regenerated by each developer via `sync`. Project-owned scaffolds (`docs/`, `CONTRIBUTING.md`, etc.) are committed after first sync.
+```bash
+/discover       # Scan the codebase
+/healthcheck    # Pre-flight check
+/orchestrate    # Start orchestrated development
+```
+
+### Step 7 — Commit the right files
+
+Commit `.agentkit/` (source of truth). AI tool configs (`.claude/`, `.cursor/`, etc.) are gitignored — each developer regenerates them via `sync`. Scaffold-once files (`docs/`, `CONTRIBUTING.md`) are committed after the first sync.
 
 ```bash
 git add .agentkit/ .gitignore .gitattributes README.md LICENSE
@@ -189,16 +202,7 @@ Append the AgentKit Forge ignore rules to your existing `.gitignore`. The key en
 
 ```bash
 pnpm -C .agentkit install
-```
-
-**Windows:**
-```powershell
-.\.agentkit\bin\init.ps1 -RepoName my-existing-project
-```
-
-**Linux/macOS:**
-```bash
-node .agentkit/engines/node/src/cli.mjs init --repoName my-existing-project
+pnpm -C .agentkit agentkit:init -- --repoName my-existing-project
 ```
 
 ### Step 4 — Tune the overlay for your stack
@@ -225,27 +229,11 @@ renderTargets:
 | `.editorconfig` | Keep yours — sync uses scaffold-once and won't overwrite existing files |
 | `CLAUDE.md` | Move custom instructions into your overlay or into `.agentkit/spec/` |
 
-### Step 6 — Run sync and verify
+### Step 6 — Run sync, validate, and commit
 
 ```bash
-# Regenerate all configs
-node .agentkit/engines/node/src/cli.mjs sync
-
-# Verify generated output
-ls -la .claude/ .cursor/ docs/
-```
-
-### Step 7 — Validate
-
-```bash
-node .agentkit/engines/node/src/cli.mjs validate
-```
-
-This checks that all spec files parse correctly and overlay references are valid.
-
-### Step 8 — Commit
-
-```bash
+pnpm -C .agentkit agentkit:sync
+pnpm -C .agentkit agentkit:validate
 git add .agentkit/ .gitignore .gitattributes
 git commit -m "feat: adopt agentkit-forge for AI orchestration"
 ```
@@ -267,6 +255,16 @@ Comprehensive guides for using AgentKit Forge:
 | **[Troubleshooting](.agentkit/docs/TROUBLESHOOTING.md)** | Common errors, recovery procedures, FAQ |
 | **[Onboarding](.agentkit/docs/ONBOARDING.md)** | Full adoption guide with CI integration |
 | **[Cost Tracking](.agentkit/docs/COST_TRACKING.md)** | Session tracking, usage reports, optimization tips |
+| **[AGENTS.md Guide](.agentkit/docs/AGENTS_MD_GUIDE.md)** | What AGENTS.md is, which tools read it, best practices |
+| **[project.yaml Reference](.agentkit/docs/PROJECT_YAML_REFERENCE.md)** | Full schema with examples for every field |
+| **[Migration Guide](.agentkit/docs/MIGRATION_GUIDE.md)** | Upgrading from older versions of AgentKit Forge |
+| **[Architecture](.agentkit/docs/ARCHITECTURE.md)** | Sync engine, template rendering, CLI, orchestrator internals |
+| **[Tools](.agentkit/docs/TOOLS.md)** | All 11 render targets + AGENTS.md-only tools |
+| **[Security Model](.agentkit/docs/SECURITY_MODEL.md)** | Permission model, secret scanning, path traversal protection |
+| **[MCP/A2A Guide](.agentkit/docs/MCP_A2A_GUIDE.md)** | Model Context Protocol and Agent-to-Agent integration |
+| **[CLI Installation](.agentkit/docs/CLI_INSTALLATION.md)** | Installing and configuring the CLI |
+| **[Agents vs Teams](.agentkit/docs/AGENTS_VS_TEAMS.md)** | When to use agents vs teams, comparison guide |
+| **[Roadmap](.agentkit/docs/ROADMAP.md)** | Planned features and development roadmap |
 
 ---
 
@@ -322,7 +320,17 @@ After running `sync`, these are created in your project root:
 | `/handoff` | Session handoff summary |
 | `/sync-backlog` | Update AGENT_BACKLOG.md |
 
+**Tool management (CLI):**
+
+| Command | Purpose |
+|---------|---------|
+| `agentkit add <tool...>` | Enable AI tool(s) and sync |
+| `agentkit remove <tool> [--clean]` | Disable tool; `--clean` deletes generated files |
+| `agentkit list` | Show enabled, available, and always-on tools |
+
 ## Teams
+
+See the **[Team Guide](.agentkit/docs/TEAM_GUIDE.md)** for decision matrices, handoff patterns, and when to use which team.
 
 | ID | Team | Focus |
 |----|------|-------|
@@ -339,136 +347,47 @@ After running `sync`, these are created in your project root:
 
 ## Supported Tools
 
-See **[TOOLS.md](.agentkit/docs/TOOLS.md)** for detailed documentation on each tool.
+**First-class** (dedicated templates + sync): Claude Code, Codex, Copilot, Cursor, Windsurf, Gemini, Warp, Cline, Roo Code, Continue.
+**Via AGENTS.md** (universal standard): Jules, Amp, Factory, OpenCode, Amazon Q, Cody, Aider.
 
-**First-class support (dedicated templates + sync functions):**
-- **Claude Code** — CLAUDE.md, .claude/ (commands, skills, agents, hooks, rules)
-- **OpenAI Codex** — .agents/skills/ (SKILL.md open standard)
-- **GitHub Copilot** — .github/ (copilot-instructions, prompts, agents, chatmodes)
-- **Cursor** — .cursor/ (rules, commands)
-- **Windsurf** — .windsurf/ (rules, workflows)
-- **Gemini CLI / Code Assist** — GEMINI.md, .gemini/ (styleguide, config)
-- **Warp** — WARP.md
-- **Cline** — .clinerules/
-- **Roo Code** — .roo/rules/
-- **Continue** — .ai/ (continuerules)
-
-**Covered via AGENTS.md (universal standard, no dedicated templates needed):**
-- Google Jules, Amp, Factory, OpenCode, Amazon Q Developer, Sourcegraph Cody, Aider
+See **[Tools](.agentkit/docs/TOOLS.md)** for per-tool output details and configuration.
 
 ## Architecture
 
 ```
-.agentkit/          ← Canonical source of truth (committed, hidden)
-├── spec/           ← Team, command, rule, project definitions (YAML)
-├── templates/      ← Output templates per tool (15+ tools)
-├── overlays/       ← Per-repo customizations
-├── engines/node/   ← Sync engine (Node.js)
-└── bin/            ← Windows-first command surface (.ps1 + .cmd)
+.agentkit/              ← Committed source of truth
+├── spec/               ← Teams, commands, rules, project.yaml (YAML)
+├── templates/          ← Output templates per tool (15+ tools)
+├── overlays/           ← Per-repo customizations
+├── engines/node/       ← Sync engine (Node.js)
+└── bin/                ← Cross-platform command surface (.sh, .ps1, .cmd)
 
-AGENTS.md           ← Universal (always generated)
-.claude/            ← Generated (not committed)
-.cursor/            ← Generated (not committed)
-.windsurf/          ← Generated (not committed)
-.gemini/            ← Generated (not committed)
-.agents/            ← Generated (not committed)
-.clinerules/        ← Generated (not committed)
-.roo/               ← Generated (not committed)
+Generated (gitignored):   AGENTS.md, CLAUDE.md, .claude/, .cursor/, .windsurf/, ...
+Scaffold-once (committed): docs/, CONTRIBUTING.md, .github/ISSUE_TEMPLATE/, ...
 ```
 
-## Overlay System
+Each repo gets its own **overlay** under `.agentkit/overlays/<repo-name>/` to override commands, rules, and settings. Overlay values take precedence over `.agentkit/spec/` defaults.
 
-Each repo gets its own overlay directory under `.agentkit/overlays/<repo-name>/`. Overlays let you:
+The `.agentkit/` directory stays committed permanently — like `.github/` or `.vscode/`. Developers run `sync` after cloning to regenerate their local AI tool configs. Upgrades come from merging upstream changes.
 
-- **Override commands** — Add project-specific slash commands or modify built-in ones
-- **Override rules** — Add coding standards specific to your project
-- **Configure settings** — Choose which tools to generate configs for, set your default branch, select your primary tech stack
-
-Overlay values take precedence over `.agentkit/spec/` defaults. This means the same `.agentkit/` directory can power multiple repos with different configurations.
-
-## Lifecycle: Why `.agentkit/` Lives in Your Repo
-
-The `.agentkit/` directory is **not** scaffolding you delete after setup. It stays committed in your repository as the permanent source of truth for all generated AI tool configs, slash commands, rules, and orchestration logic. The dot prefix signals it's infrastructure — like `.github/` or `.vscode/` — not your application code.
-
-**Why keep it:**
-- Your overlay customizations (`.agentkit/overlays/<repo>/`) are repo-specific — they define your project's teams, commands, and rules
-- Every developer runs `pnpm -C .agentkit agentkit:sync` after cloning to regenerate their local `.claude/`, `.cursor/`, `.windsurf/`, etc.
-- Upgrades come from merging upstream changes into `.agentkit/`, not from re-running an installer
-- The CI pipeline validates that your specs and generated outputs stay consistent
-
-**What NOT to commit:**
-- Always-regenerate AI tool configs (`.claude/`, `.cursor/`, `.windsurf/`, `CLAUDE.md`, etc.) — gitignored, rebuilt every sync
-- `.agentkit/node_modules/` is gitignored
-- `.agentkit/logs/` is gitignored
-
-**What to commit after first sync (scaffold-once):**
-- `docs/`, `AGENT_BACKLOG.md`, `CONTRIBUTING.md`, `SECURITY.md` — generated once, then owned by your project
-- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md` — generated once
-- `.vscode/`, `.editorconfig`, `.prettierrc` — generated once
-
-**First-run expectations:** The first `/orchestrate` run on a new repo will produce a backlog (`AGENT_BACKLOG.md`) that may include items about the agentkit framework itself (e.g., "no app source code exists", "scaffold README"). These are expected for a fresh project — they reflect the consuming repo's current state, not problems with the agentkit.
+See **[Architecture](.agentkit/docs/ARCHITECTURE.md)** and **[Customization](.agentkit/docs/CUSTOMIZATION.md)** for details.
 
 ---
 
-## Upgrading AgentKit Forge
-
-AgentKit Forge uses a **git-merge upgrade model**. Your repo's `.agentkit/` directory tracks an upstream template, and you pull in updates via merge.
-
-### One-time setup (if not already configured)
+## Upgrading
 
 ```bash
-# Add the upstream template as a remote
-git remote add agentkit-forge https://github.com/my-org/agentkit-forge.git
-```
-
-### Pulling updates
-
-```bash
-# Fetch latest changes
+git remote add agentkit-forge https://github.com/my-org/agentkit-forge.git  # one-time
 git fetch agentkit-forge
-
-# Merge into your branch
-# Use --allow-unrelated-histories on first merge if you used "Use this template"
 git merge agentkit-forge/main --allow-unrelated-histories
-```
-
-### After merging
-
-```bash
-# Install any new/updated dependencies
 pnpm -C .agentkit install
-
-# Regenerate all AI tool configs with updated templates
 pnpm -C .agentkit agentkit:sync
-
-# Validate everything is consistent
 pnpm -C .agentkit agentkit:validate
-
-# Commit the result
 git add .agentkit/ .gitignore .gitattributes
 git commit -m "chore: upgrade agentkit-forge to latest"
 ```
 
-> **Note:** If the upgrade adds new scaffold-once files (docs, templates, editor configs), they will appear as untracked after your first `sync`. This is expected — review them and `git add` the ones you want to keep. Subsequent syncs will not overwrite them.
-
-### What merges cleanly vs. what needs attention
-
-| Component | Merge behaviour |
-|-----------|-----------------|
-| `.agentkit/engines/` | Auto-merges unless you modified engine source |
-| `.agentkit/spec/` | Auto-merges; new teams/commands appear automatically |
-| `.agentkit/templates/` | Auto-merges; new template files appear, existing ones update |
-| `.agentkit/overlays/__TEMPLATE__/` | Auto-merges; your repo-specific overlay is untouched |
-| `.agentkit/overlays/<your-repo>/` | **Never touched by upstream** — this is your customization |
-| `.agentkit/package.json` | May conflict if both sides changed versions — resolve manually |
-
-### Version pinning
-
-The current agentkit version is defined in `.agentkit/package.json` → `version`. After upgrading, check the version to confirm the merge landed:
-
-```bash
-node -e "console.log(require('./.agentkit/package.json').version)"
-```
+Your overlay (`overlays/<your-repo>/`) is never touched by upstream merges. See the **[Migration Guide](.agentkit/docs/MIGRATION_GUIDE.md)** for detailed upgrade paths and conflict resolution.
 
 ## License
 

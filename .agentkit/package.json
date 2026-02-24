@@ -18,6 +18,9 @@
     "agentkit:validate": "node engines/node/src/cli.mjs validate",
     "agentkit:discover": "node engines/node/src/cli.mjs discover",
     "agentkit:spec-validate": "node engines/node/src/cli.mjs spec-validate",
+    "agentkit:add": "node engines/node/src/cli.mjs add",
+    "agentkit:remove": "node engines/node/src/cli.mjs remove",
+    "agentkit:list": "node engines/node/src/cli.mjs list",
     "test": "vitest run",
     "test:watch": "vitest"
   },

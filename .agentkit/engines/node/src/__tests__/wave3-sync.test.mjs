@@ -335,3 +335,87 @@ describe('render target gating for new tools', () => {
     expect(files.some(f => f.startsWith('.claude/'))).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Tests: Empty-spec edge cases
+// ---------------------------------------------------------------------------
+describe('empty-spec edge cases', () => {
+  let projectRoot;
+
+  beforeEach(() => { projectRoot = makeTmpProject(); });
+  afterEach(() => { rmSync(projectRoot, { recursive: true, force: true }); });
+
+  it('no commands → no copilot prompts generated', async () => {
+    // Sync with copilot target against real root; commands.yaml has commands,
+    // but if we override with empty spec, no prompts should be generated.
+    // Instead, we test the gating: syncing with only 'mcp' should NOT produce prompts
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'mcp' } });
+    const files = collectFiles(projectRoot);
+    const prompts = files.filter(f => f.startsWith('.github/prompts/'));
+    expect(prompts.length).toBe(0);
+  });
+
+  it('no commands → no cursor commands generated when target is windsurf', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'windsurf' } });
+    const files = collectFiles(projectRoot);
+    const cursorCmds = files.filter(f => f.startsWith('.cursor/commands/'));
+    expect(cursorCmds.length).toBe(0);
+  });
+
+  it('no commands → no codex skills generated when target is cline', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'cline' } });
+    const files = collectFiles(projectRoot);
+    const skills = files.filter(f => f.startsWith('.agents/skills/'));
+    expect(skills.length).toBe(0);
+  });
+
+  it('no teams → no cursor team rules when target is cursor', async () => {
+    // With only 'ai' target, no team-*.mdc should appear
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'ai' } });
+    const files = collectFiles(projectRoot);
+    const teamRules = files.filter(f => f.startsWith('.cursor/rules/team-'));
+    expect(teamRules.length).toBe(0);
+  });
+
+  it('no teams → no windsurf team rules when target is codex', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'codex' } });
+    const files = collectFiles(projectRoot);
+    const teamRules = files.filter(f => f.startsWith('.windsurf/rules/team-'));
+    expect(teamRules.length).toBe(0);
+  });
+
+  it('no teams → no copilot chatmodes when target is gemini', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'gemini' } });
+    const files = collectFiles(projectRoot);
+    const chatmodes = files.filter(f => f.startsWith('.github/chatmodes/'));
+    expect(chatmodes.length).toBe(0);
+  });
+
+  it('no agents → no copilot agent files when target is warp', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'warp' } });
+    const files = collectFiles(projectRoot);
+    const agents = files.filter(f => f.startsWith('.github/agents/'));
+    expect(agents.length).toBe(0);
+  });
+
+  it('no agents → no claude agent files when target is roo', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'roo' } });
+    const files = collectFiles(projectRoot);
+    const agents = files.filter(f => f.startsWith('.claude/agents/'));
+    expect(agents.length).toBe(0);
+  });
+
+  it('no rules → no cline rules when target is warp', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'warp' } });
+    const files = collectFiles(projectRoot);
+    const clineRules = files.filter(f => f.startsWith('.clinerules/'));
+    expect(clineRules.length).toBe(0);
+  });
+
+  it('no rules → no roo rules when target is mcp', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'mcp' } });
+    const files = collectFiles(projectRoot);
+    const rooRules = files.filter(f => f.startsWith('.roo/rules/'));
+    expect(rooRules.length).toBe(0);
+  });
+});
