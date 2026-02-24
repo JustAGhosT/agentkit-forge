@@ -1,5 +1,10 @@
 # AgentKit Forge
 
+[![CI](https://github.com/JustAGhosT/agentkit-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/JustAGhosT/agentkit-forge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/Node.js-%3E%3D20-green.svg)](https://nodejs.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9-orange.svg)](https://pnpm.io/)
+
 A universal AI-orchestration template repository. Generates tool-specific configs from a single YAML spec for **15+ AI coding tools** — Claude Code, Cursor, Windsurf, Copilot, Codex, Gemini, Warp, Cline, Roo Code, Continue, Jules, Amp, Factory, and more. Cross-platform (Windows, macOS, Linux) with polyglot support and MCP/A2A protocol integration.
 
 ---
@@ -73,22 +78,10 @@ cd my-project
 
 ```bash
 pnpm -C .agentkit install
+pnpm -C .agentkit agentkit:init -- --repoName my-project
 ```
 
-**Windows:**
-```powershell
-.\.agentkit\bin\init.ps1 -RepoName my-project
-```
-
-**Linux/macOS:**
-```bash
-node .agentkit/engines/node/src/cli.mjs init --repoName my-project
-```
-
-This does three things:
-1. Copies `.agentkit/overlays/__TEMPLATE__/` to `.agentkit/overlays/my-project/`
-2. Sets `repoName: my-project` in your overlay's `settings.yaml`
-3. Runs `sync` to generate all AI tool configs
+This copies the template overlay, writes `settings.yaml`, and runs `sync` to generate all AI tool configs.
 
 ### Step 3 — Customize your overlay
 
@@ -131,13 +124,10 @@ Override or extend any spec definition in your overlay files:
 ### Step 5 — Manage tools incrementally
 
 ```bash
-# Add or remove AI tool targets after init
-pnpm -C .agentkit agentkit:init -- add cursor windsurf
-pnpm -C .agentkit agentkit:init -- remove mcp --clean
-pnpm -C .agentkit agentkit:init -- list
+pnpm -C .agentkit agentkit:add -- cursor windsurf
+pnpm -C .agentkit agentkit:remove -- mcp --clean
+pnpm -C .agentkit agentkit:list
 ```
-
-Or use the CLI directly: `node .agentkit/engines/node/src/cli.mjs add cursor`.
 
 ### Step 6 — Start working
 
@@ -212,16 +202,7 @@ Append the AgentKit Forge ignore rules to your existing `.gitignore`. The key en
 
 ```bash
 pnpm -C .agentkit install
-```
-
-**Windows:**
-```powershell
-.\.agentkit\bin\init.ps1 -RepoName my-existing-project
-```
-
-**Linux/macOS:**
-```bash
-node .agentkit/engines/node/src/cli.mjs init --repoName my-existing-project
+pnpm -C .agentkit agentkit:init -- --repoName my-existing-project
 ```
 
 ### Step 4 — Tune the overlay for your stack
@@ -281,6 +262,9 @@ Comprehensive guides for using AgentKit Forge:
 | **[Tools](.agentkit/docs/TOOLS.md)** | All 11 render targets + AGENTS.md-only tools |
 | **[Security Model](.agentkit/docs/SECURITY_MODEL.md)** | Permission model, secret scanning, path traversal protection |
 | **[MCP/A2A Guide](.agentkit/docs/MCP_A2A_GUIDE.md)** | Model Context Protocol and Agent-to-Agent integration |
+| **[CLI Installation](.agentkit/docs/CLI_INSTALLATION.md)** | Installing and configuring the CLI |
+| **[Agents vs Teams](.agentkit/docs/AGENTS_VS_TEAMS.md)** | When to use agents vs teams, comparison guide |
+| **[Roadmap](.agentkit/docs/ROADMAP.md)** | Planned features and development roadmap |
 
 ---
 
@@ -346,6 +330,8 @@ After running `sync`, these are created in your project root:
 
 ## Teams
 
+See the **[Team Guide](.agentkit/docs/TEAM_GUIDE.md)** for decision matrices, handoff patterns, and when to use which team.
+
 | ID | Team | Focus |
 |----|------|-------|
 | T1 | BACKEND | API, services, core logic |
@@ -361,22 +347,10 @@ After running `sync`, these are created in your project root:
 
 ## Supported Tools
 
-See **[TOOLS.md](.agentkit/docs/TOOLS.md)** for detailed documentation on each tool.
+**First-class** (dedicated templates + sync): Claude Code, Codex, Copilot, Cursor, Windsurf, Gemini, Warp, Cline, Roo Code, Continue.
+**Via AGENTS.md** (universal standard): Jules, Amp, Factory, OpenCode, Amazon Q, Cody, Aider.
 
-**First-class support (dedicated templates + sync functions):**
-- **Claude Code** — CLAUDE.md, .claude/ (commands, skills, agents, hooks, rules)
-- **OpenAI Codex** — .agents/skills/ (SKILL.md open standard)
-- **GitHub Copilot** — .github/ (copilot-instructions, prompts, agents, chatmodes)
-- **Cursor** — .cursor/ (rules, commands)
-- **Windsurf** — .windsurf/ (rules, workflows)
-- **Gemini CLI / Code Assist** — GEMINI.md, .gemini/ (styleguide, config)
-- **Warp** — WARP.md
-- **Cline** — .clinerules/
-- **Roo Code** — .roo/rules/
-- **Continue** — .ai/ (continuerules)
-
-**Covered via AGENTS.md (universal standard, no dedicated templates needed):**
-- Google Jules, Amp, Factory, OpenCode, Amazon Q Developer, Sourcegraph Cody, Aider
+See **[Tools](.agentkit/docs/TOOLS.md)** for per-tool output details and configuration.
 
 ## Architecture
 
