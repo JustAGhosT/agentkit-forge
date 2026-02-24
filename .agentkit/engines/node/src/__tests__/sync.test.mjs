@@ -372,6 +372,24 @@ describe('resolveConditionals', () => {
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('safety limit reached'));
     warnSpy.mockRestore();
   });
+
+  it('uses only the first {{else}} when body contains multiple potential splits', () => {
+    const result = resolveConditionals('{{#if flag}}A{{else}}B{{/if}}', { flag: false });
+    expect(result).toBe('B');
+
+    const result2 = resolveConditionals('{{#if flag}}A{{else}}B{{/if}}', { flag: true });
+    expect(result2).toBe('A');
+  });
+
+  it('preserves surrounding text', () => {
+    const result = resolveConditionals('before {{#if x}}X{{/if}} after', { x: 'yes' });
+    expect(result).toBe('before X after');
+  });
+
+  it('handles multiple independent if blocks', () => {
+    const result = resolveConditionals('{{#if a}}A{{/if}}{{#if b}}B{{/if}}', { a: true, b: true });
+    expect(result).toBe('AB');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -498,6 +516,25 @@ describe('flattenProjectYaml', () => {
     const vars = flattenProjectYaml({ integrations: [] });
     expect(vars.hasIntegrations).toBe(false);
   });
+
+  it('does not create a meaningful stackLanguages var for empty languages array', () => {
+    const vars = flattenProjectYaml({ stack: { languages: [] } });
+    expect(vars.stackLanguages == null || vars.stackLanguages === '').toBe(true);
+  });
+
+  it('handles database as string (defensive fallback)', () => {
+    const vars = flattenProjectYaml({ stack: { database: 'postgres' } });
+    expect(vars.stackDatabase).toBe('postgres');
+  });
+
+  it('maps documentation boolean has* flags', () => {
+    const vars = flattenProjectYaml({
+      documentation: { hasPrd: true, prdPath: 'docs/prd.md', hasAdr: false },
+    });
+    expect(vars.hasPrd).toBe(true);
+    expect(vars.prdPath).toBe('docs/prd.md');
+    expect(vars.hasAdr).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -556,6 +593,28 @@ describe('flattenCrosscutting', () => {
   it('handles empty crosscutting object without throwing', () => {
     const vars = {};
     expect(() => flattenCrosscutting({}, vars)).not.toThrow();
+  });
+
+  it('does not set hasAuth when provider is none', () => {
+    const vars = {};
+    flattenCrosscutting({ authentication: { provider: 'none' } }, vars);
+    expect(vars.hasAuth).toBeUndefined();
+  });
+
+  it('sets hasApiVersioning when versioning is not none', () => {
+    const vars = {};
+    flattenCrosscutting({ api: { versioning: 'url-segment', pagination: 'cursor' } }, vars);
+    expect(vars.hasApiVersioning).toBe(true);
+    expect(vars.apiVersioning).toBe('url-segment');
+    expect(vars.hasApiPagination).toBe(true);
+    expect(vars.apiPagination).toBe('cursor');
+  });
+
+  it('sets hasDbMigrations when migrations is not none', () => {
+    const vars = {};
+    flattenCrosscutting({ database: { migrations: 'code-first' } }, vars);
+    expect(vars.hasDbMigrations).toBe(true);
+    expect(vars.dbMigrations).toBe('code-first');
   });
 });
 

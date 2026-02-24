@@ -287,4 +287,44 @@ describe('validateProjectYaml', () => {
     const { errors } = validateProjectYaml({ name: 'MyApp' });
     expect(errors).toEqual([]);
   });
+
+  it('accepts all valid enum values for phase', () => {
+    for (const v of PROJECT_ENUMS.phase) {
+      expect(validateProjectYaml({ phase: v }).errors).toEqual([]);
+    }
+  });
+
+  it('accepts null/undefined optional enum fields without error', () => {
+    const { errors } = validateProjectYaml({ phase: null, architecture: { pattern: null } });
+    expect(errors).toEqual([]);
+  });
+
+  it('accepts empty string for enum fields without error', () => {
+    const { errors } = validateProjectYaml({ phase: '' });
+    expect(errors).toEqual([]);
+  });
+
+  it('validates architecture.monorepoTool enum', () => {
+    const { errors: ok } = validateProjectYaml({ architecture: { monorepoTool: 'nx' } });
+    expect(ok).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({ architecture: { monorepoTool: 'invalid' } });
+    expect(bad.some(e => e.includes('monorepoTool'))).toBe(true);
+  });
+
+  it('validates architecture.apiStyle enum', () => {
+    const { errors: ok } = validateProjectYaml({ architecture: { apiStyle: 'rest' } });
+    expect(ok).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({ architecture: { apiStyle: 'soap' } });
+    expect(bad.some(e => e.includes('apiStyle'))).toBe(true);
+  });
+
+  it('validates testing.coverage boundary values', () => {
+    expect(validateProjectYaml({ testing: { coverage: 0 } }).errors).toEqual([]);
+    expect(validateProjectYaml({ testing: { coverage: 100 } }).errors).toEqual([]);
+
+    const { errors: neg } = validateProjectYaml({ testing: { coverage: -1 } });
+    expect(neg.some(e => e.includes('coverage'))).toBe(true);
+  });
 });
