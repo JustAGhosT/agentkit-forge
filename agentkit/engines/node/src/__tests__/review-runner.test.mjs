@@ -80,6 +80,107 @@ describe('review-runner', () => {
     });
   });
 
+  describe('secret scan skip logic', () => {
+    it('skips files inside node_modules/', async () => {
+      setupTestRepo();
+      // Place a fake AWS key inside a node_modules path
+      mkdirSync(resolve(TEST_ROOT, 'node_modules', 'some-pkg'), { recursive: true });
+      writeFileSync(
+        resolve(TEST_ROOT, 'node_modules', 'some-pkg', 'index.js'),
+        'const key = "AKIAIOSFODNN7EXAMPLE";',
+        'utf-8',
+      );
+
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const result = await runReview({
+        agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+        projectRoot: TEST_ROOT,
+        flags: { file: 'node_modules/some-pkg/index.js' },
+      });
+
+      // File should be skipped — no secret findings
+      expect(result.secrets).toBe(0);
+    });
+
+    it('skips .lock files', async () => {
+      setupTestRepo();
+      writeFileSync(
+        resolve(TEST_ROOT, 'yarn.lock'),
+        'const key = "AKIAIOSFODNN7EXAMPLE";',
+        'utf-8',
+      );
+
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const result = await runReview({
+        agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+        projectRoot: TEST_ROOT,
+        flags: { file: 'yarn.lock' },
+      });
+
+      expect(result.secrets).toBe(0);
+    });
+
+    it('skips .snap files', async () => {
+      setupTestRepo();
+      writeFileSync(
+        resolve(TEST_ROOT, 'test.snap'),
+        'const key = "AKIAIOSFODNN7EXAMPLE";',
+        'utf-8',
+      );
+
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const result = await runReview({
+        agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+        projectRoot: TEST_ROOT,
+        flags: { file: 'test.snap' },
+      });
+
+      expect(result.secrets).toBe(0);
+    });
+
+    it('skips .sum files', async () => {
+      setupTestRepo();
+      writeFileSync(
+        resolve(TEST_ROOT, 'go.sum'),
+        'const key = "AKIAIOSFODNN7EXAMPLE";',
+        'utf-8',
+      );
+
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const result = await runReview({
+        agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+        projectRoot: TEST_ROOT,
+        flags: { file: 'go.sum' },
+      });
+
+      expect(result.secrets).toBe(0);
+    });
+
+    it('skips files inside vendor/', async () => {
+      setupTestRepo();
+      mkdirSync(resolve(TEST_ROOT, 'vendor', 'lib'), { recursive: true });
+      writeFileSync(
+        resolve(TEST_ROOT, 'vendor', 'lib', 'util.go'),
+        'const key = "AKIAIOSFODNN7EXAMPLE";',
+        'utf-8',
+      );
+
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const result = await runReview({
+        agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+        projectRoot: TEST_ROOT,
+        flags: { file: 'vendor/lib/util.go' },
+      });
+
+      expect(result.secrets).toBe(0);
+    });
+  });
+
   describe('path traversal protection', () => {
     it('rejects --file paths outside project root', async () => {
       setupTestRepo();

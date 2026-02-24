@@ -106,8 +106,11 @@ export function commandExists(cmd) {
  */
 export function formatDuration(ms) {
   if (ms < 1000) return `${ms}ms`;
-  const s = (ms / 1000).toFixed(1);
-  if (ms < 60_000) return `${s}s`;
+  if (ms < 60_000) {
+    // Truncate (not round) to avoid "60.0s" at the boundary
+    const s = Math.floor(ms / 100) / 10;
+    return `${s.toFixed(1)}s`;
+  }
   const totalSeconds = Math.floor(ms / 1000);
   const m = Math.floor(totalSeconds / 60);
   const remainS = totalSeconds % 60;

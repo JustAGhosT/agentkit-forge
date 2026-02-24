@@ -14,12 +14,29 @@ import { appendEvent } from './orchestrator.mjs';
 // The /g flag is safe with String.prototype.match() which resets lastIndex.
 // ---------------------------------------------------------------------------
 
+// Note: patterns use /g so String.prototype.match() returns all occurrences.
+// If refactoring to use .exec()/.test(), create fresh RegExp instances per call
+// to avoid stale lastIndex across files.
 const SECRET_PATTERNS = [
   { name: 'AWS Key', pattern: /AKIA[0-9A-Z]{16}/g },
   { name: 'Private Key', pattern: /-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----/g },
   { name: 'Generic Secret', pattern: /(password|secret|api_key|apikey|token)\s*[:=]\s*['"][^'"]{8,}['"]/gi },
   { name: 'Connection String', pattern: /mongodb(\+srv)?:\/\/[^\s'"]+/g },
   { name: 'JWT', pattern: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g },
+];
+
+// Paths that commonly produce false positives in secret scanning
+const SKIP_SECRET_SCAN_PATHS = [
+  '/node_modules/',
+  '/vendor/',
+  '/third_party/',
+  '/.git/',
+];
+
+const SKIP_SECRET_SCAN_EXTENSIONS = [
+  '.lock',    // package-lock.json, yarn.lock, etc.
+  '.sum',     // go.sum
+  '.snap',    // jest snapshots
 ];
 
 // ---------------------------------------------------------------------------
@@ -70,6 +87,11 @@ function getChangedFiles(projectRoot, flags) {
 function scanSecrets(projectRoot, files) {
   const findings = [];
   for (const file of files) {
+    // Skip paths known to produce false positives (lockfiles, vendored code, etc.)
+    const normalised = '/' + file.replace(/\\/g, '/');
+    if (SKIP_SECRET_SCAN_PATHS.some(p => normalised.includes(p))) continue;
+    if (SKIP_SECRET_SCAN_EXTENSIONS.some(ext => normalised.endsWith(ext))) continue;
+
     const fullPath = resolve(projectRoot, file);
     if (!existsSync(fullPath)) continue;
 
@@ -167,7 +189,7 @@ function scanTodos(projectRoot, files) {
  * @param {object} opts.flags - --range, --file
  * @returns {object}
  */
-export async function runReview({ agentkitRoot, projectRoot, flags = {} }) {
+export async function runReview({ agentkitRoot /* kept for interface compatibility with other runner functions */, projectRoot, flags = {} }) {
   console.log('[agentkit:review] Running automated review checks...');
   console.log('');
 

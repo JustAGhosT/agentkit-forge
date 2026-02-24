@@ -83,7 +83,7 @@ describe('formatDuration()', () => {
   it('formats seconds', () => {
     expect(formatDuration(1000)).toBe('1.0s');
     expect(formatDuration(1500)).toBe('1.5s');
-    expect(formatDuration(59999)).toBe('60.0s');
+    expect(formatDuration(59999)).toBe('59.9s');
   });
 
   it('formats minutes', () => {
