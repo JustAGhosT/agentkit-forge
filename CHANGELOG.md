@@ -20,13 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hook-based safety guardrails
 - Automated quality gates and validation
 
+
 ### Changed
+
 - (none yet)
 
 ### Fixed
+
 - (none yet)
 
 ### Removed
+
 - (none yet)
 
 ---

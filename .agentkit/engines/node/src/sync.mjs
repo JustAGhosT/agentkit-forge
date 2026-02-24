@@ -587,6 +587,11 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       if (!newManifestFiles[prevFile]) {
         // File was in previous sync but not in this one — it's orphaned
         const orphanPath = resolve(projectRoot, prevFile);
+        // Path traversal protection: ensure orphan path stays within project root
+        if (!orphanPath.startsWith(resolvedRoot) && orphanPath !== resolve(projectRoot)) {
+          console.warn(`[agentkit:sync] BLOCKED: path traversal in manifest — ${prevFile}`);
+          continue;
+        }
         if (existsSync(orphanPath)) {
           try {
             unlinkSync(orphanPath);
@@ -651,6 +656,10 @@ function resolveRenderTargets(overlayTargets, flags) {
   // --only flag overrides everything
   if (flags?.only) {
     const onlyTargets = String(flags.only).split(',').map(t => t.trim()).filter(Boolean);
+    const unknown = onlyTargets.filter(t => !ALL_RENDER_TARGETS.includes(t));
+    if (unknown.length > 0) {
+      console.warn(`[agentkit:sync] Warning: unknown render target(s): ${unknown.join(', ')}. Valid: ${ALL_RENDER_TARGETS.join(', ')}`);
+    }
     return new Set(onlyTargets);
   }
   // Overlay renderTargets

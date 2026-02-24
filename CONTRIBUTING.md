@@ -43,7 +43,7 @@ See [UNIFIED_AGENT_TEAMS.md](./UNIFIED_AGENT_TEAMS.md) for full details.
 
 Use [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 <type>(<scope>): <description>
 
 [optional body]
@@ -99,4 +99,4 @@ Key conventions:
 
 ---
 
-*This guide is maintained by AgentKit Forge. Run `pnpm -C agentkit agentkit:sync` to regenerate.*
+*This guide is maintained by AgentKit Forge. Run `pnpm -C .agentkit agentkit:sync` to regenerate.*
