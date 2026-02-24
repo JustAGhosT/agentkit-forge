@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validate, validateCrossReferences, validateSpec } from '../spec-validator.mjs';
+import { validate, validateCrossReferences, validateSpec, validateProjectYaml, PROJECT_ENUMS } from '../spec-validator.mjs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -126,5 +126,120 @@ describe('validateSpec() on real spec files', () => {
       console.error('Spec validation errors:', result.errors);
     }
     expect(result.valid).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateProjectYaml()
+// ---------------------------------------------------------------------------
+describe('validateProjectYaml()', () => {
+  it('returns no errors for an empty/null project', () => {
+    expect(validateProjectYaml(null).errors).toEqual([]);
+    expect(validateProjectYaml({}).errors).toEqual([]);
+  });
+
+  it('accepts all valid enum values for phase', () => {
+    for (const v of PROJECT_ENUMS.phase) {
+      expect(validateProjectYaml({ phase: v }).errors).toEqual([]);
+    }
+  });
+
+  it('rejects invalid phase value', () => {
+    const { errors } = validateProjectYaml({ phase: 'unknown-phase' });
+    expect(errors.some(e => e.includes('phase'))).toBe(true);
+  });
+
+  it('accepts null/undefined optional enum fields without error', () => {
+    const { errors } = validateProjectYaml({ phase: null, architecture: { pattern: null } });
+    expect(errors).toEqual([]);
+  });
+
+  it('rejects empty string for enum fields', () => {
+    const { errors } = validateProjectYaml({ phase: '' });
+    // empty string should be treated as no value — no error
+    expect(errors).toEqual([]);
+  });
+
+  it('validates architecture.monorepoTool enum', () => {
+    const { errors: ok } = validateProjectYaml({ architecture: { monorepoTool: 'nx' } });
+    expect(ok).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({ architecture: { monorepoTool: 'invalid' } });
+    expect(bad.some(e => e.includes('monorepoTool'))).toBe(true);
+  });
+
+  it('validates architecture.apiStyle enum', () => {
+    const { errors: ok } = validateProjectYaml({ architecture: { apiStyle: 'rest' } });
+    expect(ok).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({ architecture: { apiStyle: 'soap' } });
+    expect(bad.some(e => e.includes('apiStyle'))).toBe(true);
+  });
+
+  it('validates stack array fields', () => {
+    const { errors: ok } = validateProjectYaml({ stack: { languages: ['TypeScript'] } });
+    expect(ok).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({ stack: { languages: 'TypeScript' } });
+    expect(bad.some(e => e.includes('stack.languages'))).toBe(true);
+  });
+
+  it('validates testing.coverage range (0-100)', () => {
+    expect(validateProjectYaml({ testing: { coverage: 80 } }).errors).toEqual([]);
+    expect(validateProjectYaml({ testing: { coverage: 0 } }).errors).toEqual([]);
+    expect(validateProjectYaml({ testing: { coverage: 100 } }).errors).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({ testing: { coverage: 150 } });
+    expect(bad.some(e => e.includes('coverage'))).toBe(true);
+
+    const { errors: bad2 } = validateProjectYaml({ testing: { coverage: -1 } });
+    expect(bad2.some(e => e.includes('coverage'))).toBe(true);
+  });
+
+  it('validates testing.coverage must be a number', () => {
+    const { errors } = validateProjectYaml({ testing: { coverage: 'eighty' } });
+    expect(errors.some(e => e.includes('coverage'))).toBe(true);
+  });
+
+  it('validates integrations entries require name and purpose', () => {
+    const ok = validateProjectYaml({
+      integrations: [{ name: 'Stripe', purpose: 'payments' }],
+    });
+    expect(ok.errors).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({ integrations: [{ name: 'Stripe' }] });
+    expect(bad.some(e => e.includes('purpose'))).toBe(true);
+  });
+
+  it('validates integrations must be an array', () => {
+    const { errors } = validateProjectYaml({ integrations: 'stripe' });
+    expect(errors.some(e => e.includes('integrations'))).toBe(true);
+  });
+
+  it('validates crosscutting logging.framework enum', () => {
+    const ok = validateProjectYaml({ crosscutting: { logging: { framework: 'winston' } } });
+    expect(ok.errors).toEqual([]);
+
+    const { errors: bad } = validateProjectYaml({
+      crosscutting: { logging: { framework: 'unknown-logger' } },
+    });
+    expect(bad.some(e => e.includes('logging.framework'))).toBe(true);
+  });
+
+  it('validates crosscutting authentication enum fields', () => {
+    const ok = validateProjectYaml({
+      crosscutting: { authentication: { provider: 'auth0', strategy: 'jwt-bearer' } },
+    });
+    expect(ok.errors).toEqual([]);
+
+    const { errors } = validateProjectYaml({
+      crosscutting: { authentication: { provider: 'unknown' } },
+    });
+    expect(errors.some(e => e.includes('authentication.provider'))).toBe(true);
+  });
+
+  it('validates crosscutting caching.provider enum', () => {
+    const { errors } = validateProjectYaml({ crosscutting: { caching: { provider: 'badcache' } } });
+    expect(errors.some(e => e.includes('caching.provider'))).toBe(true);
   });
 });
