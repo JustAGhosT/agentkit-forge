@@ -1,7 +1,7 @@
 # =============================================================================
 # AgentKit Forge — Always-regenerate outputs
 # Pure AI tool configs. Regenerated every sync, never edit directly.
-# Edit agentkit/spec/ or agentkit/overlays/ instead.
+# Edit .agentkit/spec/ or .agentkit/overlays/ instead.
 # =============================================================================
 /.claude/
 /.cursor/
@@ -43,10 +43,10 @@
 node_modules/
 
 # Agentkit internal
-agentkit/.tmp/
-agentkit/.bak/
-agentkit/logs/*
-!agentkit/logs/.gitkeep
+.agentkit/.tmp/
+.agentkit/.bak/
+.agentkit/logs/*
+!.agentkit/logs/.gitkeep
 
 # Repo identity marker (created by init)
 .agentkit-repo

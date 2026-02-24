@@ -24,15 +24,15 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
-          cache-dependency-path: agentkit/pnpm-lock.yaml
+          cache-dependency-path: .agentkit/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: agentkit
+        working-directory: .agentkit
 
       - name: Run tests
         run: pnpm test
-        working-directory: agentkit
+        working-directory: .agentkit
 
   validate:
     runs-on: ubuntu-latest
@@ -48,32 +48,32 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-          cache-dependency-path: agentkit/pnpm-lock.yaml
+          cache-dependency-path: .agentkit/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: agentkit
+        working-directory: .agentkit
 
       - name: Validate spec schemas
         run: node engines/node/src/cli.mjs spec-validate
-        working-directory: agentkit
+        working-directory: .agentkit
 
       - name: Run sync
         run: node engines/node/src/cli.mjs sync
-        working-directory: agentkit
+        working-directory: .agentkit
 
       - name: Validate generated outputs
         run: node engines/node/src/cli.mjs validate
-        working-directory: agentkit
+        working-directory: .agentkit
 
       - name: Run discover
         run: node engines/node/src/cli.mjs discover --output json
-        working-directory: agentkit
+        working-directory: .agentkit
 
       - name: Check for drift
         run: |
           if ! git diff --quiet; then
-            echo "::error::Generated files are out of sync. Run 'pnpm -C agentkit agentkit:sync' and commit."
+            echo "::error::Generated files are out of sync. Run 'pnpm -C .agentkit agentkit:sync' and commit."
             git diff --stat
             exit 1
           fi
@@ -91,14 +91,14 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-          cache-dependency-path: agentkit/pnpm-lock.yaml
+          cache-dependency-path: .agentkit/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: agentkit
+        working-directory: .agentkit
 
       - name: Validate YAML spec files
-        working-directory: agentkit
+        working-directory: .agentkit
         run: |
           for f in spec/*.yaml; do
             echo "Checking $f..."
