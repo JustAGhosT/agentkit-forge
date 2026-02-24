@@ -418,6 +418,10 @@ function* walkDir(dir) {
 // ---------------------------------------------------------------------------
 
 export async function runSync({ agentkitRoot, projectRoot, flags }) {
+  const dryRun = flags?.['dry-run'] || false;
+  if (dryRun) {
+    console.log('[agentkit:sync] Dry-run mode — no files will be written.');
+  }
   console.log('[agentkit:sync] Starting sync...');
 
   // 1. Load spec — version from package.json (primary) with VERSION file as fallback
@@ -526,7 +530,31 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     syncDirectCopy(templatesDir, 'mcp', tmpDir, 'mcp', vars, version, repoName);
   }
 
-  // 5. Load previous manifest for stale file cleanup
+  // 5. Build file list from temp and compute summary
+  const newManifestFiles = {};
+  const fileSummary = {}; // category → count
+  for (const srcFile of walkDir(tmpDir)) {
+    const relPath = relative(tmpDir, srcFile);
+    const manifestKey = relPath.replace(/\\/g, '/');
+    const fileContent = readFileSync(srcFile);
+    const hash = createHash('sha256').update(fileContent).digest('hex').slice(0, 12);
+    newManifestFiles[manifestKey] = { hash };
+
+    // Categorize for summary
+    const cat = categorizeFile(manifestKey);
+    fileSummary[cat] = (fileSummary[cat] || 0) + 1;
+  }
+
+  // --- Dry-run: print summary and exit without writing ---
+  if (dryRun) {
+    rmSync(tmpDir, { recursive: true, force: true });
+    const total = Object.keys(newManifestFiles).length;
+    console.log(`[agentkit:sync] Dry-run: would generate ${total} file(s):`);
+    printSyncSummary(fileSummary, targets);
+    return;
+  }
+
+  // 6. Load previous manifest for stale file cleanup
   const manifestPath = resolve(agentkitRoot, '.manifest.json');
   let previousManifest = null;
   try {
@@ -535,18 +563,15 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     }
   } catch { /* ignore corrupt manifest */ }
 
-  // 6. Atomic swap: move temp outputs to project root & build new manifest
+  // 7. Atomic swap: move temp outputs to project root & build new manifest
   console.log('[agentkit:sync] Writing outputs...');
   const resolvedRoot = resolve(projectRoot) + sep;
   let count = 0;
   let skippedScaffold = 0;
   const failedFiles = [];
-  const newManifestFiles = {};
   for (const srcFile of walkDir(tmpDir)) {
     const relPath = relative(tmpDir, srcFile);
     const destFile = resolve(projectRoot, relPath);
-    // Normalize to forward slashes for consistent manifest keys
-    const manifestKey = relPath.replace(/\\/g, '/');
 
     // Path traversal protection: ensure all output stays within project root
     if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot)) {
@@ -554,11 +579,6 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       failedFiles.push({ file: relPath, error: 'path traversal blocked' });
       continue;
     }
-
-    // Compute content hash for manifest
-    const fileContent = readFileSync(srcFile);
-    const hash = createHash('sha256').update(fileContent).digest('hex').slice(0, 12);
-    newManifestFiles[manifestKey] = { hash };
 
     // Scaffold-once: skip project-owned files that already exist
     if (isScaffoldOnce(relPath) && existsSync(destFile)) {
@@ -581,7 +601,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     }
   }
 
-  // 7. Stale file cleanup: delete orphaned files from previous sync
+  // 8. Stale file cleanup: delete orphaned files from previous sync
   let cleanedCount = 0;
   if (previousManifest?.files) {
     for (const prevFile of Object.keys(previousManifest.files)) {
@@ -608,7 +628,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     }
   }
 
-  // 8. Write new manifest
+  // 9. Write new manifest
   const newManifest = {
     generatedAt: new Date().toISOString(),
     version,
@@ -621,7 +641,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     console.warn(`[agentkit:sync] Warning: could not write manifest — ${err.message}`);
   }
 
-  // 9. Cleanup temp
+  // 10. Cleanup temp
   rmSync(tmpDir, { recursive: true, force: true });
 
   if (failedFiles.length > 0) {
@@ -637,7 +657,20 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   if (cleanedCount > 0) {
     console.log(`[agentkit:sync] Cleaned ${cleanedCount} stale file(s) from previous sync.`);
   }
+
+  // 11. Post-sync summary
+  printSyncSummary(fileSummary, targets);
   console.log(`[agentkit:sync] Done! Generated ${count} files.`);
+
+  // 12. First-sync hint (when not called from init)
+  if (!flags?.overlay) {
+    const markerPath = resolve(projectRoot, '.agentkit-repo');
+    if (!existsSync(markerPath)) {
+      console.log('');
+      console.log('  Tip: Run "agentkit init" to customize which AI tools you generate configs for.');
+      console.log('       Run "agentkit add <tool>" to add tools incrementally.');
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -646,6 +679,61 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 
 /** All known render target names. */
 const ALL_RENDER_TARGETS = ['claude', 'cursor', 'windsurf', 'copilot', 'gemini', 'codex', 'warp', 'cline', 'roo', 'ai', 'mcp'];
+
+/** Tool display names for summary output. */
+const TOOL_LABELS = {
+  claude: 'Claude Code', cursor: 'Cursor', windsurf: 'Windsurf', copilot: 'GitHub Copilot',
+  gemini: 'Gemini', codex: 'Codex', warp: 'Warp', cline: 'Cline', roo: 'Roo Code',
+  ai: 'Continue/AI', mcp: 'MCP', docs: 'Docs', github: 'GitHub', universal: 'Universal',
+  editor: 'Editor configs',
+};
+
+/**
+ * Categorizes a generated file path into a tool/category name for summary.
+ */
+function categorizeFile(manifestKey) {
+  if (manifestKey === 'AGENTS.md') return 'universal';
+  if (manifestKey === 'CLAUDE.md' || manifestKey.startsWith('.claude/')) return 'claude';
+  if (manifestKey.startsWith('.cursor/')) return 'cursor';
+  if (manifestKey.startsWith('.windsurf/')) return 'windsurf';
+  if (manifestKey.startsWith('.ai/')) return 'ai';
+  if (manifestKey.startsWith('mcp/')) return 'mcp';
+  if (manifestKey === 'GEMINI.md' || manifestKey.startsWith('.gemini/')) return 'gemini';
+  if (manifestKey === 'WARP.md') return 'warp';
+  if (manifestKey.startsWith('.agents/')) return 'codex';
+  if (manifestKey.startsWith('.clinerules/')) return 'cline';
+  if (manifestKey.startsWith('.roo/')) return 'roo';
+  if (manifestKey.startsWith('.github/copilot') || manifestKey.startsWith('.github/instructions') ||
+      manifestKey.startsWith('.github/prompts') || manifestKey.startsWith('.github/agents') ||
+      manifestKey.startsWith('.github/chatmodes')) return 'copilot';
+  if (manifestKey.startsWith('.github/')) return 'github';
+  if (manifestKey.startsWith('docs/')) return 'docs';
+  if (manifestKey.startsWith('.vscode/') || manifestKey === '.editorconfig' ||
+      manifestKey === '.prettierrc' || manifestKey === '.markdownlint.json') return 'editor';
+  return 'universal';
+}
+
+/**
+ * Prints a grouped post-sync summary.
+ */
+function printSyncSummary(fileSummary, targets) {
+  const toolEntries = [];
+  const otherEntries = [];
+  for (const [cat, count] of Object.entries(fileSummary)) {
+    const label = TOOL_LABELS[cat] || cat;
+    if (ALL_RENDER_TARGETS.includes(cat)) {
+      toolEntries.push(`  ${label}: ${count} file(s)`);
+    } else {
+      otherEntries.push(`  ${label}: ${count} file(s)`);
+    }
+  }
+  if (toolEntries.length > 0 || otherEntries.length > 0) {
+    const enabledNames = [...targets].map(t => TOOL_LABELS[t] || t).join(', ');
+    console.log(`[agentkit:sync] Summary for: ${enabledNames}`);
+    for (const line of toolEntries) console.log(line);
+    for (const line of otherEntries) console.log(line);
+  }
+}
 
 /**
  * Resolves the active render targets from overlay settings + CLI flags.
