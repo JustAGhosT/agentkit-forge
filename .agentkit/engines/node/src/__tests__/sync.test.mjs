@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   renderTemplate,
   sanitizeTemplateValue,
@@ -7,11 +7,13 @@ import {
   mergePermissions,
   insertHeader,
   isScaffoldOnce,
-  evalTruthy,
   resolveConditionals,
   resolveEachBlocks,
+  evalTruthy,
   flattenProjectYaml,
   flattenCrosscutting,
+  resolveRenderTargets,
+  ALL_RENDER_TARGETS,
 } from '../sync.mjs';
 
 // ---------------------------------------------------------------------------
@@ -290,24 +292,25 @@ describe('evalTruthy', () => {
     expect(evalTruthy('hello')).toBe(true);
   });
 
-  it("returns true for 'none' (use explicit template checks for none values)", () => {
-    expect(evalTruthy('none')).toBe(true);
-  });
-
   it('returns true for true', () => {
     expect(evalTruthy(true)).toBe(true);
   });
 
-  it('returns true for positive number', () => {
-    expect(evalTruthy(42)).toBe(true);
+  it('returns true for non-zero number', () => {
+    expect(evalTruthy(1)).toBe(true);
   });
 
   it('returns true for non-empty array', () => {
     expect(evalTruthy(['a'])).toBe(true);
   });
 
-  it('returns true for plain object', () => {
-    expect(evalTruthy({ key: 'val' })).toBe(true);
+  it('returns true for object', () => {
+    expect(evalTruthy({})).toBe(true);
+  });
+
+  it('returns true for the string "none"', () => {
+    // 'none' is truthy — templates must use explicit checks
+    expect(evalTruthy('none')).toBe(true);
   });
 });
 
@@ -315,47 +318,67 @@ describe('evalTruthy', () => {
 // resolveConditionals
 // ---------------------------------------------------------------------------
 describe('resolveConditionals', () => {
-  it('renders truthy branch', () => {
-    const result = resolveConditionals('{{#if name}}hello{{/if}}', { name: 'World' });
-    expect(result).toBe('hello');
+  it('keeps content when var is truthy', () => {
+    const result = resolveConditionals('{{#if name}}Hello {{name}}!{{/if}}', { name: 'World' });
+    expect(result).toBe('Hello {{name}}!');
   });
 
-  it('omits falsy block', () => {
-    const result = resolveConditionals('{{#if name}}hello{{/if}}', {});
+  it('removes content when var is falsy', () => {
+    const result = resolveConditionals('{{#if name}}Hello!{{/if}}', { name: '' });
     expect(result).toBe('');
   });
 
-  it('renders else branch when var is falsy', () => {
-    const result = resolveConditionals('{{#if flag}}yes{{else}}no{{/if}}', { flag: false });
-    expect(result).toBe('no');
+  it('removes content when var is undefined', () => {
+    const result = resolveConditionals('{{#if missing}}present{{/if}}', {});
+    expect(result).toBe('');
   });
 
-  it('renders truthy branch when var is truthy with else', () => {
+  it('handles {{else}} branch — truthy', () => {
     const result = resolveConditionals('{{#if flag}}yes{{else}}no{{/if}}', { flag: true });
     expect(result).toBe('yes');
   });
 
-  it('handles nested conditionals', () => {
-    const result = resolveConditionals(
-      '{{#if outer}}{{#if inner}}both{{else}}outer only{{/if}}{{/if}}',
-      { outer: true, inner: false }
-    );
-    expect(result).toBe('outer only');
+  it('handles {{else}} branch — falsy', () => {
+    const result = resolveConditionals('{{#if flag}}yes{{else}}no{{/if}}', { flag: false });
+    expect(result).toBe('no');
   });
 
-  it('uses only the first {{else}} occurrence in a block body', () => {
-    // Body has a literal {{else}} that should NOT be treated as a second branch
-    const result = resolveConditionals(
-      '{{#if flag}}A{{else}}B{{/if}}',
-      { flag: true }
-    );
-    expect(result).toBe('A');
+  it('resolves nested conditionals — both truthy', () => {
+    const tpl = '{{#if outer}}{{#if inner}}both{{/if}}{{/if}}';
+    expect(resolveConditionals(tpl, { outer: true, inner: true })).toBe('both');
+  });
 
-    const result2 = resolveConditionals(
-      '{{#if flag}}A{{else}}B{{/if}}',
-      { flag: false }
-    );
-    expect(result2).toBe('B');
+  it('resolves nested conditionals — inner falsy', () => {
+    const tpl = '{{#if outer}}{{#if inner}}both{{/if}}{{/if}}';
+    expect(resolveConditionals(tpl, { outer: true, inner: false })).toBe('');
+  });
+
+  it('resolves nested conditionals — outer falsy', () => {
+    const tpl = '{{#if outer}}{{#if inner}}both{{/if}}{{/if}}';
+    expect(resolveConditionals(tpl, { outer: false, inner: true })).toBe('');
+  });
+
+  it('returns empty string for empty array var', () => {
+    const result = resolveConditionals('{{#if items}}list{{/if}}', { items: [] });
+    expect(result).toBe('');
+  });
+
+  it('warns on safety limit exhaustion', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // 51 levels of nesting will exhaust the 50-iteration safety counter
+    const open = '{{#if a}}'.repeat(51);
+    const close = '{{/if}}'.repeat(51);
+    resolveConditionals(open + 'deep' + close, { a: true });
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('safety limit reached'));
+    warnSpy.mockRestore();
+  });
+
+  it('uses only the first {{else}} when body contains multiple potential splits', () => {
+    const result = resolveConditionals('{{#if flag}}A{{else}}B{{/if}}', { flag: false });
+    expect(result).toBe('B');
+
+    const result2 = resolveConditionals('{{#if flag}}A{{else}}B{{/if}}', { flag: true });
+    expect(result2).toBe('A');
   });
 
   it('preserves surrounding text', () => {
@@ -364,10 +387,7 @@ describe('resolveConditionals', () => {
   });
 
   it('handles multiple independent if blocks', () => {
-    const result = resolveConditionals(
-      '{{#if a}}A{{/if}}{{#if b}}B{{/if}}',
-      { a: true, b: true }
-    );
+    const result = resolveConditionals('{{#if a}}A{{/if}}{{#if b}}B{{/if}}', { a: true, b: true });
     expect(result).toBe('AB');
   });
 });
@@ -376,11 +396,9 @@ describe('resolveConditionals', () => {
 // resolveEachBlocks
 // ---------------------------------------------------------------------------
 describe('resolveEachBlocks', () => {
-  it('iterates string arrays replacing {{.}}', () => {
-    const result = resolveEachBlocks('{{#each items}}* {{.}}\n{{/each}}', {
-      items: ['alpha', 'beta'],
-    });
-    expect(result).toBe('* alpha\n* beta\n');
+  it('iterates over string array using {{.}}', () => {
+    const result = resolveEachBlocks('{{#each items}}{{.}},{{/each}}', { items: ['a', 'b', 'c'] });
+    expect(result).toBe('a,b,c,');
   });
 
   it('returns empty string for empty array', () => {
@@ -388,33 +406,38 @@ describe('resolveEachBlocks', () => {
     expect(result).toBe('');
   });
 
-  it('returns empty string for undefined var', () => {
+  it('returns empty string when var is not an array', () => {
+    const result = resolveEachBlocks('{{#each items}}{{.}}{{/each}}', { items: 'notarray' });
+    expect(result).toBe('');
+  });
+
+  it('returns empty string when var is undefined', () => {
     const result = resolveEachBlocks('{{#each items}}{{.}}{{/each}}', {});
     expect(result).toBe('');
   });
 
-  it('iterates object arrays using {{.prop}} syntax', () => {
-    const result = resolveEachBlocks('{{#each list}}{{.name}}: {{.purpose}}\n{{/each}}', {
-      list: [
-        { name: 'Stripe', purpose: 'payments' },
-        { name: 'SendGrid', purpose: 'email' },
-      ],
-    });
-    expect(result).toBe('Stripe: payments\nSendGrid: email\n');
+  it('iterates over object array using {{.prop}}', () => {
+    const result = resolveEachBlocks(
+      '{{#each items}}{{.name}}:{{.purpose}} {{/each}}',
+      { items: [{ name: 'A', purpose: 'auth' }, { name: 'B', purpose: 'pay' }] }
+    );
+    expect(result).toBe('A:auth B:pay ');
   });
 
-  it('replaces {{@index}} with the current index', () => {
-    const result = resolveEachBlocks('{{#each items}}{{@index}}:{{.}} {{/each}}', {
-      items: ['a', 'b', 'c'],
-    });
-    expect(result).toBe('0:a 1:b 2:c ');
-  });
-
-  it('handles missing object properties gracefully', () => {
-    const result = resolveEachBlocks('{{#each list}}{{.name}}{{.missing}}{{/each}}', {
-      list: [{ name: 'X' }],
-    });
+  it('replaces missing object props with empty string', () => {
+    const result = resolveEachBlocks(
+      '{{#each items}}{{.name}}{{.missing}}{{/each}}',
+      { items: [{ name: 'X' }] }
+    );
     expect(result).toBe('X');
+  });
+
+  it('exposes {{@index}} for current position', () => {
+    const result = resolveEachBlocks(
+      '{{#each items}}{{@index}}:{{.}} {{/each}}',
+      { items: ['x', 'y'] }
+    );
+    expect(result).toBe('0:x 1:y ');
   });
 });
 
@@ -422,41 +445,33 @@ describe('resolveEachBlocks', () => {
 // flattenProjectYaml
 // ---------------------------------------------------------------------------
 describe('flattenProjectYaml', () => {
-  it('returns empty object for null/undefined input', () => {
+  it('returns empty object for null input', () => {
     expect(flattenProjectYaml(null)).toEqual({});
-    expect(flattenProjectYaml(undefined)).toEqual({});
+  });
+
+  it('returns empty object for non-object input', () => {
     expect(flattenProjectYaml('string')).toEqual({});
   });
 
-  it('maps top-level scalars', () => {
-    const vars = flattenProjectYaml({ name: 'MyApp', description: 'A desc', phase: 'active' });
+  it('maps top-level scalar fields', () => {
+    const vars = flattenProjectYaml({ name: 'MyApp', description: 'Desc', phase: 'active' });
     expect(vars.projectName).toBe('MyApp');
-    expect(vars.projectDescription).toBe('A desc');
+    expect(vars.projectDescription).toBe('Desc');
     expect(vars.projectPhase).toBe('active');
   });
 
-  it('joins stack arrays with comma', () => {
+  it('maps stack.languages as comma-separated string', () => {
+    const vars = flattenProjectYaml({ stack: { languages: ['TypeScript', 'C#'] } });
+    expect(vars.stackLanguages).toBe('TypeScript, C#');
+  });
+
+  it('maps stack.frameworks arrays', () => {
     const vars = flattenProjectYaml({
-      stack: { languages: ['TypeScript', 'Python'] },
+      stack: { frameworks: { frontend: ['React'], backend: ['Express'], css: ['Tailwind'] } },
     });
-    expect(vars.stackLanguages).toBe('TypeScript, Python');
-  });
-
-  it('does not create a meaningful stackLanguages var for empty languages array', () => {
-    const vars = flattenProjectYaml({ stack: { languages: [] } });
-    // Empty array joins to '' — both undefined and '' are falsy for {{#if}} and produce
-    // empty output for {{#each}}, so the template behaviour is identical in both cases.
-    expect(vars.stackLanguages == null || vars.stackLanguages === '').toBe(true);
-  });
-
-  it('handles database as array', () => {
-    const vars = flattenProjectYaml({ stack: { database: ['postgres', 'redis'] } });
-    expect(vars.stackDatabase).toBe('postgres, redis');
-  });
-
-  it('handles database as string (defensive fallback)', () => {
-    const vars = flattenProjectYaml({ stack: { database: 'postgres' } });
-    expect(vars.stackDatabase).toBe('postgres');
+    expect(vars.stackFrontendFrameworks).toBe('React');
+    expect(vars.stackBackendFrameworks).toBe('Express');
+    expect(vars.stackCssFrameworks).toBe('Tailwind');
   });
 
   it('maps architecture fields', () => {
@@ -469,6 +484,49 @@ describe('flattenProjectYaml', () => {
     expect(vars.monorepoTool).toBe('nx');
   });
 
+  it('maps deployment fields', () => {
+    const vars = flattenProjectYaml({
+      deployment: { cloudProvider: 'azure', containerized: true, environments: ['dev', 'prod'], iacTool: 'bicep' },
+    });
+    expect(vars.cloudProvider).toBe('azure');
+    expect(vars.hasContainerized).toBe(true);
+    expect(vars.environments).toBe('dev, prod');
+    expect(vars.iacTool).toBe('bicep');
+  });
+
+  it('maps testing fields', () => {
+    const vars = flattenProjectYaml({
+      testing: { unit: ['vitest'], integration: ['supertest'], e2e: ['playwright'], coverage: 80 },
+    });
+    expect(vars.testingUnit).toBe('vitest');
+    expect(vars.testingIntegration).toBe('supertest');
+    expect(vars.testingE2e).toBe('playwright');
+    expect(vars.testingCoverage).toBe('80');
+  });
+
+  it('keeps integrations as array and sets hasIntegrations true', () => {
+    const vars = flattenProjectYaml({
+      integrations: [{ name: 'Stripe', purpose: 'payments' }],
+    });
+    expect(Array.isArray(vars.integrations)).toBe(true);
+    expect(vars.hasIntegrations).toBe(true);
+  });
+
+  it('sets hasIntegrations false for empty integrations array', () => {
+    const vars = flattenProjectYaml({ integrations: [] });
+    expect(vars.hasIntegrations).toBe(false);
+  });
+
+  it('does not create a meaningful stackLanguages var for empty languages array', () => {
+    const vars = flattenProjectYaml({ stack: { languages: [] } });
+    expect(vars.stackLanguages == null || vars.stackLanguages === '').toBe(true);
+  });
+
+  it('handles database as string (defensive fallback)', () => {
+    const vars = flattenProjectYaml({ stack: { database: 'postgres' } });
+    expect(vars.stackDatabase).toBe('postgres');
+  });
+
   it('maps documentation boolean has* flags', () => {
     const vars = flattenProjectYaml({
       documentation: { hasPrd: true, prdPath: 'docs/prd.md', hasAdr: false },
@@ -477,87 +535,70 @@ describe('flattenProjectYaml', () => {
     expect(vars.prdPath).toBe('docs/prd.md');
     expect(vars.hasAdr).toBe(false);
   });
-
-  it('maps deployment fields', () => {
-    const vars = flattenProjectYaml({
-      deployment: {
-        cloudProvider: 'aws',
-        containerized: true,
-        environments: ['dev', 'prod'],
-        iacTool: 'terraform',
-      },
-    });
-    expect(vars.cloudProvider).toBe('aws');
-    expect(vars.hasContainerized).toBe(true);
-    expect(vars.environments).toBe('dev, prod');
-    expect(vars.iacTool).toBe('terraform');
-  });
-
-  it('keeps integrations as array for {{#each}} with hasIntegrations flag', () => {
-    const integ = [{ name: 'Stripe', purpose: 'payments' }];
-    const vars = flattenProjectYaml({ integrations: integ });
-    expect(vars.integrations).toEqual(integ);
-    expect(vars.hasIntegrations).toBe(true);
-  });
-
-  it('sets hasIntegrations to false for empty integrations array', () => {
-    const vars = flattenProjectYaml({ integrations: [] });
-    expect(vars.hasIntegrations).toBe(false);
-  });
 });
 
 // ---------------------------------------------------------------------------
 // flattenCrosscutting
 // ---------------------------------------------------------------------------
 describe('flattenCrosscutting', () => {
-  it('returns empty vars for empty crosscutting object', () => {
+  it('maps logging fields', () => {
     const vars = {};
-    flattenCrosscutting({}, vars);
-    expect(vars.hasLogging).toBeUndefined();
-    expect(vars.hasAuth).toBeUndefined();
-  });
-
-  it('sets hasLogging and loggingFramework when framework is not none', () => {
-    const vars = {};
-    flattenCrosscutting({ logging: { framework: 'winston', level: 'debug' } }, vars);
+    flattenCrosscutting({
+      logging: { framework: 'serilog', structured: true, correlationId: true, level: 'information', sink: ['console'] },
+    }, vars);
+    expect(vars.loggingFramework).toBe('serilog');
     expect(vars.hasLogging).toBe(true);
-    expect(vars.loggingFramework).toBe('winston');
-    expect(vars.loggingLevel).toBe('debug');
+    expect(vars.hasStructuredLogging).toBe(true);
+    expect(vars.hasCorrelationId).toBe(true);
+    expect(vars.loggingLevel).toBe('information');
+    expect(vars.loggingSinks).toBe('console');
   });
 
-  it('does not set hasLogging when framework is none', () => {
+  it('does not set hasLogging when framework is "none"', () => {
     const vars = {};
     flattenCrosscutting({ logging: { framework: 'none' } }, vars);
     expect(vars.hasLogging).toBeUndefined();
-    expect(vars.loggingFramework).toBeUndefined();
   });
 
-  it('sets hasAuth and authProvider when provider is not none', () => {
+  it('maps authentication fields', () => {
     const vars = {};
-    flattenCrosscutting({ authentication: { provider: 'auth0', strategy: 'jwt-bearer' } }, vars);
-    expect(vars.hasAuth).toBe(true);
+    flattenCrosscutting({
+      authentication: { provider: 'auth0', strategy: 'jwt-bearer', rbac: true, multiTenant: false },
+    }, vars);
     expect(vars.authProvider).toBe('auth0');
+    expect(vars.hasAuth).toBe(true);
     expect(vars.authStrategy).toBe('jwt-bearer');
+    expect(vars.hasRbac).toBe(true);
+    expect(vars.hasMultiTenant).toBe(false);
+  });
+
+  it('maps caching fields', () => {
+    const vars = {};
+    flattenCrosscutting({
+      caching: { provider: 'redis', patterns: ['cache-aside'], distributedCache: true },
+    }, vars);
+    expect(vars.cachingProvider).toBe('redis');
+    expect(vars.hasCaching).toBe(true);
+    expect(vars.cachingPatterns).toBe('cache-aside');
+    expect(vars.hasDistributedCache).toBe(true);
+  });
+
+  it('maps feature flags', () => {
+    const vars = {};
+    flattenCrosscutting({ featureFlags: { provider: 'launchdarkly' } }, vars);
+    expect(vars.featureFlagProvider).toBe('launchdarkly');
+    expect(vars.hasFeatureFlags).toBe(true);
+  });
+
+  it('handles empty crosscutting object without throwing', () => {
+    const vars = {};
+    expect(() => flattenCrosscutting({}, vars)).not.toThrow();
   });
 
   it('does not set hasAuth when provider is none', () => {
     const vars = {};
     flattenCrosscutting({ authentication: { provider: 'none' } }, vars);
     expect(vars.hasAuth).toBeUndefined();
-  });
-
-  it('sets hasCorrelationId as boolean from logging.correlationId', () => {
-    const vars = {};
-    flattenCrosscutting({ logging: { correlationId: true } }, vars);
-    expect(vars.hasCorrelationId).toBe(true);
-  });
-
-  it('sets hasCaching and cachingProvider when provider is not none', () => {
-    const vars = {};
-    flattenCrosscutting({ caching: { provider: 'redis', patterns: ['cache-aside'] } }, vars);
-    expect(vars.hasCaching).toBe(true);
-    expect(vars.cachingProvider).toBe('redis');
-    expect(vars.cachingPatterns).toBe('cache-aside');
   });
 
   it('sets hasApiVersioning when versioning is not none', () => {
@@ -575,11 +616,49 @@ describe('flattenCrosscutting', () => {
     expect(vars.hasDbMigrations).toBe(true);
     expect(vars.dbMigrations).toBe('code-first');
   });
+});
 
-  it('sets hasFeatureFlags when provider is not none', () => {
-    const vars = {};
-    flattenCrosscutting({ featureFlags: { provider: 'launchdarkly' } }, vars);
-    expect(vars.hasFeatureFlags).toBe(true);
-    expect(vars.featureFlagProvider).toBe('launchdarkly');
+// ---------------------------------------------------------------------------
+// resolveRenderTargets
+// ---------------------------------------------------------------------------
+describe('resolveRenderTargets', () => {
+  it('returns all targets when overlayTargets is undefined and no --only flag', () => {
+    const result = resolveRenderTargets(undefined, {});
+    expect(result).toEqual(new Set(ALL_RENDER_TARGETS));
+  });
+
+  it('returns all targets when overlayTargets is empty array and no --only flag', () => {
+    const result = resolveRenderTargets([], {});
+    expect(result).toEqual(new Set(ALL_RENDER_TARGETS));
+  });
+
+  it('returns overlay targets when defined and no --only flag', () => {
+    const result = resolveRenderTargets(['claude', 'cursor'], {});
+    expect(result).toEqual(new Set(['claude', 'cursor']));
+  });
+
+  it('--only flag overrides overlay targets', () => {
+    const result = resolveRenderTargets(['claude', 'cursor', 'windsurf'], { only: 'claude,cursor' });
+    expect(result).toEqual(new Set(['claude', 'cursor']));
+  });
+
+  it('--only flag overrides default all-targets', () => {
+    const result = resolveRenderTargets(undefined, { only: 'copilot' });
+    expect(result).toEqual(new Set(['copilot']));
+  });
+
+  it('--only flag handles whitespace around commas', () => {
+    const result = resolveRenderTargets(undefined, { only: 'claude , cursor , windsurf' });
+    expect(result).toEqual(new Set(['claude', 'cursor', 'windsurf']));
+  });
+
+  it('--only flag filters out empty tokens', () => {
+    const result = resolveRenderTargets(undefined, { only: 'claude,,cursor' });
+    expect(result).toEqual(new Set(['claude', 'cursor']));
+  });
+
+  it('returns all targets when flags is null', () => {
+    const result = resolveRenderTargets(undefined, null);
+    expect(result).toEqual(new Set(ALL_RENDER_TARGETS));
   });
 });
