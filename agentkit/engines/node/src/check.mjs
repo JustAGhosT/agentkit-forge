@@ -46,6 +46,8 @@ function buildSteps(stack, flags) {
     const resolved = resolveLinter(stack.linter);
     if (!isValidCommand(resolved.check)) {
       console.warn(`[agentkit:check] Skipping invalid linter command: ${stack.linter}`);
+    } else if (!isAllowedLinter(resolved)) {
+      console.warn(`[agentkit:check] Skipping unrecognized linter: ${stack.linter}`);
     } else {
       const fixCmd = flags.fix && resolved.fix ? resolved.fix : null;
       steps.push({
@@ -161,9 +163,24 @@ function isAllowedFormatter(resolved) {
   return ALLOWED_FORMATTER_BASES.has(base);
 }
 
-// ---------------------------------------------------------------------------
-// Stack detection
-// ---------------------------------------------------------------------------
+// Allowed linter base executables. Values from the YAML spec must resolve to
+// one of these to prevent a compromised spec from executing arbitrary binaries.
+const ALLOWED_LINTER_BASES = new Set([
+  'eslint', 'cargo', 'pylint', 'flake8', 'rubocop', 'golangci-lint',
+  'tslint', 'stylelint', 'shellcheck',
+]);
+
+/**
+ * Check if a resolved linter command uses an allowed base executable.
+ * @param {{ cmd: string, check: string, fix: string|null }} resolved
+ * @returns {boolean}
+ */
+function isAllowedLinter(resolved) {
+  const base = resolved.cmd.split(/\s+/)[0];
+  return ALLOWED_LINTER_BASES.has(base);
+}
+
+
 
 /**
  * Detect tech stacks from teams.yaml techStacks config.
@@ -310,3 +327,14 @@ export async function runCheck({ agentkitRoot, projectRoot, flags = {} }) {
 
   return { stacks: allResults, overallStatus, overallPassed };
 }
+
+// Export internal helpers so they can be directly unit-tested.
+export {
+  resolveFormatter,
+  resolveLinter,
+  isAllowedFormatter,
+  isAllowedLinter,
+  ALLOWED_FORMATTER_BASES,
+  ALLOWED_NPX_PACKAGES,
+  ALLOWED_LINTER_BASES,
+};
