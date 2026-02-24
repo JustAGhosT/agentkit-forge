@@ -6,6 +6,7 @@ import {
   getGeneratedHeader,
   mergePermissions,
   insertHeader,
+  isScaffoldOnce,
 } from '../sync.mjs';
 
 // ---------------------------------------------------------------------------
@@ -200,5 +201,34 @@ describe('insertHeader', () => {
     const content = '{"key": "value"}';
     const result = insertHeader(content, '.json', '0.1.0', 'test');
     expect(result).toBe(content);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isScaffoldOnce
+// ---------------------------------------------------------------------------
+describe('isScaffoldOnce', () => {
+  it('identifies project-owned root files', () => {
+    expect(isScaffoldOnce('AGENT_BACKLOG.md')).toBe(true);
+    expect(isScaffoldOnce('CHANGELOG.md')).toBe(true);
+    expect(isScaffoldOnce('CONTRIBUTING.md')).toBe(true);
+    expect(isScaffoldOnce('MIGRATIONS.md')).toBe(true);
+    expect(isScaffoldOnce('SECURITY.md')).toBe(true);
+  });
+
+  it('identifies docs/ directory files', () => {
+    expect(isScaffoldOnce('docs/README.md')).toBe(true);
+    expect(isScaffoldOnce('docs/01_product/overview.md')).toBe(true);
+  });
+
+  it('returns false for tool config files', () => {
+    expect(isScaffoldOnce('CLAUDE.md')).toBe(false);
+    expect(isScaffoldOnce('QUALITY_GATES.md')).toBe(false);
+    expect(isScaffoldOnce('UNIFIED_AGENT_TEAMS.md')).toBe(false);
+  });
+
+  it('returns false for AI tool directories', () => {
+    expect(isScaffoldOnce('.claude/settings.json')).toBe(false);
+    expect(isScaffoldOnce('.cursor/rules/team-backend.mdc')).toBe(false);
   });
 });

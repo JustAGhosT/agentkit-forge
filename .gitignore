@@ -14,20 +14,21 @@
 /.github/PULL_REQUEST_TEMPLATE.md
 /mcp/
 
-# Generated root docs (from templates)
+# Generated AI instruction files (from templates — regenerate with sync)
 /CLAUDE.md
 /UNIFIED_AGENT_TEAMS.md
 /AGENT_TEAMS.md
-/AGENT_BACKLOG.md
 /QUALITY_GATES.md
 /RUNBOOK_AI.md
-/SECURITY.md
-/CONTRIBUTING.md
-/CHANGELOG.md
-/MIGRATIONS.md
 
-# Generated docs structure
-/docs/
+# Project docs and tracking — NOT gitignored. These start as generated scaffolds
+# but become project-owned content. Commit them after first sync.
+# /AGENT_BACKLOG.md   ← project work tracking, commit this
+# /docs/              ← project documentation, commit this
+# /SECURITY.md        ← project security policy, commit this
+# /CONTRIBUTING.md    ← project contributing guide, commit this
+# /CHANGELOG.md       ← project changelog, commit this
+# /MIGRATIONS.md      ← project migration notes, commit this
 
 # Generated editor configs
 /.vscode/

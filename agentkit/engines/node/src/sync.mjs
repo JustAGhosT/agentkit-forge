@@ -86,6 +86,30 @@ function ensureDir(dirPath) {
   mkdirSync(dirPath, { recursive: true });
 }
 
+// Project-owned files: generated once as scaffolds, then owned by the consuming repo.
+// Sync will NOT overwrite these if they already exist at the destination.
+const SCAFFOLD_ONCE_ROOT_FILES = new Set([
+  'AGENT_BACKLOG.md',
+  'CHANGELOG.md',
+  'CONTRIBUTING.md',
+  'MIGRATIONS.md',
+  'SECURITY.md',
+]);
+
+const SCAFFOLD_ONCE_DIRS = ['docs/'];
+
+/**
+ * Check if a relative path is a scaffold-once file (project-owned content).
+ * These are only written on first sync; subsequent syncs skip them if they exist.
+ */
+function isScaffoldOnce(relPath) {
+  if (SCAFFOLD_ONCE_ROOT_FILES.has(relPath)) return true;
+  for (const dir of SCAFFOLD_ONCE_DIRS) {
+    if (relPath.startsWith(dir)) return true;
+  }
+  return false;
+}
+
 function writeOutput(filePath, content) {
   ensureDir(dirname(filePath));
   writeFileSync(filePath, content, 'utf-8');
@@ -211,6 +235,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   console.log('[agentkit:sync] Writing outputs...');
   const resolvedRoot = resolve(projectRoot) + sep;
   let count = 0;
+  let skippedScaffold = 0;
   const failedFiles = [];
   for (const srcFile of walkDir(tmpDir)) {
     const relPath = relative(tmpDir, srcFile);
@@ -220,6 +245,12 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot)) {
       console.error(`[agentkit:sync] BLOCKED: path traversal detected — ${relPath}`);
       failedFiles.push({ file: relPath, error: 'path traversal blocked' });
+      continue;
+    }
+
+    // Scaffold-once: skip project-owned files that already exist
+    if (isScaffoldOnce(relPath) && existsSync(destFile)) {
+      skippedScaffold++;
       continue;
     }
 
@@ -247,6 +278,9 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       console.error(`  - ${f.file}: ${f.error}`);
     }
     throw new Error(`Sync completed with ${failedFiles.length} write failure(s)`);
+  }
+  if (skippedScaffold > 0) {
+    console.log(`[agentkit:sync] Skipped ${skippedScaffold} project-owned file(s) (already exist).`);
   }
   console.log(`[agentkit:sync] Done! Generated ${count} files.`);
 }
@@ -590,4 +624,4 @@ function syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec) {
 // ---------------------------------------------------------------------------
 // Exports for testing
 // ---------------------------------------------------------------------------
-export { renderTemplate, sanitizeTemplateValue, getCommentStyle, getGeneratedHeader, mergePermissions, insertHeader };
+export { renderTemplate, sanitizeTemplateValue, getCommentStyle, getGeneratedHeader, mergePermissions, insertHeader, isScaffoldOnce };
