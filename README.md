@@ -2,6 +2,35 @@
 
 A universal AI-orchestration template repository. Generates tool-specific configs from a single YAML spec for **15+ AI coding tools** — Claude Code, Cursor, Windsurf, Copilot, Codex, Gemini, Warp, Cline, Roo Code, Continue, Jules, Amp, Factory, and more. Windows-first with polyglot support and MCP/A2A protocol integration.
 
+---
+
+## Why
+
+Every AI coding tool has its own config format — `CLAUDE.md`, `.cursor/rules/`, `.windsurf/rules/`, `.github/copilot-instructions.md`, `AGENTS.md`, and more. Maintaining them by hand across a team means duplicated effort, inconsistent context, and drift between tools. When your stack changes, you update one file and forget the other ten.
+
+## What
+
+AgentKit Forge is a **single source of truth** for all your AI tool configurations. You define your project once in YAML (`project.yaml` + spec files), and `sync` generates consistent, project-aware configs for every tool your team uses. It also provides an orchestration layer — slash commands, team routing, quality gates, and session state — that works identically across Claude Code, Cursor, Copilot, and the rest.
+
+## How
+
+```
+.agentkit/spec/project.yaml   ← You describe your project once
+.agentkit/spec/*.yaml          ← Teams, commands, rules, settings
+.agentkit/templates/           ← Templates per tool
+        ↓  agentkit sync
+AGENTS.md, CLAUDE.md, .claude/, .cursor/, .windsurf/,
+.github/prompts/, GEMINI.md, WARP.md, .clinerules/, ...    ← Generated
+```
+
+1. **`agentkit init`** — Scans your repo, asks a few questions, writes `project.yaml`.
+2. **`agentkit sync`** — Renders templates → generates tool configs.
+3. **`agentkit add/remove`** — Incrementally enable or disable tools.
+
+Every developer runs `sync` after cloning. The generated files are gitignored — `.agentkit/` is the committed source of truth.
+
+---
+
 ## Quick Start
 
 ### Prerequisites
@@ -267,6 +296,9 @@ Comprehensive guides for using AgentKit Forge:
 | **[Troubleshooting](.agentkit/docs/TROUBLESHOOTING.md)** | Common errors, recovery procedures, FAQ |
 | **[Onboarding](.agentkit/docs/ONBOARDING.md)** | Full adoption guide with CI integration |
 | **[Cost Tracking](.agentkit/docs/COST_TRACKING.md)** | Session tracking, usage reports, optimization tips |
+| **[AGENTS.md Guide](.agentkit/docs/AGENTS_MD_GUIDE.md)** | What AGENTS.md is, which tools read it, best practices |
+| **[project.yaml Reference](.agentkit/docs/PROJECT_YAML_REFERENCE.md)** | Full schema with examples for every field |
+| **[Migration Guide](.agentkit/docs/MIGRATION_GUIDE.md)** | Upgrading from older versions of AgentKit Forge |
 
 ---
 
