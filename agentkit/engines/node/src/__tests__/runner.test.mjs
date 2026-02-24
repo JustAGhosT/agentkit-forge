@@ -53,19 +53,12 @@ describe('execCommand()', () => {
   });
 
   it('does not interpret shell metacharacters as command separators', () => {
-    // On non-Windows: spawnSync (no shell) treats semicolons as literal args
-    // On Windows: the defense-in-depth check in execCommand blocks metacharacters
+    // spawnSync passes args as an array — semicolons are literal, not separators.
+    // On Windows (shell:true), Node auto-escapes each arg for cmd.exe.
     const result = execCommand('echo safe; echo injected');
-    if (process.platform === 'win32') {
-      // Windows: blocked by isValidCommand() guard
-      expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain('shell metacharacters');
-    } else {
-      // Linux/macOS: semicolons are literal text, not command separators
-      const lines = result.stdout.trim().split('\n');
-      expect(lines).toHaveLength(1);
-      expect(lines[0]).toContain('safe;');
-    }
+    const lines = result.stdout.trim().split('\n');
+    expect(lines).toHaveLength(1); // Only one echo, not two
+    expect(lines[0]).toContain('safe;'); // Semicolon is literal text
   });
 });
 

@@ -44,28 +44,30 @@ export function isValidCommand(cmd) {
  */
 export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
   const start = Date.now();
-
-  // SECURITY (defense-in-depth): On Windows, shell:true is required to resolve
-  // .cmd/.bat executables (e.g. npx.cmd), which means cmd.exe interprets the
-  // command. Reject commands containing shell metacharacters at this level so
-  // even if a caller forgets to validate, injection is blocked.
-  if (process.platform === 'win32' && !isValidCommand(cmd)) {
-    return { exitCode: 1, stdout: '', stderr: 'Blocked: command contains shell metacharacters', durationMs: 0 };
-  }
-
   const parsed = parseCommand(cmd);
   if (parsed.length === 0) {
     return { exitCode: 1, stdout: '', stderr: 'Empty command', durationMs: 0 };
   }
   const [executable, ...args] = parsed;
+
+  // SECURITY (defense-in-depth): On Windows, shell:true is required to resolve
+  // .cmd/.bat executables (e.g. npx.cmd), which means cmd.exe interprets the
+  // command. We validate the executable name here to block injection even if a
+  // caller forgets to check. Arguments are safe because spawnSync auto-escapes
+  // each element of the args array when constructing the cmd.exe command line.
+  if (process.platform === 'win32' && /[$`|;&<>(){}!\\\r\n]/.test(executable)) {
+    return { exitCode: 1, stdout: '', stderr: `Blocked: executable contains shell metacharacters: ${executable}`, durationMs: 0 };
+  }
+
   const result = spawnSync(executable, args, {
     cwd,
     timeout,
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, FORCE_COLOR: '0' },
-    // On Windows, shell:true is needed for .cmd/.bat resolution. Metacharacter
-    // injection is blocked by the isValidCommand() guard above.
+    // On Windows, shell:true is needed for .cmd/.bat resolution. Executable
+    // injection is blocked by the metacharacter guard above; args are
+    // auto-escaped by Node's child_process when passed as an array.
     shell: process.platform === 'win32',
   });
 
