@@ -1,0 +1,469 @@
+{
+  "generatedAt": "2026-02-24T14:17:11.567Z",
+  "version": "0.1.1",
+  "repoName": "__TEMPLATE__",
+  "files": {
+    ".ai/README.md": {
+      "hash": "d39688e1b1e6"
+    },
+    ".ai/continuerules": {
+      "hash": "389125b5658c"
+    },
+    ".ai/cursorrules": {
+      "hash": "389125b5658c"
+    },
+    ".ai/windsurfrules": {
+      "hash": "389125b5658c"
+    },
+    ".claude/agents/design/brand-guardian.md": {
+      "hash": "f2dafbdc59ca"
+    },
+    ".claude/agents/design/ui-designer.md": {
+      "hash": "a69b48bbdfaa"
+    },
+    ".claude/agents/engineering/backend.md": {
+      "hash": "2a651001d5fc"
+    },
+    ".claude/agents/engineering/data.md": {
+      "hash": "309f8878eeaa"
+    },
+    ".claude/agents/engineering/devops.md": {
+      "hash": "6e1e7841a9a8"
+    },
+    ".claude/agents/engineering/frontend.md": {
+      "hash": "df894b353870"
+    },
+    ".claude/agents/engineering/infra.md": {
+      "hash": "4d7a6c26412c"
+    },
+    ".claude/agents/marketing/content-strategist.md": {
+      "hash": "85bdaf326375"
+    },
+    ".claude/agents/marketing/growth-analyst.md": {
+      "hash": "7f4cd4f7f58d"
+    },
+    ".claude/agents/operations/dependency-watcher.md": {
+      "hash": "c03afd1b4305"
+    },
+    ".claude/agents/operations/environment-manager.md": {
+      "hash": "9c29a69290d6"
+    },
+    ".claude/agents/operations/security-auditor.md": {
+      "hash": "61d40a61e756"
+    },
+    ".claude/agents/product/product-manager.md": {
+      "hash": "bc70b065a889"
+    },
+    ".claude/agents/product/roadmap-tracker.md": {
+      "hash": "de51632ac29b"
+    },
+    ".claude/agents/project-management/project-shipper.md": {
+      "hash": "a1e8bf279498"
+    },
+    ".claude/agents/project-management/release-manager.md": {
+      "hash": "76a44676a331"
+    },
+    ".claude/agents/testing/coverage-tracker.md": {
+      "hash": "545b670e7028"
+    },
+    ".claude/agents/testing/integration-tester.md": {
+      "hash": "a7ce1a724e69"
+    },
+    ".claude/agents/testing/test-lead.md": {
+      "hash": "18e537ad1005"
+    },
+    ".claude/commands/build.md": {
+      "hash": "85a3448dc781"
+    },
+    ".claude/commands/check.md": {
+      "hash": "65c59f8ff964"
+    },
+    ".claude/commands/cost.md": {
+      "hash": "4ffccd1e60ec"
+    },
+    ".claude/commands/deploy.md": {
+      "hash": "0bafabb53a5f"
+    },
+    ".claude/commands/discover.md": {
+      "hash": "67ff21f00836"
+    },
+    ".claude/commands/format.md": {
+      "hash": "309d5efd2acf"
+    },
+    ".claude/commands/handoff.md": {
+      "hash": "68f493dd1ca5"
+    },
+    ".claude/commands/healthcheck.md": {
+      "hash": "ee7a8a34c6be"
+    },
+    ".claude/commands/orchestrate.md": {
+      "hash": "03a20019cff9"
+    },
+    ".claude/commands/plan.md": {
+      "hash": "b0892fb75d75"
+    },
+    ".claude/commands/project-review.md": {
+      "hash": "358696895e0d"
+    },
+    ".claude/commands/review.md": {
+      "hash": "b7be4c26ffd0"
+    },
+    ".claude/commands/security.md": {
+      "hash": "f0d7fc54a1e5"
+    },
+    ".claude/commands/sync-backlog.md": {
+      "hash": "0d130577333f"
+    },
+    ".claude/commands/team-backend.md": {
+      "hash": "14fbffe4ad1d"
+    },
+    ".claude/commands/team-data.md": {
+      "hash": "f5351137c638"
+    },
+    ".claude/commands/team-devops.md": {
+      "hash": "94cacee8b4e3"
+    },
+    ".claude/commands/team-docs.md": {
+      "hash": "4bf48f96c54a"
+    },
+    ".claude/commands/team-frontend.md": {
+      "hash": "470b790ecb6b"
+    },
+    ".claude/commands/team-infra.md": {
+      "hash": "ae7b953c4ea9"
+    },
+    ".claude/commands/team-product.md": {
+      "hash": "d775772c9e3b"
+    },
+    ".claude/commands/team-quality.md": {
+      "hash": "57b3e05d31f5"
+    },
+    ".claude/commands/team-security.md": {
+      "hash": "3d609f7b6673"
+    },
+    ".claude/commands/team-testing.md": {
+      "hash": "7526c1305d2a"
+    },
+    ".claude/commands/test.md": {
+      "hash": "44b417330365"
+    },
+    ".claude/hooks/guard-destructive-commands.ps1": {
+      "hash": "363e7e56a776"
+    },
+    ".claude/hooks/guard-destructive-commands.sh": {
+      "hash": "56c4e540db91"
+    },
+    ".claude/hooks/protect-sensitive.ps1": {
+      "hash": "2c47c748618b"
+    },
+    ".claude/hooks/protect-sensitive.sh": {
+      "hash": "f35e3d1643f5"
+    },
+    ".claude/hooks/session-start.ps1": {
+      "hash": "4d41409b7e05"
+    },
+    ".claude/hooks/session-start.sh": {
+      "hash": "50ae49e8e37a"
+    },
+    ".claude/hooks/stop-build-check.ps1": {
+      "hash": "ab2e3836481b"
+    },
+    ".claude/hooks/stop-build-check.sh": {
+      "hash": "9529135b6da7"
+    },
+    ".claude/hooks/warn-uncommitted.ps1": {
+      "hash": "689a899645bf"
+    },
+    ".claude/hooks/warn-uncommitted.sh": {
+      "hash": "4ce53b34a043"
+    },
+    ".claude/rules/blockchain.md": {
+      "hash": "fa291b9d2041"
+    },
+    ".claude/rules/dotnet.md": {
+      "hash": "22a22a1b89c9"
+    },
+    ".claude/rules/python.md": {
+      "hash": "84e2bbc52b85"
+    },
+    ".claude/rules/rust.md": {
+      "hash": "b7342cffd368"
+    },
+    ".claude/rules/security.md": {
+      "hash": "b61ae4c88426"
+    },
+    ".claude/rules/typescript.md": {
+      "hash": "9fb058e1967d"
+    },
+    ".claude/settings.json": {
+      "hash": "0b1e2f8ced2e"
+    },
+    ".claude/state/orchestrator.json.template": {
+      "hash": "1e97119bdb60"
+    },
+    ".claude/state/schema.json": {
+      "hash": "b47a7efcd922"
+    },
+    ".cursor/rules/orchestrate.mdc": {
+      "hash": "2e34665329ac"
+    },
+    ".cursor/rules/project-context.mdc": {
+      "hash": "408d9e5aebda"
+    },
+    ".cursor/rules/security.mdc": {
+      "hash": "3cad520f730b"
+    },
+    ".cursor/rules/team-backend.mdc": {
+      "hash": "86dfd1323ecb"
+    },
+    ".cursor/rules/team-data.mdc": {
+      "hash": "e31df7a0c1d2"
+    },
+    ".cursor/rules/team-devops.mdc": {
+      "hash": "10c79b25a322"
+    },
+    ".cursor/rules/team-docs.mdc": {
+      "hash": "e98ef5daeb4e"
+    },
+    ".cursor/rules/team-frontend.mdc": {
+      "hash": "cb3a2630e583"
+    },
+    ".cursor/rules/team-infra.mdc": {
+      "hash": "ebcfc92e94dc"
+    },
+    ".cursor/rules/team-product.mdc": {
+      "hash": "b4037e4ffce6"
+    },
+    ".cursor/rules/team-quality.mdc": {
+      "hash": "ac542e13e313"
+    },
+    ".cursor/rules/team-security.mdc": {
+      "hash": "e711b1808f00"
+    },
+    ".cursor/rules/team-testing.mdc": {
+      "hash": "fdf187563952"
+    },
+    ".editorconfig": {
+      "hash": "af3e0da5d7d5"
+    },
+    ".github/ISSUE_TEMPLATE/bug_report.md": {
+      "hash": "72cfb91d0e82"
+    },
+    ".github/PULL_REQUEST_TEMPLATE.md": {
+      "hash": "bc7690aa0eed"
+    },
+    ".github/copilot-instructions.md": {
+      "hash": "3efae48a2c02"
+    },
+    ".github/instructions/README.md": {
+      "hash": "6934ad4e506d"
+    },
+    ".github/instructions/docs.md": {
+      "hash": "add5e33a8314"
+    },
+    ".github/instructions/marketing.md": {
+      "hash": "7ec6b919e54c"
+    },
+    ".github/instructions/rust.md": {
+      "hash": "2448ffb47f51"
+    },
+    ".github/workflows/ai-framework-ci.yml": {
+      "hash": "b3b555eca82e"
+    },
+    ".markdownlint.json": {
+      "hash": "afe70a444035"
+    },
+    ".prettierrc": {
+      "hash": "4f48671f6228"
+    },
+    ".vscode/extensions.json": {
+      "hash": "dd20fd0751ba"
+    },
+    ".vscode/settings.json": {
+      "hash": "4af945c89151"
+    },
+    ".windsurf/rules/orchestrate.md": {
+      "hash": "e1e5c421cf25"
+    },
+    ".windsurf/rules/project.md": {
+      "hash": "e754cf090d85"
+    },
+    ".windsurf/rules/security.md": {
+      "hash": "6a77201cb34a"
+    },
+    ".windsurf/rules/team-backend.md": {
+      "hash": "1e152b02349f"
+    },
+    ".windsurf/rules/team-data.md": {
+      "hash": "5e2c77cd5275"
+    },
+    ".windsurf/rules/team-devops.md": {
+      "hash": "b6c1599c1f26"
+    },
+    ".windsurf/rules/team-docs.md": {
+      "hash": "cd34f4c85a98"
+    },
+    ".windsurf/rules/team-frontend.md": {
+      "hash": "5d7e05f972c8"
+    },
+    ".windsurf/rules/team-infra.md": {
+      "hash": "f536271bce25"
+    },
+    ".windsurf/rules/team-product.md": {
+      "hash": "702c550748ef"
+    },
+    ".windsurf/rules/team-quality.md": {
+      "hash": "b25003786405"
+    },
+    ".windsurf/rules/team-security.md": {
+      "hash": "1f8c58ea8496"
+    },
+    ".windsurf/rules/team-testing.md": {
+      "hash": "696f4dcc8c83"
+    },
+    ".windsurf/workflows/full-assessment.yml": {
+      "hash": "7e95173bb45b"
+    },
+    ".windsurf/workflows/phase-execution.yml": {
+      "hash": "60783ee06948"
+    },
+    "AGENT_BACKLOG.md": {
+      "hash": "bb7a6bb6232c"
+    },
+    "AGENT_TEAMS.md": {
+      "hash": "3bb049b0122d"
+    },
+    "CHANGELOG.md": {
+      "hash": "4e521d3b093f"
+    },
+    "CLAUDE.md": {
+      "hash": "f7cd8793b1f9"
+    },
+    "CONTRIBUTING.md": {
+      "hash": "068d4fe28b57"
+    },
+    "MIGRATIONS.md": {
+      "hash": "6570f33be526"
+    },
+    "QUALITY_GATES.md": {
+      "hash": "e47473a3a775"
+    },
+    "RUNBOOK_AI.md": {
+      "hash": "c829ca9878cf"
+    },
+    "SECURITY.md": {
+      "hash": "a5eb5cc55973"
+    },
+    "UNIFIED_AGENT_TEAMS.md": {
+      "hash": "003020fb7935"
+    },
+    "docs/01_product/01_prd.md": {
+      "hash": "87bc9087cabd"
+    },
+    "docs/01_product/02_user_stories.md": {
+      "hash": "3a441da60d4d"
+    },
+    "docs/01_product/03_roadmap.md": {
+      "hash": "69b1d36ae42e"
+    },
+    "docs/01_product/04_personas.md": {
+      "hash": "9935184476ed"
+    },
+    "docs/02_specs/01_functional_spec.md": {
+      "hash": "93dc9f85c186"
+    },
+    "docs/02_specs/02_technical_spec.md": {
+      "hash": "0559380c2994"
+    },
+    "docs/02_specs/03_api_spec.md": {
+      "hash": "20410799d772"
+    },
+    "docs/02_specs/04_data_models.md": {
+      "hash": "b771f995750e"
+    },
+    "docs/03_architecture/01_overview.md": {
+      "hash": "0f1cc01bcdc9"
+    },
+    "docs/03_architecture/02_diagrams/.gitkeep": {
+      "hash": "e3b0c44298fc"
+    },
+    "docs/03_architecture/03_decisions/0001-adopt-agentkit-forge.md": {
+      "hash": "ed27263c0b37"
+    },
+    "docs/04_api/01_overview.md": {
+      "hash": "2505fb6df38b"
+    },
+    "docs/04_api/02_endpoints.md": {
+      "hash": "a13fd6ac6819"
+    },
+    "docs/04_api/03_authentication.md": {
+      "hash": "390e72624b66"
+    },
+    "docs/04_api/04_examples.md": {
+      "hash": "51ba9ec29eb4"
+    },
+    "docs/05_operations/01_deployment.md": {
+      "hash": "85838c333e67"
+    },
+    "docs/05_operations/02_monitoring.md": {
+      "hash": "c1cff7c1e673"
+    },
+    "docs/05_operations/03_incident_response.md": {
+      "hash": "24bb02354f8b"
+    },
+    "docs/05_operations/04_troubleshooting.md": {
+      "hash": "7f3fee650b0a"
+    },
+    "docs/06_engineering/01_setup.md": {
+      "hash": "c3f44d2a5cf8"
+    },
+    "docs/06_engineering/02_coding_standards.md": {
+      "hash": "06a45c52771e"
+    },
+    "docs/06_engineering/03_testing.md": {
+      "hash": "1458bb46fdd1"
+    },
+    "docs/06_engineering/04_git_workflow.md": {
+      "hash": "a6d34ed67470"
+    },
+    "docs/06_engineering/05_security.md": {
+      "hash": "9d2c017f6246"
+    },
+    "docs/07_integrations/01_external_apis.md": {
+      "hash": "544d9db0c07b"
+    },
+    "docs/07_integrations/02_webhooks.md": {
+      "hash": "60684d430436"
+    },
+    "docs/07_integrations/03_sdk.md": {
+      "hash": "a56f9fa14b97"
+    },
+    "docs/08_reference/01_glossary.md": {
+      "hash": "1317e51a4c32"
+    },
+    "docs/08_reference/02_faq.md": {
+      "hash": "b5fb3bd95a28"
+    },
+    "docs/08_reference/03_changelog.md": {
+      "hash": "76318c29e867"
+    },
+    "docs/08_reference/04_contributing.md": {
+      "hash": "20d06f83fe99"
+    },
+    "docs/08_reference/ai_handoffs/.gitkeep": {
+      "hash": "e3b0c44298fc"
+    },
+    "docs/README.md": {
+      "hash": "31947ce4c4c0"
+    },
+    "docs/prd/.gitkeep": {
+      "hash": "e3b0c44298fc"
+    },
+    "mcp/a2a-config.json": {
+      "hash": "ed0220415efa"
+    },
+    "mcp/servers.json": {
+      "hash": "fd1bc5c0b639"
+    }
+  }
+}

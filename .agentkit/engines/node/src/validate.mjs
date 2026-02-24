@@ -56,8 +56,6 @@ export async function runValidate({ agentkitRoot, projectRoot, flags }) {
   const jsonFiles = [
     '.claude/settings.json',
     '.claude/state/schema.json',
-    'mcp/servers.json',
-    'mcp/a2a-config.json',
   ];
 
   for (const file of jsonFiles) {
