@@ -6,7 +6,7 @@ import {
   readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync,
   statSync, renameSync, rmSync, chmodSync, cpSync
 } from 'fs';
-import { resolve, join, relative, dirname, extname, basename } from 'path';
+import { resolve, join, relative, dirname, extname, basename, sep } from 'path';
 import yaml from 'js-yaml';
 
 // ---------------------------------------------------------------------------
@@ -23,15 +23,40 @@ function readText(filePath) {
   return readFileSync(filePath, 'utf-8');
 }
 
+/**
+ * Renders a template by replacing {{key}} placeholders with values from vars.
+ * - Replaces longest keys first to prevent partial matches (e.g., {{versionInfo}} before {{version}})
+ * - Sanitizes string values to prevent shell metacharacter injection
+ * - Warns on unresolved placeholders when DEBUG is set
+ */
 function renderTemplate(template, vars) {
   let result = template;
-  for (const [key, value] of Object.entries(vars)) {
+  // Sort keys longest-first to prevent partial placeholder collisions
+  const sortedKeys = Object.keys(vars).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    const value = vars[key];
     const placeholder = `{{${key}}}`;
-    result = result.split(placeholder).join(
-      typeof value === 'string' ? value : JSON.stringify(value)
-    );
+    const safeValue = typeof value === 'string' ? sanitizeTemplateValue(value) : JSON.stringify(value);
+    result = result.split(placeholder).join(safeValue);
+  }
+  // Warn about unresolved placeholders
+  const unresolved = result.match(/\{\{[a-zA-Z_][a-zA-Z0-9_]*\}\}/g);
+  if (unresolved && process.env.DEBUG) {
+    const unique = [...new Set(unresolved)];
+    console.warn(`[agentkit:sync] Warning: unresolved placeholders: ${unique.join(', ')}`);
   }
   return result;
+}
+
+/**
+ * Sanitizes a template variable value to prevent injection.
+ * Strips shell metacharacters that could cause command injection if the
+ * rendered output is executed in a shell context (e.g., hook scripts).
+ */
+function sanitizeTemplateValue(value) {
+  // Remove characters that enable shell injection: $() `` ; | & etc.
+  // Allow common safe characters: alphanumeric, spaces, hyphens, underscores, dots, slashes, @
+  return value.replace(/[`$\\;|&<>!{}()]/g, '');
 }
 
 function getGeneratedHeader(version, repoName, ext) {
@@ -48,7 +73,7 @@ function getGeneratedHeader(version, repoName, ext) {
 function getCommentStyle(ext) {
   switch (ext) {
     case '.md': case '.mdc': return { start: '<!--', end: '-->' };
-    case '.json': return null; // JSON doesn't support comments
+    case '.json': case '.template': return null; // JSON / template files don't support comments
     case '.yml': case '.yaml': return { start: '#', end: '' };
     case '.sh': return { start: '#', end: '' };
     case '.ps1': return { start: '#', end: '' };
@@ -66,18 +91,16 @@ function writeOutput(filePath, content) {
   writeFileSync(filePath, content, 'utf-8');
 }
 
-function walkDir(dir) {
-  const files = [];
-  if (!existsSync(dir)) return files;
+function* walkDir(dir) {
+  if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
-      files.push(...walkDir(full));
+      yield* walkDir(full);
     } else {
-      files.push(full);
+      yield full;
     }
   }
-  return files;
 }
 
 // ---------------------------------------------------------------------------
@@ -87,8 +110,14 @@ function walkDir(dir) {
 export async function runSync({ agentkitRoot, projectRoot, flags }) {
   console.log('[agentkit:sync] Starting sync...');
 
-  // 1. Load spec
-  const version = readText(resolve(agentkitRoot, 'spec', 'VERSION'))?.trim() || '0.0.0';
+  // 1. Load spec — version from package.json (primary) with VERSION file as fallback
+  let version = '0.0.0';
+  try {
+    const pkg = JSON.parse(readFileSync(resolve(agentkitRoot, 'package.json'), 'utf-8'));
+    version = pkg.version || version;
+  } catch {
+    version = readText(resolve(agentkitRoot, 'spec', 'VERSION'))?.trim() || version;
+  }
   const teamsSpec = readYaml(resolve(agentkitRoot, 'spec', 'teams.yaml')) || {};
   const commandsSpec = readYaml(resolve(agentkitRoot, 'spec', 'commands.yaml')) || {};
   const rulesSpec = readYaml(resolve(agentkitRoot, 'spec', 'rules.yaml')) || {};
@@ -146,10 +175,12 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 
   // --- Cursor templates ---
   syncDirectCopy(templatesDir, 'cursor/rules', tmpDir, '.cursor/rules', vars, version, repoName);
+  syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec);
 
   // --- Windsurf templates ---
   syncDirectCopy(templatesDir, 'windsurf/rules', tmpDir, '.windsurf/rules', vars, version, repoName);
   syncDirectCopy(templatesDir, 'windsurf/workflows', tmpDir, '.windsurf/workflows', vars, version, repoName);
+  syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec);
 
   // --- .ai templates ---
   syncDirectCopy(templatesDir, 'ai', tmpDir, '.ai', vars, version, repoName);
@@ -178,23 +209,41 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 
   // 5. Atomic swap: move temp outputs to project root
   console.log('[agentkit:sync] Writing outputs...');
-  const outputFiles = walkDir(tmpDir);
-  for (const srcFile of outputFiles) {
+  const resolvedRoot = resolve(projectRoot) + sep;
+  let count = 0;
+  const failedFiles = [];
+  for (const srcFile of walkDir(tmpDir)) {
     const relPath = relative(tmpDir, srcFile);
     const destFile = resolve(projectRoot, relPath);
-    ensureDir(dirname(destFile));
-    cpSync(srcFile, destFile, { force: true });
 
-    // Make .sh files executable
-    if (extname(srcFile) === '.sh') {
-      try { chmodSync(destFile, 0o755); } catch { /* ignore on Windows */ }
+    // Path traversal protection: ensure all output stays within project root
+    if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot)) {
+      console.error(`[agentkit:sync] BLOCKED: path traversal detected — ${relPath}`);
+      failedFiles.push({ file: relPath, error: 'path traversal blocked' });
+      continue;
+    }
+
+    try {
+      ensureDir(dirname(destFile));
+      cpSync(srcFile, destFile, { force: true });
+
+      // Make .sh files executable
+      if (extname(srcFile) === '.sh') {
+        try { chmodSync(destFile, 0o755); } catch { /* ignore on Windows */ }
+      }
+      count++;
+    } catch (err) {
+      failedFiles.push({ file: relPath, error: err.message });
+      console.error(`[agentkit:sync] Failed to write: ${relPath} — ${err.message}`);
     }
   }
 
   // 6. Cleanup temp
   rmSync(tmpDir, { recursive: true, force: true });
 
-  const count = outputFiles.length;
+  if (failedFiles.length > 0) {
+    console.error(`[agentkit:sync] Warning: ${failedFiles.length} file(s) failed to write.`);
+  }
   console.log(`[agentkit:sync] Done! Generated ${count} files.`);
 }
 
@@ -212,8 +261,7 @@ function syncDirectCopy(templatesDir, srcSubdir, tmpDir, destSubdir, vars, versi
   const srcDir = resolve(templatesDir, srcSubdir);
   if (!existsSync(srcDir)) return;
 
-  const files = walkDir(srcDir);
-  for (const file of files) {
+  for (const file of walkDir(srcDir)) {
     const relPath = relative(srcDir, file);
     const destPath = resolve(tmpDir, destSubdir, relPath);
     const ext = extname(file);
@@ -257,6 +305,8 @@ function insertHeader(content, ext, version, repoName) {
       if (endOfFrontmatter > -1) {
         return content.substring(0, endOfFrontmatter + 1) + '\n' + header + content.substring(endOfFrontmatter + 1);
       }
+      // Frontmatter closing --- is at EOF — append header after it
+      return content + '\n' + header;
     }
   }
 
@@ -435,8 +485,8 @@ function syncClaudeMd(templatesDir, tmpDir, vars, version, repoName) {
 
   let content = readFileSync(claudeMdPath, 'utf-8');
   content = renderTemplate(content, { ...vars, repoName });
-  const header = getGeneratedHeader(version, repoName, '.md');
-  writeOutput(resolve(tmpDir, 'CLAUDE.md'), header + content);
+  content = insertHeader(content, '.md', version, repoName);
+  writeOutput(resolve(tmpDir, 'CLAUDE.md'), content);
 }
 
 function syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName) {
@@ -464,3 +514,76 @@ function syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName) {
     writeOutput(resolve(tmpDir, cfg.dest), content);
   }
 }
+
+function syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec) {
+  if (!teamsSpec.teams) return;
+
+  for (const team of teamsSpec.teams) {
+    const scope = Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || '**/*');
+    const globs = Array.isArray(team.scope) ? team.scope.join(', ') : '';
+    let content = [
+      '---',
+      `description: "Team ${team.name} — ${team.focus}"`,
+      `globs: ${globs}`,
+      'alwaysApply: false',
+      '---',
+      `# Team: ${team.name}`,
+      '',
+      `**Focus**: ${team.focus}`,
+      `**Scope**: ${scope}`,
+      '',
+      '## Responsibilities',
+      `- Own all code within scope: ${scope}`,
+      '- Follow project conventions and quality gates',
+      '- Coordinate with other teams via /orchestrate for cross-cutting changes',
+      '',
+      '## Workflow',
+      '1. Review current backlog in AGENT_BACKLOG.md',
+      '2. Implement changes within team scope',
+      '3. Run /check before committing',
+      '4. Use /handoff when passing work to another team',
+      '',
+    ].join('\n');
+
+    content = renderTemplate(content, { ...vars, repoName });
+    content = insertHeader(content, '.mdc', version, repoName);
+    const fileName = `team-${team.id}.mdc`;
+    writeOutput(resolve(tmpDir, '.cursor', 'rules', fileName), content);
+  }
+}
+
+function syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec) {
+  if (!teamsSpec.teams) return;
+
+  for (const team of teamsSpec.teams) {
+    const scope = Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || '**/*');
+    let content = [
+      `# Team: ${team.name}`,
+      '',
+      `**Focus**: ${team.focus}`,
+      `**Scope**: ${scope}`,
+      '',
+      '## Responsibilities',
+      `- Own all code within scope: ${scope}`,
+      '- Follow project conventions and quality gates',
+      '- Coordinate with other teams via /orchestrate for cross-cutting changes',
+      '',
+      '## Workflow',
+      '1. Review current backlog in AGENT_BACKLOG.md',
+      '2. Implement changes within team scope',
+      '3. Run /check before committing',
+      '4. Use /handoff when passing work to another team',
+      '',
+    ].join('\n');
+
+    content = renderTemplate(content, { ...vars, repoName });
+    content = insertHeader(content, '.md', version, repoName);
+    const fileName = `team-${team.id}.md`;
+    writeOutput(resolve(tmpDir, '.windsurf', 'rules', fileName), content);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Exports for testing
+// ---------------------------------------------------------------------------
+export { renderTemplate, sanitizeTemplateValue, getCommentStyle, getGeneratedHeader, mergePermissions, insertHeader };

@@ -1,0 +1,31 @@
+# Changelog — {{repoName}}
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [Unreleased]
+
+### Added
+- Initial AgentKit Forge integration (v{{version}})
+- Multi-agent team framework with 10 teams
+- 5-phase lifecycle orchestration model
+- Support for Claude Code, Cursor, Windsurf, Copilot, and MCP/A2A
+- Hook-based safety guardrails
+- Automated quality gates and validation
+
+### Changed
+- (none yet)
+
+### Fixed
+- (none yet)
+
+### Removed
+- (none yet)
+
+---
+
+*Maintained by AgentKit Forge. Update this file as part of the Ship phase.*

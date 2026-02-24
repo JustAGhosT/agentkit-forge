@@ -11,8 +11,16 @@ set -euo pipefail
 # ── Read JSON payload from stdin ──────────────────────────────────────────
 INPUT=$(cat)
 
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
-CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+# Parse JSON — prefer jq if available, fall back to basic grep/sed extraction
+if command -v jq &>/dev/null; then
+  SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+  CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+else
+  # Fallback: extract values with grep/sed (handles simple flat JSON)
+  # Use POSIX character classes for portability (BSD/macOS grep lacks \s)
+  SESSION_ID=$(echo "$INPUT" | grep -o '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"//;s/"$//' || true)
+  CWD=$(echo "$INPUT" | grep -o '"cwd"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"//;s/"$//' || true)
+fi
 
 # Fall back to $PWD when cwd is not supplied.
 CWD="${CWD:-$PWD}"
@@ -59,15 +67,56 @@ else
     git_summary="Not a git repository (or git is not installed)."
 fi
 
+# ── Session cost tracking ───────────────────────────────────────────────
+# Write a session-start event to the JSONL usage log for cost tracking.
+AGENTKIT_ROOT=""
+if [[ -d "${CWD}/agentkit" ]]; then
+    AGENTKIT_ROOT="${CWD}/agentkit"
+elif [[ -d "${CWD}/../agentkit" ]]; then
+    AGENTKIT_ROOT="${CWD}/../agentkit"
+fi
+
+if [[ -n "$AGENTKIT_ROOT" ]] && command -v node &>/dev/null; then
+    LOG_DIR="${AGENTKIT_ROOT}/logs"
+    mkdir -p "$LOG_DIR"
+    DATE_STR=$(date -u +"%Y-%m-%d")
+    LOG_FILE="${LOG_DIR}/usage-${DATE_STR}.jsonl"
+    TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+
+    git_user=""
+    if command -v git &>/dev/null; then
+        _raw_email=$(git -C "$CWD" config user.email 2>/dev/null || echo "")
+        if [[ -n "$_raw_email" ]]; then
+            # Hash the email for privacy — avoids logging PII in shared repos/CI
+            git_user=$(echo -n "$_raw_email" | sha256sum 2>/dev/null | cut -c1-12 || echo "unknown")
+        else
+            git_user="unknown"
+        fi
+    fi
+
+    if command -v jq &>/dev/null; then
+        jq -n --arg ts "$TIMESTAMP" --arg sid "$SESSION_ID" --arg user "$git_user" \
+            --arg branch "${git_branch:-unknown}" --arg cwd "$CWD" \
+            '{timestamp: $ts, event: "session_start", sessionId: $sid, user: $user, branch: $branch, cwd: $cwd}' \
+            >> "$LOG_FILE" 2>/dev/null || true
+    fi
+fi
+
 # ── Compose the environment summary ─────────────────────────────────────
 env_summary=$(printf 'Session: %s\nWorking directory: %s\n\nToolchains:\n%s\n\nGit:\n%s' \
     "$SESSION_ID" "$CWD" "$tools_summary" "$git_summary")
 
 # ── Return structured output ────────────────────────────────────────────
-jq -n --arg ctx "$env_summary" '{
-    hookSpecificOutput: {
-        additionalContext: $ctx
-    }
-}'
+if command -v jq &>/dev/null; then
+  jq -n --arg ctx "$env_summary" '{
+      hookSpecificOutput: {
+          additionalContext: $ctx
+      }
+  }'
+else
+  # Fallback: manually construct JSON (escape backslashes, quotes, and newlines)
+  escaped_summary=$(printf '%s' "$env_summary" | awk '{gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); printf "%s\\n", $0}' | sed '$ s/\\n$//')
+  printf '{"hookSpecificOutput":{"additionalContext":"%s"}}\n' "$escaped_summary"
+fi
 
 exit 0

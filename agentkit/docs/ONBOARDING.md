@@ -169,13 +169,12 @@ overrides:
 
 ### Running Discovery
 
-Use the `discover` command to automatically detect your repository's tech stack, project structure, and existing conventions:
+The `discover` command scans your repository to detect tech stacks, project structure,
+and existing conventions:
 
 ```bash
 node agentkit-forge/agentkit/engines/node/src/cli.mjs discover
 ```
-
-This populates additional metadata that improves the quality of generated AI configurations.
 
 ---
 
@@ -183,28 +182,18 @@ This populates additional metadata that improves the quality of generated AI con
 
 ### Validate Configuration
 
-Use the `check` command to validate your configuration files for syntax errors, missing required fields, and inconsistencies:
+Use the `validate` command to check generated outputs for correctness:
 
 ```bash
-node agentkit-forge/agentkit/engines/node/src/cli.mjs check
+node agentkit-forge/agentkit/engines/node/src/cli.mjs validate
 ```
 
 This will report:
 
-- YAML syntax errors in overlay files
-- Missing required fields in `settings.yaml`
-- Invalid render target names
-- Command override conflicts
-
-### Review Generated Output
-
-Use the `review` command to inspect the rendered AI assistant configuration before committing:
-
-```bash
-node agentkit-forge/agentkit/engines/node/src/cli.mjs review
-```
-
-This displays a summary of what will be written to each render target directory.
+- Missing required directories and files
+- Invalid JSON in configuration files
+- Missing command or hook files
+- Forbidden patterns (hardcoded secrets)
 
 ### Test with an AI Assistant
 
@@ -215,13 +204,8 @@ After syncing, open your repository in one of your configured AI assistants and 
 3. Rules and guidelines are being followed in generated code
 4. The assistant can navigate and understand the codebase
 
-### Plan Command
-
-Use the `plan` command to generate a structured plan for a task before executing it:
-
-```bash
-node agentkit-forge/agentkit/engines/node/src/cli.mjs plan "Add authentication to the API"
-```
+The `review` and `plan` CLI subcommands are available for automated pre-review checks
+and plan status display. They also exist as slash commands for richer AI-driven workflows.
 
 ---
 
@@ -257,7 +241,7 @@ jobs:
           node-version: '20'
 
       - name: Validate AgentKit configuration
-        run: node agentkit-forge/agentkit/engines/node/src/cli.mjs check
+        run: node agentkit-forge/agentkit/engines/node/src/cli.mjs validate
 
       - name: Verify sync is up to date
         run: |
@@ -275,10 +259,10 @@ Add a Git pre-commit hook to catch configuration drift early:
 
 # Check if any agentkit overlay files changed
 if git diff --cached --name-only | grep -q "agentkit-forge/agentkit/overlays/"; then
-  echo "AgentKit overlay files changed. Running sync check..."
-  node agentkit-forge/agentkit/engines/node/src/cli.mjs check
+  echo "AgentKit overlay files changed. Running validation..."
+  node agentkit-forge/agentkit/engines/node/src/cli.mjs validate
   if [ $? -ne 0 ]; then
-    echo "AgentKit check failed. Fix issues before committing."
+    echo "AgentKit validation failed. Fix issues before committing."
     exit 1
   fi
 fi
@@ -305,7 +289,7 @@ git commit -m "chore: update AgentKit Forge and re-sync configuration"
 
 Ensure Node.js is installed and available on your PATH. Verify with `node --version`.
 
-**YAML parse errors during check**
+**YAML parse errors during validation**
 
 Validate your YAML files with an online YAML validator or run `node -e "require('yaml').parse(require('fs').readFileSync('file.yaml','utf8'))"`.
 

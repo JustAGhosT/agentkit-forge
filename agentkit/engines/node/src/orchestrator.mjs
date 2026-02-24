@@ -1,0 +1,562 @@
+/**
+ * AgentKit Forge — Runtime Orchestration Engine
+ * State machine for the 5-phase lifecycle: Discovery → Planning → Implementation → Validation → Ship.
+ * Manages orchestrator state, event logging, and session locking.
+ */
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, unlinkSync, renameSync } from 'fs';
+import { resolve } from 'path';
+import { execSync } from 'child_process';
+import yaml from 'js-yaml';
+import { formatTimestamp } from './runner.mjs';
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const PHASES = {
+  1: 'Discovery',
+  2: 'Planning',
+  3: 'Implementation',
+  4: 'Validation',
+  5: 'Ship',
+};
+
+const DEFAULT_TEAM_IDS = [
+  'team-backend', 'team-frontend', 'team-data', 'team-infra', 'team-devops',
+  'team-testing', 'team-security', 'team-docs', 'team-product', 'team-quality',
+];
+
+// Backwards-compatible alias — kept as default, overridable via loadTeamIdsFromSpec()
+let VALID_TEAM_IDS = [...DEFAULT_TEAM_IDS];
+
+const VALID_TEAM_STATUSES = ['idle', 'in_progress', 'blocked', 'done'];
+const LOCK_STALE_MS = 30 * 60 * 1000; // 30 minutes
+
+/**
+ * Load team IDs from teams.yaml spec file.
+ * Falls back to the hardcoded defaults if the file doesn't exist or is invalid.
+ * @param {string} agentkitRoot
+ * @returns {string[]}
+ */
+export function loadTeamIdsFromSpec(agentkitRoot) {
+  try {
+    const teamsPath = resolve(agentkitRoot, 'spec', 'teams.yaml');
+    if (existsSync(teamsPath)) {
+      const spec = yaml.load(readFileSync(teamsPath, 'utf-8'));
+      if (spec.teams && Array.isArray(spec.teams)) {
+        const ids = spec.teams.map(t => t.id).filter(Boolean);
+        if (ids.length > 0) {
+          VALID_TEAM_IDS = ids;
+          return ids;
+        }
+      }
+    }
+  } catch { /* fallback to defaults */ }
+  return DEFAULT_TEAM_IDS;
+}
+
+// ---------------------------------------------------------------------------
+// Path helpers
+// ---------------------------------------------------------------------------
+
+function stateDir(projectRoot) {
+  return resolve(projectRoot, '.claude', 'state');
+}
+
+function statePath(projectRoot) {
+  return resolve(stateDir(projectRoot), 'orchestrator.json');
+}
+
+function eventsPath(projectRoot) {
+  return resolve(stateDir(projectRoot), 'events.log');
+}
+
+function lockPath(projectRoot) {
+  return resolve(stateDir(projectRoot), 'orchestrator.lock');
+}
+
+// ---------------------------------------------------------------------------
+// State Management
+// ---------------------------------------------------------------------------
+
+/**
+ * Create default orchestrator state.
+ * @param {string} projectRoot
+ * @returns {object}
+ */
+function createDefaultState(projectRoot) {
+  let repoId = 'unknown';
+  const markerPath = resolve(projectRoot, '.agentkit-repo');
+  if (existsSync(markerPath)) {
+    repoId = readFileSync(markerPath, 'utf-8').trim();
+  }
+
+  let branch = 'main';
+  try {
+    branch = execSync('git rev-parse --abbrev-ref HEAD', {
+      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+  } catch { /* fallback */ }
+
+  const teamProgress = {};
+  for (const teamId of VALID_TEAM_IDS) {
+    teamProgress[teamId] = { status: 'idle', notes: '' };
+  }
+
+  return {
+    schema_version: '1.0.0',
+    repo_id: repoId,
+    branch,
+    session_id: '',
+    current_phase: 1,
+    phase_name: 'Discovery',
+    last_phase_completed: 0,
+    next_action: 'Run /orchestrate to begin project assessment',
+    team_progress: teamProgress,
+    todo_items: [],
+    recent_results: [],
+    completed: false,
+  };
+}
+
+/**
+ * Load orchestrator state from disk. Creates default state if missing.
+ * @param {string} projectRoot
+ * @returns {object} state
+ */
+export function loadState(projectRoot) {
+  const path = statePath(projectRoot);
+  if (existsSync(path)) {
+    try {
+      return JSON.parse(readFileSync(path, 'utf-8'));
+    } catch (err) {
+      console.warn(`[agentkit:orchestrate] Corrupted state file, resetting: ${err.message}`);
+    }
+  }
+  const state = createDefaultState(projectRoot);
+  saveState(projectRoot, state);
+  return state;
+}
+
+/**
+ * Save orchestrator state to disk atomically.
+ * @param {string} projectRoot
+ * @param {object} state
+ */
+export function saveState(projectRoot, state) {
+  const dir = stateDir(projectRoot);
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+  const path = statePath(projectRoot);
+  const tmpPath = path + '.tmp';
+  writeFileSync(tmpPath, JSON.stringify(state, null, 2) + '\n', 'utf-8');
+  renameSync(tmpPath, path);
+}
+
+// ---------------------------------------------------------------------------
+// Lock Management
+// ---------------------------------------------------------------------------
+
+/**
+ * Acquire an exclusive session lock.
+ * @param {string} projectRoot
+ * @param {{ pid?: number, hostname?: string, sessionId?: string }} holder
+ * @returns {{ acquired: boolean, existingLock?: object }}
+ */
+export function acquireLock(projectRoot, holder = {}) {
+  const lPath = lockPath(projectRoot);
+  const dir = stateDir(projectRoot);
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+
+  const lockData = {
+    pid: holder.pid || process.pid,
+    hostname: holder.hostname || (getHostname()),
+    started_at: new Date().toISOString(),
+    session_id: holder.sessionId || '',
+  };
+
+  try {
+    // Atomic create — fails with EEXIST if lock file already exists
+    writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
+    return { acquired: true };
+  } catch (err) {
+    if (err.code !== 'EEXIST') throw err;
+    // Lock file exists — check staleness
+    let existing;
+    try {
+      existing = JSON.parse(readFileSync(lPath, 'utf-8'));
+    } catch {
+      // Corrupted lock file — delete and retry
+      try { unlinkSync(lPath); } catch { /* ignore */ }
+      try {
+        writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
+        return { acquired: true };
+      } catch {
+        return { acquired: false, existingLock: null };
+      }
+    }
+    const age = Date.now() - new Date(existing.started_at).getTime();
+    if (age < LOCK_STALE_MS) {
+      return { acquired: false, existingLock: existing };
+    }
+    // Stale lock — remove and retry once
+    unlinkSync(lPath);
+    try {
+      writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
+      return { acquired: true };
+    } catch {
+      // Another process acquired the lock — re-read current holder
+      let currentLock = existing;
+      try {
+        currentLock = JSON.parse(readFileSync(lPath, 'utf-8'));
+      } catch { /* use stale data as fallback */ }
+      return { acquired: false, existingLock: currentLock };
+    }
+  }
+}
+
+function getHostname() {
+  try {
+    return execSync('hostname', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
+ * Release the session lock.
+ * @param {string} projectRoot
+ * @returns {boolean} true if lock was released, false if no lock existed
+ */
+export function releaseLock(projectRoot) {
+  const path = lockPath(projectRoot);
+  if (existsSync(path)) {
+    try {
+      unlinkSync(path);
+    } catch (err) {
+      console.warn(`[agentkit:orchestrate] Failed to release lock: ${err.message}`);
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Check lock status without acquiring.
+ * @param {string} projectRoot
+ * @returns {{ locked: boolean, stale: boolean, lock?: object }}
+ */
+export function checkLock(projectRoot) {
+  const path = lockPath(projectRoot);
+  if (!existsSync(path)) {
+    return { locked: false, stale: false };
+  }
+  let lock;
+  try {
+    lock = JSON.parse(readFileSync(path, 'utf-8'));
+  } catch {
+    // Corrupted lock file — treat as unlocked
+    return { locked: false, stale: false };
+  }
+  const age = Date.now() - new Date(lock.started_at).getTime();
+  return {
+    locked: true,
+    stale: age >= LOCK_STALE_MS,
+    lock,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Event Logging
+// ---------------------------------------------------------------------------
+
+/**
+ * Append an event to the events log.
+ * @param {string} projectRoot
+ * @param {string} action - What happened (e.g. 'phase_advanced', 'check_completed')
+ * @param {object} data - Event data
+ */
+export function appendEvent(projectRoot, action, data = {}) {
+  const dir = stateDir(projectRoot);
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+  const event = {
+    timestamp: new Date().toISOString(),
+    action,
+    ...data,
+  };
+  appendFileSync(eventsPath(projectRoot), JSON.stringify(event) + '\n', 'utf-8');
+}
+
+/**
+ * Read recent events from the log.
+ * @param {string} projectRoot
+ * @param {number} limit - Max events to return (default 20)
+ * @returns {object[]}
+ */
+export function readEvents(projectRoot, limit = 20) {
+  const path = eventsPath(projectRoot);
+  if (!existsSync(path)) return [];
+  const lines = readFileSync(path, 'utf-8').trim().split('\n').filter(Boolean);
+  const events = lines.map(line => {
+    try { return JSON.parse(line); } catch { return null; }
+  }).filter(Boolean);
+  return events.slice(-limit);
+}
+
+// ---------------------------------------------------------------------------
+// Phase Transitions
+// ---------------------------------------------------------------------------
+
+/**
+ * Advance the orchestrator to the next phase.
+ * @param {object} state - Current state
+ * @returns {{ state: object, advanced: boolean, error?: string }}
+ */
+export function advancePhase(state) {
+  if (state.completed) {
+    return { state, advanced: false, error: 'All phases are already complete' };
+  }
+
+  const current = state.current_phase;
+  if (current >= 5) {
+    const newState = {
+      ...state,
+      completed: true,
+      next_action: 'Project workflow complete. All phases finished.',
+    };
+    return { state: newState, advanced: true };
+  }
+
+  const next = current + 1;
+  const newState = {
+    ...state,
+    current_phase: next,
+    phase_name: PHASES[next],
+    last_phase_completed: current,
+    next_action: getNextAction(next),
+  };
+  return { state: newState, advanced: true };
+}
+
+/**
+ * Set the orchestrator to a specific phase (for --phase flag).
+ * @param {object} state
+ * @param {number} phase - Phase number (1-5)
+ * @returns {{ state: object, error?: string }}
+ */
+export function setPhase(state, phase) {
+  if (phase < 1 || phase > 5 || !Number.isInteger(phase)) {
+    return { state, error: `Invalid phase: ${phase}. Must be 1-5.` };
+  }
+  const newState = {
+    ...state,
+    current_phase: phase,
+    phase_name: PHASES[phase],
+    last_phase_completed: phase - 1,
+    next_action: getNextAction(phase),
+    completed: false,
+  };
+  return { state: newState };
+}
+
+function getNextAction(phase) {
+  switch (phase) {
+    case 1: return 'Run /discover to scan the repository and identify tech stacks';
+    case 2: return 'Run /plan to create implementation plans for identified work items';
+    case 3: return 'Delegate to team agents (/team-*) to implement planned changes';
+    case 4: return 'Run /check to validate all changes pass quality gates';
+    case 5: return 'Run /review for final review, then prepare deployment';
+    default: return '';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Team Status
+// ---------------------------------------------------------------------------
+
+/**
+ * Update a team's status.
+ * @param {object} state
+ * @param {string} teamId - e.g. 'team-backend'
+ * @param {string} status - One of: idle, in_progress, blocked, done
+ * @param {string} [notes]
+ * @returns {{ state: object, error?: string }}
+ */
+export function updateTeamStatus(state, teamId, status, notes) {
+  if (!VALID_TEAM_IDS.includes(teamId)) {
+    return { state, error: `Unknown team: ${teamId}. Valid teams: ${VALID_TEAM_IDS.join(', ')}` };
+  }
+  if (!VALID_TEAM_STATUSES.includes(status)) {
+    return { state, error: `Invalid status: ${status}. Valid: ${VALID_TEAM_STATUSES.join(', ')}` };
+  }
+
+  const newState = {
+    ...state,
+    team_progress: {
+      ...state.team_progress,
+      [teamId]: {
+        ...state.team_progress[teamId],
+        status,
+        notes: notes ?? state.team_progress[teamId]?.notes ?? '',
+        last_updated: new Date().toISOString(),
+      },
+    },
+  };
+  return { state: newState };
+}
+
+// ---------------------------------------------------------------------------
+// Status Display
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a human-readable status summary.
+ * @param {string} projectRoot
+ * @returns {string}
+ */
+export function getStatus(projectRoot) {
+  const state = loadState(projectRoot);
+  const lockStatus = checkLock(projectRoot);
+  const events = readEvents(projectRoot, 5);
+
+  const lines = [
+    `=== AgentKit Forge — Orchestrator Status ===`,
+    ``,
+    `Repo:      ${state.repo_id}`,
+    `Branch:    ${state.branch}`,
+    `Session:   ${state.session_id || '(none)'}`,
+    `Phase:     ${state.current_phase}/5 — ${state.phase_name}`,
+    `Completed: ${state.completed ? 'Yes' : 'No'}`,
+    `Next:      ${state.next_action}`,
+    ``,
+  ];
+
+  // Lock info
+  if (lockStatus.locked) {
+    lines.push(`Lock:      LOCKED${lockStatus.stale ? ' (STALE)' : ''}`);
+    lines.push(`  PID:     ${lockStatus.lock.pid}`);
+    lines.push(`  Since:   ${lockStatus.lock.started_at}`);
+    lines.push(``);
+  }
+
+  // Team progress
+  lines.push(`--- Team Progress ---`);
+  for (const teamId of VALID_TEAM_IDS) {
+    const team = state.team_progress[teamId] || { status: 'idle' };
+    const icon = { idle: ' ', in_progress: '▶', blocked: '!', done: '✓' }[team.status] || ' ';
+    const line = `  [${icon}] ${teamId.padEnd(16)} ${team.status}${team.notes ? ` — ${team.notes}` : ''}`;
+    lines.push(line);
+  }
+  lines.push(``);
+
+  // Todo items
+  if (state.todo_items.length > 0) {
+    lines.push(`--- Todo Items (${state.todo_items.length}) ---`);
+    for (const item of state.todo_items.slice(0, 10)) {
+      const icon = { pending: '○', in_progress: '▶', done: '✓', blocked: '!' }[item.status] || '○';
+      lines.push(`  [${icon}] ${item.id}: ${item.title} (${item.status})`);
+    }
+    if (state.todo_items.length > 10) {
+      lines.push(`  ... and ${state.todo_items.length - 10} more`);
+    }
+    lines.push(``);
+  }
+
+  // Recent events
+  if (events.length > 0) {
+    lines.push(`--- Recent Events ---`);
+    for (const evt of events) {
+      const ts = formatTimestamp(evt.timestamp);
+      lines.push(`  ${ts}  ${evt.action}${evt.team ? ` (${evt.team})` : ''}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+// ---------------------------------------------------------------------------
+// CLI Handler
+// ---------------------------------------------------------------------------
+
+/**
+ * Run the orchestrate command from CLI.
+ * @param {object} opts
+ * @param {string} opts.projectRoot
+ * @param {object} opts.flags
+ */
+export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
+  // Load team IDs from spec if available (overrides hardcoded defaults)
+  loadTeamIdsFromSpec(agentkitRoot);
+
+  // --status: show current state
+  if (flags.status) {
+    console.log(getStatus(projectRoot));
+    return;
+  }
+
+  // --force-unlock: clear stale lock
+  if (flags['force-unlock']) {
+    const released = releaseLock(projectRoot);
+    if (released) {
+      console.log('[agentkit:orchestrate] Lock released.');
+      appendEvent(projectRoot, 'lock_force_released');
+    } else {
+      console.log('[agentkit:orchestrate] No lock to release.');
+    }
+    return;
+  }
+
+  // Acquire lock
+  const lockResult = acquireLock(projectRoot);
+  if (!lockResult.acquired) {
+    const lock = lockResult.existingLock;
+    if (lock) {
+      console.error(`[agentkit:orchestrate] Session locked by PID ${lock.pid} since ${lock.started_at}.`);
+    } else {
+      console.error(`[agentkit:orchestrate] Session lock exists but is corrupted.`);
+    }
+    console.error(`Use --force-unlock to override.`);
+    process.exit(1);
+  }
+
+  try {
+    const state = loadState(projectRoot);
+
+    // --phase N: jump to specific phase
+    if (flags.phase) {
+      const phase = parseInt(flags.phase, 10);
+      const result = setPhase(state, phase);
+      if (result.error) {
+        console.error(`[agentkit:orchestrate] ${result.error}`);
+        return;
+      }
+      saveState(projectRoot, result.state);
+      appendEvent(projectRoot, 'phase_set', { phase, phase_name: PHASES[phase] });
+      console.log(`[agentkit:orchestrate] Phase set to ${phase} — ${PHASES[phase]}`);
+      console.log(`Next action: ${result.state.next_action}`);
+      return;
+    }
+
+    // Default: show status and advance phase if requested
+    console.log(getStatus(projectRoot));
+    console.log('');
+    console.log('Use this command within your AI tool as a slash command for full orchestration.');
+    console.log(`Current phase: ${state.current_phase}/5 — ${state.phase_name}`);
+    console.log(`Next action: ${state.next_action}`);
+
+    appendEvent(projectRoot, 'orchestrate_invoked', {
+      phase: state.current_phase,
+      phase_name: state.phase_name,
+    });
+  } finally {
+    releaseLock(projectRoot);
+  }
+}
+
+export { PHASES, VALID_TEAM_IDS, VALID_TEAM_STATUSES };
