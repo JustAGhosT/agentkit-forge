@@ -209,18 +209,18 @@ export function createTask(projectRoot, taskData) {
 
   // Check if blocked by incomplete dependencies
   if (task.dependsOn.length > 0) {
-    const blockers = [];
+    const blockers = new Set();
     for (const depId of task.dependsOn) {
       const dep = getTask(projectRoot, depId);
       if (dep.task && !TERMINAL_STATES.includes(dep.task.status)) {
-        blockers.push(depId);
+        blockers.add(depId);
       }
       // If a dependency failed/rejected/canceled, mark this as blocked too
       if (dep.task && ['failed', 'rejected', 'canceled'].includes(dep.task.status)) {
-        blockers.push(depId);
+        blockers.add(depId);
       }
     }
-    task.blockedBy = blockers;
+    task.blockedBy = [...blockers];
   }
 
   writeTaskFile(projectRoot, taskId, task);

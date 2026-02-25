@@ -42,7 +42,7 @@ patterns:
   cqrs: false
   eventSourcing: false
   mediator: false
-  unitOfWork: false
+  unitOfWork: false # domain/app UoW pattern, distinct from DB transaction strategy
 
 # Existing documentation & specs
 documentation:

@@ -60,8 +60,6 @@ function applyPresetDefaults(project, preset) {
   project.infrastructure = project.infrastructure || {};
   project.infrastructure.namingConvention =
     project.infrastructure.namingConvention || '{org}-{env}-{project}-{resourcetype}-{region}';
-  project.infrastructure.defaultRegion = project.infrastructure.defaultRegion || 'southafricanorth';
-  project.infrastructure.org = project.infrastructure.org || 'nl';
   project.infrastructure.iacToolchain =
     Array.isArray(project.infrastructure.iacToolchain) &&
     project.infrastructure.iacToolchain.length > 0
@@ -95,6 +93,7 @@ const REPO_NAME_PATTERN = /^[A-Za-z0-9._-]+$/;
 function sanitizeRepoName(value) {
   if (!value || typeof value !== 'string') return null;
   const trimmed = value.trim();
+  if (trimmed === '.' || trimmed === '..') return null;
   if (!trimmed) return null;
   if (/\.\.|[/\\]/.test(trimmed)) return null;
   const safe = basename(trimmed);

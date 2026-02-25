@@ -160,21 +160,7 @@ export async function runRemove({ agentkitRoot, projectRoot, flags }) {
  * Deletes generated files belonging to specific tools using the manifest.
  * Maps tool names to their output path prefixes.
  */
-function cleanToolFiles(agentkitRoot, projectRoot, tools) {
-  const manifestPath = resolve(agentkitRoot, '.manifest.json');
-  if (!existsSync(manifestPath)) {
-    console.warn('[agentkit:remove] No manifest found — cannot determine which files to clean.');
-    return 0;
-  }
-
-  let manifest;
-  try {
-    manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-  } catch {
-    console.warn('[agentkit:remove] Corrupt manifest — cannot clean files.');
-    return 0;
-  }
-
+function cleanRemovedToolFiles(projectRoot, manifest, tools) {
   // Map tool names to path prefixes they generate
   const toolPrefixes = {
     claude: ['.claude/', 'CLAUDE.md'],
@@ -199,6 +185,11 @@ function cleanToolFiles(agentkitRoot, projectRoot, tools) {
   const prefixesToClean = tools.flatMap((t) => toolPrefixes[t] || []);
   let cleaned = 0;
 
+  const hasPrefixBoundaryMatch = (filePath, prefix) => {
+    const normalizedPrefix = prefix.replace(/\/+$/, '');
+    return filePath === normalizedPrefix || filePath.startsWith(`${normalizedPrefix}/`);
+  };
+
   let projectRootReal;
   try {
     projectRootReal = realpathSync(projectRoot) + sep;
@@ -208,12 +199,7 @@ function cleanToolFiles(agentkitRoot, projectRoot, tools) {
 
   for (const filePath of Object.keys(manifest.files || {})) {
     if (filePath.includes('..') || /^\/|^[A-Za-z]:/i.test(filePath)) continue;
-    if (
-      !prefixesToClean.some(
-        (prefix) => filePath.startsWith(prefix) || filePath === prefix.replace(/\/$/, '')
-      )
-    )
-      continue;
+    if (!prefixesToClean.some((prefix) => hasPrefixBoundaryMatch(filePath, prefix))) continue;
 
     const fullPath = resolve(projectRoot, filePath);
     try {
@@ -233,6 +219,24 @@ function cleanToolFiles(agentkitRoot, projectRoot, tools) {
   }
 
   return cleaned;
+}
+
+function cleanToolFiles(agentkitRoot, projectRoot, tools) {
+  const manifestPath = resolve(agentkitRoot, '.manifest.json');
+  if (!existsSync(manifestPath)) {
+    console.warn('[agentkit:remove] Manifest not found — skipping clean.');
+    return 0;
+  }
+
+  let manifest;
+  try {
+    manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+  } catch {
+    console.warn('[agentkit:remove] Corrupt manifest — cannot clean files.');
+    return 0;
+  }
+
+  return cleanRemovedToolFiles(projectRoot, manifest, tools);
 }
 
 // ---------------------------------------------------------------------------

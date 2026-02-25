@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/JustAGhosT/agentkit-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/JustAGhosT/agentkit-forge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/Node.js-%3E%3D20-green.svg)](https://nodejs.org/)
+[![Node](https://img.shields.io/badge/Node.js-%3E%3D20.11-green.svg)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9-orange.svg)](https://pnpm.io/)
 
 A universal AI-orchestration template repository. Generates tool-specific configs from a single YAML spec for **15+ AI coding tools** â€” Claude Code, Cursor, Windsurf, Copilot, Codex, Gemini, Warp, Cline, Roo Code, Continue, Jules, Amp, Factory, and more. Cross-platform (Windows, macOS, Linux) with polyglot support and MCP/A2A protocol integration.
@@ -38,7 +38,7 @@ Every developer runs `sync` after cloning. The generated files are gitignored â€
 
 ## Quick Start
 
-**Prerequisites:** Node.js 20+ and pnpm 9+.
+**Prerequisites:** Node.js 20.11+ and pnpm 9+.
 
 ```bash
 # Install runtime
