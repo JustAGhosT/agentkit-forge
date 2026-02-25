@@ -62,8 +62,8 @@ assumptions about project structure or conventions.
 ## Observability
 
 {{#if monitoringProvider}}- Monitoring provider: {{monitoringProvider}}{{/if}}
-{{#if hasAlerting}}- Alerting provider: {{alertingProvider}}{{/if}}
-{{#if hasTracing}}- Tracing provider: {{tracingProvider}}{{/if}}
+{{#if alertingProvider}}- Alerting provider: {{alertingProvider}}{{/if}}
+{{#if tracingProvider}}- Tracing provider: {{tracingProvider}}{{/if}}
 {{#if tracingSamplingRate}}- Trace sampling rate: {{tracingSamplingRate}}{{/if}}
 {{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
 {{/if}}

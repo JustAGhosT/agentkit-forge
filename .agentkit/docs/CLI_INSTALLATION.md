@@ -6,11 +6,11 @@
 
 ## Prerequisites
 
-| Requirement | Minimum Version | Check Command |
-|-------------|-----------------|---------------|
-| Node.js     | 18+             | `node --version` |
+| Requirement | Minimum Version | Check Command    |
+| ----------- | --------------- | ---------------- |
+| Node.js     | 20.11.0+        | `node --version` |
 | pnpm        | 9+              | `pnpm --version` |
-| Git         | 2.30+           | `git --version` |
+| Git         | 2.30+           | `git --version`  |
 
 If you do not have pnpm installed, install it globally:
 
@@ -104,32 +104,32 @@ DEBUG=1 node .agentkit/engines/node/src/cli.mjs sync
 
 ### Setup Commands
 
-| Command          | Purpose                                           |
-|------------------|---------------------------------------------------|
-| `init`           | Initialize a repo overlay from the template        |
-| `sync`           | Render all AI tool configs from spec and overlay   |
-| `validate`       | Validate generated outputs for correctness         |
-| `spec-validate`  | Validate YAML spec files against the schema        |
-| `discover`       | Scan the repo to detect tech stacks and structure  |
+| Command         | Purpose                                           |
+| --------------- | ------------------------------------------------- |
+| `init`          | Initialize a repo overlay from the template       |
+| `sync`          | Render all AI tool configs from spec and overlay  |
+| `validate`      | Validate generated outputs for correctness        |
+| `spec-validate` | Validate YAML spec files against the schema       |
+| `discover`      | Scan the repo to detect tech stacks and structure |
 
 **Sync flags:** `--overlay <name>`, `--only <targets>`, `--dry-run`, `--overwrite` (or `--force`), `-q`/`--quiet`, `-v`/`--verbose`, `--no-clean`, `--diff`. By default, project-owned files (`docs/`, `.vscode/`, `CONTRIBUTING.md`, etc.) are written only on first sync; use `--overwrite` to regenerate them. Use `--quiet` for CI, `--verbose` to list each file, `--no-clean` to keep orphaned files, and `--diff` to preview changes.
 
 ### Workflow Commands
 
-| Command          | Purpose                                           |
-|------------------|---------------------------------------------------|
-| `orchestrate`    | Multi-team coordination with state persistence     |
-| `plan`           | Structured implementation planning                 |
-| `check`          | Run quality gates (format, lint, typecheck, test)  |
-| `review`         | Automated code review (secrets, large files, TODOs)|
-| `handoff`        | Generate a session handoff document                |
-| `healthcheck`    | Pre-flight validation of repo health               |
+| Command       | Purpose                                             |
+| ------------- | --------------------------------------------------- |
+| `orchestrate` | Multi-team coordination with state persistence      |
+| `plan`        | Structured implementation planning                  |
+| `check`       | Run quality gates (format, lint, typecheck, test)   |
+| `review`      | Automated code review (secrets, large files, TODOs) |
+| `handoff`     | Generate a session handoff document                 |
+| `healthcheck` | Pre-flight validation of repo health                |
 
 ### Utility Commands
 
-| Command          | Purpose                                           |
-|------------------|---------------------------------------------------|
-| `cost`           | Session cost and usage tracking                    |
+| Command | Purpose                         |
+| ------- | ------------------------------- |
+| `cost`  | Session cost and usage tracking |
 
 Run any command with `--help` to see its specific flags.
 
@@ -210,7 +210,7 @@ Make sure you installed dependencies first:
 pnpm -C .agentkit install
 ```
 
-If the error persists, verify your Node.js version is 18 or higher:
+If the error persists, verify your Node.js version is 20.11.0 or higher:
 
 ```bash
 node --version

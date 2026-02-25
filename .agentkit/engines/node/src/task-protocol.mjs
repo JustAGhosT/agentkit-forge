@@ -6,6 +6,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
+import { VALID_TASK_TYPES } from './task-types.mjs';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -27,7 +28,7 @@ export const TASK_STATES = [
 export const TERMINAL_STATES = ['completed', 'failed', 'rejected', 'canceled'];
 
 /** Valid task types. */
-export const TASK_TYPES = ['implement', 'review', 'plan', 'investigate', 'test', 'document'];
+export const TASK_TYPES = VALID_TASK_TYPES;
 
 /** Valid priority levels. */
 export const TASK_PRIORITIES = ['P0', 'P1', 'P2', 'P3'];

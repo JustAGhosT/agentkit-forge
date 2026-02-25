@@ -6,6 +6,7 @@ allowed-tools: Bash(git *), Bash(find *), Bash(ls *), Bash(cat *), Bash(head *),
 # Codebase Discovery
 
 {{#if commandDescription}}
+
 ## Context
 
 {{commandDescription}}

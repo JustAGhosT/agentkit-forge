@@ -85,7 +85,7 @@ const VALID_FLAGS = {
   handoff: ['format', 'include-diff', 'tag', 'save', 'help'],
   healthcheck: ['stack', 'fix', 'verbose', 'help'],
   cost: ['summary', 'sessions', 'report', 'month', 'format', 'last', 'help'],
-  tasks: ['status', 'assignee', 'type', 'priority', 'id', 'help'],
+  tasks: ['status', 'assignee', 'type', 'priority', 'id', 'process-handoffs', 'help'],
   delegate: [
     'to',
     'title',
@@ -182,6 +182,7 @@ Task Delegation:
                   --status <s>      Filter by status (submitted, working, completed, etc.)
                   --assignee <team>  Filter by assignee team
                   --id <task-id>     Show details for a specific task
+                  --process-handoffs Process handoff chains before listing
   delegate        Create a delegated task for a team
                   --to <team>       Assignee team (required)
                   --title <text>    Task title (required)

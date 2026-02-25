@@ -1,6 +1,6 @@
 ---
-name: "{{agentName}}"
-description: "{{agentRole}}"
+name: '{{agentName}}'
+description: '{{agentRole}}'
 ---
 
 # {{agentName}}
@@ -30,12 +30,14 @@ Scan the codebase within your focus area before making changes. Read `AGENT_BACK
 {{agentToolsList}}
 
 {{#if hasAgentDomainRules}}
+
 ## Domain Rules
 
 {{agentDomainRules}}
 {{/if}}
 
 {{#if hasAgentConventions}}
+
 ## Agent Conventions
 
 {{agentConventions}}

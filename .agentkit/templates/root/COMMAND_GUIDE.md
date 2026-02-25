@@ -9,6 +9,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 ### `/orchestrate` — Full lifecycle coordination
 
 **Use when:**
+
 - You want the system to assess, plan, delegate, validate, and ship in one coordinated flow
 - You're starting a new session and need a full assessment
 - Work spans multiple teams and needs phased coordination
@@ -23,6 +24,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 ### `/plan` — Structured implementation plan (no code)
 
 **Use when:**
+
 - You need a detailed plan before writing any code
 - A backlog item involves more than 2 files or touches shared infra/APIs
 - The team is uncertain about the best approach
@@ -37,6 +39,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 ### `/project-review` — Comprehensive project audit
 
 **Use when:**
+
 - You want a production-grade review of the entire project
 - You need systematic analysis of code quality, architecture, security, UX, performance, docs
 - You're onboarding or doing a fresh assessment
@@ -53,6 +56,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 ### `/discover` — Codebase inventory (read-only)
 
 **Use when:**
+
 - You need to understand the repo structure, tech stacks, build tools, CI, tests
 - You're starting fresh or the codebase has changed significantly
 - You want `AGENT_TEAMS.md` updated with team boundaries
@@ -61,9 +65,52 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 ---
 
+### `/doctor` — Setup and spec diagnostics
+
+**Use when:**
+
+- You need a quick health signal for AgentKit setup
+- Sync/init behavior looks inconsistent and you need actionable checks
+- You want malformed overlays/spec warnings surfaced before orchestration
+
+**Flags:** `--verbose`
+
+**Shared assets:** Reads spec and overlay files. Does not write orchestrator state.
+
+---
+
+### `/tasks` — Inspect delegated task queue
+
+**Use when:**
+
+- You need to inspect task state (`submitted`, `working`, `completed`, etc.)
+- You need one task's full detail (`--id`) before taking action
+- You want dependency unblocking refreshed before status review
+
+**Flags:** `--status`, `--assignee`, `--type`, `--priority`, `--id`, `--process-handoffs`
+
+**Shared assets:** Reads/writes `.claude/state/tasks/*.json` for dependency updates.
+
+---
+
+### `/delegate` — Create a team task
+
+**Use when:**
+
+- You need to assign scoped implementation/review/test work to a team
+- You need explicit `dependsOn` or `handoffTo` routing
+- You want auditable task artifacts/messages in the task protocol
+
+**Flags:** `--to`, `--title`, `--description`, `--type`, `--priority`, `--depends-on`, `--handoff-to`, `--scope`
+
+**Shared assets:** Writes `.claude/state/tasks/*.json`.
+
+---
+
 ### `/healthcheck` — Build, test, lint validation
 
 **Use when:**
+
 - You want to verify the project builds, tests pass, and lint is clean
 - You're about to start work and need a baseline
 - You've made changes and want to confirm nothing is broken
@@ -75,6 +122,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 ### `/review` — Code review of changes
 
 **Use when:**
+
 - You're reviewing staged changes, a PR, or a commit range
 - You want security, performance, correctness, and style checks
 - You need a structured review before merging
@@ -88,6 +136,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 ### `/handoff` — Session continuity summary
 
 **Use when:**
+
 - You are ending a session and need to hand over current status
 - You want a concise summary of completed work, open risks, and next steps
 - You need state continuity for another agent/person
@@ -99,11 +148,38 @@ This guide helps you choose the right command for your situation. Most workflow 
 ### `/sync-backlog` — Update AGENT_BACKLOG.md
 
 **Use when:**
+
 - You need to sync the backlog with GitHub Issues or project boards
 - Discovery, healthcheck, or review has produced new findings to incorporate
 - The orchestrator has completed a phase and backlog should reflect current state
 
 **Shared assets:** Reads `orchestrator.json`, `events.log`. Writes `AGENT_BACKLOG.md`. Appends to `events.log`.
+
+---
+
+### `/scaffold` — Convention-aligned file scaffolding (slash command)
+
+**Use when:**
+
+- You need a new module/component/feature skeleton that follows repo conventions
+- You want path-safe generation under a specific target directory
+
+**Flags:** `--type`, `--name`, `--stack`, `--path`
+
+**Shared assets:** None by default (generates files in project paths).
+
+---
+
+### `/preflight` — Release-readiness gate (slash command)
+
+**Use when:**
+
+- You need a focused release gate on a commit range or current diff
+- You want strict failure behavior before merge/release
+
+**Flags:** `--stack`, `--range`, `--strict`
+
+**Shared assets:** Reads repo state and may append findings to `events.log` when run inside workflow.
 
 ---
 
@@ -115,7 +191,12 @@ This guide helps you choose the right command for your situation. Most workflow 
 | Need a plan before coding       | `/plan`                                        |
 | Full project audit / onboarding | `/project-review`                              |
 | Understand repo structure       | `/discover`                                    |
+| Validate AgentKit setup         | `/doctor`                                      |
 | Verify build/test/lint          | `/healthcheck`                                 |
+| Inspect delegated task queue    | `/tasks`                                       |
+| Delegate work to a team         | `/delegate`                                    |
+| Generate scaffolded skeletons   | `/scaffold`                                    |
+| Run release readiness checks    | `/preflight`                                   |
 | Review a PR or commit range     | `/review`                                      |
 | Update backlog from findings    | `/sync-backlog`                                |
 | End of session, hand off        | `/handoff`                                     |
@@ -129,6 +210,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 | `AGENT_BACKLOG.md`                | Prioritized work items, team assignments       | Orchestrator, Plan, Project-Review, Sync-Backlog, Team commands |
 | `.claude/state/orchestrator.json` | Phase, team status, metrics, risks, todo items | Orchestrator, Plan, Project-Review, Handoff, Healthcheck        |
 | `.claude/state/events.log`        | Audit trail of actions                         | All workflow commands                                           |
+| `.claude/state/tasks/*.json`      | Delegated task protocol queue                  | Delegate, Tasks, Orchestrator                                   |
 | `.claude/state/orchestrator.lock` | Prevents concurrent orchestrator sessions      | Orchestrator only                                               |
 | `AGENT_TEAMS.md`                  | Team boundaries and ownership map              | Discover, Orchestrator, Team commands                           |
 

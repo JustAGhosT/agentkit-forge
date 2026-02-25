@@ -22,6 +22,7 @@ import {
   createTask,
   formatTaskList,
   listTasks,
+  processHandoffs,
 } from './task-protocol.mjs';
 
 // ---------------------------------------------------------------------------
@@ -623,7 +624,7 @@ export function orchestratorCheckDependencies(projectRoot, state) {
  * @returns {{ state: object, created: object[], errors: string[] }}
  */
 export function orchestratorProcessHandoffs(projectRoot, state) {
-  const { created, errors } = processTaskHandoffs(projectRoot, 'orchestrator');
+  const { created, errors } = processHandoffs(projectRoot, 'orchestrator');
 
   let newState = { ...state };
   for (const task of created) {

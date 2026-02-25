@@ -16,7 +16,7 @@ import {
 
 /**
  * List and inspect delegated tasks.
- * Flags: --status, --assignee, --type, --priority, --id
+ * Flags: --status, --assignee, --type, --priority, --id, --process-handoffs
  */
 export async function runTasks({ projectRoot, flags }) {
   if (flags.type && !TASK_TYPES.includes(flags.type)) {
@@ -65,9 +65,11 @@ export async function runTasks({ projectRoot, flags }) {
     );
   }
 
-  const handoffResult = processHandoffs(projectRoot);
-  if (handoffResult.created.length > 0) {
-    console.log(`[agentkit:tasks] Created ${handoffResult.created.length} handoff task(s)`);
+  if (flags['process-handoffs']) {
+    const handoffResult = processHandoffs(projectRoot);
+    if (handoffResult.created.length > 0) {
+      console.log(`[agentkit:tasks] Created ${handoffResult.created.length} handoff task(s)`);
+    }
   }
 
   // List with filters

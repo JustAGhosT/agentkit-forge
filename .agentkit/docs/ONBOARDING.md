@@ -21,7 +21,7 @@ Before setting up AgentKit Forge, ensure the following requirements are met:
 
 ### System Requirements
 
-- **Node.js** v18 or later installed and available on your PATH
+- **Node.js** v20.11.0 or later installed and available on your PATH
 - **Git** v2.30 or later
 - **PowerShell** v7+ (for Windows-first workflows) or a POSIX-compatible shell (bash/zsh)
 

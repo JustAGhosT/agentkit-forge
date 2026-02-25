@@ -67,7 +67,7 @@ describe('fresh install (no node_modules)', () => {
 
   it(
     'auto-installs dependencies and runs sync --dry-run',
-    { skip: process.platform === 'win32' },
+    { skip: process.platform === 'win32', timeout: 130_000 },
     () => {
       const cliPath = join(projectRoot, '.agentkit', 'engines', 'node', 'src', 'cli.mjs');
       const result = execFileSync('node', [cliPath, 'sync', '--dry-run'], {
@@ -80,7 +80,6 @@ describe('fresh install (no node_modules)', () => {
       expect(
         existsSync(join(projectRoot, '.agentkit', 'node_modules', 'js-yaml', 'package.json'))
       ).toBe(true);
-    },
-    130_000
+    }
   );
 });

@@ -102,7 +102,8 @@ Execute the following loop. Each iteration corresponds to one phase:
 
 Delegate work using the **task protocol** (`.claude/state/tasks/`):
 
-1. For each planned work item, create a task JSON file:
+1. Ensure `.claude/state/` and `.claude/state/tasks/` exist before creating task files.
+2. For each planned work item, create a task JSON file:
 
    ```json
    {
@@ -124,31 +125,34 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
    }
    ```
 
-2. For **parallel work**, create independent tasks for each team.
-3. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
+3. For **parallel work**, create independent tasks for each team.
+4. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
    - `blockedBy` is runtime-derived state from `dependsOn`; do not author it manually.
-4. Each team should:
+5. Immediately after task creation, run the dependency derivation pass once to populate `blockedBy` from `dependsOn` before the first execution round.
+6. Each team should:
    - Accept or reject the task (update `status` and add a message).
    - Make minimal, backwards-compatible changes.
    - Add or adjust tests for any changed behavior.
    - Update `status` to `completed` and add artifacts when done.
-5. Between delegation rounds, run dependency checks:
+7. Between delegation rounds, run dependency checks:
    - Scan tasks where `blockedBy` is non-empty and check if blocking tasks are now complete.
    - Update `blockedBy` arrays and unblock tasks whose dependencies are satisfied.
-6. Process handoffs: for completed tasks with `handoffTo`, create follow-up tasks for the downstream team with the `handoffContext` carried forward.
-7. Monitor progress via task status and log team outputs to `events.log`.
+8. Process handoffs: for completed tasks with `handoffTo`, create follow-up tasks for the downstream team with the `handoffContext` carried forward.
+9. Monitor progress via task status and log team outputs to `events.log`.
 
 ### Phase 4 — Validation
 
 1. Verify all delegated tasks have reached a terminal state (`completed`, `failed`, `rejected`, or `canceled`).
 2. Invoke `/check` to run the full quality gate (format, lint, typecheck, tests, build).
 3. Invoke `/review` on all changed files since the orchestration began.
-4. If any check or review finding requires changes, create new tasks for the relevant teams (loop back to Phase 3).
-5. Record validation results in `orchestrator.json` and in task artifacts.
+4. If any check or review finding requires changes, create new tasks for the relevant teams and loop back to Phase 3.
+5. Enforce a bounded retry policy (`maxRetryCount`, default 2) for replacement-task loops; when exhausted, escalate and stop automatic retries.
+6. Record validation results in `orchestrator.json` and in task artifacts, including resolution metadata for failed/rejected tasks.
 
 ### Phase 5 — Ship
 
 1. Confirm all checks pass and all tasks are in terminal state, with no unresolved `failed`/`rejected` tasks.
+   - A failed/rejected task is "resolved" only when one of the following is recorded: retry budget exhausted, escalated, or manually closed.
 2. Invoke `/handoff` to produce a session summary.
 3. Update `orchestrator.json`: set `currentPhase` to 5, clear the lock, update metrics.
 4. Log completion to `events.log`.

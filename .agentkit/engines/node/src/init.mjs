@@ -95,7 +95,7 @@ function sanitizeRepoName(value) {
   const trimmed = value.trim();
   if (trimmed === '.' || trimmed === '..') return null;
   if (!trimmed) return null;
-  if (/\.\.|[/\\]/.test(trimmed)) return null;
+  if (/[/\\]/.test(trimmed)) return null;
   const safe = basename(trimmed);
   if (!REPO_NAME_PATTERN.test(safe)) return null;
   return safe;

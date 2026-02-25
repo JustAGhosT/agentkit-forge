@@ -471,26 +471,27 @@ describe('--quiet, --verbose, --no-clean, --diff flags', () => {
 
   it('--no-clean preserves orphaned files', { timeout: 25000 }, async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: {} });
-    const manifestPath = join(AGENTKIT_ROOT, '.manifest.json');
-    const originalManifest = readFileSync(manifestPath, 'utf-8');
-    try {
-      const manifest = JSON.parse(originalManifest);
-      manifest.files['__TEST_ORPHAN__.md'] = { hash: 'abc' };
-      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
-      const orphanPath = join(projectRoot, '__TEST_ORPHAN__.md');
-      writeFileSync(orphanPath, 'orphan', 'utf-8');
-      await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { 'no-clean': true } });
-      expect(existsSync(orphanPath)).toBe(true);
-    } finally {
-      writeFileSync(manifestPath, originalManifest, 'utf-8');
-    }
+    const sourceManifestPath = join(AGENTKIT_ROOT, '.manifest.json');
+    const manifestPath = join(projectRoot, '.manifest.json');
+    const originalManifest = readFileSync(sourceManifestPath, 'utf-8');
+    writeFileSync(manifestPath, originalManifest, 'utf-8');
+
+    const manifest = JSON.parse(originalManifest);
+    manifest.files['__TEST_ORPHAN__.md'] = { hash: 'abc' };
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+    const orphanPath = join(projectRoot, '__TEST_ORPHAN__.md');
+    writeFileSync(orphanPath, 'orphan', 'utf-8');
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { 'no-clean': true } });
+    expect(existsSync(orphanPath)).toBe(true);
+
+    rmSync(manifestPath, { force: true });
   });
 });
 
 // ---------------------------------------------------------------------------
-// Tests: Empty-spec edge cases
+// Tests: Render-target output isolation (--only flag)
 // ---------------------------------------------------------------------------
-describe('empty-spec edge cases', () => {
+describe('render-target output isolation (--only flag)', () => {
   let projectRoot;
 
   beforeEach(() => {
@@ -500,74 +501,70 @@ describe('empty-spec edge cases', () => {
     rmSync(projectRoot, { recursive: true, force: true });
   });
 
-  it('no commands → no copilot prompts generated', async () => {
-    // Sync with copilot target against real root; commands.yaml has commands,
-    // but if we override with empty spec, no prompts should be generated.
-    // Instead, we test the gating: syncing with only 'mcp' should NOT produce prompts
+  it('--only mcp produces no copilot prompts', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'mcp' } });
     const files = collectFiles(projectRoot);
     const prompts = files.filter((f) => f.startsWith('.github/prompts/'));
     expect(prompts.length).toBe(0);
   });
 
-  it('no commands → no cursor commands generated when target is windsurf', async () => {
+  it('--only windsurf produces no cursor command files', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'windsurf' } });
     const files = collectFiles(projectRoot);
     const cursorCmds = files.filter((f) => f.startsWith('.cursor/commands/'));
     expect(cursorCmds.length).toBe(0);
   });
 
-  it('no commands → no codex skills generated when target is cline', async () => {
+  it('--only cline produces no codex skills', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'cline' } });
     const files = collectFiles(projectRoot);
     const skills = files.filter((f) => f.startsWith('.agents/skills/'));
     expect(skills.length).toBe(0);
   });
 
-  it('no teams → no cursor team rules when target is cursor', async () => {
-    // With only 'ai' target, no team-*.mdc should appear
+  it('--only ai produces no cursor team rules', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'ai' } });
     const files = collectFiles(projectRoot);
     const teamRules = files.filter((f) => f.startsWith('.cursor/rules/team-'));
     expect(teamRules.length).toBe(0);
   });
 
-  it('no teams → no windsurf team rules when target is codex', async () => {
+  it('--only codex produces no windsurf team rules', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'codex' } });
     const files = collectFiles(projectRoot);
     const teamRules = files.filter((f) => f.startsWith('.windsurf/rules/team-'));
     expect(teamRules.length).toBe(0);
   });
 
-  it('no teams → no copilot chatmodes when target is gemini', async () => {
+  it('--only gemini produces no copilot chatmodes', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'gemini' } });
     const files = collectFiles(projectRoot);
     const chatmodes = files.filter((f) => f.startsWith('.github/chatmodes/'));
     expect(chatmodes.length).toBe(0);
   });
 
-  it('no agents → no copilot agent files when target is warp', async () => {
+  it('--only warp produces no copilot agent files', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'warp' } });
     const files = collectFiles(projectRoot);
     const agents = files.filter((f) => f.startsWith('.github/agents/'));
     expect(agents.length).toBe(0);
   });
 
-  it('no agents → no claude agent files when target is roo', async () => {
+  it('--only roo produces no claude agent files', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'roo' } });
     const files = collectFiles(projectRoot);
     const agents = files.filter((f) => f.startsWith('.claude/agents/'));
     expect(agents.length).toBe(0);
   });
 
-  it('no rules → no cline rules when target is warp', async () => {
+  it('--only warp produces no cline rules', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'warp' } });
     const files = collectFiles(projectRoot);
     const clineRules = files.filter((f) => f.startsWith('.clinerules/'));
     expect(clineRules.length).toBe(0);
   });
 
-  it('no rules → no roo rules when target is mcp', async () => {
+  it('--only mcp produces no roo rules', async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'mcp' } });
     const files = collectFiles(projectRoot);
     const rooRules = files.filter((f) => f.startsWith('.roo/rules/'));

@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'fs';
 import yaml from 'js-yaml';
 import { resolve } from 'path';
+import { VALID_TASK_TYPES } from './task-types.mjs';
 
 // ---------------------------------------------------------------------------
 // Schema definitions (lightweight — no external deps needed)
@@ -156,11 +157,6 @@ const settingsSchema = {
     hooks: { type: 'object', required: true },
   },
 };
-
-// ---------------------------------------------------------------------------
-// Task protocol — valid task types (used by agents.accepts and teams.accepts)
-// ---------------------------------------------------------------------------
-const VALID_TASK_TYPES = ['implement', 'review', 'plan', 'investigate', 'test', 'document'];
 
 // ---------------------------------------------------------------------------
 // Schema: project.yaml — enum value sets
@@ -596,6 +592,7 @@ function validateCrossReferences(specs) {
   }
 
   // Validate team accepts and handoff-chain fields
+  const teamHandoffMap = new Map();
   for (const team of teams?.teams || []) {
     if (team.accepts !== undefined && team.accepts !== null) {
       if (!Array.isArray(team.accepts)) {
@@ -615,6 +612,10 @@ function validateCrossReferences(specs) {
       if (!Array.isArray(chain)) {
         errors.push(`teams.yaml: team "${team.id}" handoff-chain must be an array`);
       } else {
+        teamHandoffMap.set(
+          team.id,
+          chain.filter((target) => typeof target === 'string')
+        );
         for (const target of chain) {
           if (!teamIds.has(target)) {
             errors.push(
@@ -627,6 +628,36 @@ function validateCrossReferences(specs) {
         }
       }
     }
+  }
+
+  // Detect transitive cycles in team handoff chains (A -> ... -> A)
+  const visiting = new Set();
+  const visited = new Set();
+  const stack = [];
+
+  function detectHandoffCycle(teamId) {
+    if (visiting.has(teamId)) {
+      const cycleStart = stack.indexOf(teamId);
+      const cycle = [...stack.slice(cycleStart), teamId];
+      errors.push(`teams.yaml: handoff-chain cycle detected: ${cycle.join(' -> ')}`);
+      return;
+    }
+    if (visited.has(teamId)) return;
+
+    visiting.add(teamId);
+    stack.push(teamId);
+    const next = teamHandoffMap.get(teamId) || [];
+    for (const target of next) {
+      if (!teamIds.has(target)) continue;
+      detectHandoffCycle(target);
+    }
+    stack.pop();
+    visiting.delete(teamId);
+    visited.add(teamId);
+  }
+
+  for (const teamId of teamIds) {
+    detectHandoffCycle(teamId);
   }
 
   // Check for duplicate rule convention IDs

@@ -20,11 +20,11 @@
 
 Before you begin, make sure you have the following installed:
 
-| Requirement | Minimum Version | Check Command |
-|-------------|----------------|---------------|
-| **Node.js** | 18+ | `node --version` |
-| **Git** | 2.30+ | `git --version` |
-| **AI Tool** | Latest | See below |
+| Requirement | Minimum Version | Check Command    |
+| ----------- | --------------- | ---------------- |
+| **Node.js** | 20.11.0+        | `node --version` |
+| **Git**     | 2.30+           | `git --version`  |
+| **AI Tool** | Latest          | See below        |
 
 You need at least one of these AI coding assistants:
 
@@ -113,22 +113,22 @@ The `sync` command generated several directories and files in your repository ro
 
 ### Generated Directories
 
-| Path | Purpose |
-|------|---------|
-| `.claude/` | **Claude Code configs** -- Slash commands, lifecycle hooks, specialized agents, coding rules, and orchestrator state. This is where the 23 commands like `/discover` and `/orchestrate` live. |
-| `.cursor/` | **Cursor AI rules** -- Rules files in `.mdc` format that Cursor uses for context-aware code generation. |
-| `.windsurf/` | **Windsurf AI rules and workflows** -- Rules and workflow definitions for Windsurf's AI assistant. |
-| `.ai/` | **Portable rules** -- A tool-agnostic rules format compatible with Continue and other AI tools that support the `.ai/` convention. |
-| `docs/` | **8-category documentation structure** -- A complete project documentation scaffold organized into product, specs, architecture, API, operations, engineering, integrations, and reference categories. |
+| Path         | Purpose                                                                                                                                                                                                |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `.claude/`   | **Claude Code configs** -- Slash commands, lifecycle hooks, specialized agents, coding rules, and orchestrator state. This is where the 23 commands like `/discover` and `/orchestrate` live.          |
+| `.cursor/`   | **Cursor AI rules** -- Rules files in `.mdc` format that Cursor uses for context-aware code generation.                                                                                                |
+| `.windsurf/` | **Windsurf AI rules and workflows** -- Rules and workflow definitions for Windsurf's AI assistant.                                                                                                     |
+| `.ai/`       | **Portable rules** -- A tool-agnostic rules format compatible with Continue and other AI tools that support the `.ai/` convention.                                                                     |
+| `docs/`      | **8-category documentation structure** -- A complete project documentation scaffold organized into product, specs, architecture, API, operations, engineering, integrations, and reference categories. |
 
 ### Generated Root Files
 
-| File | Purpose |
-|------|---------|
-| `CLAUDE.md` | **Main AI instructions entry point** -- The first file Claude Code reads when it opens your project. Contains the project overview, command reference, workflow guide, safety rules, and links to all other configuration. |
+| File                     | Purpose                                                                                                                                                                                                                                                     |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAUDE.md`              | **Main AI instructions entry point** -- The first file Claude Code reads when it opens your project. Contains the project overview, command reference, workflow guide, safety rules, and links to all other configuration.                                  |
 | `UNIFIED_AGENT_TEAMS.md` | **Team specifications** -- Defines the 10 agent teams (Backend, Frontend, Data, Infrastructure, Auth, Integration, Documentation, DevEx, Platform, Quality), their responsibilities, scope patterns, and the 5-phase lifecycle model that governs all work. |
-| `AGENT_BACKLOG.md` | **Work tracking** -- A prioritized backlog of tasks for AI agents to pick up, organized by team and priority. |
-| `QUALITY_GATES.md` | **Definition of done** -- Quality gates for each of the 5 lifecycle phases, ensuring work meets standards before advancing. |
+| `AGENT_BACKLOG.md`       | **Work tracking** -- A prioritized backlog of tasks for AI agents to pick up, organized by team and priority.                                                                                                                                               |
+| `QUALITY_GATES.md`       | **Definition of done** -- Quality gates for each of the 5 lifecycle phases, ensuring work meets standards before advancing.                                                                                                                                 |
 
 ### Documentation Structure
 
@@ -200,7 +200,7 @@ Open Claude Code in your project directory and walk through this sequence. Each 
 ## Healthcheck Report
 
 | Check        | Status | Duration | Details              |
-|--------------|--------|----------|----------------------|
+| ------------ | ------ | -------- | -------------------- |
 | Dependencies | PASS   | 4.2s     | pnpm install clean   |
 | Build        | PASS   | 12.1s    | No errors            |
 | Lint         | FAIL   | 3.8s     | 7 errors, 2 warnings |
@@ -251,45 +251,45 @@ AgentKit Forge provides 23 slash commands, organized into three categories.
 
 These commands drive the development lifecycle.
 
-| Command | Purpose |
-|---------|---------|
-| `/orchestrate` | Master coordinator -- assess, plan, delegate, validate, ship |
-| `/discover` | Scan codebase, detect tech stacks, produce inventory |
-| `/healthcheck` | Pre-flight validation of build, lint, typecheck, and tests |
-| `/plan` | Structured implementation plan before writing code |
-| `/review` | Structured code review with severity classification |
-| `/handoff` | Session handoff summary for continuity between sessions |
-| `/sync-backlog` | Update AGENT_BACKLOG.md from multiple sources |
-| `/project-review` | Comprehensive multi-phase project audit |
+| Command           | Purpose                                                      |
+| ----------------- | ------------------------------------------------------------ |
+| `/orchestrate`    | Master coordinator -- assess, plan, delegate, validate, ship |
+| `/discover`       | Scan codebase, detect tech stacks, produce inventory         |
+| `/healthcheck`    | Pre-flight validation of build, lint, typecheck, and tests   |
+| `/plan`           | Structured implementation plan before writing code           |
+| `/review`         | Structured code review with severity classification          |
+| `/handoff`        | Session handoff summary for continuity between sessions      |
+| `/sync-backlog`   | Update AGENT_BACKLOG.md from multiple sources                |
+| `/project-review` | Comprehensive multi-phase project audit                      |
 
 ### Quality Commands
 
 These commands validate and improve code quality.
 
-| Command | Purpose |
-|---------|---------|
-| `/check` | Universal quality gate -- format, lint, typecheck, test, build |
-| `/build` | Build the project (auto-detects stack) |
-| `/test` | Run tests (auto-detects framework, accepts scope/filter) |
-| `/format` | Run code formatters (auto-detects tools) |
-| `/security` | Security audit -- OWASP top 10, dependencies, secrets scan |
-| `/deploy` | Deployment automation with safety checks and rollback |
+| Command     | Purpose                                                        |
+| ----------- | -------------------------------------------------------------- |
+| `/check`    | Universal quality gate -- format, lint, typecheck, test, build |
+| `/build`    | Build the project (auto-detects stack)                         |
+| `/test`     | Run tests (auto-detects framework, accepts scope/filter)       |
+| `/format`   | Run code formatters (auto-detects tools)                       |
+| `/security` | Security audit -- OWASP top 10, dependencies, secrets scan     |
+| `/deploy`   | Deployment automation with safety checks and rollback          |
 
 ### Team Commands
 
 These commands activate specialized agent teams for focused work.
 
-| Command | Team | Focus Area |
-|---------|------|------------|
-| `/team-backend` | Backend (T1) | API routes, services, core server logic |
-| `/team-frontend` | Frontend (T2) | UI components, client state, accessibility |
-| `/team-data` | Data (T3) | Database, models, migrations, queries |
-| `/team-infra` | Infrastructure (T4) | CI/CD, Docker, cloud configuration |
-| `/team-devops` | DevOps (T5) | Pipelines, containers, automation |
-| `/team-testing` | Testing (T6) | Test strategy, coverage, benchmarks |
-| `/team-security` | Security (T7) | Auth, compliance, audit |
-| `/team-docs` | Documentation (T8) | Docs, ADRs, runbooks, guides |
-| `/team-product` | Product (T9) | Feature specs, PRDs, roadmap |
+| Command          | Team                | Focus Area                                 |
+| ---------------- | ------------------- | ------------------------------------------ |
+| `/team-backend`  | Backend (T1)        | API routes, services, core server logic    |
+| `/team-frontend` | Frontend (T2)       | UI components, client state, accessibility |
+| `/team-data`     | Data (T3)           | Database, models, migrations, queries      |
+| `/team-infra`    | Infrastructure (T4) | CI/CD, Docker, cloud configuration         |
+| `/team-devops`   | DevOps (T5)         | Pipelines, containers, automation          |
+| `/team-testing`  | Testing (T6)        | Test strategy, coverage, benchmarks        |
+| `/team-security` | Security (T7)       | Auth, compliance, audit                    |
+| `/team-docs`     | Documentation (T8)  | Docs, ADRs, runbooks, guides               |
+| `/team-product`  | Product (T9)        | Feature specs, PRDs, roadmap               |
 
 ---
 

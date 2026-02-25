@@ -52,7 +52,7 @@ teams:
     focus: 'Auth, compliance, audit'
     scope: ['auth/**', 'security/**', 'middleware/auth*']
     accepts: [review, investigate]
-    handoff-chain: [devops, infra]
+    handoff-chain: []
 
   - id: docs
     name: DOCUMENTATION

@@ -32,24 +32,28 @@ Always scan the codebase within your focus area before making changes. Read `AGE
 {{agentToolsList}}
 
 {{#if hasAgentDomainRules}}
+
 ## Domain Rules
 
 {{agentDomainRules}}
 {{/if}}
 
 {{#if hasAgentConventions}}
+
 ## Conventions
 
 {{agentConventions}}
 {{/if}}
 
 {{#if hasAgentExamples}}
+
 ## Examples
 
 {{agentExamples}}
 {{/if}}
 
 {{#if hasAgentAntiPatterns}}
+
 ## Anti-Patterns
 
 {{agentAntiPatterns}}

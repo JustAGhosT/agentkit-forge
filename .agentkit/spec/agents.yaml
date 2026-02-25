@@ -288,8 +288,7 @@ agents:
       accepts:
         - review
       depends-on: []
-      notifies:
-        - frontend
+      notifies: []
       focus:
         - 'styles/**'
         - 'tokens/**'

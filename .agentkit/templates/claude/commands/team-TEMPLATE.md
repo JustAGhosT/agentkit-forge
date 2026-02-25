@@ -163,7 +163,9 @@ If you were working on a delegated task from `.claude/state/tasks/`:
    The orchestrator will auto-create follow-up tasks.
 6. If no `handoffTo` is set but you identified downstream work, set
    `handoffTo` to the appropriate team(s) from your handoff chain:
+   {{#if teamHandoffChain}}
    **{{teamHandoffChain}}**
+   {{/if}}
 
 ### Events and Orchestrator State
 

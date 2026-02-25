@@ -8,7 +8,7 @@ Consolidated FAQ and error guide for agentkit-forge.
 
 Node.js is not installed or not on your PATH.
 
-**Fix:** Install Node.js 18 or later. Verify with:
+**Fix:** Install Node.js 20.11.0 or later. Verify with:
 
 ```bash
 node --version

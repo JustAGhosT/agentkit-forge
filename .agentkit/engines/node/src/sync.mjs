@@ -294,7 +294,8 @@ function flattenProjectYaml(project) {
   vars.hasDr =
     (dr.rpoHours !== undefined && dr.rpoHours !== null) ||
     (dr.rtoHours !== undefined && dr.rtoHours !== null) ||
-    (dr.backupSchedule && dr.backupSchedule !== 'none');
+    (dr.backupSchedule && dr.backupSchedule !== 'none') ||
+    vars.hasGeoRedundancy;
   const audit = comp.audit || {};
   vars.hasAudit = !!audit.enabled;
   vars.hasAppendOnlyAudit = !!audit.appendOnly;
@@ -525,7 +526,14 @@ function writeOutput(filePath, content) {
 
 function* walkDir(dir) {
   if (!existsSync(dir)) return;
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+  let entries = [];
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch (err) {
+    if (err?.code === 'ENOENT') return;
+    throw err;
+  }
+  for (const entry of entries) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
       yield* walkDir(full);
@@ -1296,6 +1304,8 @@ function syncClaudeCommands(
 
 function normalizeGlobStem(glob) {
   if (typeof glob !== 'string' || !glob.trim()) return '';
+  const raw = glob.trim().replace(/\\/g, '/');
+  if (raw === '*' || raw === '**' || raw === '**/*' || raw === '*/**') return '__WILDCARD_ALL__';
   return glob
     .replace(/\\/g, '/')
     .replace(/^\.\//, '')
@@ -1310,6 +1320,7 @@ function hasGlobOverlap(a, b) {
   const aa = normalizeGlobStem(a);
   const bb = normalizeGlobStem(b);
   if (!aa || !bb) return false;
+  if (aa === '__WILDCARD_ALL__' || bb === '__WILDCARD_ALL__') return true;
   if (aa === bb) return true;
   return aa.startsWith(`${bb}/`) || bb.startsWith(`${aa}/`);
 }
@@ -1834,7 +1845,11 @@ function syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec) {
           id: agent.id,
           role: 'executor',
           category,
-          domain: agent.focus ? agent.focus.slice(0, 3).join(', ') : '',
+          domain: Array.isArray(agent.focus)
+            ? agent.focus.slice(0, 3).join(', ')
+            : agent.focus
+              ? String(agent.focus)
+              : '',
           capabilities: agent.accepts || ['implement', 'review'],
           dependsOn: agent['depends-on'] || [],
           notifies: agent.notifies || [],
