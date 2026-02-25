@@ -11,7 +11,7 @@ Run release-readiness checks beyond `/check` before merge/ship.
 `/preflight [--stack <stack>] [--range <git-range>] [--strict]`
 
 - `--stack`: limits checks to stack-relevant paths/tools when applicable.
-- `--range`: commit range for changelog/commit/message checks. If omitted, use merge-base with default branch.
+- `--range`: commit range for changelog/commit/message checks. If omitted (or null), auto-detect via `git merge-base HEAD origin/main` and use `<merge-base>..HEAD`; if merge-base detection fails, fall back to `HEAD~10..HEAD`.
 - `--strict`: treat warnings as failures.
 
 ## Checks

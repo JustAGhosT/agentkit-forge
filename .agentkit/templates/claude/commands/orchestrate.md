@@ -50,9 +50,11 @@ If this file does not exist, create it from the following template:
   "risks": [],
   "retryPolicy": {
     "maxRetryCount": 2,
-    "retriesSoFar": 0,
+    "roundRetries": {},
+    "totalRetries": 0,
     "allowReset": false,
-    "lastResetAt": null
+    "lastResetAt": null,
+    "retryEscalated": null
   },
   "metrics": {
     "totalChanges": 0,
@@ -141,9 +143,15 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
    - Add or adjust tests for any changed behavior.
    - Update `status` to `completed` and add artifacts when done.
    - Use canonical status values only: `submitted`, `accepted`, `working` (in-progress), `rejected`, `completed`, `failed`, `canceled`.
+     - Initial: `submitted`.
      - Transient: `accepted`, `working`.
      - Terminal: `completed`, `failed`, `rejected`, `canceled`.
-     - Valid transitions: `submitted -> accepted/working -> completed|failed|canceled`, and `submitted -> rejected`.
+     - Valid transitions:
+       - `submitted -> accepted`
+       - `accepted -> working`
+       - `accepted -> rejected`
+       - `working -> completed|failed|canceled|rejected`
+       - `submitted -> rejected`
 7. Between delegation rounds, run dependency checks:
    - Scan tasks where `blockedBy` is non-empty and check if blocking tasks are now complete.
    - Update `blockedBy` arrays and unblock tasks whose dependencies are satisfied.
@@ -156,16 +164,17 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 2. Invoke `/check` to run the full quality gate (format, lint, typecheck, tests, build).
 3. Invoke `/review` on all changed files since the orchestration began.
 4. If any check or review finding requires changes, create new tasks for the relevant teams and loop back to Phase 3.
-5. Enforce a bounded retry policy for replacement-task loops using persisted `orchestrator.json.retryPolicy` fields (`maxRetryCount`, default 2; `retriesSoFar`; optional `allowReset` metadata).
-   - On each replacement-task retry, increment `retryPolicy.retriesSoFar` and persist `orchestrator.json` before continuing.
-   - If `retryPolicy.retriesSoFar` reaches `retryPolicy.maxRetryCount`, escalate and stop automatic retries.
-   - Only reset retry counters when an explicit reset decision is recorded (for example via `allowReset` + `lastResetAt`).
+5. Enforce a bounded retry policy for replacement-task loops using persisted `orchestrator.json.retryPolicy` fields (`maxRetryCount`, default 2; per-round `roundRetries`; optional reset metadata).
+   - Track retries per round or issue key (for example `round-4` or `validation:<issue-id>`) in `retryPolicy.roundRetries[roundKey]`.
+   - On each replacement-task retry, increment `retryPolicy.roundRetries[roundKey]` and `retryPolicy.totalRetries`, then persist `orchestrator.json` before continuing.
+   - If `retryPolicy.roundRetries[roundKey] >= retryPolicy.maxRetryCount`, escalate and stop automatic retries for that round/issue.
+   - When escalation occurs, append a structured entry to `events.log` and persist `retryPolicy.retryEscalated = { "reason": "retry-limit-reached", "at": "<ISO-8601 timestamp>", "roundKey": "<round-or-issue-key>", "retriesSoFar": <number> }`.
+   - Only reset retry counters when an explicit reset decision is recorded (via `allowReset` and a new `lastResetAt` timestamp); otherwise preserve counters across retries.
 6. Record validation results in `orchestrator.json` and in task artifacts, including resolution metadata for failed/rejected tasks.
 
 ### Phase 5 — Ship
 
-1. Confirm all checks pass and all tasks are in terminal state, with no unresolved `failed`/`rejected` tasks.
-   - A failed/rejected task is "resolved" only when one of the following is recorded: retry budget exhausted, escalated, or manually closed.
+1. Confirm all checks pass and all tasks are in a terminal state (`completed`, `failed`, `rejected`, `canceled`), and ensure any `failed` or `rejected` task has a superseding `completed` task that addresses the same backlog item before proceeding.
 2. Invoke `/handoff` to produce a session summary.
 3. Update `orchestrator.json`: set `currentPhase` to 5, clear the lock, update metrics.
 4. Log completion to `events.log`.

@@ -17,14 +17,22 @@ import {
 } from './task-protocol.mjs';
 
 function appendTaskAuditEvent(projectRoot, payload) {
-  const stateDir = resolve(projectRoot, '.claude', 'state');
-  mkdirSync(stateDir, { recursive: true });
-  const eventPath = resolve(stateDir, 'events.log');
   const event = {
     timestamp: new Date().toISOString(),
     ...payload,
   };
-  appendFileSync(eventPath, JSON.stringify(event) + '\n', 'utf-8');
+
+  try {
+    const stateDir = resolve(projectRoot, '.claude', 'state');
+    mkdirSync(stateDir, { recursive: true });
+    const eventPath = resolve(stateDir, 'events.log');
+    appendFileSync(eventPath, JSON.stringify(event) + '\n', 'utf-8');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `[agentkit:audit] Failed to append audit event at ${event.timestamp} for projectRoot=${projectRoot}: ${message}`
+    );
+  }
 }
 
 /**
@@ -105,6 +113,10 @@ export async function runTasks({ projectRoot, flags }) {
           handoffTo: Array.isArray(task.handoffTo) ? task.handoffTo : [],
         });
       }
+    }
+
+    if (handoffErrors.length > 0) {
+      process.exit(1);
     }
   }
 

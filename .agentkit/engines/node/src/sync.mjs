@@ -32,6 +32,13 @@ function readText(filePath) {
   return readFileSync(filePath, 'utf-8');
 }
 
+const RAW_TEMPLATE_VARS = new Set(['commandFlags']);
+
+function isShellScriptTarget(targetPath) {
+  const ext = extname(targetPath || '').toLowerCase();
+  return ext === '.sh' || ext === '.ps1';
+}
+
 /**
  * Renders a template by:
  * 1. Resolving {{#if var}}...{{/if}} conditional blocks
@@ -42,9 +49,9 @@ function readText(filePath) {
  * - Sanitizes string values to prevent shell metacharacter injection
  * - Warns on unresolved placeholders when DEBUG is set
  */
-function renderTemplate(template, vars) {
+function renderTemplate(template, vars, targetPath = '') {
   let result = template;
-  const rawTemplateVars = new Set(['commandFlags']);
+  const allowRawVars = !isShellScriptTarget(targetPath);
 
   // Phase 1: Resolve {{#if var}}...{{/if}} blocks (supports nesting)
   result = resolveConditionals(result, vars);
@@ -59,7 +66,7 @@ function renderTemplate(template, vars) {
     const placeholder = `{{${key}}}`;
     const safeValue =
       typeof value === 'string'
-        ? rawTemplateVars.has(key)
+        ? allowRawVars && RAW_TEMPLATE_VARS.has(key)
           ? value
           : sanitizeTemplateValue(value)
         : JSON.stringify(value);
@@ -1163,7 +1170,7 @@ function syncDirectCopy(templatesDir, srcSubdir, tmpDir, destSubdir, vars, versi
     const ext = extname(file);
 
     let content = readFileSync(file, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName });
+    content = renderTemplate(content, { ...vars, repoName }, file);
 
     // Add generated header for non-JSON, non-gitkeep files
     if (ext !== '.json' && basename(file) !== '.gitkeep') {

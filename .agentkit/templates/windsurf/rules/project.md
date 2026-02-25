@@ -32,8 +32,8 @@ This repository uses the AgentKit Forge unified agent team framework.
 ## Observability
 
 {{#if monitoringProvider}}- Monitoring provider: {{monitoringProvider}}{{/if}}
-{{#if hasAlerting}}- Alerting provider: {{alertingProvider}}{{/if}}
-{{#if hasTracing}}- Tracing provider: {{tracingProvider}}{{/if}}
+{{#if alertingProvider}}- Alerting provider: {{alertingProvider}}{{/if}}
+{{#if tracingProvider}}- Tracing provider: {{tracingProvider}}{{/if}}
 {{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
 {{/if}}
 

@@ -91,7 +91,7 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 
 ### Logging
 
-Use **{{loggingFramework}}** for all logging.{{#if hasStructuredLogging}} Use structured logging — never use raw `console.log` or `Console.WriteLine`.{{/if}}{{#if hasCorrelationId}} Include correlation IDs in all log entries.{{/if}}
+{{#if loggingFramework}}Use **{{loggingFramework}}** for all logging.{{/if}}{{#if hasStructuredLogging}} Use structured logging — never use raw `console.log` or `Console.WriteLine`.{{/if}}{{#if hasCorrelationId}} Include correlation IDs in all log entries.{{/if}}
 
 {{#if loggingLevel}}- Default level: `{{loggingLevel}}`{{/if}}
 {{#if loggingSinks}}- Sinks: {{loggingSinks}}{{/if}}
@@ -101,21 +101,21 @@ Use **{{loggingFramework}}** for all logging.{{#if hasStructuredLogging}} Use st
 
 ### Error Handling
 
-Strategy: **{{errorStrategy}}**.{{#if hasGlobalHandler}} A global error handler is configured.{{/if}}{{#if hasCustomExceptions}} Use the project's custom exception types.{{/if}}
+{{#if errorStrategy}}Strategy: **{{errorStrategy}}**.{{/if}}{{#if hasGlobalHandler}} A global error handler is configured.{{/if}}{{#if hasCustomExceptions}} Use the project's custom exception types.{{/if}}
 
 {{/if}}
 {{#if hasAuth}}
 
 ### Authentication
 
-Provider: **{{authProvider}}**{{#if authStrategy}}, strategy: **{{authStrategy}}**{{/if}}.{{#if hasRbac}} RBAC is enforced.{{/if}}
+{{#if authProvider}}Provider: **{{authProvider}}**{{#if authStrategy}}, strategy: **{{authStrategy}}**{{/if}}.{{/if}}{{#if hasRbac}} RBAC is enforced.{{/if}}
 
 {{/if}}
 {{#if hasCaching}}
 
 ### Caching
 
-Provider: **{{cachingProvider}}**.{{#if cachingPatterns}} Patterns: {{cachingPatterns}}.{{/if}}{{#if hasDistributedCache}} Distributed cache — consider invalidation across nodes.{{/if}}
+{{#if cachingProvider}}Provider: **{{cachingProvider}}**.{{/if}}{{#if cachingPatterns}} Patterns: {{cachingPatterns}}.{{/if}}{{#if hasDistributedCache}} Distributed cache — consider invalidation across nodes.{{/if}}
 
 {{/if}}
 {{#if hasApiVersioning}}
@@ -199,7 +199,7 @@ All project documentation follows the unified 8-category structure in `docs/`:
 {{#if cloudProvider}}- **Cloud**: {{cloudProvider}}{{/if}}
 {{#if iacTool}}- **IaC**: {{iacTool}}{{/if}}
 
-- **Containerized**: Docker
+- **Containerized**: {{#if containerRuntime}}{{containerRuntime}}{{else}}Docker{{/if}}
 
 {{#if environments}}- **Environments**: {{environments}}{{/if}}
 {{/if}}

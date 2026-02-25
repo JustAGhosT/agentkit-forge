@@ -129,8 +129,7 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   const { targets, error: overlayError } = loadOverlayRenderTargets(agentkitRoot);
   if (overlayError) {
     findings.push({ severity: 'error', message: overlayError });
-  }
-  if (targets.length === 0) {
+  } else if (targets.length === 0) {
     findings.push({
       severity: 'warning',
       message: 'No renderTargets defined in overlay settings; sync defaults may be broad.',
@@ -145,7 +144,7 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
         });
     }
     const missingCount = checks.filter((c) => !c.exists).length;
-    if (missingCount === 0)
+    if (checks.length > 0 && missingCount === 0)
       findings.push({
         severity: 'info',
         message: `Template roots present for all ${checks.length} configured targets.`,
