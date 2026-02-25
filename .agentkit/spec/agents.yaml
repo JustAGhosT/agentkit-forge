@@ -20,6 +20,15 @@ agents:
         Senior backend engineer responsible for API design, service
         architecture, core business logic, and server-side performance.
         Ensures clean separation of concerns and robust error handling.
+      accepts:
+        - implement
+        - review
+        - plan
+      depends-on:
+        - data
+      notifies:
+        - test-lead
+        - frontend
       focus:
         - 'apps/api/**'
         - 'services/**'
@@ -50,6 +59,15 @@ agents:
         Senior frontend engineer responsible for UI implementation,
         component architecture, state management, and user experience.
         Champions accessibility, performance, and responsive design.
+      accepts:
+        - implement
+        - review
+        - plan
+      depends-on:
+        - backend
+      notifies:
+        - test-lead
+        - brand-guardian
       focus:
         - 'apps/web/**'
         - 'apps/marketing/**'
@@ -80,6 +98,14 @@ agents:
         Senior data engineer responsible for database design, migrations,
         data models, and data pipeline architecture. Ensures data integrity,
         query performance, and safe schema evolution.
+      accepts:
+        - implement
+        - review
+        - plan
+      depends-on: []
+      notifies:
+        - backend
+        - test-lead
       focus:
         - 'db/**'
         - 'migrations/**'
@@ -110,6 +136,15 @@ agents:
         Senior DevOps engineer responsible for CI/CD pipelines, build
         automation, container orchestration, and deployment workflows.
         Ensures reliable, repeatable, and fast delivery pipelines.
+      accepts:
+        - implement
+        - review
+        - plan
+      depends-on:
+        - infra
+      notifies:
+        - test-lead
+        - security-auditor
       focus:
         - '.github/workflows/**'
         - 'scripts/**'
@@ -143,6 +178,15 @@ agents:
         Enforces the project naming convention {org}-{env}-{project}-{resourcetype}-{region}
         with default region South Africa North (southafricanorth) and org "nl".
         Preferred IaC toolchain: Terraform + Terragrunt.
+      accepts:
+        - implement
+        - review
+        - plan
+        - investigate
+      depends-on: []
+      notifies:
+        - devops
+        - security-auditor
       focus:
         - 'infra/**'
         - 'terraform/**'
@@ -190,6 +234,11 @@ agents:
         Brand consistency specialist ensuring all visual and written
         outputs align with the established brand identity, design tokens,
         and style guidelines across all touchpoints.
+      accepts:
+        - review
+      depends-on: []
+      notifies:
+        - frontend
       focus:
         - 'styles/**'
         - 'tokens/**'
@@ -216,6 +265,13 @@ agents:
         UI/UX design specialist responsible for interaction patterns,
         component design, layout systems, and visual hierarchy. Bridges
         design intent and implementation.
+      accepts:
+        - review
+        - plan
+      depends-on: []
+      notifies:
+        - frontend
+        - brand-guardian
       focus:
         - 'components/**'
         - 'apps/web/src/components/**'
@@ -248,6 +304,11 @@ agents:
         Content strategy specialist responsible for messaging, copy,
         documentation voice, and content architecture. Ensures clear,
         consistent, and audience-appropriate communication.
+      accepts:
+        - implement
+        - review
+      depends-on: []
+      notifies: []
       focus:
         - 'docs/**'
         - 'apps/marketing/**'
@@ -275,6 +336,12 @@ agents:
         Growth and analytics specialist focused on user acquisition,
         activation, retention, and revenue metrics. Translates data
         into actionable product and marketing recommendations.
+      accepts:
+        - investigate
+        - review
+      depends-on: []
+      notifies:
+        - product-manager
       focus:
         - 'docs/01_product/**'
         - 'analytics/**'
@@ -303,6 +370,13 @@ agents:
         Dependency management specialist responsible for monitoring,
         updating, and auditing project dependencies across all tech
         stacks. Ensures supply chain security and version freshness.
+      accepts:
+        - investigate
+        - implement
+      depends-on: []
+      notifies:
+        - security-auditor
+        - devops
       focus:
         - 'package.json'
         - 'pnpm-lock.yaml'
@@ -333,6 +407,14 @@ agents:
         Environment configuration specialist ensuring consistent, secure,
         and documented environment setups across development, CI, staging,
         and production.
+      accepts:
+        - implement
+        - review
+      depends-on:
+        - infra
+      notifies:
+        - devops
+        - security-auditor
       focus:
         - '.env.example'
         - 'docker-compose*.yml'
@@ -362,6 +444,13 @@ agents:
         Security audit specialist performing continuous security analysis,
         vulnerability assessment, and compliance verification across the
         entire codebase and infrastructure.
+      accepts:
+        - review
+        - investigate
+      depends-on: []
+      notifies:
+        - devops
+        - infra
       focus:
         - 'auth/**'
         - 'security/**'
@@ -395,6 +484,13 @@ agents:
         Product management specialist responsible for feature definition,
         prioritization, requirements gathering, and stakeholder alignment.
         Translates business needs into actionable engineering work.
+      accepts:
+        - plan
+        - review
+      depends-on: []
+      notifies:
+        - backend
+        - frontend
       focus:
         - 'docs/01_product/**'
         - 'docs/prd/**'
@@ -422,6 +518,13 @@ agents:
         Roadmap and milestone tracking specialist maintaining visibility
         into project progress, timeline adherence, and delivery forecasting
         across all active workstreams.
+      accepts:
+        - investigate
+        - review
+      depends-on: []
+      notifies:
+        - product-manager
+        - project-shipper
       focus:
         - 'docs/roadmap/**'
         - 'docs/01_product/**'
@@ -453,6 +556,13 @@ agents:
         Test strategy lead responsible for overall test architecture,
         test planning, and quality gate definitions. Ensures comprehensive
         coverage across unit, integration, and end-to-end testing.
+      accepts:
+        - implement
+        - review
+        - test
+      depends-on: []
+      notifies:
+        - devops
       focus:
         - '**/*.test.*'
         - '**/*.spec.*'
@@ -485,6 +595,12 @@ agents:
         Test coverage analysis specialist monitoring code coverage metrics,
         identifying untested code paths, and enforcing coverage thresholds
         across the codebase.
+      accepts:
+        - investigate
+        - review
+      depends-on: []
+      notifies:
+        - test-lead
       focus:
         - 'coverage/**'
         - '**/*.test.*'
@@ -512,6 +628,14 @@ agents:
         Integration and end-to-end test specialist responsible for testing
         cross-service interactions, API contracts, and user workflow
         scenarios that span multiple system components.
+      accepts:
+        - implement
+        - test
+      depends-on:
+        - backend
+        - frontend
+      notifies:
+        - test-lead
       focus:
         - 'e2e/**'
         - 'playwright/**'
@@ -545,6 +669,12 @@ agents:
         Delivery-focused project management specialist responsible for
         moving work through the pipeline from planning to production.
         Ensures tasks are properly scoped, tracked, and delivered.
+      accepts:
+        - plan
+        - review
+      depends-on: []
+      notifies:
+        - release-manager
       focus:
         - 'docs/**'
         - '.github/ISSUE_TEMPLATE/**'
@@ -573,6 +703,13 @@ agents:
         Release management specialist responsible for coordinating releases,
         managing versioning, generating changelogs, and ensuring smooth
         deployment workflows from staging to production.
+      accepts:
+        - implement
+        - plan
+      depends-on:
+        - devops
+      notifies:
+        - product-manager
       focus:
         - 'CHANGELOG.md'
         - 'package.json'

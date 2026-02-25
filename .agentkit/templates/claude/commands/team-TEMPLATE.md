@@ -17,9 +17,33 @@ You work on files matching the following patterns:
 
 Stay within your scope. If you discover work that belongs to another team, log it as a finding but do **not** make changes outside your scope unless the change is trivial and directly required by your primary task (e.g., updating an import path).
 
+## Task Protocol
+
+This team participates in the **task delegation protocol**. Tasks are JSON
+files in `.claude/state/tasks/` that carry structured work between agents.
+
+**Accepted task types:** {{teamAccepts}}
+{{#if teamHandoffChain}}
+**Default handoff chain:** {{teamHandoffChain}}
+{{/if}}
+
 ## Workflow
 
 Follow these steps in order for every work session:
+
+### Step 0: Check Task Queue
+
+1. List files in `.claude/state/tasks/` and read any with status `submitted`
+   where `assignees` includes `{{teamId}}`.
+2. For each matching task:
+   - If the task is within your scope and type matches your accepted types,
+     **accept** it: update `status` to `accepted`, add a message with
+     `role: "executor"`, `from: "{{teamId}}"`, `content: "Accepted."`,
+     and `statusChange: "accepted"`.
+   - If the task is outside your scope or type, **reject** it: set `status`
+     to `rejected`, add a message explaining why and suggesting a better team.
+3. After accepting, update `status` to `working` and begin implementation.
+4. If no delegated tasks exist, fall through to Step 1 (backlog-based work).
 
 ### Step 1: Identify Work Items
 
@@ -126,6 +150,23 @@ After completing your work, produce a summary:
 
 ## State Updates
 
+### Task Completion
+
+If you were working on a delegated task from `.claude/state/tasks/`:
+
+1. Add a `files-changed` artifact listing all modified files.
+2. Add a `test-results` artifact with pass/fail/added counts.
+3. Update `status` to `completed` (or `failed` if quality gate failed).
+4. Add a final message summarising what was done.
+5. If the task has a `handoffTo` array, populate `handoffContext` with
+   a one-paragraph summary of what was done and what the next team needs.
+   The orchestrator will auto-create follow-up tasks.
+6. If no `handoffTo` is set but you identified downstream work, set
+   `handoffTo` to the appropriate team(s) from your handoff chain:
+   **{{teamHandoffChain}}**
+
+### Events and Orchestrator State
+
 Append to `.claude/state/events.log`:
 
 ```
@@ -141,7 +182,7 @@ If `.claude/state/orchestrator.json` exists, update the team entry:
       "lastRun": "<timestamp>",
       "itemsCompleted": ["<item titles>"],
       "filesChanged": ["<file paths>"],
-      "testsAdded": <count>,
+      "testsAdded": 0,
       "gateStatus": "<PASS|FAIL>"
     }
   }

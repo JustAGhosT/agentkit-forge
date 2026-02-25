@@ -158,6 +158,11 @@ const settingsSchema = {
 };
 
 // ---------------------------------------------------------------------------
+// Task protocol — valid task types (used by agents.accepts and teams.accepts)
+// ---------------------------------------------------------------------------
+const VALID_TASK_TYPES = ['implement', 'review', 'plan', 'investigate', 'test', 'document'];
+
+// ---------------------------------------------------------------------------
 // Schema: project.yaml — enum value sets
 // ---------------------------------------------------------------------------
 const PROJECT_ENUMS = {
@@ -256,6 +261,12 @@ function validateProjectYaml(project) {
     if (value === null || value === undefined) return;
     if (!Array.isArray(value)) {
       errors.push(`project.yaml: ${fieldPath} must be an array`);
+      return;
+    }
+    for (let i = 0; i < value.length; i++) {
+      if (typeof value[i] !== 'string') {
+        errors.push(`project.yaml: ${fieldPath}[${i}] must be a string`);
+      }
     }
   }
 
@@ -264,7 +275,9 @@ function validateProjectYaml(project) {
 
   // Stack
   const stack = project.stack;
-  if (stack && typeof stack === 'object') {
+  if (stack !== undefined && stack !== null && typeof stack !== 'object') {
+    errors.push('project.yaml: stack must be an object');
+  } else if (stack && typeof stack === 'object') {
     checkStringArray(stack.languages, 'stack.languages');
     if (stack.frameworks && typeof stack.frameworks === 'object') {
       checkStringArray(stack.frameworks.frontend, 'stack.frameworks.frontend');
@@ -277,7 +290,9 @@ function validateProjectYaml(project) {
 
   // Architecture
   const arch = project.architecture;
-  if (arch && typeof arch === 'object') {
+  if (arch !== undefined && arch !== null && typeof arch !== 'object') {
+    errors.push('project.yaml: architecture must be an object');
+  } else if (arch && typeof arch === 'object') {
     checkEnum(arch.pattern, 'architecture.pattern', 'architecturePattern');
     checkEnum(arch.apiStyle, 'architecture.apiStyle', 'apiStyle');
     checkEnum(arch.monorepoTool, 'architecture.monorepoTool', 'monorepoTool');
@@ -285,7 +300,9 @@ function validateProjectYaml(project) {
 
   // Deployment
   const deploy = project.deployment;
-  if (deploy && typeof deploy === 'object') {
+  if (deploy !== undefined && deploy !== null && typeof deploy !== 'object') {
+    errors.push('project.yaml: deployment must be an object');
+  } else if (deploy && typeof deploy === 'object') {
     checkEnum(deploy.cloudProvider, 'deployment.cloudProvider', 'cloudProvider');
     checkStringArray(deploy.environments, 'deployment.environments');
     checkEnum(deploy.iacTool, 'deployment.iacTool', 'iacTool');
@@ -293,7 +310,9 @@ function validateProjectYaml(project) {
 
   // Infrastructure
   const infra = project.infrastructure;
-  if (infra && typeof infra === 'object') {
+  if (infra !== undefined && infra !== null && typeof infra !== 'object') {
+    errors.push('project.yaml: infrastructure must be an object');
+  } else if (infra && typeof infra === 'object') {
     checkStringArray(infra.iacToolchain, 'infrastructure.iacToolchain');
     checkEnum(infra.stateBackend, 'infrastructure.stateBackend', 'infraStateBackend');
     checkEnum(infra.lockProvider, 'infrastructure.lockProvider', 'infraLockProvider');
@@ -487,7 +506,7 @@ function validateCrossReferences(specs) {
     seenCommandNames.add(cmd.name);
   }
 
-  // Check for duplicate agent IDs (across all categories)
+  // Check for duplicate agent IDs (across all categories) and collect all IDs
   const seenAgentIds = new Set();
   if (agents?.agents) {
     for (const [category, agentList] of Object.entries(agents.agents)) {
@@ -497,6 +516,95 @@ function validateCrossReferences(specs) {
           errors.push(`agents.yaml: duplicate agent id "${agent.id}" (in category "${category}")`);
         }
         seenAgentIds.add(agent.id);
+      }
+    }
+  }
+
+  // Validate agent accepts, depends-on, notifies fields
+  if (agents?.agents) {
+    for (const [category, agentList] of Object.entries(agents.agents)) {
+      if (!Array.isArray(agentList)) continue;
+      for (const agent of agentList) {
+        // accepts: optional array of valid task types
+        if (agent.accepts !== undefined && agent.accepts !== null) {
+          if (!Array.isArray(agent.accepts)) {
+            errors.push(`agents.yaml: agent "${agent.id}" accepts must be an array`);
+          } else {
+            for (const t of agent.accepts) {
+              if (!VALID_TASK_TYPES.includes(t)) {
+                errors.push(
+                  `agents.yaml: agent "${agent.id}" accepts invalid task type "${t}". Valid: ${VALID_TASK_TYPES.join(', ')}`
+                );
+              }
+            }
+          }
+        }
+        // depends-on: optional array of agent IDs
+        const depsOn = agent['depends-on'];
+        if (depsOn !== undefined && depsOn !== null) {
+          if (!Array.isArray(depsOn)) {
+            errors.push(`agents.yaml: agent "${agent.id}" depends-on must be an array`);
+          } else {
+            for (const dep of depsOn) {
+              if (!seenAgentIds.has(dep)) {
+                errors.push(
+                  `agents.yaml: agent "${agent.id}" depends-on references unknown agent "${dep}"`
+                );
+              }
+              if (dep === agent.id) {
+                errors.push(`agents.yaml: agent "${agent.id}" depends-on cannot reference itself`);
+              }
+            }
+          }
+        }
+        // notifies: optional array of agent IDs
+        if (agent.notifies !== undefined && agent.notifies !== null) {
+          if (!Array.isArray(agent.notifies)) {
+            errors.push(`agents.yaml: agent "${agent.id}" notifies must be an array`);
+          } else {
+            for (const n of agent.notifies) {
+              if (!seenAgentIds.has(n)) {
+                errors.push(
+                  `agents.yaml: agent "${agent.id}" notifies references unknown agent "${n}"`
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Validate team accepts and handoff-chain fields
+  for (const team of teams?.teams || []) {
+    if (team.accepts !== undefined && team.accepts !== null) {
+      if (!Array.isArray(team.accepts)) {
+        errors.push(`teams.yaml: team "${team.id}" accepts must be an array`);
+      } else {
+        for (const t of team.accepts) {
+          if (!VALID_TASK_TYPES.includes(t)) {
+            errors.push(
+              `teams.yaml: team "${team.id}" accepts invalid task type "${t}". Valid: ${VALID_TASK_TYPES.join(', ')}`
+            );
+          }
+        }
+      }
+    }
+    const chain = team['handoff-chain'];
+    if (chain !== undefined && chain !== null) {
+      if (!Array.isArray(chain)) {
+        errors.push(`teams.yaml: team "${team.id}" handoff-chain must be an array`);
+      } else {
+        for (const target of chain) {
+          if (!teamIds.has(target)) {
+            errors.push(
+              `teams.yaml: team "${team.id}" handoff-chain references unknown team "${target}"`
+            );
+          }
+          if (target === team.id) {
+            errors.push(`teams.yaml: team "${team.id}" handoff-chain cannot reference itself`);
+          }
+        }
       }
     }
   }

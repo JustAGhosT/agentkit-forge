@@ -28,36 +28,36 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 
 ## Quick Reference
 
-| Command | Purpose |
-|---------|---------|
-| `/orchestrate` | Master coordinator — assess, plan, delegate |
-| `/discover` | Scan codebase, detect tech stacks |
-| `/healthcheck` | Pre-flight validation |
-| `/review` | Code review with quality gates |
-| `/check` | Universal quality gate (lint + test + build) |
-| `/plan` | Structured planning before implementation |
-| `/build` | Build project (auto-detects stack) |
-| `/test` | Run tests (auto-detects stack) |
-| `/format` | Format code (auto-detects stack) |
-| `/deploy` | Deployment automation |
-| `/security` | Security audit |
-| `/sync-backlog` | Update AGENT_BACKLOG.md |
-| `/handoff` | Session handoff summary |
+| Command         | Purpose                                      |
+| --------------- | -------------------------------------------- |
+| `/orchestrate`  | Master coordinator — assess, plan, delegate  |
+| `/discover`     | Scan codebase, detect tech stacks            |
+| `/healthcheck`  | Pre-flight validation                        |
+| `/review`       | Code review with quality gates               |
+| `/check`        | Universal quality gate (lint + test + build) |
+| `/plan`         | Structured planning before implementation    |
+| `/build`        | Build project (auto-detects stack)           |
+| `/test`         | Run tests (auto-detects stack)               |
+| `/format`       | Format code (auto-detects stack)             |
+| `/deploy`       | Deployment automation                        |
+| `/security`     | Security audit                               |
+| `/sync-backlog` | Update AGENT_BACKLOG.md                      |
+| `/handoff`      | Session handoff summary                      |
 
 ## Team Commands
 
-| Command | Team | Focus |
-|---------|------|-------|
-| `/team-backend` | Backend (T1) | API, services, core logic |
-| `/team-frontend` | Frontend (T2) | UI, components, PWA |
-| `/team-data` | Data (T3) | DB, models, migrations |
-| `/team-infra` | Infrastructure (T4) | IaC, cloud resources |
-| `/team-devops` | DevOps (T5) | CI/CD, containers |
-| `/team-testing` | Testing (T6) | Quality, coverage |
-| `/team-security` | Security (T7) | Auth, compliance |
-| `/team-docs` | Documentation (T8) | Docs, guides |
-| `/team-product` | Product (T9) | Features, PRDs |
-| `/team-quality` | Quality (T10) | Review, refactor |
+| Command          | Team                | Focus                     |
+| ---------------- | ------------------- | ------------------------- |
+| `/team-backend`  | Backend (T1)        | API, services, core logic |
+| `/team-frontend` | Frontend (T2)       | UI, components, PWA       |
+| `/team-data`     | Data (T3)           | DB, models, migrations    |
+| `/team-infra`    | Infrastructure (T4) | IaC, cloud resources      |
+| `/team-devops`   | DevOps (T5)         | CI/CD, containers         |
+| `/team-testing`  | Testing (T6)        | Quality, coverage         |
+| `/team-security` | Security (T7)       | Auth, compliance          |
+| `/team-docs`     | Documentation (T8)  | Docs, guides              |
+| `/team-product`  | Product (T9)        | Features, PRDs            |
+| `/team-quality`  | Quality (T10)       | Review, refactor          |
 
 ## Workflow
 
@@ -80,41 +80,42 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 /handoff                  → Document session for continuity
 ```
 
-{{#if hasLogging}}
 ## Cross-Cutting Conventions
 
+{{#if hasLogging}}
 ### Logging
 Use **{{loggingFramework}}** for all logging.{{#if hasStructuredLogging}} Use structured logging — never use raw `console.log` or `Console.WriteLine`.{{/if}}{{#if hasCorrelationId}} Include correlation IDs in all log entries.{{/if}}
 {{#if loggingLevel}}- Default level: `{{loggingLevel}}`{{/if}}
 {{#if loggingSinks}}- Sinks: {{loggingSinks}}{{/if}}
 
+{{/if}}
 {{#if hasErrorHandling}}
 ### Error Handling
 Strategy: **{{errorStrategy}}**.{{#if hasGlobalHandler}} A global error handler is configured.{{/if}}{{#if hasCustomExceptions}} Use the project's custom exception types.{{/if}}
-{{/if}}
 
+{{/if}}
 {{#if hasAuth}}
 ### Authentication
 Provider: **{{authProvider}}**{{#if authStrategy}}, strategy: **{{authStrategy}}**{{/if}}.{{#if hasRbac}} RBAC is enforced.{{/if}}
-{{/if}}
 
+{{/if}}
 {{#if hasCaching}}
 ### Caching
 Provider: **{{cachingProvider}}**.{{#if cachingPatterns}} Patterns: {{cachingPatterns}}.{{/if}}{{#if hasDistributedCache}} Distributed cache — consider invalidation across nodes.{{/if}}
-{{/if}}
 
+{{/if}}
 {{#if hasApiVersioning}}
 ### API
 {{#if hasApiVersioning}}- Versioning: **{{apiVersioning}}**{{/if}}
 {{#if hasApiPagination}}- Pagination: **{{apiPagination}}**{{/if}}
 {{#if apiResponseFormat}}- Response format: **{{apiResponseFormat}}**{{/if}}
-{{/if}}
 
+{{/if}}
 {{#if hasDbMigrations}}
 ### Database
 - Migrations: **{{dbMigrations}}**
 {{#if dbTransactionStrategy}}- Transactions: **{{dbTransactionStrategy}}**{{/if}}
-{{/if}}
+
 {{/if}}
 
 ## Testing
@@ -143,16 +144,16 @@ Always run the full test suite before creating a PR.
 
 All project documentation follows the unified 8-category structure in `docs/`:
 
-| Category | Purpose |
-|----------|---------|
-| `01_product/` | Product vision, strategy, personas, metrics |
-| `02_architecture/` | System design, diagrams, ADRs, tech stack |
-| `03_api/` | API reference, authentication, versioning |
-| `04_development/` | Setup, coding standards, testing, contributing |
-| `05_deployment/` | CI/CD, environments, releases, monitoring |
-| `06_security/` | Threat model, compliance, incident response |
-| `07_operations/` | SLAs, on-call, capacity, performance |
-| `08_reference/` | Glossary, acronyms, FAQ, tool config |
+| Category           | Purpose                                        |
+| ------------------ | ---------------------------------------------- |
+| `01_product/`      | Product vision, strategy, personas, metrics    |
+| `02_architecture/` | System design, diagrams, ADRs, tech stack      |
+| `03_api/`          | API reference, authentication, versioning      |
+| `04_development/`  | Setup, coding standards, testing, contributing |
+| `05_deployment/`   | CI/CD, environments, releases, monitoring      |
+| `06_security/`     | Threat model, compliance, incident response    |
+| `07_operations/`   | SLAs, on-call, capacity, performance           |
+| `08_reference/`    | Glossary, acronyms, FAQ, tool config           |
 
 {{#if hasIntegrations}}
 ## External Integrations
@@ -161,7 +162,7 @@ All project documentation follows the unified 8-category structure in `docs/`:
 {{/each}}
 {{/if}}
 
-{{#if containerized}}
+{{#if hasContainerized}}
 ## Infrastructure
 
 {{#if cloudProvider}}- **Cloud**: {{cloudProvider}}{{/if}}
@@ -169,6 +170,20 @@ All project documentation follows the unified 8-category structure in `docs/`:
 - **Containerized**: Docker
 {{#if environments}}- **Environments**: {{environments}}{{/if}}
 {{/if}}
+
+## Task Delegation Protocol
+
+Work is delegated between agents using **task files** in `.claude/state/tasks/`.
+Each task is a JSON file with a lifecycle: `submitted → accepted → working → completed/failed/rejected`.
+
+**Key rules:**
+- The **orchestrator** creates tasks and assigns them to teams.
+- Teams **accept or reject** tasks based on scope and accepted types.
+- On completion, teams add **artifacts** (files changed, test results) and optionally set `handoffTo` for downstream teams.
+- The orchestrator processes handoffs and manages **dependency chains** (`dependsOn` / `blockedBy`).
+- Tasks support **fan-out** (parallel delegation) and **chained handoff** (sequential delegation).
+
+See `.claude/state/tasks/` for active task files. See `UNIFIED_AGENT_TEAMS.md` for team coordination protocol.
 
 ## Safety Rules
 
@@ -181,6 +196,7 @@ All project documentation follows the unified 8-category structure in `docs/`:
 
 ## References
 
+- [COMMAND_GUIDE.md](./COMMAND_GUIDE.md) — When to use orchestrate vs plan vs project-review
 - [AGENTS.md](./AGENTS.md) — Universal agent instruction file
 - [UNIFIED_AGENT_TEAMS.md](./UNIFIED_AGENT_TEAMS.md) — Full team specification
 - [AGENT_BACKLOG.md](./AGENT_BACKLOG.md) — Current backlog
