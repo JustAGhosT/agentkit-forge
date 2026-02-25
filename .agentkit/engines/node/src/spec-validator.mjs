@@ -649,6 +649,7 @@ function validateCrossReferences(specs) {
     const next = teamHandoffMap.get(teamId) || [];
     for (const target of next) {
       if (!teamIds.has(target)) continue;
+      if (target === teamId) continue;
       detectHandoffCycle(target);
     }
     stack.pop();

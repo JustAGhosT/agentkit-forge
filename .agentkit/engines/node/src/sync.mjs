@@ -1846,7 +1846,7 @@ function syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec) {
           role: 'executor',
           category,
           domain: Array.isArray(agent.focus)
-            ? agent.focus.slice(0, 3).join(', ')
+            ? agent.focus.join(', ')
             : agent.focus
               ? String(agent.focus)
               : '',

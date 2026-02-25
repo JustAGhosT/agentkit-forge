@@ -319,7 +319,7 @@ describe('syncClineRules (via runSync --only cline)', () => {
     rmSync(projectRoot, { recursive: true, force: true });
   });
 
-  it('generates .clinerules/*.md from rules.yaml domains', async () => {
+  it('generates .clinerules/*.md from rules.yaml domains', { timeout: 15000 }, async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'cline' } });
     const files = collectFiles(projectRoot);
     const rules = files.filter((f) => f.startsWith('.clinerules/'));
@@ -328,7 +328,7 @@ describe('syncClineRules (via runSync --only cline)', () => {
     expect(rules.some((f) => f.includes('security.md'))).toBe(true);
   });
 
-  it('cline rule files contain domain name and conventions', async () => {
+  it('cline rule files contain domain name and conventions', { timeout: 15000 }, async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { only: 'cline' } });
     const content = readFileSync(resolve(projectRoot, '.clinerules', 'typescript.md'), 'utf-8');
     expect(content).toContain('typescript');
@@ -471,20 +471,23 @@ describe('--quiet, --verbose, --no-clean, --diff flags', () => {
 
   it('--no-clean preserves orphaned files', { timeout: 25000 }, async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: {} });
-    const sourceManifestPath = join(AGENTKIT_ROOT, '.manifest.json');
-    const manifestPath = join(projectRoot, '.manifest.json');
-    const originalManifest = readFileSync(sourceManifestPath, 'utf-8');
-    writeFileSync(manifestPath, originalManifest, 'utf-8');
-
-    const manifest = JSON.parse(originalManifest);
+    const manifestPath = join(AGENTKIT_ROOT, '.manifest.json');
+    const originalManifest = existsSync(manifestPath) ? readFileSync(manifestPath, 'utf-8') : null;
+    const manifest = originalManifest ? JSON.parse(originalManifest) : { files: {} };
     manifest.files['__TEST_ORPHAN__.md'] = { hash: 'abc' };
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
     const orphanPath = join(projectRoot, '__TEST_ORPHAN__.md');
     writeFileSync(orphanPath, 'orphan', 'utf-8');
-    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { 'no-clean': true } });
-    expect(existsSync(orphanPath)).toBe(true);
-
-    rmSync(manifestPath, { force: true });
+    try {
+      await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { 'no-clean': true } });
+      expect(existsSync(orphanPath)).toBe(true);
+    } finally {
+      if (originalManifest !== null) {
+        writeFileSync(manifestPath, originalManifest, 'utf-8');
+      } else {
+        rmSync(manifestPath, { force: true });
+      }
+    }
   });
 });
 

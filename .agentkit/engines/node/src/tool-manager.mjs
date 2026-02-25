@@ -198,7 +198,7 @@ function cleanRemovedToolFiles(projectRoot, manifest, tools) {
   }
 
   for (const filePath of Object.keys(manifest.files || {})) {
-    if (filePath.includes('..') || /^\/|^[A-Za-z]:/i.test(filePath)) continue;
+    if (filePath.includes('..') || /^[\\/]|^[A-Za-z]:/i.test(filePath)) continue;
     if (!prefixesToClean.some((prefix) => hasPrefixBoundaryMatch(filePath, prefix))) continue;
 
     const fullPath = resolve(projectRoot, filePath);

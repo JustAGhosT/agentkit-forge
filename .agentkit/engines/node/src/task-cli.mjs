@@ -2,6 +2,8 @@
  * AgentKit Forge — Task CLI Handlers
  * CLI entry points for the task delegation protocol.
  */
+import { appendFileSync, mkdirSync } from 'fs';
+import { resolve } from 'path';
 import {
   TASK_PRIORITIES,
   TASK_TYPES,
@@ -13,6 +15,17 @@ import {
   listTasks,
   processHandoffs,
 } from './task-protocol.mjs';
+
+function appendTaskAuditEvent(projectRoot, payload) {
+  const stateDir = resolve(projectRoot, '.claude', 'state');
+  mkdirSync(stateDir, { recursive: true });
+  const eventPath = resolve(stateDir, 'events.log');
+  const event = {
+    timestamp: new Date().toISOString(),
+    ...payload,
+  };
+  appendFileSync(eventPath, JSON.stringify(event) + '\n', 'utf-8');
+}
 
 /**
  * List and inspect delegated tasks.
@@ -67,8 +80,31 @@ export async function runTasks({ projectRoot, flags }) {
 
   if (flags['process-handoffs']) {
     const handoffResult = processHandoffs(projectRoot);
-    if (handoffResult.created.length > 0) {
-      console.log(`[agentkit:tasks] Created ${handoffResult.created.length} handoff task(s)`);
+    if (handoffResult?.error) {
+      console.error(`[agentkit:tasks] ${handoffResult.error}`);
+      process.exit(1);
+    }
+
+    const createdTasks = Array.isArray(handoffResult?.created) ? handoffResult.created : [];
+    const handoffErrors = Array.isArray(handoffResult?.errors) ? handoffResult.errors : [];
+
+    if (handoffErrors.length > 0) {
+      for (const err of handoffErrors) {
+        console.error(`[agentkit:tasks] Handoff processing error: ${err}`);
+      }
+    }
+
+    if (createdTasks.length > 0) {
+      console.log(`[agentkit:tasks] Created ${createdTasks.length} handoff task(s)`);
+      for (const task of createdTasks) {
+        appendTaskAuditEvent(projectRoot, {
+          action: 'create_task',
+          actor: 'tasks:process-handoffs',
+          taskId: task.id,
+          dependsOn: Array.isArray(task.dependsOn) ? task.dependsOn : [],
+          handoffTo: Array.isArray(task.handoffTo) ? task.handoffTo : [],
+        });
+      }
     }
   }
 
@@ -132,6 +168,14 @@ export async function runDelegate({ projectRoot, flags }) {
     console.error(`[agentkit:delegate] ${result.error}`);
     process.exit(1);
   }
+
+  appendTaskAuditEvent(projectRoot, {
+    action: 'delegate',
+    actor: 'cli',
+    taskId: result.task.id,
+    dependsOn: Array.isArray(result.task.dependsOn) ? result.task.dependsOn : [],
+    handoffTo: Array.isArray(result.task.handoffTo) ? result.task.handoffTo : [],
+  });
 
   console.log(`[agentkit:delegate] Task created: ${result.task.id}`);
   console.log(formatTaskSummary(result.task));

@@ -48,6 +48,12 @@ If this file does not exist, create it from the following template:
   "completedPhases": [],
   "backlogSnapshot": [],
   "risks": [],
+  "retryPolicy": {
+    "maxRetryCount": 2,
+    "retriesSoFar": 0,
+    "allowReset": false,
+    "lastResetAt": null
+  },
   "metrics": {
     "totalChanges": 0,
     "testsAdded": 0,
@@ -134,6 +140,10 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
    - Make minimal, backwards-compatible changes.
    - Add or adjust tests for any changed behavior.
    - Update `status` to `completed` and add artifacts when done.
+   - Use canonical status values only: `submitted`, `accepted`, `working` (in-progress), `rejected`, `completed`, `failed`, `canceled`.
+     - Transient: `accepted`, `working`.
+     - Terminal: `completed`, `failed`, `rejected`, `canceled`.
+     - Valid transitions: `submitted -> accepted/working -> completed|failed|canceled`, and `submitted -> rejected`.
 7. Between delegation rounds, run dependency checks:
    - Scan tasks where `blockedBy` is non-empty and check if blocking tasks are now complete.
    - Update `blockedBy` arrays and unblock tasks whose dependencies are satisfied.
@@ -146,7 +156,10 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 2. Invoke `/check` to run the full quality gate (format, lint, typecheck, tests, build).
 3. Invoke `/review` on all changed files since the orchestration began.
 4. If any check or review finding requires changes, create new tasks for the relevant teams and loop back to Phase 3.
-5. Enforce a bounded retry policy (`maxRetryCount`, default 2) for replacement-task loops; when exhausted, escalate and stop automatic retries.
+5. Enforce a bounded retry policy for replacement-task loops using persisted `orchestrator.json.retryPolicy` fields (`maxRetryCount`, default 2; `retriesSoFar`; optional `allowReset` metadata).
+   - On each replacement-task retry, increment `retryPolicy.retriesSoFar` and persist `orchestrator.json` before continuing.
+   - If `retryPolicy.retriesSoFar` reaches `retryPolicy.maxRetryCount`, escalate and stop automatic retries.
+   - Only reset retry counters when an explicit reset decision is recorded (for example via `allowReset` + `lastResetAt`).
 6. Record validation results in `orchestrator.json` and in task artifacts, including resolution metadata for failed/rejected tasks.
 
 ### Phase 5 — Ship

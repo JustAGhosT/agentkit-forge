@@ -75,21 +75,22 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 **Flags:** `--verbose`
 
-**Shared assets:** Reads spec and overlay files. Does not write orchestrator state.
+**Shared assets:** Reads spec and overlay files. Does not write orchestrator state or append to `events.log`.
 
 ---
 
-### `/tasks` — Inspect delegated task queue
+### `/tasks` — View and process delegated task queue
 
 **Use when:**
 
 - You need to inspect task state (`submitted`, `working`, `completed`, etc.)
 - You need one task's full detail (`--id`) before taking action
 - You want dependency unblocking refreshed before status review
+- You need to process completed-task handoffs (`--process-handoffs`), which mutates task state
 
 **Flags:** `--status`, `--assignee`, `--type`, `--priority`, `--id`, `--process-handoffs`
 
-**Shared assets:** Reads/writes `.claude/state/tasks/*.json` for dependency updates.
+**Shared assets:** Reads/writes `.claude/state/tasks/*.json` for dependency and handoff updates. When `--process-handoffs` creates tasks, append structured audit entries to `events.log`.
 
 ---
 
@@ -103,7 +104,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 **Flags:** `--to`, `--title`, `--description`, `--type`, `--priority`, `--depends-on`, `--handoff-to`, `--scope`
 
-**Shared assets:** Writes `.claude/state/tasks/*.json`.
+**Shared assets:** Writes `.claude/state/tasks/*.json` and appends structured `events.log` entries for task delegation auditability.
 
 ---
 
@@ -157,7 +158,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 ---
 
-### `/scaffold` — Convention-aligned file scaffolding (slash command)
+### `/scaffold` — Convention-aligned file scaffolding
 
 **Use when:**
 
@@ -170,7 +171,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 ---
 
-### `/preflight` — Release-readiness gate (slash command)
+### `/preflight` — Release-readiness gate
 
 **Use when:**
 
@@ -179,7 +180,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 **Flags:** `--stack`, `--range`, `--strict`
 
-**Shared assets:** Reads repo state and may append findings to `events.log` when run inside workflow.
+**Shared assets:** Reads repo state. Does not directly write shared state files unless explicitly wrapped by another workflow command that logs outcomes.
 
 ---
 
@@ -205,13 +206,13 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 ## Shared State Files
 
-| File                              | Purpose                                        | Used by                                                         |
-| --------------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
-| `AGENT_BACKLOG.md`                | Prioritized work items, team assignments       | Orchestrator, Plan, Project-Review, Sync-Backlog, Team commands |
-| `.claude/state/orchestrator.json` | Phase, team status, metrics, risks, todo items | Orchestrator, Plan, Project-Review, Handoff, Healthcheck        |
-| `.claude/state/events.log`        | Audit trail of actions                         | All workflow commands                                           |
-| `.claude/state/tasks/*.json`      | Delegated task protocol queue                  | Delegate, Tasks, Orchestrator                                   |
-| `.claude/state/orchestrator.lock` | Prevents concurrent orchestrator sessions      | Orchestrator only                                               |
-| `AGENT_TEAMS.md`                  | Team boundaries and ownership map              | Discover, Orchestrator, Team commands                           |
+| File                              | Purpose                                        | Used by                                                                                                                          |
+| --------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `AGENT_BACKLOG.md`                | Prioritized work items, team assignments       | Orchestrator, Plan, Project-Review, Sync-Backlog, Team commands                                                                  |
+| `.claude/state/orchestrator.json` | Phase, team status, metrics, risks, todo items | Orchestrator, Plan, Project-Review, Handoff, Healthcheck                                                                         |
+| `.claude/state/events.log`        | Audit trail of actions                         | Orchestrator, Plan, Project-Review, Discover, Healthcheck, Review, Handoff, Sync-Backlog, Tasks (`--process-handoffs`), Delegate |
+| `.claude/state/tasks/*.json`      | Delegated task protocol queue                  | Delegate, Tasks, Orchestrator                                                                                                    |
+| `.claude/state/orchestrator.lock` | Prevents concurrent orchestrator sessions      | Orchestrator only                                                                                                                |
+| `AGENT_TEAMS.md`                  | Team boundaries and ownership map              | Discover, Orchestrator, Team commands                                                                                            |
 
 Always read the latest `AGENT_BACKLOG.md` and `orchestrator.json` before starting work. Append to `events.log` when completing significant actions.
