@@ -95,10 +95,57 @@ overlays, renders templates, and writes the final output.
 
 ### Template Rendering
 
-`renderTemplate()` replaces `{{key}}` placeholders with values. Keys are sorted
-longest-first to prevent partial collisions. String values are sanitized by
-`sanitizeTemplateValue()` which strips shell metacharacters to prevent injection
-in rendered hook scripts. Unresolved placeholders are warned on with `DEBUG=1`.
+The template engine in `renderTemplate()` processes templates in three phases:
+
+1. **Conditional blocks** — `resolveConditionals()` handles `{{#if var}}...{{else}}...{{/if}}`
+   syntax. Variables are evaluated by `evalTruthy()`: falsy values are `undefined`,
+   `null`, `false`, `''`, `0`, and empty arrays `[]`. Nested conditionals are resolved
+   innermost-first with a 50-iteration safety limit.
+
+2. **Iteration blocks** — `resolveEachBlocks()` handles `{{#each var}}...{{/each}}`.
+   Inside the body, `{{.}}` refers to the current item (string arrays), `{{.prop}}`
+   accesses object properties, and `{{@index}}` gives the zero-based position.
+
+3. **Placeholder substitution** — `{{key}}` placeholders are replaced with values.
+   Keys are sorted longest-first to prevent partial collisions (e.g.,
+   `{{versionInfo}}` before `{{version}}`). String values are sanitized by
+   `sanitizeTemplateValue()` which strips shell metacharacters (`$`, backticks,
+   `;`, `|`, `&`, `<`, `>`, `!`, `{`, `}`, `(`, `)`) to prevent injection in
+   rendered hook scripts. Non-string values are JSON-serialized.
+
+Unresolved placeholders are warned on when `DEBUG=1` is set.
+
+### project.yaml Flattening
+
+`flattenProjectYaml()` converts the nested `project.yaml` structure into a flat
+key→value map for template rendering:
+
+- Top-level scalars become `projectName`, `projectDescription`, `projectPhase`.
+- Nested arrays become comma-separated strings: `stack.languages` → `stackLanguages`.
+- Boolean fields get `has*` prefixes: `documentation.hasPrd` → `hasPrd`.
+- The `crosscutting` section is flattened by `flattenCrosscutting()` into vars
+  like `loggingFramework`, `hasLogging`, `authProvider`, `hasAuth`, etc.
+
+### Render Target Gating
+
+`resolveRenderTargets()` determines which tool outputs to generate:
+
+- **`--only` flag** overrides everything (comma-separated list).
+- **`renderTargets`** in overlay `settings.yaml` defines the default set.
+- **Fallback** when neither is set: all 11 targets (backward compatibility).
+
+Always-on outputs (`AGENTS.md`, root docs, `.github/` infra, `docs/`, `.vscode/`,
+editor configs) are generated regardless of renderTargets. Gated outputs
+(`.claude/`, `.cursor/`, `.windsurf/`, etc.) are only generated when their
+corresponding target is in the active set.
+
+### Manifest & Stale File Cleanup
+
+After rendering, sync writes `.agentkit/.manifest.json` containing a hash of
+every generated file. On subsequent syncs, files present in the previous manifest
+but absent from the new one are deleted as orphans. This ensures that removing a
+render target (e.g., via `agentkit remove warp`) and re-syncing cleans up the
+old `WARP.md` automatically.
 
 ### Generated Headers
 
@@ -133,7 +180,48 @@ Errors are caught at the top level; `DEBUG=1` enables stack traces.
 
 ---
 
-## 5. Orchestrator
+## 5. Discover → Init → Sync Pipeline
+
+The primary onboarding flow chains three commands:
+
+1. **`discover`** — Scans the repository filesystem to detect tech stacks,
+   frameworks, testing tools, documentation artifacts, design systems,
+   infrastructure (Docker, Terraform, etc.), CI/CD pipelines, monorepo
+   structure, and cross-cutting concerns (logging, auth, caching, feature
+   flags). Returns a structured JSON report.
+
+2. **`init`** — Interactive (or `--non-interactive`) wizard that:
+   - Runs `discover` internally to auto-detect project defaults.
+   - Prompts for project identity, architecture, deployment, and AI tool selection.
+   - Supports `--preset` shortcuts: `minimal` (Claude only), `full` (all 11 tools),
+     `team` (Claude + Cursor + Copilot + Windsurf).
+   - Copies the `__TEMPLATE__` overlay to `overlays/<repoName>/`.
+   - Writes `project.yaml` with merged discovery + user input.
+   - Creates the `.agentkit-repo` marker file.
+   - Runs `sync` to generate initial outputs.
+
+3. **`sync`** — Reads specs + overlay, renders templates, writes outputs.
+   See §3 Sync Engine for details.
+
+### Tool Manager (add/remove/list)
+
+After initial setup, `agentkit add <tool>` and `agentkit remove <tool>` provide
+incremental management of render targets:
+
+- **`add`** — Validates tool names against `ALL_TOOLS`, appends to
+  `renderTargets` in the overlay settings, then runs sync for the new targets
+  only (`--only` flag).
+- **`remove`** — Removes from `renderTargets`. With `--clean`, also deletes
+  generated files using the manifest to identify which files belong to each tool
+  (mapped via `toolPrefixes`).
+- **`list`** — Displays enabled, available, and always-on targets.
+
+All three commands require the `.agentkit-repo` marker to locate the active
+overlay.
+
+---
+
+## 6. Orchestrator
 
 The orchestrator (`orchestrator.mjs`) implements a state machine for the
 5-phase project lifecycle.
@@ -169,7 +257,7 @@ recent entries for the status display.
 
 ---
 
-## 6. Spec System
+## 7. Spec System
 
 YAML files in `.agentkit/spec/` serve as the single source of truth.
 
@@ -184,7 +272,7 @@ YAML files in `.agentkit/spec/` serve as the single source of truth.
 
 ---
 
-## 7. Validation Pipeline
+## 8. Validation Pipeline
 
 ### Spec Validation (`spec-validate`)
 
@@ -211,7 +299,7 @@ YAML files in `.agentkit/spec/` serve as the single source of truth.
 
 ---
 
-## 8. Quality Gates
+## 9. Quality Gates
 
 The check runner (`check.mjs`) auto-detects tech stacks and runs steps in
 sequence. Invoked via `/check` or `agentkit check`.
@@ -239,7 +327,7 @@ gracefully. Results are logged as orchestrator events. Flags: `--fix`, `--fast`,
 
 ---
 
-## 9. Data Flow Diagram
+## 10. Data Flow Diagram
 
 ```
 +---------------------------+     +---------------------------+
