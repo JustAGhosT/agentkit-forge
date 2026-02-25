@@ -112,6 +112,8 @@ DEBUG=1 node .agentkit/engines/node/src/cli.mjs sync
 | `spec-validate`  | Validate YAML spec files against the schema        |
 | `discover`       | Scan the repo to detect tech stacks and structure  |
 
+**Sync flags:** `--overlay <name>`, `--only <targets>`, `--dry-run`, `--overwrite` (or `--force`), `-q`/`--quiet`, `-v`/`--verbose`, `--no-clean`, `--diff`. By default, project-owned files (`docs/`, `.vscode/`, `CONTRIBUTING.md`, etc.) are written only on first sync; use `--overwrite` to regenerate them. Use `--quiet` for CI, `--verbose` to list each file, `--no-clean` to keep orphaned files, and `--diff` to preview changes.
+
 ### Workflow Commands
 
 | Command          | Purpose                                           |

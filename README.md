@@ -449,7 +449,7 @@ git add .agentkit/ .gitignore .gitattributes
 git commit -m "chore: upgrade agentkit-forge to latest"
 ```
 
-> **Note:** If the upgrade adds new scaffold-once files (docs, templates, editor configs), they will appear as untracked after your first `sync`. This is expected — review them and `git add` the ones you want to keep. Subsequent syncs will not overwrite them.
+> **Note:** If the upgrade adds new scaffold-once files (docs, templates, editor configs), they will appear as untracked after your first `sync`. This is expected — review them and `git add` the ones you want to keep. Subsequent syncs will not overwrite them. Use `sync --overwrite` to regenerate all project-owned files from templates.
 
 ### What merges cleanly vs. what needs attention
 

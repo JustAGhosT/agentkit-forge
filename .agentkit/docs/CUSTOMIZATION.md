@@ -12,6 +12,10 @@ Agentkit-forge uses a layered configuration system:
 
 3. On **`agentkit init`**, the `__TEMPLATE__` overlay is copied to a new directory named after your repository. This gives you a starting point for customization.
 
+### Project-Owned vs Always-Regenerate Files
+
+Sync treats some outputs as **project-owned** (scaffold-once): `docs/`, `.vscode/`, `CONTRIBUTING.md`, `AGENT_BACKLOG.md`, and similar. These are written on first sync; subsequent syncs skip them if they already exist, so you can edit them without losing changes. Use `agentkit sync --overwrite` (or `--force`) to regenerate them from templates. AI tool configs (`.claude/`, `.cursor/`, etc.) are always regenerated. Other sync flags: `-q`/`--quiet` (reduce output), `-v`/`--verbose` (list each file), `--no-clean` (don't delete orphaned files), `--diff` (preview changes without writing).
+
 ### Merge Semantics
 
 When the spec and overlay are merged during `agentkit sync`:
