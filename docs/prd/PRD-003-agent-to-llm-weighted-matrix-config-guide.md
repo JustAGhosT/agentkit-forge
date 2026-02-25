@@ -1,0 +1,219 @@
+# PRD-003: Agent-to-LLM Weighted Matrix and Config Guide (Polyglot Example)
+
+## Status
+
+In Review
+
+> [!WARNING]
+> This document is an illustrative example only.
+> It is intentionally not factually correct or comprehensive.
+
+## Module / Feature Name
+
+AgentKit Forge: Agent-to-LLM Weighted Selection and Configuration Layer
+
+## Marketing Name
+
+AgentKit Forge - Polyglot LLM Decision Matrix Configurator
+
+## Platform / Mesh Layers
+
+- Node.js (backend)
+- React (frontend)
+- CosmosDB (database)
+- Azure (cloud and infrastructure)
+- Redis (cache and queue)
+- Next.js (SSR framework)
+- C#, Rust, Python (polyglot agent coverage)
+
+## Primary Personas
+
+- Backend Engineers
+- Frontend Developers
+- Data Scientists and Engineers
+- Infrastructure and Cloud Architects
+- DevOps and SRE
+- QA and Test Engineers
+- Security Engineers
+- Technical Writers and Docs Contributors
+- Product Managers
+- Quality Leads
+
+## Core Value Proposition
+
+A mesh-native selection and configuration system that helps teams map agents
+to optimal LLMs while balancing reasoning, cost, context, and codebase
+compatibility across a heterogeneous stack.
+
+## Priority
+
+P0 - Critical
+
+## License Tier
+
+Enterprise
+
+## Business Outcomes / Success Metrics (Example)
+
+- 90% agent query satisfaction (internal survey)
+- 60% reduction in LLM-related support tickets
+- Less than 3% monthly cost overage from suboptimal model use
+- 70% faster onboarding and configuration time
+
+## Integration Points
+
+- AgentKit orchestration layer
+- Team and agent assignment modules
+- Model APIs (OpenAI, Anthropic, Google, Kimi, etc.)
+- Audit and logging services
+- Polyglot agent SDKs (.NET, Node, Python, Rust)
+
+## TL;DR
+
+AgentKit Forge enables declarative, team-aware agent-to-LLM mapping through
+YAML and JSON overlays so organizations can optimize quality and spend as model
+capabilities, pricing, and constraints evolve.
+
+## Introduction
+
+This guide demonstrates a weighted agent-to-LLM selection matrix for a
+polyglot codebase. It provides sample weights, scorecards, decision matrices,
+and overlay configuration examples.
+
+## Metric Weights by Team / Agent (out of 100)
+
+| Team / Agent | Code Quality | Reasoning | Cost | Context | Speed | Compatibility |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Backend | 30 | 25 | 10 | 25 | 5 | 5 |
+| Frontend | 15 | 15 | 20 | 15 | 25 | 10 |
+| Data | 15 | 30 | 10 | 35 | 5 | 5 |
+| Infra | 10 | 20 | 25 | 20 | 15 | 10 |
+| DevOps | 10 | 20 | 30 | 10 | 20 | 10 |
+| Testing | 25 | 20 | 15 | 20 | 10 | 10 |
+| Security | 20 | 30 | 10 | 10 | 10 | 20 |
+| Docs | 5 | 20 | 10 | 45 | 5 | 15 |
+| Product | 10 | 30 | 10 | 25 | 5 | 20 |
+| Quality | 30 | 25 | 10 | 15 | 10 | 10 |
+
+## LLM Scorecards by Team / Agent (Example Baseline)
+
+| Model | Code | Reasoning | Cost | Context | Speed | Compatibility | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Claude 3 Opus | 9 | 10 | 5 | 10 | 10 | 8 | Top context, strong code |
+| GPT-5.x | 10 | 9 | 7 | 9 | 9 | 9 | Strong NL to code, expensive |
+| Gemini Ultra | 8 | 8 | 8 | 8 | 9 | 9 | Good cloud/dev support |
+| Kimi | 7 | 7 | 9 | 6 | 7 | 8 | Budget option |
+| Minimax | 7 | 7 | 9 | 7 | 8 | 8 | Reliable in selected regions |
+| GLM-4 | 7 | 8 | 8 | 8 | 7 | 9 | Multi-language friendly |
+| xAI Grok | 6 | 6 | 7 | 7 | 8 | 7 | Infra-oriented experimentation |
+| SWE-Llama | 9 | 8 | 8 | 8 | 8 | 8 | Code/test specialist |
+| o3 | 7 | 7 | 9 | 7 | 7 | 8 | Low cost, fast deploy |
+
+## Full Weighted Decision Matrix (All Teams)
+
+Formula:
+
+Weighted Score = sum(metricWeight x modelScore) / 100
+
+Sample backend calculation (Claude 3 Opus):
+
+(30 x 9 + 25 x 10 + 10 x 5 + 25 x 10 + 5 x 10 + 5 x 8) / 100 = 8.85
+
+| Team | Claude 3 Opus | GPT-5.x | Gemini | Kimi | Minimax | GLM-4 | xAI Grok | SWE-Llama | o3 | Top Choices | Cost-Aware Alt |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| Backend | 8.85 | 8.85 | 8.05 | 7.15 | 7.25 | 7.55 | 6.60 | 8.35 | 7.20 | Claude, GPT-5.x, SWE-Llama | Kimi, o3 |
+| Frontend | 7.75 | 8.10 | 8.45 | 8.05 | 8.20 | 8.35 | 7.40 | 8.30 | 8.05 | Gemini, SWE-Llama, Minimax | o3, Kimi |
+| Data | 8.65 | 8.60 | 8.20 | 7.25 | 7.35 | 8.20 | 7.10 | 8.30 | 7.25 | Claude, SWE-Llama, GPT-5.x | o3, Kimi |
+| Infra | 8.55 | 8.35 | 8.20 | 8.05 | 8.05 | 8.15 | 8.00 | 8.20 | 8.05 | Claude, Gemini, GPT-5.x | o3, Kimi |
+| DevOps | 8.50 | 8.30 | 8.15 | 8.10 | 8.05 | 8.10 | 8.05 | 8.10 | 8.05 | Claude, Gemini, xAI Grok | o3, Kimi |
+| Testing | 8.80 | 8.75 | 8.20 | 7.90 | 7.95 | 8.35 | 7.30 | 8.65 | 7.65 | Claude, SWE-Llama, GPT-5.x | o3, Kimi |
+| Security | 9.10 | 9.15 | 8.55 | 7.60 | 7.65 | 8.30 | 7.75 | 8.60 | 7.45 | GPT-5.x, Claude, SWE-Llama | o3, Kimi |
+| Docs | 8.45 | 8.40 | 8.15 | 7.45 | 7.55 | 8.15 | 7.40 | 8.25 | 7.75 | Claude, GPT-5.x, SWE-Llama | o3, Minimax |
+| Product | 8.85 | 9.05 | 8.25 | 7.35 | 7.40 | 8.10 | 7.45 | 8.60 | 7.45 | GPT-5.x, Claude, SWE-Llama | o3, Kimi |
+| Quality | 8.80 | 8.80 | 8.40 | 7.55 | 7.65 | 8.20 | 7.40 | 8.60 | 7.45 | Claude, SWE-Llama, GPT-5.x | o3, Kimi |
+
+Note: For teams with cost weight above 25, Kimi and o3 are shown as preferred
+low-cost alternates.
+
+## Edge Cases and Commentary
+
+- Backend/Testing: SWE-Llama can outperform on Python/Rust-heavy repos.
+- DevOps/Infra: xAI Grok and GLM-4 may be favored for specific infra or region
+  constraints.
+- Cost spikes: On threshold breach (for example above 15%), teams switch to
+  cost-aware alternates.
+- Frontend quirks: Custom transpilers may favor Gemini for TS AST behavior.
+- API compatibility: Some providers may lack advanced explainability features;
+  route reviews back to Claude or GPT families.
+- Internationalization: GLM and Minimax can be prioritized for APAC workloads.
+
+## Overlay Config Example
+
+```yaml
+# .agentkit.yaml
+agents:
+  backend:
+    default_model: claude-3-opus
+    alternate_model: kimi
+    weights: [30, 25, 10, 25, 5, 5]
+    rationale: Claude for code/context, Kimi for cost fallback
+  frontend:
+    default_model: gemini-ultra
+    alternate_model: o3
+    weights: [15, 15, 20, 15, 25, 10]
+    rationale: Gemini for TypeScript nuance, o3 for cost
+  testing:
+    default_model: claude-3-opus
+    alternate_model: swe-llama
+    weights: [25, 20, 15, 20, 10, 10]
+    rationale: Claude for multi-language tests, SWE-Llama for CI-heavy flows
+```
+
+## Quick Override Rules
+
+- Budget breach: switch to alternate model.
+- Provider downtime: fail over to alternate model.
+- New language stack: raise compatibility weight and re-score.
+- Compliance scope: apply regional constraints and document exceptions.
+- Performance mode changes: rebalance reasoning vs speed.
+
+## FAQ
+
+### Can weights be changed per agent?
+
+Yes, team defaults can be inherited and overridden per agent.
+
+### How are cost overruns handled?
+
+Usage is monitored against thresholds and can trigger alternate routing with
+audit logs.
+
+### Can new models be introduced quickly?
+
+Yes, add scorecard rows and re-run weighted scoring.
+
+### What if the stack is mostly C# or Rust?
+
+Increase code quality and compatibility weights and validate with
+language-specific benchmarks.
+
+### Is manual override supported?
+
+Yes. Team leads and admins can override and roll back through config.
+
+## Appendix
+
+### Research and Data
+
+- Internal benchmark set (illustrative): 130K mixed coding and reasoning tasks
+- Team interviews across backend, DevOps, QA, docs, and product functions
+
+### Technical Feasibility
+
+- Polyglot SDK tests demonstrated on Node, .NET, Python, and Rust
+- Tradeoff remains between high-context premium models and cost-focused models
+
+### Competitive Positioning
+
+Many orchestration products provide static defaults only. This example
+illustrates dynamic, per-team weighted mapping and override paths.

@@ -1,9 +1,9 @@
 /**
  * Tests for task-protocol.mjs — A2A-lite task delegation protocol.
  */
-import { mkdtempSync, rmSync } from 'fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -37,7 +37,7 @@ afterEach(() => {
 describe('generateTaskId', () => {
   it('generates sequential IDs for the same day', () => {
     const id1 = generateTaskId(tmpRoot);
-    expect(id1).toMatch(/^task-\d{8}-001$/);
+    expect(id1).toMatch(/^task-\d{8}-001-[a-z0-9]{6}$/);
 
     // Create a task so next ID increments
     createTask(tmpRoot, {
@@ -46,7 +46,7 @@ describe('generateTaskId', () => {
       assignees: ['team-backend'],
     });
     const id2 = generateTaskId(tmpRoot);
-    expect(id2).toMatch(/^task-\d{8}-002$/);
+    expect(id2).toMatch(/^task-\d{8}-002-[a-z0-9]{6}$/);
   });
 });
 
@@ -69,7 +69,7 @@ describe('createTask', () => {
 
     expect(result.error).toBeUndefined();
     expect(result.task).toBeDefined();
-    expect(result.task.id).toMatch(/^task-\d{8}-\d{3}$/);
+    expect(result.task.id).toMatch(/^task-\d{8}-\d{3}-[a-z0-9]{6}$/);
     expect(result.task.status).toBe('submitted');
     expect(result.task.type).toBe('implement');
     expect(result.task.priority).toBe('P1');
@@ -150,6 +150,17 @@ describe('createTask', () => {
     expect(result.task).toBeNull();
   });
 
+  it('returns error for invalid dependency task ID', () => {
+    const result = createTask(tmpRoot, {
+      title: 'Test',
+      delegator: 'test',
+      assignees: ['x'],
+      dependsOn: ['../escape'],
+    });
+    expect(result.error).toContain('Invalid dependency task ID');
+    expect(result.task).toBeNull();
+  });
+
   it('sets blockedBy when dependency is not yet complete', () => {
     const dep = createTask(tmpRoot, {
       title: 'Dep',
@@ -185,6 +196,12 @@ describe('getTask', () => {
   it('returns error for non-existent task', () => {
     const result = getTask(tmpRoot, 'task-00000000-999');
     expect(result.error).toContain('not found');
+    expect(result.task).toBeNull();
+  });
+
+  it('returns error for invalid task ID path traversal attempt', () => {
+    const result = getTask(tmpRoot, '../evil');
+    expect(result.error).toContain('Invalid task ID');
     expect(result.task).toBeNull();
   });
 });
@@ -275,6 +292,25 @@ describe('updateTaskStatus', () => {
       content: 'Not in my scope.',
     });
     expect(result.task.status).toBe('rejected');
+  });
+
+  it('supports submitted → canceled', () => {
+    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = updateTaskStatus(tmpRoot, created.task.id, 'canceled', {
+      from: 'orchestrator',
+      content: 'Descoped by orchestrator.',
+    });
+    expect(result.task.status).toBe('canceled');
+  });
+
+  it('supports accepted → canceled', () => {
+    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
+    const result = updateTaskStatus(tmpRoot, created.task.id, 'canceled', {
+      from: 'orchestrator',
+      content: 'Canceled before execution.',
+    });
+    expect(result.task.status).toBe('canceled');
   });
 
   it('supports working → input-required → working', () => {
@@ -400,6 +436,25 @@ describe('checkDependencies', () => {
     const { unblocked } = checkDependencies(tmpRoot);
     expect(unblocked).toEqual([]);
   });
+
+  it('surfaces dependency cycle errors and skips propagation', () => {
+    const taskA = createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['a'] });
+    const taskB = createTask(tmpRoot, {
+      title: 'B',
+      delegator: 'test',
+      assignees: ['b'],
+      dependsOn: [taskA.task.id],
+    });
+
+    const taskAPath = resolve(tmpRoot, '.claude', 'state', 'tasks', `${taskA.task.id}.json`);
+    const taskAData = JSON.parse(readFileSync(taskAPath, 'utf-8'));
+    taskAData.dependsOn = [taskB.task.id];
+    writeFileSync(taskAPath, JSON.stringify(taskAData, null, 2) + '\n', 'utf-8');
+
+    const result = checkDependencies(tmpRoot);
+    expect(result.errors.some((e) => e.includes('Dependency cycle detected'))).toBe(true);
+    expect(result.unblocked).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -475,6 +530,28 @@ describe('processHandoffs', () => {
 
     const { created } = processHandoffs(tmpRoot);
     expect(created).toHaveLength(0);
+  });
+
+  it('does not mark handoff as processed when any downstream task creation fails', () => {
+    const task = createTask(tmpRoot, {
+      title: 'Partial handoff',
+      delegator: 'orchestrator',
+      assignees: ['data'],
+      handoffTo: ['backend', 'frontend'],
+    });
+    updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'data' });
+    updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'data' });
+    updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'data' });
+
+    const taskPath = resolve(tmpRoot, '.claude', 'state', 'tasks', `${task.task.id}.json`);
+    const taskData = JSON.parse(readFileSync(taskPath, 'utf-8'));
+    taskData.priority = 'P9';
+    writeFileSync(taskPath, JSON.stringify(taskData, null, 2) + '\n', 'utf-8');
+
+    const firstRun = processHandoffs(tmpRoot);
+    expect(firstRun.errors.length).toBeGreaterThan(0);
+    const after = getTask(tmpRoot, task.task.id);
+    expect(after.task._handoffProcessed).not.toBe(true);
   });
 });
 

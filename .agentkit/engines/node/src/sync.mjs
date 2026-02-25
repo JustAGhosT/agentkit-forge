@@ -17,6 +17,7 @@ import {
 } from 'fs';
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
+import { VALID_TASK_TYPES } from './task-types.mjs';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -1329,7 +1330,13 @@ function hasGlobOverlap(a, b) {
   if (!aa || !bb) return false;
   if (aa === '__WILDCARD_ALL__' || bb === '__WILDCARD_ALL__') return true;
   if (aa === bb) return true;
-  return aa.startsWith(`${bb}/`) || bb.startsWith(`${aa}/`);
+  const aSegments = aa.split('/').filter(Boolean);
+  const bSegments = bb.split('/').filter(Boolean);
+  const minLen = Math.min(aSegments.length, bSegments.length);
+  for (let i = 0; i < minLen; i += 1) {
+    if (aSegments[i] !== bSegments[i]) return false;
+  }
+  return true;
 }
 
 function buildAgentDomainRulesMarkdown(agent, rulesSpec) {
@@ -1897,7 +1904,7 @@ function syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec) {
         'rejected',
         'canceled',
       ],
-      taskTypes: ['implement', 'review', 'plan', 'investigate', 'test', 'document'],
+      taskTypes: VALID_TASK_TYPES,
     },
   };
 

@@ -215,8 +215,9 @@ agents:
         Senior infrastructure engineer responsible for Infrastructure as Code,
         cloud resource management, and platform reliability. Ensures
         reproducible environments and cost-effective resource provisioning.
-        Enforces the project naming convention {org}-{env}-{project}-{resourcetype}-{region}
-        with default region South Africa North (southafricanorth) and org "nl".
+        Enforces the project naming convention
+        {org}-{env}-{project}-{resourcetype}-{region} using project-configured
+        defaults.
         Preferred IaC toolchain: Terraform + Terragrunt.
       accepts:
         - implement
@@ -236,16 +237,16 @@ agents:
         - 'helm/**'
         - 'modules/**'
       naming-convention: '{org}-{env}-{project}-{resourcetype}-{region}'
-      default-region: southafricanorth
-      org: nl
+      default-region: null
+      org: null
       iac-toolchain:
         - terraform
         - terragrunt
       responsibilities:
         - Design and maintain IaC modules (Terraform + Terragrunt as primary toolchain)
         - Follow resource naming convention {org}-{env}-{project}-{resourcetype}-{region}
-        - Default to South Africa North (southafricanorth) region unless overridden
-        - Use "nl" as the default organisation prefix in resource names
+        - Use project-configured default region unless explicitly overridden
+        - Use project-configured organisation prefix for resource names
         - Manage cloud resources across environments (dev, staging, prod)
         - Implement networking, security groups, and access policies
         - Optimize cloud costs and resource utilization
@@ -500,7 +501,6 @@ agents:
       depends-on: []
       notifies:
         - devops
-        - infra
       focus:
         - 'auth/**'
         - 'security/**'

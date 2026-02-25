@@ -265,6 +265,7 @@ Comprehensive guides for using AgentKit Forge:
 | **[CLI Installation](.agentkit/docs/CLI_INSTALLATION.md)**             | Installing and configuring the CLI                                  |
 | **[Agents vs Teams](.agentkit/docs/AGENTS_VS_TEAMS.md)**               | When to use agents vs teams, comparison guide                       |
 | **[Roadmap](.agentkit/docs/ROADMAP.md)**                               | Planned features and development roadmap                            |
+| **[PRD Library](docs/prd/README.md)**                                  | Product requirement docs and LLM-mapping PRD examples               |
 
 ---
 

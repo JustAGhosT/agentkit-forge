@@ -5,7 +5,6 @@ import { dirname, join, relative, resolve } from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const AGENTKIT_SRC = resolve(import.meta.dirname, '..', '..', '..', '..');
-const CLI_PATH = resolve(AGENTKIT_SRC, 'engines', 'node', 'src', 'cli.mjs');
 
 function makeTmpProject() {
   const dir = resolve(
@@ -57,7 +56,13 @@ function hasNestedNodeModules(root) {
   const stack = [root];
   while (stack.length > 0) {
     const current = stack.pop();
-    const entries = readdirSync(current, { withFileTypes: true });
+    let entries = [];
+    try {
+      entries = readdirSync(current, { withFileTypes: true });
+    } catch (error) {
+      if (error?.code === 'ENOENT') continue;
+      throw error;
+    }
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
       if (entry.name === 'node_modules') return true;
@@ -74,7 +79,9 @@ describe('fresh install (no node_modules)', () => {
     projectRoot = makeTmpProject();
     mkdirSync(join(projectRoot, '.agentkit'), { recursive: true });
     copyAgentkitWithoutNodeModules(join(projectRoot, '.agentkit'));
-    expect(hasNestedNodeModules(join(projectRoot, '.agentkit'))).toBe(false);
+    if (hasNestedNodeModules(join(projectRoot, '.agentkit'))) {
+      throw new Error('Unexpected nested node_modules found in test fixture setup');
+    }
   });
 
   afterEach(() => {

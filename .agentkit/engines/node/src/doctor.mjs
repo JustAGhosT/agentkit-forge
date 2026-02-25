@@ -7,6 +7,15 @@ import yaml from 'js-yaml';
 import { resolve } from 'path';
 import { validateSpec } from './spec-validator.mjs';
 
+function resolveSpecRoot(agentkitRoot, projectRoot) {
+  const projectAgentkitRoot = resolve(projectRoot, '.agentkit');
+  const projectSpecDir = resolve(projectAgentkitRoot, 'spec');
+  if (existsSync(projectSpecDir)) {
+    return projectAgentkitRoot;
+  }
+  return agentkitRoot;
+}
+
 function checkTemplateRoots(agentkitRoot, targets) {
   const templatesRoot = resolve(agentkitRoot, 'templates');
   const checks = [];
@@ -108,9 +117,10 @@ function projectCompleteness(project) {
 
 export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   const findings = [];
+  const specRoot = resolveSpecRoot(agentkitRoot, projectRoot);
 
   // 1) Spec validation
-  const spec = validateSpec(agentkitRoot);
+  const spec = validateSpec(specRoot);
   if (!spec.valid) {
     findings.push({
       severity: 'error',
@@ -126,7 +136,7 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   }
 
   // 2) Overlay/template sanity
-  const { targets, error: overlayError } = loadOverlayRenderTargets(agentkitRoot);
+  const { targets, error: overlayError } = loadOverlayRenderTargets(specRoot);
   if (overlayError) {
     findings.push({ severity: 'error', message: overlayError });
   } else if (targets.length === 0) {
@@ -135,7 +145,7 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
       message: 'No renderTargets defined in overlay settings; sync defaults may be broad.',
     });
   } else {
-    const checks = checkTemplateRoots(agentkitRoot, targets);
+    const checks = checkTemplateRoots(specRoot, targets);
     for (const c of checks) {
       if (!c.exists)
         findings.push({
@@ -152,9 +162,7 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   }
 
   // 3) project.yaml completeness
-  const projectPath = existsSync(resolve(projectRoot, '.agentkit', 'spec', 'project.yaml'))
-    ? resolve(projectRoot, '.agentkit', 'spec', 'project.yaml')
-    : resolve(agentkitRoot, 'spec', 'project.yaml');
+  const projectPath = resolve(specRoot, 'spec', 'project.yaml');
   if (existsSync(projectPath)) {
     try {
       const project = yaml.load(readFileSync(projectPath, 'utf-8')) || {};

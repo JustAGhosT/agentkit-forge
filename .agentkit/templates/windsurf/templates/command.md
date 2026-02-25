@@ -2,7 +2,8 @@
 
 ## When to Use
 
-Invoke this command template when the user requests or implies the `{{commandName}}` operation.
+Invoke this command when the user requests or implies the
+`{{commandName}}` operation.
 
 ## Purpose
 

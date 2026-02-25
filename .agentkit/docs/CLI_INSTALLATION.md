@@ -131,6 +131,35 @@ DEBUG=1 node .agentkit/engines/node/src/cli.mjs sync
 | ------- | ------------------------------- |
 | `cost`  | Session cost and usage tracking |
 
+### Tool Management
+
+| Command  | Purpose                                      |
+| -------- | -------------------------------------------- |
+| `add`    | Enable one or more render targets/tools      |
+| `remove` | Disable tools (`--clean` also removes files) |
+| `list`   | Show enabled and available tools             |
+
+### Task Delegation
+
+| Command    | Purpose                                       |
+| ---------- | --------------------------------------------- |
+| `tasks`    | List and inspect delegated task state         |
+| `delegate` | Create a delegated task for one or more teams |
+
+### Diagnostics
+
+| Command  | Purpose                                      |
+| -------- | -------------------------------------------- |
+| `doctor` | Run diagnostics and setup consistency checks |
+
+### Slash-command-only
+
+| Command          | Purpose                                         |
+| ---------------- | ----------------------------------------------- |
+| `project-review` | Comprehensive project audit (slash workflow)    |
+| `scaffold`       | Convention-aligned skeleton generation workflow |
+| `preflight`      | Enhanced release-readiness workflow             |
+
 Run any command with `--help` to see its specific flags.
 
 ---
@@ -195,7 +224,7 @@ suitable for CI gates. Use `--bail` to stop on the first failing check.
 
 ```
 Unknown command: "foo"
-Valid commands: init, sync, validate, discover, spec-validate, orchestrate, plan, check, review, handoff, healthcheck, cost, project-review
+Valid commands: init, sync, validate, discover, spec-validate, orchestrate, plan, check, review, handoff, healthcheck, cost, project-review, add, remove, list, tasks, delegate, doctor, scaffold, preflight
 ```
 
 Verify you are using one of the valid commands listed above. The

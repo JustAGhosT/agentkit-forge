@@ -178,7 +178,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 - You need a focused release gate on a commit range or current diff
 - You want strict failure behavior before merge/release
 
-**Flags:** `--stack`, `--range`, `--strict`
+**Flags:** `--stack`, `--range`, `--base`, `--strict`
 
 **Shared assets:** Reads repo state. Does not directly write shared state files unless explicitly wrapped by another workflow command that logs outcomes.
 

@@ -71,5 +71,5 @@ Always scan the codebase within your focus area before making changes. Read `AGE
 - Coordinate with other agents through the orchestrator; use `/orchestrate` for cross-team work
 - Document decisions and rationale in comments or ADRs
 - Escalate blockers to the orchestrator immediately
-- Update team progress in `orchestrator.json` after completing significant work
+- Update team progress in `.claude/state/orchestrator.json` after completing significant work
 - See `COMMAND_GUIDE.md` for when to use `/plan`, `/project-review`, or `/orchestrate`

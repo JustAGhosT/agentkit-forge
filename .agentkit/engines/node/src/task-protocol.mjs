@@ -53,8 +53,17 @@ function tasksDir(projectRoot) {
   return resolve(projectRoot, '.claude', 'state', 'tasks');
 }
 
+const TASK_ID_PATH_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+function normalizeTaskId(taskId) {
+  if (typeof taskId !== 'string' || !TASK_ID_PATH_PATTERN.test(taskId)) {
+    throw new Error(`Invalid task ID: ${taskId}`);
+  }
+  return taskId;
+}
+
 function taskPath(projectRoot, taskId) {
-  return resolve(tasksDir(projectRoot), `${taskId}.json`);
+  return resolve(tasksDir(projectRoot), `${normalizeTaskId(taskId)}.json`);
 }
 
 function ensureTasksDir(projectRoot) {
@@ -70,8 +79,9 @@ function ensureTasksDir(projectRoot) {
 // ---------------------------------------------------------------------------
 
 /**
- * Generate a task ID in the format: task-YYYYMMDD-NNN
+ * Generate a task ID in the format: task-YYYYMMDD-NNN-XXXXXX
  * NNN is a zero-padded sequence number based on existing tasks for that day.
+ * XXXXXX is a short collision-resistant suffix.
  * @param {string} projectRoot
  * @returns {string}
  */
@@ -96,10 +106,10 @@ export function generateTaskId(projectRoot) {
     }
   }
 
-  let candidate = `${prefix}${String(seq).padStart(3, '0')}`;
+  let candidate = `${prefix}${String(seq).padStart(3, '0')}-${Math.random().toString(36).slice(2, 8)}`;
   while (existsSync(taskPath(projectRoot, candidate))) {
     seq += 1;
-    candidate = `${prefix}${String(seq).padStart(3, '0')}`;
+    candidate = `${prefix}${String(seq).padStart(3, '0')}-${Math.random().toString(36).slice(2, 8)}`;
   }
   return candidate;
 }
@@ -165,6 +175,9 @@ export function createTask(projectRoot, taskData) {
   // Validate dependsOn references exist
   if (Array.isArray(taskData.dependsOn)) {
     for (const depId of taskData.dependsOn) {
+      if (!TASK_ID_PATH_PATTERN.test(depId)) {
+        return { task: null, error: `Invalid dependency task ID: ${depId}` };
+      }
       if (!existsSync(taskPath(projectRoot, depId))) {
         return { task: null, error: `Dependency task not found: ${depId}` };
       }
@@ -213,11 +226,9 @@ export function createTask(projectRoot, taskData) {
     const blockers = new Set();
     for (const depId of task.dependsOn) {
       const dep = getTask(projectRoot, depId);
-      if (dep.task && !TERMINAL_STATES.includes(dep.task.status)) {
-        blockers.add(depId);
-      }
-      // If a dependency failed/rejected/canceled, mark this as blocked too
-      if (dep.task && ['failed', 'rejected', 'canceled'].includes(dep.task.status)) {
+      if (!dep.task) continue;
+      const depStatus = dep.task.status;
+      if (depStatus !== 'completed') {
         blockers.add(depId);
       }
     }
@@ -235,7 +246,12 @@ export function createTask(projectRoot, taskData) {
  * @returns {{ task: object|null, error?: string }}
  */
 export function getTask(projectRoot, taskId) {
-  const path = taskPath(projectRoot, taskId);
+  let path;
+  try {
+    path = taskPath(projectRoot, taskId);
+  } catch {
+    return { task: null, error: `Invalid task ID: ${taskId}` };
+  }
   if (!existsSync(path)) {
     return { task: null, error: `Task not found: ${taskId}` };
   }
@@ -465,6 +481,10 @@ export function checkDependencies(projectRoot) {
   const { tasks } = listTasks(projectRoot);
   const unblocked = [];
   const errors = [];
+  const cycleErrors = detectDependencyCycles(tasks);
+  if (cycleErrors.length > 0) {
+    return { unblocked, errors: cycleErrors };
+  }
 
   for (const task of tasks) {
     if (TERMINAL_STATES.includes(task.status)) continue;
@@ -506,6 +526,48 @@ export function checkDependencies(projectRoot) {
   return { unblocked, errors };
 }
 
+function detectDependencyCycles(tasks) {
+  const taskById = new Map();
+  for (const task of tasks) {
+    if (task?.id) taskById.set(task.id, task);
+  }
+
+  const visiting = new Set();
+  const visited = new Set();
+  const path = [];
+  const errors = [];
+
+  function walk(taskId) {
+    if (visiting.has(taskId)) {
+      const start = path.indexOf(taskId);
+      const cycle = [...path.slice(start), taskId];
+      errors.push(`Dependency cycle detected: ${cycle.join(' -> ')}`);
+      return;
+    }
+    if (visited.has(taskId)) return;
+
+    visiting.add(taskId);
+    path.push(taskId);
+
+    const task = taskById.get(taskId);
+    const deps = Array.isArray(task?.dependsOn) ? task.dependsOn : [];
+    for (const depId of deps) {
+      if (!taskById.has(depId)) continue;
+      walk(depId);
+    }
+
+    path.pop();
+    visiting.delete(taskId);
+    visited.add(taskId);
+  }
+
+  for (const taskId of taskById.keys()) {
+    walk(taskId);
+  }
+
+  return errors;
+}
+
 // ---------------------------------------------------------------------------
 // Handoff processing
 // ---------------------------------------------------------------------------
@@ -528,6 +590,8 @@ export function processHandoffs(projectRoot, delegator = 'orchestrator') {
     // Check if handoff already processed (look for a _handoffProcessed flag)
     if (task._handoffProcessed) continue;
 
+    let hadFailures = false;
+
     for (const targetTeam of task.handoffTo) {
       const result = createTask(projectRoot, {
         type: task.type || 'implement',
@@ -547,16 +611,19 @@ export function processHandoffs(projectRoot, delegator = 'orchestrator') {
       });
 
       if (result.error) {
+        hadFailures = true;
         errors.push(`Failed to create handoff task for ${targetTeam}: ${result.error}`);
       } else {
         created.push(result.task);
       }
     }
 
-    // Mark handoff as processed
-    task._handoffProcessed = true;
-    task.updatedAt = new Date().toISOString();
-    writeTaskFile(projectRoot, task.id, task);
+    // Mark handoff as processed only when all downstream task creations succeed.
+    if (!hadFailures) {
+      task._handoffProcessed = true;
+      task.updatedAt = new Date().toISOString();
+      writeTaskFile(projectRoot, task.id, task);
+    }
   }
 
   return { created, errors };

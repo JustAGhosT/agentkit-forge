@@ -9,16 +9,16 @@ documentation category maintained by this repository.
 
 ## Categories
 
-| # | Category | Description |
-|---|----------|-------------|
-| 1 | [Product](./01_product/) | Product vision, strategy, personas, and metrics |
-| 2 | [Specs](./02_specs/) | Functional spec, technical spec, API spec, and data models |
-| 3 | [Architecture](./03_architecture/) | System design, diagrams, ADRs, and tech stack |
-| 4 | [API](./04_api/) | API reference, authentication, versioning, and errors |
-| 5 | [Operations](./05_operations/) | SLAs, on-call, capacity, and performance |
-| 6 | [Engineering](./06_engineering/) | Setup, coding standards, testing, and contributing |
-| 7 | [Integrations](./07_integrations/) | External APIs, webhooks, and SDKs |
-| 8 | [Reference](./08_reference/) | Glossary, acronyms, FAQ, and tool config |
+| #   | Category                           | Description                                                |
+| --- | ---------------------------------- | ---------------------------------------------------------- |
+| 1   | [Product](./01_product/)           | Product vision, strategy, personas, and metrics            |
+| 2   | [Specs](./02_specs/)               | Functional spec, technical spec, API spec, and data models |
+| 3   | [Architecture](./03_architecture/) | System design, diagrams, ADRs, and tech stack              |
+| 4   | [API](./04_api/)                   | API reference, authentication, versioning, and errors      |
+| 5   | [Operations](./05_operations/)     | SLAs, on-call, capacity, and performance                   |
+| 6   | [Engineering](./06_engineering/)   | Setup, coding standards, testing, and contributing         |
+| 7   | [Integrations](./07_integrations/) | External APIs, webhooks, and SDKs                          |
+| 8   | [Reference](./08_reference/)       | Glossary, acronyms, FAQ, and tool config                   |
 
 ## Quick Links
 
@@ -27,6 +27,7 @@ documentation category maintained by this repository.
 - [API Overview](./04_api/01_overview.md)
 - [Getting Started](./06_engineering/01_setup.md)
 - [Changelog](./08_reference/03_changelog.md)
+- [PRD Library](./prd/README.md)
 
 ## Conventions
 

@@ -1,5 +1,7 @@
 ---
+{{#if commandDescription}}
 description: "{{commandDescription}}"
+{{/if}}
 allowed-tools: Bash(git *), Bash(find *), Bash(ls *), Bash(cat *), Bash(head *), Bash(wc *)
 ---
 

@@ -13,6 +13,7 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import yaml from 'js-yaml';
 import { basename, resolve } from 'path';
+import { REPO_NAME_PATTERN } from './repo-name.mjs';
 
 // ---------------------------------------------------------------------------
 // Preset definitions
@@ -88,17 +89,14 @@ const ALL_TOOL_OPTIONS = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-const REPO_NAME_PATTERN = /^[A-Za-z0-9._-]+$/;
-
 function sanitizeRepoName(value) {
   if (!value || typeof value !== 'string') return null;
   const trimmed = value.trim();
   if (trimmed === '.' || trimmed === '..') return null;
   if (!trimmed) return null;
   if (/[/\\]/.test(trimmed)) return null;
-  const safe = basename(trimmed);
-  if (!REPO_NAME_PATTERN.test(safe)) return null;
-  return safe;
+  if (!REPO_NAME_PATTERN.test(trimmed)) return null;
+  return trimmed;
 }
 
 // ---------------------------------------------------------------------------

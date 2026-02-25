@@ -99,7 +99,7 @@ const VALID_FLAGS = {
   ],
   doctor: ['verbose', 'help'],
   scaffold: ['type', 'name', 'stack', 'path', 'help'],
-  preflight: ['stack', 'range', 'strict', 'help'],
+  preflight: ['stack', 'range', 'base', 'strict', 'help'],
   'project-review': ['scope', 'focus', 'phase', 'help'],
   add: ['help'],
   remove: ['clean', 'help'],

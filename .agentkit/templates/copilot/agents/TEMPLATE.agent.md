@@ -14,6 +14,7 @@ description: '{{agentRole}}'
 {{#if stackBackendFrameworks}}- **Backend:** {{stackBackendFrameworks}}{{/if}}
 {{#if stackDatabase}}- **Database:** {{stackDatabase}}{{/if}}
 {{#if architecturePattern}}- **Architecture:** {{architecturePattern}}{{/if}}
+{{#if defaultBranch}}- **Default branch:** {{defaultBranch}}{{/if}}
 
 Scan the codebase within your focus area before making changes. Read `AGENT_BACKLOG.md` for work items. Check `AGENT_TEAMS.md` for team boundaries.
 
@@ -41,6 +42,20 @@ Scan the codebase within your focus area before making changes. Read `AGENT_BACK
 ## Agent Conventions
 
 {{agentConventions}}
+{{/if}}
+
+{{#if hasAgentExamples}}
+
+## Examples
+
+{{agentExamples}}
+{{/if}}
+
+{{#if hasAgentAntiPatterns}}
+
+## Anti-Patterns
+
+{{agentAntiPatterns}}
 {{/if}}
 
 ## Shared State

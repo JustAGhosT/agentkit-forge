@@ -5,6 +5,7 @@
 import { existsSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'fs';
 import yaml from 'js-yaml';
 import { resolve, sep } from 'path';
+import { REPO_NAME_PATTERN } from './repo-name.mjs';
 
 const ALL_TOOLS = [
   'claude',
@@ -19,8 +20,6 @@ const ALL_TOOLS = [
   'ai',
   'mcp',
 ];
-
-const REPO_NAME_PATTERN = /^[A-Za-z0-9._-]+$/;
 
 function sanitizeRepoName(value) {
   if (!value || typeof value !== 'string') return null;

@@ -137,6 +137,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 4. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
    - `blockedBy` is runtime-derived state from `dependsOn`; do not author it manually.
 5. Immediately after task creation, run the dependency derivation pass once to populate `blockedBy` from `dependsOn` before the first execution round.
+   - Detect cycles in the `dependsOn` graph (for example via DFS/Kahn). If a cycle is found, stop dependency propagation for the affected tasks and surface a clear validation error instead of continuing the round.
 6. Each team should:
    - Accept or reject the task (update `status` and add a message).
    - Make minimal, backwards-compatible changes.
@@ -148,8 +149,10 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
      - Terminal: `completed`, `failed`, `rejected`, `canceled`.
      - Valid transitions:
        - `submitted -> accepted`
+       - `submitted -> canceled`
        - `accepted -> working`
        - `accepted -> rejected`
+       - `accepted -> canceled`
        - `working -> completed|failed|canceled|rejected`
        - `submitted -> rejected`
 7. Between delegation rounds, run dependency checks:
@@ -168,13 +171,15 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
    - Track retries per round or issue key (for example `round-4` or `validation:<issue-id>`) in `retryPolicy.roundRetries[roundKey]`.
    - On each replacement-task retry, increment `retryPolicy.roundRetries[roundKey]` and `retryPolicy.totalRetries`, then persist `orchestrator.json` before continuing.
    - If `retryPolicy.roundRetries[roundKey] >= retryPolicy.maxRetryCount`, escalate and stop automatic retries for that round/issue.
-   - When escalation occurs, append a structured entry to `events.log` and persist `retryPolicy.retryEscalated = { "reason": "retry-limit-reached", "at": "<ISO-8601 timestamp>", "roundKey": "<round-or-issue-key>", "retriesSoFar": <number> }`.
+   - When escalation occurs, append a structured entry to `events.log` and persist `retryPolicy.retryEscalated = { "reason": "retry-limit-reached", "at": "<ISO-8601 timestamp>", "roundKey": "<round-or-issue-key>", "roundRetryCount": <number> }`.
    - Only reset retry counters when an explicit reset decision is recorded (via `allowReset` and a new `lastResetAt` timestamp); otherwise preserve counters across retries.
 6. Record validation results in `orchestrator.json` and in task artifacts, including resolution metadata for failed/rejected tasks.
 
 ### Phase 5 — Ship
 
-1. Confirm all checks pass and all tasks are in a terminal state (`completed`, `failed`, `rejected`, `canceled`), and ensure any `failed` or `rejected` task has a superseding `completed` task that addresses the same backlog item before proceeding.
+1. Confirm all checks pass and all tasks are in a terminal state (`completed`, `failed`, `rejected`, `canceled`). Before proceeding:
+   - every `failed`/`rejected`/`canceled` task must be superseded by a `completed` task that addresses the same backlog item, unless the task was intentionally descoped;
+   - intentionally descoped `failed`/`rejected`/`canceled` tasks may proceed without a superseding task only when the descoping rationale is recorded in `events.log`.
 2. Invoke `/handoff` to produce a session summary.
 3. Update `orchestrator.json`: set `currentPhase` to 5, clear the lock, update metrics.
 4. Log completion to `events.log`.

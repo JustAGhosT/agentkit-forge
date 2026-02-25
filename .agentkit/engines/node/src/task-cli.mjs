@@ -16,6 +16,14 @@ import {
   processHandoffs,
 } from './task-protocol.mjs';
 
+function parseCsvFlag(value) {
+  if (typeof value !== 'string') return [];
+  return value
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
 function appendTaskAuditEvent(projectRoot, payload) {
   const event = {
     timestamp: new Date().toISOString(),
@@ -55,7 +63,7 @@ export async function runTasks({ projectRoot, flags }) {
 
   // Single task detail
   if (flags.id) {
-    const result = getTask(projectRoot, flags.id);
+    const result = await getTask(projectRoot, flags.id);
     if (result.error) {
       console.error(`[agentkit:tasks] ${result.error}`);
       process.exit(1);
@@ -79,7 +87,7 @@ export async function runTasks({ projectRoot, flags }) {
   }
 
   // Check dependencies and process handoffs before listing
-  const depResult = checkDependencies(projectRoot);
+  const depResult = await checkDependencies(projectRoot);
   if (depResult.unblocked.length > 0) {
     console.log(
       `[agentkit:tasks] Unblocked ${depResult.unblocked.length} task(s): ${depResult.unblocked.join(', ')}`
@@ -87,7 +95,7 @@ export async function runTasks({ projectRoot, flags }) {
   }
 
   if (flags['process-handoffs']) {
-    const handoffResult = processHandoffs(projectRoot);
+    const handoffResult = await processHandoffs(projectRoot);
     if (handoffResult?.error) {
       console.error(`[agentkit:tasks] ${handoffResult.error}`);
       process.exit(1);
@@ -127,7 +135,7 @@ export async function runTasks({ projectRoot, flags }) {
   if (flags.type) filters.type = flags.type;
   if (flags.priority) filters.priority = flags.priority;
 
-  const { tasks } = listTasks(projectRoot, filters);
+  const { tasks } = await listTasks(projectRoot, filters);
   if (tasks.length === 0) {
     console.log('[agentkit:tasks] No tasks found.');
     return;
@@ -165,17 +173,17 @@ export async function runDelegate({ projectRoot, flags }) {
 
   const taskData = {
     delegator: 'cli',
-    assignees: flags.to.split(',').map((s) => s.trim()),
+    assignees: parseCsvFlag(flags.to),
     title: flags.title,
     description: flags.description || '',
     type: flags.type || 'implement',
     priority: flags.priority || 'P2',
-    dependsOn: flags['depends-on'] ? flags['depends-on'].split(',').map((s) => s.trim()) : [],
-    handoffTo: flags['handoff-to'] ? flags['handoff-to'].split(',').map((s) => s.trim()) : [],
-    scope: flags.scope ? flags.scope.split(',').map((s) => s.trim()) : [],
+    dependsOn: parseCsvFlag(flags['depends-on']),
+    handoffTo: parseCsvFlag(flags['handoff-to']),
+    scope: parseCsvFlag(flags.scope),
   };
 
-  const result = createTask(projectRoot, taskData);
+  const result = await createTask(projectRoot, taskData);
   if (result.error) {
     console.error(`[agentkit:delegate] ${result.error}`);
     process.exit(1);

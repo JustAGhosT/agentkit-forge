@@ -23,5 +23,9 @@ rules before writing custom logic.
 ## Guardrails
 
 - Never overwrite non-generated files without explicit instruction.
+- Reject `--path` values that resolve outside the workspace root (including
+  `..` traversal, symlink escapes, and absolute paths such as `/tmp/evil` or
+  `/etc`). If `--path` resolves outside workspace boundaries, abort scaffold
+  execution and return a clear user-facing error.
 - Keep generated outputs small and composable.
 - Follow naming conventions and architecture patterns from `CLAUDE.md`.

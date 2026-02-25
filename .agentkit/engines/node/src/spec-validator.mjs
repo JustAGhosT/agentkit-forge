@@ -271,9 +271,13 @@ function validateProjectYaml(project) {
 
   // Stack
   const stack = project.stack;
-  if (stack !== undefined && stack !== null && typeof stack !== 'object') {
+  if (
+    stack !== undefined &&
+    stack !== null &&
+    (typeof stack !== 'object' || Array.isArray(stack))
+  ) {
     errors.push('project.yaml: stack must be an object');
-  } else if (stack && typeof stack === 'object') {
+  } else if (stack && typeof stack === 'object' && !Array.isArray(stack)) {
     checkStringArray(stack.languages, 'stack.languages');
     if (stack.frameworks && typeof stack.frameworks === 'object') {
       checkStringArray(stack.frameworks.frontend, 'stack.frameworks.frontend');
@@ -286,9 +290,9 @@ function validateProjectYaml(project) {
 
   // Architecture
   const arch = project.architecture;
-  if (arch !== undefined && arch !== null && typeof arch !== 'object') {
+  if (arch !== undefined && arch !== null && (typeof arch !== 'object' || Array.isArray(arch))) {
     errors.push('project.yaml: architecture must be an object');
-  } else if (arch && typeof arch === 'object') {
+  } else if (arch && typeof arch === 'object' && !Array.isArray(arch)) {
     checkEnum(arch.pattern, 'architecture.pattern', 'architecturePattern');
     checkEnum(arch.apiStyle, 'architecture.apiStyle', 'apiStyle');
     checkEnum(arch.monorepoTool, 'architecture.monorepoTool', 'monorepoTool');
@@ -296,9 +300,13 @@ function validateProjectYaml(project) {
 
   // Explicit implementation patterns
   const patterns = project.patterns;
-  if (patterns !== undefined && patterns !== null && typeof patterns !== 'object') {
+  if (
+    patterns !== undefined &&
+    patterns !== null &&
+    (typeof patterns !== 'object' || Array.isArray(patterns))
+  ) {
     errors.push('project.yaml: patterns must be an object');
-  } else if (patterns && typeof patterns === 'object') {
+  } else if (patterns && typeof patterns === 'object' && !Array.isArray(patterns)) {
     const boolFields = ['repository', 'cqrs', 'eventSourcing', 'mediator', 'unitOfWork'];
     for (const field of boolFields) {
       if (
@@ -313,9 +321,13 @@ function validateProjectYaml(project) {
 
   // Deployment
   const deploy = project.deployment;
-  if (deploy !== undefined && deploy !== null && typeof deploy !== 'object') {
+  if (
+    deploy !== undefined &&
+    deploy !== null &&
+    (typeof deploy !== 'object' || Array.isArray(deploy))
+  ) {
     errors.push('project.yaml: deployment must be an object');
-  } else if (deploy && typeof deploy === 'object') {
+  } else if (deploy && typeof deploy === 'object' && !Array.isArray(deploy)) {
     checkEnum(deploy.cloudProvider, 'deployment.cloudProvider', 'cloudProvider');
     checkStringArray(deploy.environments, 'deployment.environments');
     checkEnum(deploy.iacTool, 'deployment.iacTool', 'iacTool');
@@ -323,9 +335,13 @@ function validateProjectYaml(project) {
 
   // Infrastructure
   const infra = project.infrastructure;
-  if (infra !== undefined && infra !== null && typeof infra !== 'object') {
+  if (
+    infra !== undefined &&
+    infra !== null &&
+    (typeof infra !== 'object' || Array.isArray(infra))
+  ) {
     errors.push('project.yaml: infrastructure must be an object');
-  } else if (infra && typeof infra === 'object') {
+  } else if (infra && typeof infra === 'object' && !Array.isArray(infra)) {
     checkStringArray(infra.iacToolchain, 'infrastructure.iacToolchain');
     checkEnum(infra.stateBackend, 'infrastructure.stateBackend', 'infraStateBackend');
     checkEnum(infra.lockProvider, 'infrastructure.lockProvider', 'infraLockProvider');

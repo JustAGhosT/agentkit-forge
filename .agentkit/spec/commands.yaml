@@ -320,8 +320,12 @@ commands:
         description: 'Limit checks to a specific stack'
         type: string
         default: null
+      - name: --base
+        description: 'Remote base branch used for merge-base when --range is omitted (e.g., origin/main)'
+        type: string
+        default: null
       - name: --range
-        description: 'Git range used for changelog/commit checks (auto-detected when omitted)'
+        description: 'Git range used for changelog/commit checks (auto-detect via merge-base; fallback emits warning and uses HEAD~50..HEAD)'
         type: string
         default: null
       - name: --strict

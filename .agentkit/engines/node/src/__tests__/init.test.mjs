@@ -269,6 +269,42 @@ describe('runInit', () => {
   // Error cases
   // ---------------------------------------------------------------------------
   describe('error handling', () => {
+    it('throws on invalid repoName (empty string)', async () => {
+      const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
+      await expect(
+        runInit({
+          agentkitRoot,
+          projectRoot,
+          flags: { repoName: '', 'non-interactive': true },
+        })
+      ).rejects.toThrow('Invalid repo name');
+    });
+
+    it('throws on invalid repoName (.)', async () => {
+      const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
+      await expect(
+        runInit({
+          agentkitRoot,
+          projectRoot,
+          flags: { repoName: '.', 'non-interactive': true },
+        })
+      ).rejects.toThrow('Invalid repo name');
+    });
+
+    it('throws on invalid repoName (..)', async () => {
+      const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
+      await expect(
+        runInit({
+          agentkitRoot,
+          projectRoot,
+          flags: { repoName: '..', 'non-interactive': true },
+        })
+      ).rejects.toThrow('Invalid repo name');
+    });
+
     it('throws on invalid repoName (path traversal)', async () => {
       const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
       const { runInit } = await import('../init.mjs');
@@ -411,6 +447,7 @@ describe('runInit', () => {
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
 
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
