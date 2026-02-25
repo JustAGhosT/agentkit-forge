@@ -731,9 +731,16 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   const newManifestFiles = {};
   const fileSummary = {}; // category → count
   for (const srcFile of walkDir(tmpDir)) {
+    if (!existsSync(srcFile)) continue;
     const relPath = relative(tmpDir, srcFile);
     const manifestKey = relPath.replace(/\\/g, '/');
-    const fileContent = readFileSync(srcFile);
+    let fileContent;
+    try {
+      fileContent = readFileSync(srcFile);
+    } catch (err) {
+      if (err?.code === 'ENOENT') continue;
+      throw err;
+    }
     const hash = createHash('sha256').update(fileContent).digest('hex').slice(0, 12);
     newManifestFiles[manifestKey] = { hash };
 
@@ -759,6 +766,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     let updateCount = 0;
     let skipCount = 0;
     for (const srcFile of walkDir(tmpDir)) {
+      if (!existsSync(srcFile)) continue;
       const relPath = relative(tmpDir, srcFile);
       const destFile = resolve(projectRoot, relPath);
       const normPath = relPath.replace(/\\/g, '/');
@@ -770,7 +778,13 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
         logVerbose(`  skip ${normPath} (project-owned, exists)`);
         continue;
       }
-      const newContent = readFileSync(srcFile, 'utf-8');
+      let newContent;
+      try {
+        newContent = readFileSync(srcFile, 'utf-8');
+      } catch (err) {
+        if (err?.code === 'ENOENT') continue;
+        throw err;
+      }
       if (!existsSync(destFile)) {
         createCount++;
         log(`  create ${normPath}`);
@@ -818,6 +832,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   let skippedScaffold = 0;
   const failedFiles = [];
   for (const srcFile of walkDir(tmpDir)) {
+    if (!existsSync(srcFile)) continue;
     const relPath = relative(tmpDir, srcFile);
     const destFile = resolve(projectRoot, relPath);
 
