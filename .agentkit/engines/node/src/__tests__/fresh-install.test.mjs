@@ -1,7 +1,7 @@
 import { execFileSync } from 'child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { join, resolve } from 'path';
+import { dirname, join, relative, resolve } from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const AGENTKIT_SRC = resolve(import.meta.dirname, '..', '..', '..', '..');
@@ -17,19 +17,38 @@ function makeTmpProject() {
 }
 
 function copyAgentkitWithoutNodeModules(dest) {
-  cpSync(AGENTKIT_SRC, dest, { recursive: true, force: true });
-  const stack = [dest];
-  while (stack.length > 0) {
-    const current = stack.pop();
-    const entries = readdirSync(current, { withFileTypes: true });
+  mkdirSync(dest, { recursive: true });
+  const sourceStack = [AGENTKIT_SRC];
+  while (sourceStack.length > 0) {
+    const currentSource = sourceStack.pop();
+    let entries = [];
+    try {
+      entries = readdirSync(currentSource, { withFileTypes: true });
+    } catch (error) {
+      if (error?.code === 'ENOENT') continue;
+      throw error;
+    }
+
     for (const entry of entries) {
-      const fullPath = join(current, entry.name);
-      if (!entry.isDirectory()) continue;
-      if (entry.name === 'node_modules') {
-        rmSync(fullPath, { recursive: true, force: true });
+      if (entry.name === 'node_modules' || entry.name === '.tmp') continue;
+
+      const sourcePath = join(currentSource, entry.name);
+      const rel = relative(AGENTKIT_SRC, sourcePath);
+      const destPath = join(dest, rel);
+
+      if (entry.isDirectory()) {
+        mkdirSync(destPath, { recursive: true });
+        sourceStack.push(sourcePath);
         continue;
       }
-      stack.push(fullPath);
+
+      mkdirSync(dirname(destPath), { recursive: true });
+      try {
+        cpSync(sourcePath, destPath, { force: true });
+      } catch (error) {
+        if (error?.code === 'ENOENT') continue;
+        throw error;
+      }
     }
   }
 }
