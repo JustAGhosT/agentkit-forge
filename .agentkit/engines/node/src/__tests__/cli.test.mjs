@@ -70,4 +70,9 @@ describe('CLI', () => {
     const result = run('spec-validate', '--help');
     expect(result.exitCode).toBe(0);
   });
+
+  it('runs spec-validate successfully', () => {
+    const result = run('spec-validate');
+    expect(result.exitCode).toBe(0);
+  });
 });

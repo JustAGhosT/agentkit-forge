@@ -481,12 +481,41 @@ function* walkDir(dir) {
 // Core sync logic
 // ---------------------------------------------------------------------------
 
+function simpleDiff(a, b) {
+  const aLines = a.split(/\r?\n/);
+  const bLines = b.split(/\r?\n/);
+  const out = [];
+  const maxLen = Math.max(aLines.length, bLines.length);
+  for (let i = 0; i < maxLen; i++) {
+    const al = aLines[i];
+    const bl = bLines[i];
+    if (al === undefined) out.push(`+ ${bl || ''}`);
+    else if (bl === undefined) out.push(`- ${al}`);
+    else if (al !== bl) {
+      out.push(`- ${al}`);
+      out.push(`+ ${bl}`);
+    }
+  }
+  return out.slice(0, 20).join('\n') + (out.length > 20 ? '\n...' : '');
+}
+
 export async function runSync({ agentkitRoot, projectRoot, flags }) {
   const dryRun = flags?.['dry-run'] || false;
+  const diff = flags?.diff || false;
+  const quiet = flags?.quiet || false;
+  const verbose = flags?.verbose || false;
+  const noClean = flags?.['no-clean'] || false;
+
+  const log = (...args) => { if (!quiet) console.log(...args); };
+  const logVerbose = (...args) => { if (verbose && !quiet) console.log(...args); };
+
   if (dryRun) {
-    console.log('[agentkit:sync] Dry-run mode — no files will be written.');
+    log('[agentkit:sync] Dry-run mode — no files will be written.');
   }
-  console.log('[agentkit:sync] Starting sync...');
+  if (diff) {
+    log('[agentkit:sync] Diff mode — showing what would change.');
+  }
+  log('[agentkit:sync] Starting sync...');
 
   // 1. Load spec — version from package.json (primary) with VERSION file as fallback
   let version = '0.0.0';
@@ -514,7 +543,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   }
   if (!repoName) {
     repoName = '__TEMPLATE__';
-    console.log('[agentkit:sync] No overlay detected, using __TEMPLATE__');
+    log('[agentkit:sync] No overlay detected, using __TEMPLATE__');
   }
 
   // 3. Load overlay
@@ -540,9 +569,9 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   // Resolve render targets — determines which tool outputs to generate
   let targets = resolveRenderTargets(overlaySettings.renderTargets, flags);
 
-  console.log(`[agentkit:sync] Repo: ${vars.repoName}, Version: ${version}`);
+  log(`[agentkit:sync] Repo: ${vars.repoName}, Version: ${version}`);
   if (flags?.only) {
-    console.log(`[agentkit:sync] Syncing only: ${[...targets].join(', ')}`);
+    log(`[agentkit:sync] Syncing only: ${[...targets].join(', ')}`);
   }
 
   // 4. Render templates to temp directory
@@ -638,8 +667,48 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   if (dryRun) {
     rmSync(tmpDir, { recursive: true, force: true });
     const total = Object.keys(newManifestFiles).length;
-    console.log(`[agentkit:sync] Dry-run: would generate ${total} file(s):`);
-    printSyncSummary(fileSummary, targets);
+    log(`[agentkit:sync] Dry-run: would generate ${total} file(s):`);
+    printSyncSummary(fileSummary, targets, { quiet });
+    return;
+  }
+
+  // --- Diff: show what would change and exit without writing ---
+  if (diff) {
+    const resolvedRoot = resolve(projectRoot) + sep;
+    const overwrite = flags?.overwrite || flags?.force;
+    let createCount = 0;
+    let updateCount = 0;
+    let skipCount = 0;
+    for (const srcFile of walkDir(tmpDir)) {
+      const relPath = relative(tmpDir, srcFile);
+      const destFile = resolve(projectRoot, relPath);
+      const normPath = relPath.replace(/\\/g, '/');
+      if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot)) continue;
+      const wouldSkip = !overwrite && isScaffoldOnce(normPath) && existsSync(destFile);
+      if (wouldSkip) {
+        skipCount++;
+        logVerbose(`  skip ${normPath} (project-owned, exists)`);
+        continue;
+      }
+      const newContent = readFileSync(srcFile, 'utf-8');
+      if (!existsSync(destFile)) {
+        createCount++;
+        log(`  create ${normPath}`);
+      } else {
+        const oldContent = readFileSync(destFile, 'utf-8');
+        if (oldContent !== newContent) {
+          updateCount++;
+          log(`  update ${normPath}`);
+          const diffOut = simpleDiff(oldContent, newContent);
+          if (diffOut) log(diffOut.split('\n').map(l => `    ${l}`).join('\n'));
+        } else {
+          skipCount++;
+          logVerbose(`  unchanged ${normPath}`);
+        }
+      }
+    }
+    rmSync(tmpDir, { recursive: true, force: true });
+    log(`[agentkit:sync] Diff: ${createCount} create, ${updateCount} update, ${skipCount} unchanged/skip`);
     return;
   }
 
@@ -653,7 +722,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   } catch { /* ignore corrupt manifest */ }
 
   // 7. Atomic swap: move temp outputs to project root & build new manifest
-  console.log('[agentkit:sync] Writing outputs...');
+  log('[agentkit:sync] Writing outputs...');
   const resolvedRoot = resolve(projectRoot) + sep;
   let count = 0;
   let skippedScaffold = 0;
@@ -669,8 +738,9 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       continue;
     }
 
-    // Scaffold-once: skip project-owned files that already exist
-    if (isScaffoldOnce(relPath) && existsSync(destFile)) {
+    // Scaffold-once: skip project-owned files that already exist (unless --overwrite)
+    const overwrite = flags?.overwrite || flags?.force;
+    if (!overwrite && isScaffoldOnce(relPath) && existsSync(destFile)) {
       skippedScaffold++;
       continue;
     }
@@ -684,15 +754,16 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
         try { chmodSync(destFile, 0o755); } catch { /* ignore on Windows */ }
       }
       count++;
+      logVerbose(`  wrote ${relPath.replace(/\\/g, '/')}`);
     } catch (err) {
       failedFiles.push({ file: relPath, error: err.message });
       console.error(`[agentkit:sync] Failed to write: ${relPath} — ${err.message}`);
     }
   }
 
-  // 8. Stale file cleanup: delete orphaned files from previous sync
+  // 8. Stale file cleanup: delete orphaned files from previous sync (unless --no-clean)
   let cleanedCount = 0;
-  if (previousManifest?.files) {
+  if (!noClean && previousManifest?.files) {
     for (const prevFile of Object.keys(previousManifest.files)) {
       if (!newManifestFiles[prevFile]) {
         // File was in previous sync but not in this one — it's orphaned
@@ -706,9 +777,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
           try {
             unlinkSync(orphanPath);
             cleanedCount++;
-            if (process.env.DEBUG) {
-              console.log(`[agentkit:sync] Cleaned stale file: ${prevFile}`);
-            }
+            logVerbose(`[agentkit:sync] Cleaned stale file: ${prevFile}`);
           } catch (err) {
             console.warn(`[agentkit:sync] Warning: could not clean stale file ${prevFile} — ${err.message}`);
           }
@@ -741,23 +810,23 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     throw new Error(`Sync completed with ${failedFiles.length} write failure(s)`);
   }
   if (skippedScaffold > 0) {
-    console.log(`[agentkit:sync] Skipped ${skippedScaffold} project-owned file(s) (already exist).`);
+    log(`[agentkit:sync] Skipped ${skippedScaffold} project-owned file(s) (already exist).`);
   }
   if (cleanedCount > 0) {
-    console.log(`[agentkit:sync] Cleaned ${cleanedCount} stale file(s) from previous sync.`);
+    log(`[agentkit:sync] Cleaned ${cleanedCount} stale file(s) from previous sync.`);
   }
 
   // 11. Post-sync summary
-  printSyncSummary(fileSummary, targets);
-  console.log(`[agentkit:sync] Done! Generated ${count} files.`);
+  printSyncSummary(fileSummary, targets, { quiet });
+  log(`[agentkit:sync] Done! Generated ${count} files.`);
 
   // 12. First-sync hint (when not called from init)
   if (!flags?.overlay) {
     const markerPath = resolve(projectRoot, '.agentkit-repo');
     if (!existsSync(markerPath)) {
-      console.log('');
-      console.log('  Tip: Run "agentkit init" to customize which AI tools you generate configs for.');
-      console.log('       Run "agentkit add <tool>" to add tools incrementally.');
+      log('');
+      log('  Tip: Run "agentkit init" to customize which AI tools you generate configs for.');
+      log('       Run "agentkit add <tool>" to add tools incrementally.');
     }
   }
 }
@@ -805,7 +874,8 @@ function categorizeFile(manifestKey) {
 /**
  * Prints a grouped post-sync summary.
  */
-function printSyncSummary(fileSummary, targets) {
+function printSyncSummary(fileSummary, targets, opts = {}) {
+  if (opts.quiet) return;
   const toolEntries = [];
   const otherEntries = [];
   for (const [cat, count] of Object.entries(fileSummary)) {

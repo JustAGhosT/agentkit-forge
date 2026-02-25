@@ -387,7 +387,28 @@ git add .agentkit/ .gitignore .gitattributes
 git commit -m "chore: upgrade agentkit-forge to latest"
 ```
 
+> **Note:** If the upgrade adds new scaffold-once files (docs, templates, editor configs), they will appear as untracked after your first `sync`. This is expected — review them and `git add` the ones you want to keep. Subsequent syncs will not overwrite them. Use `sync --overwrite` to regenerate all project-owned files from templates.
+
 Your overlay (`overlays/<your-repo>/`) is never touched by upstream merges. See the **[Migration Guide](.agentkit/docs/MIGRATION_GUIDE.md)** for detailed upgrade paths and conflict resolution.
+
+### What merges cleanly vs. what needs attention
+
+| Component | Merge behaviour |
+|-----------|-----------------|
+| `.agentkit/engines/` | Auto-merges unless you modified engine source |
+| `.agentkit/spec/` | Auto-merges; new teams/commands appear automatically |
+| `.agentkit/templates/` | Auto-merges; new template files appear, existing ones update |
+| `.agentkit/overlays/__TEMPLATE__/` | Auto-merges; your repo-specific overlay is untouched |
+| `.agentkit/overlays/<your-repo>/` | **Never touched by upstream** — this is your customization |
+| `.agentkit/package.json` | May conflict if both sides changed versions — resolve manually |
+
+### Version pinning
+
+The current agentkit version is defined in `.agentkit/package.json` → `version`. After upgrading, check the version to confirm the merge landed:
+
+```bash
+node -e "console.log(require('./.agentkit/package.json').version)"
+```
 
 ## License
 

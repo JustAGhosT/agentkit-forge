@@ -336,15 +336,69 @@ describe('render target gating for new tools', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Tests: Empty-spec edge cases
-// ---------------------------------------------------------------------------
-describe('empty-spec edge cases', () => {
+describe('--overwrite flag', () => {
   let projectRoot;
 
   beforeEach(() => { projectRoot = makeTmpProject(); });
   afterEach(() => { rmSync(projectRoot, { recursive: true, force: true }); });
 
+  it('skips project-owned files by default, overwrites with --overwrite', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: {} });
+    const contribPath = join(projectRoot, 'CONTRIBUTING.md');
+    expect(existsSync(contribPath)).toBe(true);
+
+    const customContent = 'CUSTOM_CONTENT_MARKER_12345';
+    writeFileSync(contribPath, customContent, 'utf-8');
+
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: {} });
+    expect(readFileSync(contribPath, 'utf-8')).toBe(customContent);
+
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { overwrite: true } });
+    expect(readFileSync(contribPath, 'utf-8')).not.toContain(customContent);
+  });
+
+  it('--force is alias for --overwrite', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: {} });
+    const contribPath = join(projectRoot, 'CONTRIBUTING.md');
+    writeFileSync(contribPath, 'CUSTOM', 'utf-8');
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { force: true } });
+    expect(readFileSync(contribPath, 'utf-8')).not.toContain('CUSTOM');
+  });
+});
+
+describe('--quiet, --verbose, --no-clean, --diff flags', () => {
+  let projectRoot;
+
+  beforeEach(() => { projectRoot = makeTmpProject(); });
+  afterEach(() => { rmSync(projectRoot, { recursive: true, force: true }); });
+
+  it('--diff shows create/update/skip without writing', async () => {
+    const log = [];
+    const origLog = console.log;
+    console.log = (...args) => { log.push(args.map(String).join(' ')); origLog.apply(console, args); };
+    try {
+      await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { diff: true } });
+      const out = log.join('\n');
+      expect(out).toContain('[agentkit:sync] Diff mode');
+      expect(out).toContain('create ');
+      expect(out).toContain('Diff:');
+      expect(existsSync(join(projectRoot, 'CONTRIBUTING.md'))).toBe(false);
+    } finally {
+      console.log = origLog;
+    }
+  });
+
+  it('--no-clean preserves orphaned files', async () => {
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: {} });
+    const manifestPath = join(AGENTKIT_ROOT, '.manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+    manifest.files['__TEST_ORPHAN__.md'] = { hash: 'abc' };
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+    const orphanPath = join(projectRoot, '__TEST_ORPHAN__.md');
+    writeFileSync(orphanPath, 'orphan', 'utf-8');
+    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { 'no-clean': true } });
+    expect(existsSync(orphanPath)).toBe(true);
+=======
   it('no commands → no copilot prompts generated', async () => {
     // Sync with copilot target against real root; commands.yaml has commands,
     // but if we override with empty spec, no prompts should be generated.

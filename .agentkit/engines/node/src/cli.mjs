@@ -6,6 +6,7 @@
 import { fileURLToPath } from 'url';
 import { readFileSync, existsSync } from 'fs';
 import { dirname, resolve } from 'path';
+import { spawnSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,7 +32,7 @@ const SLASH_ONLY_COMMANDS = ['project-review'];
 
 const VALID_FLAGS = {
   init: ['repoName', 'force', 'non-interactive', 'ci', 'preset', 'help'],
-  sync: ['overlay', 'only', 'dry-run', 'help'],
+  sync: ['overlay', 'only', 'dry-run', 'overwrite', 'force', 'quiet', 'verbose', 'no-clean', 'diff', 'help'],
   validate: ['help'],
   discover: ['output', 'depth', 'include-deps', 'help'],
   'spec-validate': ['help'],
@@ -58,7 +59,6 @@ function parseFlags(args) {
     const arg = args[i];
     if (arg.startsWith('--')) {
       const raw = arg.slice(2);
-      // Support --flag=value syntax
       const eqIdx = raw.indexOf('=');
       if (eqIdx !== -1) {
         flags[raw.slice(0, eqIdx)] = raw.slice(eqIdx + 1);
@@ -71,8 +71,12 @@ function parseFlags(args) {
           flags[raw] = true;
         }
       }
+    } else if (arg.startsWith('-') && arg.length > 1 && arg !== '-') {
+      for (const c of arg.slice(1)) {
+        if (c === 'q') flags.quiet = true;
+        if (c === 'v') flags.verbose = true;
+      }
     } else {
-      // Positional argument (tool names for add/remove)
       flags._args.push(arg);
     }
   }
@@ -92,6 +96,12 @@ Commands:
                   --ci                Alias for --non-interactive
   sync            Render all AI tool configs from spec + overlay
                   --only <targets>    Sync only specific targets (comma-separated)
+                  --overwrite         Overwrite project-owned files (docs/, .vscode/, etc.)
+                  --force             Alias for --overwrite
+                  -q, --quiet         Reduce output (errors only)
+                  -v, --verbose       List each file written
+                  --no-clean          Don't delete orphaned files from previous sync
+                  --diff              Show what would change without writing
   validate        Validate generated outputs
   discover        Scan repo to detect tech stacks and structure
   spec-validate   Validate YAML spec files for schema correctness
@@ -151,6 +161,31 @@ Environment:
 `);
 }
 
+function ensureDependencies(agentkitRoot) {
+  const jsYamlPath = resolve(agentkitRoot, 'node_modules', 'js-yaml', 'package.json');
+  if (existsSync(jsYamlPath)) {
+    return true;
+  }
+  const pkgPath = resolve(agentkitRoot, 'package.json');
+  if (!existsSync(pkgPath)) {
+    return true;
+  }
+  const hasPnpm = spawnSync('pnpm', ['--version'], { encoding: 'utf8', windowsHide: true }).status === 0;
+  const installCmd = hasPnpm ? 'pnpm' : 'npm';
+  const installArgs = hasPnpm ? ['install'] : ['install'];
+  console.warn(`[agentkit] Dependencies not installed. Running ${installCmd} install in .agentkit...`);
+  const r = spawnSync(installCmd, installArgs, {
+    cwd: agentkitRoot,
+    stdio: 'inherit',
+    windowsHide: true,
+  });
+  if (r.status !== 0) {
+    console.error(`[agentkit] Failed to install dependencies. Run manually: ${installCmd} -C .agentkit install`);
+    return false;
+  }
+  return true;
+}
+
 async function main() {
   if (!command || command === '--help' || command === '-h') {
     showHelp();
@@ -179,6 +214,10 @@ async function main() {
     if (!validForCommand.includes(key)) {
       console.warn(`[agentkit:${command}] Warning: unrecognised flag --${key} (ignored)`);
     }
+  }
+
+  if (!ensureDependencies(AGENTKIT_ROOT)) {
+    process.exit(1);
   }
 
   // Record command invocation for cost tracking (best-effort)
