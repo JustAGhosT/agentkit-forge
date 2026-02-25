@@ -3,11 +3,13 @@
 This repository uses the AgentKit Forge unified agent team framework.
 
 ## Key References
+
 - UNIFIED_AGENT_TEAMS.md — Team definitions and workflow
 - AGENT_TEAMS.md — Repo-specific team mapping
 - AGENT_BACKLOG.md — Current work items
 
 ## Workflow
+
 1. /discover — Scan codebase structure and conventions
 2. /healthcheck — Validate build and test readiness
 3. /plan — Create implementation plan with clear acceptance criteria
@@ -15,6 +17,7 @@ This repository uses the AgentKit Forge unified agent team framework.
 5. /review — Code review against team standards
 
 {{#if infraNamingConvention}}
+
 ## Infrastructure Conventions
 
 - Naming convention: `{{infraNamingConvention}}`
@@ -25,6 +28,7 @@ This repository uses the AgentKit Forge unified agent team framework.
 {{/if}}
 
 {{#if hasMonitoring}}
+
 ## Observability
 
 {{#if monitoringProvider}}- Monitoring provider: {{monitoringProvider}}{{/if}}
@@ -34,6 +38,7 @@ This repository uses the AgentKit Forge unified agent team framework.
 {{/if}}
 
 {{#if hasCompliance}}
+
 ## Compliance and DR
 
 {{#if complianceFramework}}- Framework: {{complianceFramework}}{{/if}}
@@ -44,6 +49,7 @@ This repository uses the AgentKit Forge unified agent team framework.
 {{/if}}
 
 ## Non-negotiables
+
 - Prefer small, reversible changes
 - Keep builds and tests green at all times
 - Never touch secrets or .env files

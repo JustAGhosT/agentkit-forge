@@ -9,9 +9,14 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 - **Repository**: {{repoName}}
 - **Default Branch**: {{defaultBranch}}
 - **Framework Version**: {{version}}
-{{#if projectPhase}}- **Phase**: {{projectPhase}}{{/if}}
+{{#if projectPhase}}
+
+- **Phase**: {{projectPhase}}
+
+{{/if}}
 
 {{#if stackLanguages}}
+
 ## Tech Stack
 
 - **Languages**: {{stackLanguages}}
@@ -71,7 +76,7 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 
 ### Standard Session Flow
 
-```
+```text
 /orchestrate --assess-only → Understand current state
 /plan                     → Design implementation
 /team-<name>              → Execute with appropriate team
@@ -83,36 +88,49 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 ## Cross-Cutting Conventions
 
 {{#if hasLogging}}
+
 ### Logging
+
 Use **{{loggingFramework}}** for all logging.{{#if hasStructuredLogging}} Use structured logging — never use raw `console.log` or `Console.WriteLine`.{{/if}}{{#if hasCorrelationId}} Include correlation IDs in all log entries.{{/if}}
+
 {{#if loggingLevel}}- Default level: `{{loggingLevel}}`{{/if}}
 {{#if loggingSinks}}- Sinks: {{loggingSinks}}{{/if}}
 
 {{/if}}
 {{#if hasErrorHandling}}
+
 ### Error Handling
+
 Strategy: **{{errorStrategy}}**.{{#if hasGlobalHandler}} A global error handler is configured.{{/if}}{{#if hasCustomExceptions}} Use the project's custom exception types.{{/if}}
 
 {{/if}}
 {{#if hasAuth}}
+
 ### Authentication
+
 Provider: **{{authProvider}}**{{#if authStrategy}}, strategy: **{{authStrategy}}**{{/if}}.{{#if hasRbac}} RBAC is enforced.{{/if}}
 
 {{/if}}
 {{#if hasCaching}}
+
 ### Caching
+
 Provider: **{{cachingProvider}}**.{{#if cachingPatterns}} Patterns: {{cachingPatterns}}.{{/if}}{{#if hasDistributedCache}} Distributed cache — consider invalidation across nodes.{{/if}}
 
 {{/if}}
 {{#if hasApiVersioning}}
+
 ### API
+
 {{#if hasApiVersioning}}- Versioning: **{{apiVersioning}}**{{/if}}
 {{#if hasApiPagination}}- Pagination: **{{apiPagination}}**{{/if}}
 {{#if apiResponseFormat}}- Response format: **{{apiResponseFormat}}**{{/if}}
 
 {{/if}}
 {{#if hasDbMigrations}}
+
 ### Database
+
 - Migrations: **{{dbMigrations}}**
 {{#if dbTransactionStrategy}}- Transactions: **{{dbTransactionStrategy}}**{{/if}}
 
@@ -136,6 +154,7 @@ Always run the full test suite before creating a PR.
 - **State**: `.claude/state/` — Orchestrator state and session tracking
 
 {{#if hasAnyPattern}}
+
 ### Declared Implementation Patterns
 
 {{#if hasPatternRepository}}- Repository pattern{{/if}}
@@ -166,6 +185,7 @@ All project documentation follows the unified 8-category structure in `docs/`:
 | `08_reference/`    | Glossary, acronyms, FAQ, tool config           |
 
 {{#if hasIntegrations}}
+
 ## External Integrations
 
 {{#each integrations}}- **{{.name}}** — {{.purpose}}
@@ -173,15 +193,19 @@ All project documentation follows the unified 8-category structure in `docs/`:
 {{/if}}
 
 {{#if hasContainerized}}
+
 ## Infrastructure
 
 {{#if cloudProvider}}- **Cloud**: {{cloudProvider}}{{/if}}
 {{#if iacTool}}- **IaC**: {{iacTool}}{{/if}}
+
 - **Containerized**: Docker
+
 {{#if environments}}- **Environments**: {{environments}}{{/if}}
 {{/if}}
 
 {{#if infraNamingConvention}}
+
 ## Infrastructure Conventions
 
 - **Naming convention**: `{{infraNamingConvention}}`
@@ -194,6 +218,7 @@ All project documentation follows the unified 8-category structure in `docs/`:
 {{/if}}
 
 {{#if hasMonitoring}}
+
 ## Observability
 
 - **Monitoring provider**: {{monitoringProvider}}
@@ -207,6 +232,7 @@ All project documentation follows the unified 8-category structure in `docs/`:
 {{/if}}
 
 {{#if hasCompliance}}
+
 ## Compliance and Resilience
 
 - **Framework**: {{complianceFramework}}
@@ -223,6 +249,7 @@ Work is delegated between agents using **task files** in `.claude/state/tasks/`.
 Each task is a JSON file with a lifecycle: `submitted → accepted → working → completed/failed/rejected`.
 
 **Key rules:**
+
 - The **orchestrator** creates tasks and assigns them to teams.
 - Teams **accept or reject** tasks based on scope and accepted types.
 - On completion, teams add **artifacts** (files changed, test results) and optionally set `handoffTo` for downstream teams.

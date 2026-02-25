@@ -19,7 +19,7 @@ AgentKit Forge is a **single source of truth** for all your AI tool configuratio
 
 ## How
 
-```
+```text
 .agentkit/spec/project.yaml   ← You describe your project once
 .agentkit/spec/*.yaml          ← Teams, commands, rules, settings
 .agentkit/templates/           ← Templates per tool
@@ -354,7 +354,7 @@ See **[Tools](.agentkit/docs/TOOLS.md)** for per-tool output details and configu
 
 ## Architecture
 
-```
+```text
 .agentkit/              ← Committed source of truth
 ├── spec/               ← Teams, commands, rules, project.yaml (YAML)
 ├── templates/          ← Output templates per tool (15+ tools)

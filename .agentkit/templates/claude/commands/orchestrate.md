@@ -63,7 +63,7 @@ Create the directory `.claude/state/` if it does not exist.
 
 Append structured log lines in the format:
 
-```
+```text
 [<ISO-8601 timestamp>] [<PHASE>] [<TEAM|ORCHESTRATOR>] <message>
 ```
 
@@ -72,6 +72,7 @@ Create this file if it does not exist.
 ### Lock Management
 
 Before starting work:
+
 1. Read `orchestrator.json` and check `lock`.
 2. If `lock` is non-null and the timestamp is less than 30 minutes old, **stop** and inform the user another session may be active. Suggest `--force-unlock`.
 3. If `lock` is null or stale (>30 minutes), set `lock` to `{ "holder": "orchestrator", "acquired": "<timestamp>" }`.
@@ -82,6 +83,7 @@ Before starting work:
 Execute the following loop. Each iteration corresponds to one phase:
 
 ### Phase 1 — Discovery
+
 1. Read the current state file.
 2. Invoke the `/discover` workflow: scan the repository, identify stacks, build tools, package managers, folder structure, CI configuration, test frameworks, and broken items.
 3. Verify that `AGENT_TEAMS.md` has been created or updated.
@@ -89,6 +91,7 @@ Execute the following loop. Each iteration corresponds to one phase:
 5. Update `orchestrator.json` with discovered metadata.
 
 ### Phase 2 — Planning
+
 1. Invoke `/healthcheck` to validate the current build, lint, typecheck, and test status.
 2. Invoke `/sync-backlog` to ensure `AGENT_BACKLOG.md` reflects the latest findings.
 3. For each registered team, identify 1-3 high-priority backlog items that match their scope.
@@ -100,6 +103,7 @@ Execute the following loop. Each iteration corresponds to one phase:
 Delegate work using the **task protocol** (`.claude/state/tasks/`):
 
 1. For each planned work item, create a task JSON file:
+
    ```json
    {
      "id": "<generated>",
@@ -119,6 +123,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
      "artifacts": []
    }
    ```
+
 2. For **parallel work**, create independent tasks for each team.
 3. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
    - `blockedBy` is runtime-derived state from `dependsOn`; do not author it manually.
@@ -134,6 +139,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 7. Monitor progress via task status and log team outputs to `events.log`.
 
 ### Phase 4 — Validation
+
 1. Verify all delegated tasks have reached a terminal state (`completed`, `failed`, `rejected`, or `canceled`).
 2. Invoke `/check` to run the full quality gate (format, lint, typecheck, tests, build).
 3. Invoke `/review` on all changed files since the orchestration began.
@@ -141,6 +147,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 5. Record validation results in `orchestrator.json` and in task artifacts.
 
 ### Phase 5 — Ship
+
 1. Confirm all checks pass and all tasks are in terminal state, with no unresolved `failed`/`rejected` tasks.
 2. Invoke `/handoff` to produce a session summary.
 3. Update `orchestrator.json`: set `currentPhase` to 5, clear the lock, update metrics.
@@ -150,7 +157,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 
 At the end of each orchestration run, produce a summary with the following sections:
 
-```
+```markdown
 ## Orchestration Summary
 
 ### Actions Taken
