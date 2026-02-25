@@ -1,0 +1,163 @@
+/**
+ * AgentKit Forge — Doctor
+ * Repository diagnostics and setup checks.
+ */
+import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
+import yaml from 'js-yaml';
+import { validateSpec } from './spec-validator.mjs';
+
+function checkTemplateRoots(agentkitRoot, targets) {
+  const templatesRoot = resolve(agentkitRoot, 'templates');
+  const checks = [];
+
+  for (const target of targets) {
+    let expected;
+    switch (target) {
+      case 'claude':
+      case 'cursor':
+      case 'windsurf':
+      case 'copilot':
+      case 'mcp':
+      case 'roo':
+      case 'cline':
+      case 'ai':
+      case 'github':
+      case 'docs':
+        expected = resolve(templatesRoot, target);
+        break;
+      default:
+        expected = null;
+    }
+
+    if (!expected) continue;
+    checks.push({
+      target,
+      exists: existsSync(expected),
+      path: expected,
+    });
+  }
+
+  return checks;
+}
+
+function loadOverlayRenderTargets(agentkitRoot) {
+  const overlayPath = resolve(agentkitRoot, 'overlays', '__TEMPLATE__', 'settings.yaml');
+  if (!existsSync(overlayPath)) return [];
+  try {
+    const data = yaml.load(readFileSync(overlayPath, 'utf-8')) || {};
+    return Array.isArray(data.renderTargets) ? data.renderTargets : [];
+  } catch {
+    return [];
+  }
+}
+
+function projectCompleteness(project) {
+  if (!project || typeof project !== 'object') return { percent: 0, present: 0, total: 0, missing: [] };
+
+  const fields = [
+    'name',
+    'description',
+    'phase',
+    'stack.languages',
+    'stack.database',
+    'architecture.pattern',
+    'deployment.cloudProvider',
+    'deployment.iacTool',
+    'infrastructure.namingConvention',
+    'infrastructure.defaultRegion',
+    'infrastructure.org',
+    'observability.monitoring.provider',
+    'observability.alerting.provider',
+    'observability.tracing.provider',
+    'compliance.framework',
+    'compliance.disasterRecovery.rpoHours',
+    'compliance.disasterRecovery.rtoHours',
+    'compliance.audit.eventBus',
+  ];
+
+  const get = (obj, path) => path.split('.').reduce((a, k) => (a && a[k] !== undefined ? a[k] : undefined), obj);
+
+  const present = [];
+  const missing = [];
+  for (const f of fields) {
+    const val = get(project, f);
+    if (val !== undefined && val !== null && val !== '' && !(Array.isArray(val) && val.length === 0)) {
+      present.push(f);
+    } else {
+      missing.push(f);
+    }
+  }
+
+  const percent = Math.round((present.length / fields.length) * 100);
+  return { percent, present: present.length, total: fields.length, missing };
+}
+
+export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
+  const findings = [];
+
+  // 1) Spec validation
+  const spec = validateSpec(agentkitRoot);
+  if (!spec.valid) {
+    findings.push({ severity: 'error', message: `Spec validation failed (${spec.errors.length} errors)` });
+    for (const e of spec.errors) findings.push({ severity: 'error', message: e });
+  } else {
+    findings.push({ severity: 'info', message: `Spec validation passed (${spec.warnings.length} warnings)` });
+  }
+
+  // 2) Overlay/template sanity
+  const targets = loadOverlayRenderTargets(agentkitRoot);
+  if (targets.length === 0) {
+    findings.push({ severity: 'warning', message: 'No renderTargets defined in overlay settings; sync defaults may be broad.' });
+  } else {
+    const checks = checkTemplateRoots(agentkitRoot, targets);
+    for (const c of checks) {
+      if (!c.exists) findings.push({ severity: 'error', message: `Missing template root for target '${c.target}': ${c.path}` });
+    }
+    const missingCount = checks.filter((c) => !c.exists).length;
+    if (missingCount === 0) findings.push({ severity: 'info', message: `Template roots present for all ${checks.length} configured targets.` });
+  }
+
+  // 3) project.yaml completeness
+  const projectPath = resolve(agentkitRoot, 'spec', 'project.yaml');
+  if (existsSync(projectPath)) {
+    try {
+      const project = yaml.load(readFileSync(projectPath, 'utf-8')) || {};
+      const c = projectCompleteness(project);
+      findings.push({ severity: 'info', message: `project.yaml completeness: ${c.percent}% (${c.present}/${c.total})` });
+      if (c.missing.length > 0) {
+        findings.push({ severity: 'warning', message: `Top missing high-impact fields: ${c.missing.slice(0, 5).join(', ')}` });
+      }
+    } catch (err) {
+      findings.push({ severity: 'error', message: `Failed to parse project.yaml: ${err.message}` });
+    }
+  } else {
+    findings.push({ severity: 'error', message: `project.yaml not found at ${projectPath}` });
+  }
+
+  // Output
+  const hasErrors = findings.some((f) => f.severity === 'error');
+  const hasWarnings = findings.some((f) => f.severity === 'warning');
+  const status = hasErrors ? 'FAIL' : hasWarnings ? 'WARN' : 'PASS';
+
+  console.log(`[agentkit:doctor] Status: ${status}`);
+  for (const f of findings) {
+    const tag = f.severity.toUpperCase().padEnd(7);
+    console.log(`  ${tag} ${f.message}`);
+  }
+
+  if (flags.verbose) {
+    console.log('\n[agentkit:doctor] Suggested next actions:');
+    if (hasErrors) {
+      console.log('  1) Fix spec errors: node src/cli.mjs spec-validate');
+      console.log('  2) Re-run diagnostics: node src/cli.mjs doctor --verbose');
+    } else if (hasWarnings) {
+      console.log('  1) Fill missing project.yaml fields for richer templates');
+      console.log('  2) Run sync to regenerate outputs: node src/cli.mjs sync');
+    } else {
+      console.log('  System healthy. Continue with /orchestrate workflow.');
+    }
+  }
+
+  return { ok: !hasErrors, status, findings };
+}

@@ -1,12 +1,12 @@
 {
   "name": "agentkit-forge-runtime",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "description": "AgentKit Forge — unified AI agent team framework sync engine",
   "packageManager": "pnpm@9.15.4",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.11.0"
   },
   "dependencies": {
     "@clack/prompts": "^1.0.1",

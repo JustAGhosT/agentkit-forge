@@ -135,6 +135,16 @@ Always run the full test suite before creating a PR.
 - **Hooks**: `.claude/hooks/` — Lifecycle hooks (session-start, protect-sensitive, etc.)
 - **State**: `.claude/state/` — Orchestrator state and session tracking
 
+{{#if hasPatternRepository}}
+### Declared Implementation Patterns
+
+{{#if hasPatternRepository}}- Repository pattern{{/if}}
+{{#if hasPatternCqrs}}- CQRS{{/if}}
+{{#if hasPatternEventSourcing}}- Event sourcing{{/if}}
+{{#if hasPatternMediator}}- Mediator{{/if}}
+{{#if hasPatternUnitOfWork}}- Unit of work{{/if}}
+{{/if}}
+
 ## Documentation
 
 {{#if hasPrd}}- **PRDs**: `{{prdPath}}`{{/if}}
@@ -169,6 +179,42 @@ All project documentation follows the unified 8-category structure in `docs/`:
 {{#if iacTool}}- **IaC**: {{iacTool}}{{/if}}
 - **Containerized**: Docker
 {{#if environments}}- **Environments**: {{environments}}{{/if}}
+{{/if}}
+
+{{#if infraNamingConvention}}
+## Infrastructure Conventions
+
+- **Naming convention**: `{{infraNamingConvention}}`
+{{#if infraDefaultRegion}}- **Default region**: {{infraDefaultRegion}}{{/if}}
+{{#if infraOrg}}- **Organisation prefix**: {{infraOrg}}{{/if}}
+{{#if infraIacToolchain}}- **Preferred IaC toolchain**: {{infraIacToolchain}}{{/if}}
+{{#if infraStateBackend}}- **State backend**: {{infraStateBackend}}{{/if}}
+{{#if infraLockProvider}}- **State lock provider**: {{infraLockProvider}}{{/if}}
+{{#if infraMandatoryTags}}- **Mandatory tags**: {{infraMandatoryTags}}{{/if}}
+{{/if}}
+
+{{#if hasMonitoring}}
+## Observability
+
+- **Monitoring provider**: {{monitoringProvider}}
+{{#if hasMonitoringDashboards}}- **Dashboards**: required{{/if}}
+{{#if hasAlerting}}- **Alerting provider**: {{alertingProvider}}{{/if}}
+{{#if alertingChannels}}- **Alert channels**: {{alertingChannels}}{{/if}}
+{{#if hasTracing}}- **Tracing provider**: {{tracingProvider}}{{/if}}
+{{#if tracingSamplingRate}}- **Trace sampling rate**: {{tracingSamplingRate}}{{/if}}
+{{#if hasCentralisedLogging}}- **Centralised logging**: enabled{{/if}}
+{{#if loggingRetentionDays}}- **Log retention (days)**: {{loggingRetentionDays}}{{/if}}
+{{/if}}
+
+{{#if hasCompliance}}
+## Compliance and Resilience
+
+- **Framework**: {{complianceFramework}}
+{{#if drRpoHours}}- **DR RPO (hours)**: {{drRpoHours}}{{/if}}
+{{#if drRtoHours}}- **DR RTO (hours)**: {{drRtoHours}}{{/if}}
+{{#if drTestSchedule}}- **DR test schedule**: {{drTestSchedule}}{{/if}}
+{{#if hasAuditAppendOnly}}- **Audit mode**: append-only{{/if}}
+{{#if auditEventBus}}- **Audit event bus**: {{auditEventBus}}{{/if}}
 {{/if}}
 
 ## Task Delegation Protocol

@@ -110,6 +110,7 @@ This project uses a multi-team orchestration model. Teams are specialized by dom
 - Use `/handoff` to document session state for continuity.
 
 See `UNIFIED_AGENT_TEAMS.md` for full team definitions and workflow phases.
+See `COMMAND_GUIDE.md` for when to choose `/orchestrate`, `/plan`, `/project-review`, and other commands.
 
 {{#if hasFeatureFlags}}
 ## Feature Flags

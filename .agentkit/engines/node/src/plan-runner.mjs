@@ -85,7 +85,7 @@ function readBacklog(projectRoot) {
     // Detect table header row — match any pipe-delimited header containing common
     // backlog columns (ID, Priority, Task, Status, Team, etc.)
     if (!inTable && trimmed.startsWith('|')) {
-      const cols = trimmed.split('|').map(c => c.trim().toLowerCase()).filter(Boolean);
+      const cols = trimmed.split('|').map(c => c.trim().toLowerCase()).slice(1, -1);
       if (cols.some(c => c === 'id' || c === 'priority' || c === 'task' || c === 'status')) {
         headerCols = cols;
         continue;
@@ -99,21 +99,27 @@ function readBacklog(projectRoot) {
     }
 
     if (inTable && trimmed.startsWith('|')) {
-      const cells = trimmed.split('|').map(c => c.trim()).filter(Boolean);
+      const parts = trimmed.split('|').map(c => c.trim());
+      const cells = parts.slice(1, parts.length - 1);
       if (cells.length >= 2) {
-        // Map cells by header position if available, otherwise positional fallback
-        const idIdx = headerCols ? headerCols.indexOf('id') : 0;
-        const titleIdx = headerCols ? Math.max(headerCols.indexOf('title'), headerCols.indexOf('description'), headerCols.indexOf('what')) : 1;
-        const statusIdx = headerCols ? headerCols.indexOf('status') : 2;
-        const teamIdx = headerCols ? headerCols.indexOf('team') : 3;
-        const priorityIdx = headerCols ? headerCols.indexOf('priority') : 4;
+        const idIdx = headerCols && headerCols.indexOf('id') >= 0 ? headerCols.indexOf('id') : 0;
+        const titleIdx = headerCols ? Math.max(headerCols.indexOf('title'), headerCols.indexOf('description'), headerCols.indexOf('what'), headerCols.indexOf('task')) : 1;
+        const statusIdx = headerCols && headerCols.indexOf('status') >= 0 ? headerCols.indexOf('status') : 2;
+        const teamIdx = headerCols && headerCols.indexOf('team') >= 0 ? headerCols.indexOf('team') : 3;
+        const priorityIdx = headerCols && headerCols.indexOf('priority') >= 0 ? headerCols.indexOf('priority') : 4;
+
+        const safeId = idIdx >= 0 && idIdx < cells.length ? idIdx : 0;
+        const safeTitle = titleIdx >= 0 && titleIdx < cells.length ? titleIdx : 1;
+        const safeStatus = statusIdx >= 0 && statusIdx < cells.length ? statusIdx : 2;
+        const safeTeam = teamIdx >= 0 && teamIdx < cells.length ? teamIdx : 3;
+        const safePriority = priorityIdx >= 0 && priorityIdx < cells.length ? priorityIdx : 4;
 
         items.push({
-          id: cells[idIdx >= 0 ? idIdx : 0] || '',
-          title: cells[titleIdx >= 0 ? titleIdx : 1] || '',
-          status: cells[statusIdx >= 0 ? statusIdx : 2] || '',
-          team: cells[teamIdx >= 0 ? teamIdx : 3] || '',
-          priority: cells[priorityIdx >= 0 ? priorityIdx : 4] || '',
+          id: (cells[safeId] ?? '').toString(),
+          title: (cells[safeTitle] ?? '').toString(),
+          status: (cells[safeStatus] ?? '').toString(),
+          team: (cells[safeTeam] ?? '').toString(),
+          priority: (cells[safePriority] ?? '').toString(),
         });
       }
     } else if (inTable && !trimmed.startsWith('|')) {

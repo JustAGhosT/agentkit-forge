@@ -40,7 +40,7 @@ jobs:
           echo "=== Validating JSON files ==="
           errors=0
           for f in $(find . -name '*.json' -not -path './node_modules/*' -not -path './.git/*'); do
-            if ! python3 -c "import json; json.loads(open('$f').read())" 2>/dev/null; then
+            if ! python3 -c 'import json,sys; json.loads(open(sys.argv[1]).read())' "$f" 2>/dev/null; then
               echo "FAIL: $f is not valid JSON"
               errors=$((errors + 1))
             else
@@ -111,8 +111,8 @@ jobs:
             fi
           done
 
-          # Check for .env file commits
-          if git diff --cached --name-only 2>/dev/null | grep -qE '\.env($|\.)'; then
+          # Check for .env files in repo (tracked or untracked)
+          if { git ls-files --name-only 2>/dev/null; git ls-files --others --exclude-standard --name-only 2>/dev/null; } | grep -qE '\.env($|\.)'; then
             echo "::error::.env file detected in staged changes"
             errors=$((errors + 1))
           fi
@@ -136,7 +136,7 @@ jobs:
           done
 
           # Check for agent configuration directories
-          for dir in .cursor .windsurf .ai agentkit; do
+          for dir in .cursor .windsurf .ai .agentkit; do
             if [ -d "$dir" ]; then
               echo "OK:   $dir/ directory exists"
             else

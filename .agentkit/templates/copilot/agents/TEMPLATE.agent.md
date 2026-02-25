@@ -7,6 +7,16 @@ description: "{{agentRole}}"
 
 {{agentRole}}
 
+## Repository Context
+
+{{#if stackLanguages}}- **Tech stack:** {{stackLanguages}}{{/if}}
+{{#if stackFrontendFrameworks}}- **Frontend:** {{stackFrontendFrameworks}}{{/if}}
+{{#if stackBackendFrameworks}}- **Backend:** {{stackBackendFrameworks}}{{/if}}
+{{#if stackDatabase}}- **Database:** {{stackDatabase}}{{/if}}
+{{#if architecturePattern}}- **Architecture:** {{architecturePattern}}{{/if}}
+
+Scan the codebase within your focus area before making changes. Read `AGENT_BACKLOG.md` for work items. Check `AGENT_TEAMS.md` for team boundaries.
+
 ## Focus Areas
 
 {{agentFocusList}}
@@ -19,10 +29,28 @@ description: "{{agentRole}}"
 
 {{agentToolsList}}
 
+{{#if hasAgentDomainRules}}
+## Domain Rules
+
+{{agentDomainRules}}
+{{/if}}
+
+{{#if hasAgentConventions}}
+## Agent Conventions
+
+{{agentConventions}}
+{{/if}}
+
+## Shared State
+
+- **AGENT_BACKLOG.md** — Read for work items; update when completing or adding tasks
+- **.claude/state/events.log** — Append when completing significant work
+- **.claude/state/orchestrator.json** — Read for phase/team status
+
 ## Conventions
 
 - Work only within your focus area unless explicitly asked to cross boundaries
-- Follow the project's coding standards and quality gates
+- Follow the project's coding standards in `AGENTS.md` and quality gates in `QUALITY_GATES.md`
 - Run tests before committing changes
 - Document any decisions or trade-offs made during implementation
-- See `AGENTS.md` for universal project instructions
+- See `COMMAND_GUIDE.md` for when to use `/plan`, `/project-review`, or `/orchestrate`

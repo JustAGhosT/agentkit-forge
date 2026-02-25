@@ -41,13 +41,16 @@ const VALID_COMMANDS = [
   'list',
   'tasks',
   'delegate',
+  'doctor',
+  'scaffold',
+  'preflight',
 ];
 
 // Workflow commands with runtime handlers
 const WORKFLOW_COMMANDS = ['orchestrate', 'plan', 'check', 'review', 'handoff', 'healthcheck'];
 
 // Commands that are slash-command-only (no CLI handler)
-const SLASH_ONLY_COMMANDS = ['project-review'];
+const SLASH_ONLY_COMMANDS = ['project-review', 'scaffold', 'preflight'];
 
 const VALID_FLAGS = {
   init: ['repoName', 'force', 'non-interactive', 'ci', 'preset', 'help'],
@@ -94,6 +97,9 @@ const VALID_FLAGS = {
     'scope',
     'help',
   ],
+  doctor: ['verbose', 'help'],
+  scaffold: ['type', 'name', 'stack', 'path', 'help'],
+  preflight: ['stack', 'range', 'strict', 'help'],
   'project-review': ['scope', 'focus', 'phase', 'help'],
   add: ['help'],
   remove: ['clean', 'help'],
@@ -184,11 +190,17 @@ Task Delegation:
                   --depends-on <id> Depend on another task ID
                   --handoff-to <t>  Auto-handoff to team on completion
 
+Diagnostics:
+  doctor          Run AgentKit diagnostics and setup checks
+                  --verbose         Include detailed diagnostics
+
 Utility Commands:
   cost            Session cost and usage tracking
 
 Slash-Command Only:
   project-review  Comprehensive project audit (use as /project-review in AI tool)
+  scaffold        Generate convention-aligned skeletons (use as /scaffold in AI tool)
+  preflight       Run enhanced release-readiness checks (use as /preflight in AI tool)
 
 Options:
   orchestrate:
@@ -368,6 +380,16 @@ async function main() {
       case 'cost': {
         const { runCost } = await import('./cost-tracker.mjs');
         await runCost({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'doctor': {
+        const { runDoctor } = await import('./doctor.mjs');
+        const result = await runDoctor({
+          agentkitRoot: AGENTKIT_ROOT,
+          projectRoot: PROJECT_ROOT,
+          flags,
+        });
+        if (!result.ok) process.exit(1);
         break;
       }
       case 'tasks': {

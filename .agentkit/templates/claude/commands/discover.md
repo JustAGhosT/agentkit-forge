@@ -1,9 +1,21 @@
 ---
-description: "Scan the repository and produce a full codebase inventory"
+description: "{{commandDescription}}"
 allowed-tools: Bash(git *), Bash(find *), Bash(ls *), Bash(cat *), Bash(head *), Bash(wc *)
 ---
 
 # Codebase Discovery
+
+{{#if commandDescription}}
+## Context
+
+{{commandDescription}}
+{{#if commandFlags}}
+
+### Flags (from spec)
+
+{{commandFlags}}
+{{/if}}
+{{/if}}
 
 You are the **Discovery Agent**. Your job is to scan this repository thoroughly and produce a complete inventory of the codebase. You gather intelligence — you do **NOT** change any functional code.
 

@@ -2,23 +2,36 @@
  * AgentKit Forge — Tool Manager
  * Handles add/remove/list subcommands for incremental AI tool management.
  */
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, writeFileSync, existsSync, unlinkSync, realpathSync } from 'fs';
+import { resolve, sep } from 'path';
 import yaml from 'js-yaml';
 
 const ALL_TOOLS = ['claude', 'cursor', 'windsurf', 'copilot', 'gemini', 'codex', 'warp', 'cline', 'roo', 'ai', 'mcp'];
+
+const REPO_NAME_PATTERN = /^[A-Za-z0-9._-]+$/;
+
+function sanitizeRepoName(value) {
+  if (!value || typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || /\.\.|[/\\]/.test(trimmed)) return null;
+  if (!REPO_NAME_PATTERN.test(trimmed)) return null;
+  return trimmed;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function loadOverlaySettings(agentkitRoot, projectRoot) {
-  // Determine overlay name from .agentkit-repo marker
   const markerPath = resolve(projectRoot, '.agentkit-repo');
   if (!existsSync(markerPath)) {
     throw new Error('No .agentkit-repo marker found. Run "agentkit init" first.');
   }
-  const repoName = readFileSync(markerPath, 'utf-8').trim();
+  const raw = readFileSync(markerPath, 'utf-8').trim();
+  const repoName = sanitizeRepoName(raw);
+  if (!repoName) {
+    throw new Error('.agentkit-repo contains invalid overlay name. Run "agentkit init" to fix.');
+  }
   const settingsPath = resolve(agentkitRoot, 'overlays', repoName, 'settings.yaml');
   if (!existsSync(settingsPath)) {
     throw new Error(`Overlay settings not found at ${settingsPath}. Run "agentkit init" first.`);
@@ -163,15 +176,29 @@ function cleanToolFiles(agentkitRoot, projectRoot, tools) {
   const prefixesToClean = tools.flatMap(t => toolPrefixes[t] || []);
   let cleaned = 0;
 
+  let projectRootReal;
+  try {
+    projectRootReal = realpathSync(projectRoot) + sep;
+  } catch {
+    return cleaned;
+  }
+
   for (const filePath of Object.keys(manifest.files || {})) {
-    if (prefixesToClean.some(prefix => filePath.startsWith(prefix) || filePath === prefix.replace(/\/$/, ''))) {
-      const fullPath = resolve(projectRoot, filePath);
-      if (existsSync(fullPath)) {
-        try {
-          unlinkSync(fullPath);
-          cleaned++;
-        } catch { /* skip files we can't delete */ }
-      }
+    if (filePath.includes('..') || /^\/|^[A-Za-z]:/i.test(filePath)) continue;
+    if (!prefixesToClean.some(prefix => filePath.startsWith(prefix) || filePath === prefix.replace(/\/$/, ''))) continue;
+
+    const fullPath = resolve(projectRoot, filePath);
+    try {
+      const realPath = realpathSync(fullPath);
+      if (!realPath.startsWith(projectRootReal)) continue;
+    } catch {
+      continue;
+    }
+    if (existsSync(fullPath)) {
+      try {
+        unlinkSync(fullPath);
+        cleaned++;
+      } catch { /* skip files we can't delete */ }
     }
   }
 

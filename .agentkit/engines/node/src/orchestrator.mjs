@@ -749,7 +749,7 @@ export {
   createTask,
   formatTaskList,
   formatTaskSummary,
-  getTaskById,
+  getTask as getTaskById,
   listTasks,
-  updateTaskState,
+  updateTaskStatus as updateTaskState,
 } from './task-protocol.mjs';

@@ -135,6 +135,12 @@ List anything that could go wrong or needs human attention:
 
 Write the complete plan as a structured markdown document. Do NOT create a file — output the plan directly so the orchestrator or user can review it before implementation begins.
 
+## Shared State (read before planning, write after)
+
+- **Read:** `AGENT_BACKLOG.md` (for item context), `.claude/state/orchestrator.json` (for phase/team status)
+- **Append to:** `.claude/state/events.log`
+- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
+
 ## State Updates
 
 Append to `.claude/state/events.log`:

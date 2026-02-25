@@ -14,6 +14,35 @@ This repository uses the AgentKit Forge unified agent team framework.
 4. /check — Run quality gates (lint, test, build)
 5. /review — Code review against team standards
 
+{{#if infraNamingConvention}}
+## Infrastructure Conventions
+
+- Naming convention: `{{infraNamingConvention}}`
+{{#if infraDefaultRegion}}- Default region: {{infraDefaultRegion}}{{/if}}
+{{#if infraOrg}}- Organisation prefix: {{infraOrg}}{{/if}}
+{{#if infraIacToolchain}}- Preferred IaC toolchain: {{infraIacToolchain}}{{/if}}
+{{#if infraStateBackend}}- State backend: {{infraStateBackend}}{{/if}}
+{{/if}}
+
+{{#if hasMonitoring}}
+## Observability
+
+- Monitoring provider: {{monitoringProvider}}
+{{#if hasAlerting}}- Alerting provider: {{alertingProvider}}{{/if}}
+{{#if hasTracing}}- Tracing provider: {{tracingProvider}}{{/if}}
+{{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
+{{/if}}
+
+{{#if hasCompliance}}
+## Compliance and DR
+
+- Framework: {{complianceFramework}}
+{{#if drRpoHours}}- DR RPO (hours): {{drRpoHours}}{{/if}}
+{{#if drRtoHours}}- DR RTO (hours): {{drRtoHours}}{{/if}}
+{{#if drTestSchedule}}- DR test schedule: {{drTestSchedule}}{{/if}}
+{{#if auditEventBus}}- Audit event bus: {{auditEventBus}}{{/if}}
+{{/if}}
+
 ## Non-negotiables
 - Prefer small, reversible changes
 - Keep builds and tests green at all times

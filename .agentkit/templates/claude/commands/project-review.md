@@ -116,6 +116,13 @@ Propose updates to:
 
 ---
 
+## Shared State (read before review, write after)
+
+- **Read:** `AGENT_BACKLOG.md` (for existing items), `.claude/state/orchestrator.json` (for project context)
+- **Append to:** `.claude/state/events.log` — write findings for tracking
+- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
+- Consider updating `AGENT_BACKLOG.md` with new items from your findings (or recommend `/sync-backlog`).
+
 ## Output Format
 
 Update the orchestrator state after completing the review:

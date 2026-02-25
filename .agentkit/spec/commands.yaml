@@ -8,7 +8,6 @@
 # =============================================================================
 
 commands:
-
   # ===========================================================================
   # Workflow Commands — Multi-step orchestration and analysis
   # ===========================================================================
@@ -21,31 +20,31 @@ commands:
       synthesizes results. The primary entry point for multi-step workflows.
     flags:
       - name: --assess-only
-        description: "Run assessment phase only; do not execute changes"
+        description: 'Run assessment phase only; do not execute changes'
         type: boolean
         default: false
       - name: --scope
-        description: "Limit orchestration to specific file paths or glob patterns"
+        description: 'Limit orchestration to specific file paths or glob patterns'
         type: string
         default: null
       - name: --dry-run
-        description: "Show planned actions without executing them"
+        description: 'Show planned actions without executing them'
         type: boolean
         default: false
       - name: --team
-        description: "Delegate to a specific team instead of auto-routing"
+        description: 'Delegate to a specific team instead of auto-routing'
         type: string
         default: null
       - name: --phase
-        description: "Jump to a specific phase (1-5)"
+        description: 'Jump to a specific phase (1-5)'
         type: integer
         default: null
       - name: --status
-        description: "Show current orchestrator state without executing"
+        description: 'Show current orchestrator state without executing'
         type: boolean
         default: false
       - name: --force-unlock
-        description: "Clear a stale session lock"
+        description: 'Clear a stale session lock'
         type: boolean
         default: false
     allowed-tools:
@@ -64,15 +63,15 @@ commands:
       Outputs a structured discovery report used by other commands.
     flags:
       - name: --output
-        description: "Output format: json, yaml, or markdown"
+        description: 'Output format: json, yaml, or markdown'
         type: string
-        default: "yaml"
+        default: 'yaml'
       - name: --depth
-        description: "Directory traversal depth limit"
+        description: 'Directory traversal depth limit'
         type: integer
         default: 5
       - name: --include-deps
-        description: "Include dependency analysis in discovery output"
+        description: 'Include dependency analysis in discovery output'
         type: boolean
         default: true
     allowed-tools:
@@ -89,15 +88,15 @@ commands:
       the overall state of the codebase across all detected tech stacks.
     flags:
       - name: --stack
-        description: "Check only a specific tech stack (node, dotnet, rust, python)"
+        description: 'Check only a specific tech stack (node, dotnet, rust, python)'
         type: string
         default: null
       - name: --fix
-        description: "Attempt to auto-fix discovered issues"
+        description: 'Attempt to auto-fix discovered issues'
         type: boolean
         default: false
       - name: --verbose
-        description: "Include detailed output for each check"
+        description: 'Include detailed output for each check'
         type: boolean
         default: false
     allowed-tools:
@@ -114,25 +113,25 @@ commands:
       security concerns, test coverage, and architectural alignment.
     flags:
       - name: --pr
-        description: "GitHub PR number to review"
+        description: 'GitHub PR number to review'
         type: integer
         default: null
       - name: --range
-        description: "Git commit range to review (e.g., main..HEAD)"
+        description: 'Git commit range to review (e.g., main..HEAD)'
         type: string
         default: null
       - name: --file
-        description: "Review a specific file"
+        description: 'Review a specific file'
         type: string
         default: null
       - name: --focus
-        description: "Focus area: security, performance, correctness, style, or all"
+        description: 'Focus area: security, performance, correctness, style, or all'
         type: string
-        default: "all"
+        default: 'all'
       - name: --severity
-        description: "Minimum severity to report: info, warning, error, critical"
+        description: 'Minimum severity to report: info, warning, error, critical'
         type: string
-        default: "warning"
+        default: 'warning'
     allowed-tools:
       - Read
       - Glob
@@ -147,15 +146,15 @@ commands:
       and identifies stale or unassigned work items.
     flags:
       - name: --direction
-        description: "Sync direction: pull (from GitHub), push (to GitHub), or both"
+        description: 'Sync direction: pull (from GitHub), push (to GitHub), or both'
         type: string
-        default: "pull"
+        default: 'pull'
       - name: --labels
-        description: "Filter by GitHub labels (comma-separated)"
+        description: 'Filter by GitHub labels (comma-separated)'
         type: string
         default: null
       - name: --team
-        description: "Filter issues relevant to a specific team"
+        description: 'Filter issues relevant to a specific team'
         type: string
         default: null
     allowed-tools:
@@ -174,19 +173,19 @@ commands:
       status with detailed breakdowns per check category.
     flags:
       - name: --stack
-        description: "Check only a specific tech stack"
+        description: 'Check only a specific tech stack'
         type: string
         default: null
       - name: --fix
-        description: "Auto-fix issues where possible (lint, format)"
+        description: 'Auto-fix issues where possible (lint, format)'
         type: boolean
         default: false
       - name: --bail
-        description: "Stop on first failure"
+        description: 'Stop on first failure'
         type: boolean
         default: false
       - name: --fast
-        description: "Skip the build step; only run format + lint + typecheck + test"
+        description: 'Skip the build step; only run format + lint + typecheck + test'
         type: boolean
         default: false
     allowed-tools:
@@ -204,17 +203,17 @@ commands:
       acceptance criteria.
     flags:
       - name: --issue
-        description: "GitHub issue number to plan for"
+        description: 'GitHub issue number to plan for'
         type: integer
         default: null
       - name: --output
-        description: "Output format: markdown, yaml, or json"
+        description: 'Output format: markdown, yaml, or json'
         type: string
-        default: "markdown"
+        default: 'markdown'
       - name: --depth
-        description: "Planning detail level: high, medium, low"
+        description: 'Planning detail level: high, medium, low'
         type: string
-        default: "medium"
+        default: 'medium'
     allowed-tools:
       - Read
       - Glob
@@ -229,19 +228,19 @@ commands:
       by the next session or developer. Writes to docs/ai_handoffs/.
     flags:
       - name: --format
-        description: "Output format: markdown or yaml"
+        description: 'Output format: markdown or yaml'
         type: string
-        default: "markdown"
+        default: 'markdown'
       - name: --include-diff
-        description: "Include a summary of all file changes in the handoff"
+        description: 'Include a summary of all file changes in the handoff'
         type: boolean
         default: true
       - name: --tag
-        description: "Tag for categorizing the handoff (e.g., feature, bugfix, spike)"
+        description: 'Tag for categorizing the handoff (e.g., feature, bugfix, spike)'
         type: string
         default: null
       - name: --save
-        description: "Save the handoff document to docs/ai_handoffs/"
+        description: 'Save the handoff document to docs/ai_handoffs/'
         type: boolean
         default: false
     allowed-tools:
@@ -260,15 +259,15 @@ commands:
       roadmap organized into implementation waves.
     flags:
       - name: --scope
-        description: "Limit review to specific paths or modules"
+        description: 'Limit review to specific paths or modules'
         type: string
         default: null
       - name: --focus
-        description: "Focus area: all, security, performance, ux, docs, architecture"
+        description: 'Focus area: all, security, performance, ux, docs, architecture'
         type: string
-        default: "all"
+        default: 'all'
       - name: --phase
-        description: "Run only a specific review phase (0-4)"
+        description: 'Run only a specific review phase (0-4)'
         type: integer
         default: null
     allowed-tools:
@@ -279,6 +278,62 @@ commands:
       - WebSearch
       - WebFetch
 
+  - name: scaffold
+    type: workflow
+    description: >
+      Generates implementation skeletons aligned with project conventions.
+      Supports endpoints, UI components, IaC modules, migrations, tests,
+      and services. Uses project.yaml context and domain rules to prefill
+      structure and guardrails.
+    flags:
+      - name: --type
+        description: 'Scaffold type: endpoint, component, module, migration, test, service'
+        type: string
+        default: null
+      - name: --name
+        description: 'Name of the scaffold artifact'
+        type: string
+        default: null
+      - name: --stack
+        description: 'Target tech stack override'
+        type: string
+        default: null
+      - name: --path
+        description: 'Target output path'
+        type: string
+        default: null
+    allowed-tools:
+      - Read
+      - Write
+      - Edit
+      - Glob
+      - Grep
+
+  - name: preflight
+    type: workflow
+    description: >
+      Runs enhanced delivery checks before ship: quality gates, changelog,
+      coverage delta, commit convention conformance, TODO/FIXME hygiene,
+      and documentation updates for externally visible changes.
+    flags:
+      - name: --stack
+        description: 'Limit checks to a specific stack'
+        type: string
+        default: null
+      - name: --range
+        description: 'Git range used for changelog/commit checks'
+        type: string
+        default: 'HEAD~10..HEAD'
+      - name: --strict
+        description: 'Fail on warnings'
+        type: boolean
+        default: false
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+
   - name: cost
     type: utility
     description: >
@@ -287,32 +342,49 @@ commands:
       commands run, and files modified via lifecycle hooks.
     flags:
       - name: --summary
-        description: "Show recent session summary"
+        description: 'Show recent session summary'
         type: boolean
         default: false
       - name: --sessions
-        description: "List recent sessions"
+        description: 'List recent sessions'
         type: boolean
         default: false
       - name: --report
-        description: "Generate aggregate usage report"
+        description: 'Generate aggregate usage report'
         type: boolean
         default: false
       - name: --month
-        description: "Month for report (YYYY-MM format)"
+        description: 'Month for report (YYYY-MM format)'
         type: string
         default: null
       - name: --format
-        description: "Export format: table, json, csv"
+        description: 'Export format: table, json, csv'
         type: string
-        default: "table"
+        default: 'table'
       - name: --last
-        description: "Time period for queries (e.g. 7d, 30d)"
+        description: 'Time period for queries (e.g. 7d, 30d)'
         type: string
-        default: "7d"
+        default: '7d'
     allowed-tools:
       - Read
       - Glob
+
+  - name: doctor
+    type: utility
+    description: >
+      Runs AgentKit Forge diagnostics: spec validation, overlay sanity checks,
+      template availability, project.yaml completeness hints, and suggested
+      next actions for fixing setup issues.
+    flags:
+      - name: --verbose
+        description: 'Include detailed diagnostics'
+        type: boolean
+        default: false
+    allowed-tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
 
   # ===========================================================================
   # Framework Commands — AgentKit Forge internal tooling
@@ -341,19 +413,19 @@ commands:
       targeting specific packages in a monorepo or building the entire workspace.
     flags:
       - name: --stack
-        description: "Force a specific tech stack build command"
+        description: 'Force a specific tech stack build command'
         type: string
         default: null
       - name: --package
-        description: "Build a specific package/app in a monorepo"
+        description: 'Build a specific package/app in a monorepo'
         type: string
         default: null
       - name: --production
-        description: "Build in production mode"
+        description: 'Build in production mode'
         type: boolean
         default: false
       - name: --verbose
-        description: "Show verbose build output"
+        description: 'Show verbose build output'
         type: boolean
         default: false
     allowed-tools:
@@ -369,23 +441,23 @@ commands:
       and coverage when available.
     flags:
       - name: --stack
-        description: "Force a specific tech stack test command"
+        description: 'Force a specific tech stack test command'
         type: string
         default: null
       - name: --filter
-        description: "Filter tests by name or pattern"
+        description: 'Filter tests by name or pattern'
         type: string
         default: null
       - name: --coverage
-        description: "Generate coverage report"
+        description: 'Generate coverage report'
         type: boolean
         default: false
       - name: --watch
-        description: "Run tests in watch mode"
+        description: 'Run tests in watch mode'
         type: boolean
         default: false
       - name: --package
-        description: "Test a specific package/app in a monorepo"
+        description: 'Test a specific package/app in a monorepo'
         type: string
         default: null
     allowed-tools:
@@ -401,15 +473,15 @@ commands:
       that were changed.
     flags:
       - name: --stack
-        description: "Force a specific tech stack formatter"
+        description: 'Force a specific tech stack formatter'
         type: string
         default: null
       - name: --check
-        description: "Check formatting without making changes"
+        description: 'Check formatting without making changes'
         type: boolean
         default: false
       - name: --path
-        description: "Format only files matching this path or glob"
+        description: 'Format only files matching this path or glob'
         type: string
         default: null
     allowed-tools:
@@ -425,19 +497,19 @@ commands:
       Supports dry-run mode for safety.
     flags:
       - name: --environment
-        description: "Target environment: dev, staging, production"
+        description: 'Target environment: dev, staging, production'
         type: string
-        default: "dev"
+        default: 'dev'
       - name: --dry-run
-        description: "Simulate deployment without executing"
+        description: 'Simulate deployment without executing'
         type: boolean
         default: true
       - name: --skip-checks
-        description: "Skip pre-deployment quality checks (use with caution)"
+        description: 'Skip pre-deployment quality checks (use with caution)'
         type: boolean
         default: false
       - name: --stack
-        description: "Deploy a specific tech stack component"
+        description: 'Deploy a specific tech stack component'
         type: string
         default: null
     allowed-tools:
@@ -454,21 +526,21 @@ commands:
       Generates a security report with severity ratings.
     flags:
       - name: --scan-type
-        description: "Scan type: deps, secrets, owasp, permissions, or all"
+        description: 'Scan type: deps, secrets, owasp, permissions, or all'
         type: string
-        default: "all"
+        default: 'all'
       - name: --severity
-        description: "Minimum severity to report: low, medium, high, critical"
+        description: 'Minimum severity to report: low, medium, high, critical'
         type: string
-        default: "medium"
+        default: 'medium'
       - name: --fix
-        description: "Attempt to auto-fix vulnerabilities (dependency updates)"
+        description: 'Attempt to auto-fix vulnerabilities (dependency updates)'
         type: boolean
         default: false
       - name: --output
-        description: "Output format: json, markdown, or sarif"
+        description: 'Output format: json, markdown, or sarif'
         type: string
-        default: "markdown"
+        default: 'markdown'
     allowed-tools:
       - Read
       - Glob
@@ -488,7 +560,7 @@ commands:
       delegates to backend-specialized agents.
     flags:
       - name: --task
-        description: "Specific task to perform within the backend scope"
+        description: 'Specific task to perform within the backend scope'
         type: string
         default: null
     allowed-tools:
@@ -508,7 +580,7 @@ commands:
       WCAG AA accessibility and component patterns.
     flags:
       - name: --task
-        description: "Specific task to perform within the frontend scope"
+        description: 'Specific task to perform within the frontend scope'
         type: string
         default: null
     allowed-tools:
@@ -528,7 +600,7 @@ commands:
       migration safety and schema validation.
     flags:
       - name: --task
-        description: "Specific task to perform within the data scope"
+        description: 'Specific task to perform within the data scope'
         type: string
         default: null
     allowed-tools:
@@ -548,7 +620,7 @@ commands:
       including state safety and drift detection.
     flags:
       - name: --task
-        description: "Specific task to perform within the infra scope"
+        description: 'Specific task to perform within the infra scope'
         type: string
         default: null
     allowed-tools:
@@ -568,7 +640,7 @@ commands:
       rules including pipeline validation and container best practices.
     flags:
       - name: --task
-        description: "Specific task to perform within the devops scope"
+        description: 'Specific task to perform within the devops scope'
         type: string
         default: null
     allowed-tools:
@@ -588,7 +660,7 @@ commands:
       including coverage thresholds and test organization patterns.
     flags:
       - name: --task
-        description: "Specific task to perform within the testing scope"
+        description: 'Specific task to perform within the testing scope'
         type: string
         default: null
     allowed-tools:
@@ -608,7 +680,7 @@ commands:
       rules including secret protection and least-privilege enforcement.
     flags:
       - name: --task
-        description: "Specific task to perform within the security scope"
+        description: 'Specific task to perform within the security scope'
         type: string
         default: null
     allowed-tools:
@@ -628,7 +700,7 @@ commands:
       ADR formatting, link validation, and content structure.
     flags:
       - name: --task
-        description: "Specific task to perform within the docs scope"
+        description: 'Specific task to perform within the docs scope'
         type: string
         default: null
     allowed-tools:
@@ -648,7 +720,7 @@ commands:
       including PRD templates and acceptance criteria validation.
     flags:
       - name: --task
-        description: "Specific task to perform within the product scope"
+        description: 'Specific task to perform within the product scope'
         type: string
         default: null
     allowed-tools:
@@ -668,11 +740,11 @@ commands:
       reliability improvements.
     flags:
       - name: --task
-        description: "Specific task to perform within the quality scope"
+        description: 'Specific task to perform within the quality scope'
         type: string
         default: null
       - name: --focus
-        description: "Focus area: review, refactor, bugs, reliability"
+        description: 'Focus area: review, refactor, bugs, reliability'
         type: string
         default: null
     allowed-tools:

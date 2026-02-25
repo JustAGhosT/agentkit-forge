@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { runInit } from '../init.mjs';
 import {
   mkdirSync, writeFileSync, existsSync, readFileSync, rmSync, readdirSync, cpSync,
 } from 'fs';
@@ -116,8 +115,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
-      // Re-import after mock
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -138,7 +136,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -159,7 +157,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -181,7 +179,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -214,7 +212,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -239,7 +237,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -261,8 +259,21 @@ describe('runInit', () => {
   // Error cases
   // ---------------------------------------------------------------------------
   describe('error handling', () => {
+    it('throws on invalid repoName (path traversal)', async () => {
+      const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
+      await expect(
+        runInit({
+          agentkitRoot,
+          projectRoot,
+          flags: { repoName: '../evil', 'non-interactive': true },
+        }),
+      ).rejects.toThrow('Invalid repo name');
+    });
+
     it('throws on unknown preset', async () => {
       const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
       await expect(
         runInit({
           agentkitRoot,
@@ -274,11 +285,10 @@ describe('runInit', () => {
 
     it('throws when overlay already exists without --force', async () => {
       const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
-      // Create an overlay dir that already exists
       mkdirSync(resolve(agentkitRoot, 'overlays', 'existing-project'), {
         recursive: true,
       });
-
+      const { runInit } = await import('../init.mjs');
       await expect(
         runInit({
           agentkitRoot,
@@ -300,7 +310,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await expect(
         initFn({
@@ -333,7 +343,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await expect(
         initFn({
@@ -362,7 +372,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -421,7 +431,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -453,7 +463,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,

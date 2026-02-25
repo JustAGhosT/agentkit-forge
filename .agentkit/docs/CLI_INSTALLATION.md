@@ -35,11 +35,11 @@ Or, if adding AgentKit Forge to an existing project, see the
 ### 2. Install runtime dependencies
 
 ```bash
-pnpm -C agentkit install
+pnpm -C .agentkit install
 ```
 
 This installs the Node.js dependencies (including `js-yaml`) required by the
-sync engine. The `-C agentkit` flag tells pnpm to run inside the `.agentkit/`
+sync engine. The `-C .agentkit` flag tells pnpm to run inside the `.agentkit/`
 directory.
 
 ### 3. Verify the installation
@@ -68,11 +68,11 @@ node .agentkit/engines/node/src/cli.mjs <command> [options]
 Several commands have shorthand scripts defined in `.agentkit/package.json`:
 
 ```bash
-pnpm -C agentkit agentkit:sync           # equivalent to: cli.mjs sync
-pnpm -C agentkit agentkit:init           # equivalent to: cli.mjs init
-pnpm -C agentkit agentkit:validate       # equivalent to: cli.mjs validate
-pnpm -C agentkit agentkit:discover       # equivalent to: cli.mjs discover
-pnpm -C agentkit agentkit:spec-validate  # equivalent to: cli.mjs spec-validate
+pnpm -C .agentkit agentkit:sync           # equivalent to: cli.mjs sync
+pnpm -C .agentkit agentkit:init           # equivalent to: cli.mjs init
+pnpm -C .agentkit agentkit:validate       # equivalent to: cli.mjs validate
+pnpm -C .agentkit agentkit:discover       # equivalent to: cli.mjs discover
+pnpm -C .agentkit agentkit:spec-validate  # equivalent to: cli.mjs spec-validate
 ```
 
 ### Flag syntax
@@ -141,7 +141,7 @@ Run any command with `--help` to see its specific flags.
 
 ```bash
 # 1. Install dependencies
-pnpm -C agentkit install
+pnpm -C .agentkit install
 
 # 2. Initialize for your repository
 node .agentkit/engines/node/src/cli.mjs init --repoName my-project
@@ -178,7 +178,7 @@ Add a validation step to your CI pipeline to ensure spec files and generated
 outputs stay consistent:
 
 ```bash
-pnpm -C agentkit install
+pnpm -C .agentkit install
 node .agentkit/engines/node/src/cli.mjs spec-validate
 node .agentkit/engines/node/src/cli.mjs validate
 node .agentkit/engines/node/src/cli.mjs check --bail
@@ -207,7 +207,7 @@ directly.
 Make sure you installed dependencies first:
 
 ```bash
-pnpm -C agentkit install
+pnpm -C .agentkit install
 ```
 
 If the error persists, verify your Node.js version is 18 or higher:

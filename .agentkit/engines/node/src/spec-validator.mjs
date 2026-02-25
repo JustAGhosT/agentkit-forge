@@ -298,6 +298,23 @@ function validateProjectYaml(project) {
     checkEnum(arch.monorepoTool, 'architecture.monorepoTool', 'monorepoTool');
   }
 
+  // Explicit implementation patterns
+  const patterns = project.patterns;
+  if (patterns !== undefined && patterns !== null && typeof patterns !== 'object') {
+    errors.push('project.yaml: patterns must be an object');
+  } else if (patterns && typeof patterns === 'object') {
+    const boolFields = ['repository', 'cqrs', 'eventSourcing', 'mediator', 'unitOfWork'];
+    for (const field of boolFields) {
+      if (
+        patterns[field] !== undefined &&
+        patterns[field] !== null &&
+        typeof patterns[field] !== 'boolean'
+      ) {
+        errors.push(`project.yaml: patterns.${field} must be a boolean`);
+      }
+    }
+  }
+
   // Deployment
   const deploy = project.deployment;
   if (deploy !== undefined && deploy !== null && typeof deploy !== 'object') {

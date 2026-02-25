@@ -728,6 +728,46 @@ function formatMarkdown(report) {
     }
   }
 
+  const fw = report.frameworks;
+  const fwTotal = Object.values(fw).flat().length;
+  if (fwTotal > 0) {
+    lines.push(`## Frameworks`, ``);
+    if (fw.frontend?.length) lines.push(`- **Frontend:** ${fw.frontend.join(', ')}`);
+    if (fw.backend?.length) lines.push(`- **Backend:** ${fw.backend.join(', ')}`);
+    if (fw.css?.length) lines.push(`- **CSS:** ${fw.css.join(', ')}`);
+    if (fw.orm?.length) lines.push(`- **ORM:** ${fw.orm.join(', ')}`);
+    if (fw.stateManagement?.length) lines.push(`- **State:** ${fw.stateManagement.join(', ')}`);
+    lines.push('');
+  }
+
+  if (report.testing?.length > 0) {
+    lines.push(`## Testing`, ``, report.testing.map(t => `- ${t}`).join('\n'), ``);
+  }
+
+  if (report.documentation?.length > 0) {
+    lines.push(`## Documentation`, ``);
+    for (const d of report.documentation) {
+      lines.push(`- **${d.label}:** \`${d.path}\``);
+    }
+    lines.push('');
+  }
+
+  if (report.designSystem?.length > 0) {
+    lines.push(`## Design System`, ``, report.designSystem.map(d => `- ${d}`).join('\n'), ``);
+  }
+
+  const cc = report.crosscutting;
+  const ccKeys = Object.keys(cc || {}).filter(k => Array.isArray(cc[k]) ? cc[k].length > 0 : cc[k]);
+  if (ccKeys.length > 0) {
+    lines.push(`## Cross-Cutting`, ``);
+    for (const k of ccKeys) {
+      const v = cc[k];
+      if (Array.isArray(v)) lines.push(`- **${k}:** ${v.join(', ')}`);
+      else lines.push(`- **${k}:** ${v}`);
+    }
+    lines.push('');
+  }
+
   if (report.monorepo.detected) {
     lines.push(`## Monorepo`, ``, `Tools: ${report.monorepo.tools.join(', ')}`, ``);
   }

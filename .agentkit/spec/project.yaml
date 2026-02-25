@@ -36,6 +36,14 @@ architecture:
   monorepo: false
   monorepoTool: null # turborepo | nx | lerna | pnpm-workspaces
 
+# Explicit implementation patterns (helps agents avoid reinventing architecture)
+patterns:
+  repository: false
+  cqrs: false
+  eventSourcing: false
+  mediator: false
+  unitOfWork: false
+
 # Existing documentation & specs
 documentation:
   hasPrd: false

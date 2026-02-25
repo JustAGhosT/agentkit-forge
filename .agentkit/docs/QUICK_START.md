@@ -44,14 +44,14 @@ AgentKit Forge generates configuration files for whichever tools your team uses.
 From the root of your project repository:
 
 ```bash
-git submodule add https://github.com/your-org/agentkit-forge.git agentkit
+git submodule add https://github.com/your-org/agentkit-forge.git .agentkit
 git submodule update --init --recursive
 ```
 
 Then install the runtime dependencies:
 
 ```bash
-pnpm -C agentkit install
+pnpm -C .agentkit install
 ```
 
 > **Note:** If you do not use pnpm, you can also run `npm install` inside the

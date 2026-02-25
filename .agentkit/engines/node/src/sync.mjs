@@ -190,6 +190,14 @@ function flattenProjectYaml(project) {
   vars.hasMonorepo = !!arch.monorepo;
   if (arch.monorepoTool) vars.monorepoTool = arch.monorepoTool;
 
+  // Explicit implementation patterns
+  const patterns = project.patterns || {};
+  vars.hasPatternRepository = !!patterns.repository;
+  vars.hasPatternCqrs = !!patterns.cqrs;
+  vars.hasPatternEventSourcing = !!patterns.eventSourcing;
+  vars.hasPatternMediator = !!patterns.mediator;
+  vars.hasPatternUnitOfWork = !!patterns.unitOfWork;
+
   // Documentation
   const docs = project.documentation || {};
   vars.hasPrd = !!docs.hasPrd;
@@ -637,7 +645,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     syncDirectCopy(templatesDir, 'claude/hooks', tmpDir, '.claude/hooks', vars, version, repoName);
     syncClaudeSettings(templatesDir, tmpDir, vars, version, mergedPermissions, settingsSpec);
     syncClaudeCommands(templatesDir, tmpDir, vars, version, repoName, teamsSpec, commandsSpec);
-    syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec);
+    syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec);
     syncDirectCopy(templatesDir, 'claude/rules', tmpDir, '.claude/rules', vars, version, repoName);
     syncDirectCopy(templatesDir, 'claude/state', tmpDir, '.claude/state', vars, version, repoName);
     syncClaudeMd(templatesDir, tmpDir, vars, version, repoName);
@@ -680,7 +688,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   if (targets.has('copilot')) {
     syncCopilot(templatesDir, tmpDir, vars, version, repoName);
     syncCopilotPrompts(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
-    syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec);
+    syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec);
     syncCopilotChatModes(templatesDir, tmpDir, vars, version, repoName, teamsSpec);
   }
 
@@ -897,6 +905,15 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 
   // 11. Post-sync summary
   printSyncSummary(fileSummary, targets, { quiet });
+  const completeness = computeProjectCompleteness(projectSpec);
+  if (completeness.total > 0) {
+    log(
+      `[agentkit:sync] project.yaml completeness: ${completeness.percent}% (${completeness.present}/${completeness.total} fields populated)`
+    );
+    if (completeness.missing.length > 0) {
+      log(`[agentkit:sync] Top missing fields: ${completeness.missing.slice(0, 5).join(', ')}`);
+    }
+  }
   log(`[agentkit:sync] Done! Generated ${count} files.`);
 
   // 12. First-sync hint (when not called from init)
@@ -1039,6 +1056,67 @@ function mergePermissions(base, overlay) {
   const allow = [...new Set([...(base.allow || []), ...(overlay.allow || [])])];
   const deny = [...new Set([...(base.deny || []), ...(overlay.deny || [])])];
   return { allow, deny };
+}
+
+function computeProjectCompleteness(project) {
+  if (!project || typeof project !== 'object') {
+    return { percent: 0, present: 0, total: 0, missing: [] };
+  }
+
+  const fields = [
+    'name',
+    'description',
+    'phase',
+    'stack.languages',
+    'stack.database',
+    'architecture.pattern',
+    'deployment.cloudProvider',
+    'deployment.iacTool',
+    'infrastructure.namingConvention',
+    'infrastructure.defaultRegion',
+    'infrastructure.org',
+    'observability.monitoring.provider',
+    'observability.alerting.provider',
+    'observability.tracing.provider',
+    'compliance.framework',
+    'compliance.disasterRecovery.rpoHours',
+    'compliance.disasterRecovery.rtoHours',
+    'compliance.audit.eventBus',
+    'patterns.repository',
+    'patterns.cqrs',
+    'patterns.eventSourcing',
+    'patterns.mediator',
+    'patterns.unitOfWork',
+  ];
+
+  const get = (obj, path) =>
+    path
+      .split('.')
+      .reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
+
+  const missing = [];
+  let present = 0;
+
+  for (const field of fields) {
+    const value = get(project, field);
+    if (
+      value === undefined ||
+      value === null ||
+      value === '' ||
+      (Array.isArray(value) && value.length === 0)
+    ) {
+      missing.push(field);
+    } else {
+      present += 1;
+    }
+  }
+
+  return {
+    percent: Math.round((present / fields.length) * 100),
+    present,
+    total: fields.length,
+    missing,
+  };
 }
 
 function syncDirectCopy(templatesDir, srcSubdir, tmpDir, destSubdir, vars, version, repoName) {
@@ -1190,7 +1268,55 @@ function syncClaudeCommands(
   }
 }
 
-function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec) {
+function normalizeGlobStem(glob) {
+  if (typeof glob !== 'string' || !glob.trim()) return '';
+  return glob
+    .replace(/\\/g, '/')
+    .replace(/^\.\//, '')
+    .replace(/\*\*\/\*/g, '')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/\.(ts|tsx|js|jsx|mjs|mts|cs|py|rs|tf|md|json|yaml|yml)$/i, '')
+    .replace(/^\/+|\/+$/g, '');
+}
+
+function hasGlobOverlap(a, b) {
+  const aa = normalizeGlobStem(a);
+  const bb = normalizeGlobStem(b);
+  if (!aa || !bb) return false;
+  return aa.startsWith(bb) || bb.startsWith(aa) || aa.includes(bb) || bb.includes(aa);
+}
+
+function buildAgentDomainRulesMarkdown(agent, rulesSpec) {
+  if (!rulesSpec?.rules || !Array.isArray(agent?.focus)) return '';
+  const matched = [];
+
+  for (const ruleSet of rulesSpec.rules) {
+    if (!Array.isArray(ruleSet['applies-to'])) continue;
+    const overlaps = ruleSet['applies-to'].some((ruleGlob) =>
+      agent.focus.some((focusGlob) => hasGlobOverlap(focusGlob, ruleGlob))
+    );
+    if (!overlaps) continue;
+
+    const conventions = Array.isArray(ruleSet.conventions)
+      ? ruleSet.conventions
+          .map((c) => {
+            const severity = c.severity ? ` [${c.severity}]` : '';
+            const ruleText = typeof c.rule === 'string' ? c.rule.trim() : String(c.rule || '');
+            return `- **${c.id}**${severity}: ${ruleText}`;
+          })
+          .join('\n')
+      : '';
+
+    if (conventions) {
+      matched.push(`### ${ruleSet.domain}\n${conventions}`);
+    }
+  }
+
+  return matched.join('\n\n');
+}
+
+function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec) {
   const agentTemplatePath = resolve(templatesDir, 'claude', 'agents', 'TEMPLATE.md');
   if (!existsSync(agentTemplatePath) || !agentsSpec.agents) return;
 
@@ -1218,6 +1344,22 @@ function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsS
       : Array.isArray(agent.tools)
         ? agent.tools.map((t) => `- ${t}`).join('\n')
         : '';
+    const domainRules = buildAgentDomainRulesMarkdown(agent, rulesSpec);
+    const conventionsList = Array.isArray(agent.conventions)
+      ? agent.conventions.map((c) => `- ${c}`).join('\n')
+      : '';
+    const antiPatternsList = Array.isArray(agent['anti-patterns'])
+      ? agent['anti-patterns'].map((a) => `- ${a}`).join('\n')
+      : '';
+    const examplesList = Array.isArray(agent.examples)
+      ? agent.examples
+          .map((ex) => {
+            const title = ex?.title || 'Example';
+            const code = ex?.code || '';
+            return `### ${title}\n\n\`\`\`\n${code}\n\`\`\``;
+          })
+          .join('\n\n')
+      : '';
 
     const agentVars = {
       ...vars,
@@ -1228,6 +1370,14 @@ function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsS
       agentFocusList: focusList,
       agentResponsibilitiesList: responsibilitiesList,
       agentToolsList: toolsList,
+      hasAgentDomainRules: !!domainRules,
+      agentDomainRules: domainRules,
+      hasAgentExamples: !!examplesList,
+      agentExamples: examplesList,
+      hasAgentAntiPatterns: !!antiPatternsList,
+      agentAntiPatterns: antiPatternsList,
+      hasAgentConventions: !!conventionsList,
+      agentConventions: conventionsList,
     };
 
     let content = renderTemplate(agentTemplate, agentVars);
@@ -1427,7 +1577,7 @@ function syncCopilotPrompts(templatesDir, tmpDir, vars, version, repoName, comma
   }
 }
 
-function syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec) {
+function syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec) {
   const templatePath = resolve(templatesDir, 'copilot', 'agents', 'TEMPLATE.agent.md');
   if (!existsSync(templatePath) || !agentsSpec.agents) return;
 
@@ -1454,6 +1604,10 @@ function syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agents
       : Array.isArray(agent.tools)
         ? agent.tools.map((t) => `- ${t}`).join('\n')
         : '';
+    const domainRules = buildAgentDomainRulesMarkdown(agent, rulesSpec);
+    const conventionsList = Array.isArray(agent.conventions)
+      ? agent.conventions.map((c) => `- ${c}`).join('\n')
+      : '';
 
     const agentVars = {
       ...vars,
@@ -1464,6 +1618,10 @@ function syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agents
       agentFocusList: focusList,
       agentResponsibilitiesList: responsibilitiesList,
       agentToolsList: toolsList,
+      hasAgentDomainRules: !!domainRules,
+      agentDomainRules: domainRules,
+      hasAgentConventions: !!conventionsList,
+      agentConventions: conventionsList,
     };
 
     let content = renderTemplate(template, agentVars);
