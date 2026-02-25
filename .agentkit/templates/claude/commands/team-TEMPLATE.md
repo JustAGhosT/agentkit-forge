@@ -182,7 +182,7 @@ If `.claude/state/orchestrator.json` exists, update the team entry:
       "lastRun": "<timestamp>",
       "itemsCompleted": ["<item titles>"],
       "filesChanged": ["<file paths>"],
-      "testsAdded": 0,
+      "testsAdded": <number>,
       "gateStatus": "<PASS|FAIL>"
     }
   }

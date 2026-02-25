@@ -3,9 +3,9 @@
  * Scans the repository to detect tech stacks, project structure, team boundaries,
  * and build a structured discovery report.
  */
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
-import { resolve, join, basename, extname, relative } from 'path';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import yaml from 'js-yaml';
+import { basename, extname, join, resolve } from 'path';
 
 // ---------------------------------------------------------------------------
 // Tech stack detection patterns
@@ -17,7 +17,14 @@ const STACK_DETECTORS = [
     label: 'Node.js / TypeScript',
     markers: ['package.json'],
     filePatterns: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts'],
-    configFiles: ['tsconfig.json', '.eslintrc.json', '.eslintrc.js', '.prettierrc', 'vitest.config.ts', 'jest.config.ts'],
+    configFiles: [
+      'tsconfig.json',
+      '.eslintrc.json',
+      '.eslintrc.js',
+      '.prettierrc',
+      'vitest.config.ts',
+      'jest.config.ts',
+    ],
   },
   {
     name: 'dotnet',
@@ -70,17 +77,38 @@ const STACK_DETECTORS = [
 const FRAMEWORK_DETECTORS = {
   frontend: [
     { name: 'react', label: 'React', deps: ['react'], configs: [] },
-    { name: 'next.js', label: 'Next.js', deps: ['next'], configs: ['next.config.js', 'next.config.mjs', 'next.config.ts'] },
+    {
+      name: 'next.js',
+      label: 'Next.js',
+      deps: ['next'],
+      configs: ['next.config.js', 'next.config.mjs', 'next.config.ts'],
+    },
     { name: 'vue', label: 'Vue', deps: ['vue'], configs: ['vue.config.js'] },
     { name: 'angular', label: 'Angular', deps: ['@angular/core'], configs: ['angular.json'] },
-    { name: 'svelte', label: 'Svelte', deps: ['svelte'], configs: ['svelte.config.js', 'svelte.config.ts'] },
-    { name: 'astro', label: 'Astro', deps: ['astro'], configs: ['astro.config.mjs', 'astro.config.ts'] },
+    {
+      name: 'svelte',
+      label: 'Svelte',
+      deps: ['svelte'],
+      configs: ['svelte.config.js', 'svelte.config.ts'],
+    },
+    {
+      name: 'astro',
+      label: 'Astro',
+      deps: ['astro'],
+      configs: ['astro.config.mjs', 'astro.config.ts'],
+    },
   ],
   backend: [
     { name: 'express', label: 'Express', deps: ['express'], configs: [] },
     { name: 'nestjs', label: 'NestJS', deps: ['@nestjs/core'], configs: ['nest-cli.json'] },
     { name: 'fastify', label: 'Fastify', deps: ['fastify'], configs: [] },
-    { name: 'asp.net-core', label: 'ASP.NET Core', deps: [], markers: ['Program.cs'], csprojRefs: ['Microsoft.AspNetCore'] },
+    {
+      name: 'asp.net-core',
+      label: 'ASP.NET Core',
+      deps: [],
+      markers: ['Program.cs'],
+      csprojRefs: ['Microsoft.AspNetCore'],
+    },
     { name: 'fastapi', label: 'FastAPI', deps: ['fastapi'], configs: [] },
     { name: 'django', label: 'Django', deps: ['django'], configs: ['manage.py'] },
     { name: 'flask', label: 'Flask', deps: ['flask'], configs: [] },
@@ -90,16 +118,46 @@ const FRAMEWORK_DETECTORS = {
     { name: 'actix', label: 'Actix', deps: [], cargoRefs: ['actix-web'] },
   ],
   css: [
-    { name: 'tailwind', label: 'Tailwind CSS', deps: ['tailwindcss'], configs: ['tailwind.config.js', 'tailwind.config.ts', 'tailwind.config.mjs'] },
+    {
+      name: 'tailwind',
+      label: 'Tailwind CSS',
+      deps: ['tailwindcss'],
+      configs: ['tailwind.config.js', 'tailwind.config.ts', 'tailwind.config.mjs'],
+    },
     { name: 'sass', label: 'SASS/SCSS', deps: ['sass', 'node-sass'], fileExt: '.scss' },
-    { name: 'styled-components', label: 'Styled Components', deps: ['styled-components'], configs: [] },
+    {
+      name: 'styled-components',
+      label: 'Styled Components',
+      deps: ['styled-components'],
+      configs: [],
+    },
     { name: 'emotion', label: 'Emotion', deps: ['@emotion/react'], configs: [] },
   ],
   orm: [
-    { name: 'prisma', label: 'Prisma', deps: ['prisma', '@prisma/client'], configs: ['prisma/schema.prisma'] },
-    { name: 'typeorm', label: 'TypeORM', deps: ['typeorm'], configs: ['ormconfig.json', 'ormconfig.ts', 'ormconfig.js'] },
-    { name: 'drizzle', label: 'Drizzle', deps: ['drizzle-orm'], configs: ['drizzle.config.ts', 'drizzle.config.js'] },
-    { name: 'ef-core', label: 'Entity Framework Core', deps: [], csprojRefs: ['Microsoft.EntityFrameworkCore'] },
+    {
+      name: 'prisma',
+      label: 'Prisma',
+      deps: ['prisma', '@prisma/client'],
+      configs: ['prisma/schema.prisma'],
+    },
+    {
+      name: 'typeorm',
+      label: 'TypeORM',
+      deps: ['typeorm'],
+      configs: ['ormconfig.json', 'ormconfig.ts', 'ormconfig.js'],
+    },
+    {
+      name: 'drizzle',
+      label: 'Drizzle',
+      deps: ['drizzle-orm'],
+      configs: ['drizzle.config.ts', 'drizzle.config.js'],
+    },
+    {
+      name: 'ef-core',
+      label: 'Entity Framework Core',
+      deps: [],
+      csprojRefs: ['Microsoft.EntityFrameworkCore'],
+    },
     { name: 'sqlalchemy', label: 'SQLAlchemy', deps: ['sqlalchemy'], configs: [] },
     { name: 'diesel', label: 'Diesel', deps: [], configs: ['diesel.toml'], cargoRefs: ['diesel'] },
     { name: 'sequelize', label: 'Sequelize', deps: ['sequelize'], configs: ['.sequelizerc'] },
@@ -118,10 +176,30 @@ const FRAMEWORK_DETECTORS = {
 // ---------------------------------------------------------------------------
 
 const TESTING_DETECTORS = [
-  { name: 'vitest', label: 'Vitest', deps: ['vitest'], configs: ['vitest.config.ts', 'vitest.config.js', 'vitest.config.mjs'] },
-  { name: 'jest', label: 'Jest', deps: ['jest'], configs: ['jest.config.ts', 'jest.config.js', 'jest.config.mjs'] },
-  { name: 'playwright', label: 'Playwright', deps: ['@playwright/test', 'playwright'], configs: ['playwright.config.ts', 'playwright.config.js'] },
-  { name: 'cypress', label: 'Cypress', deps: ['cypress'], configs: ['cypress.config.ts', 'cypress.config.js'] },
+  {
+    name: 'vitest',
+    label: 'Vitest',
+    deps: ['vitest'],
+    configs: ['vitest.config.ts', 'vitest.config.js', 'vitest.config.mjs'],
+  },
+  {
+    name: 'jest',
+    label: 'Jest',
+    deps: ['jest'],
+    configs: ['jest.config.ts', 'jest.config.js', 'jest.config.mjs'],
+  },
+  {
+    name: 'playwright',
+    label: 'Playwright',
+    deps: ['@playwright/test', 'playwright'],
+    configs: ['playwright.config.ts', 'playwright.config.js'],
+  },
+  {
+    name: 'cypress',
+    label: 'Cypress',
+    deps: ['cypress'],
+    configs: ['cypress.config.ts', 'cypress.config.js'],
+  },
   { name: 'xunit', label: 'xUnit', deps: [], csprojRefs: ['xunit'] },
   { name: 'nunit', label: 'NUnit', deps: [], csprojRefs: ['NUnit'] },
   { name: 'pytest', label: 'pytest', deps: ['pytest'], configs: ['conftest.py'] },
@@ -134,9 +212,24 @@ const TESTING_DETECTORS = [
 
 const DOC_ARTIFACT_DETECTORS = [
   { name: 'prd', label: 'PRDs', dirs: ['docs/prd', 'docs/PRD'], files: ['PRD.md', 'docs/PRD.md'] },
-  { name: 'adr', label: 'ADRs', dirs: ['adr', 'docs/adr', 'docs/02_architecture/ADR'], files: ['ARCHITECTURE.md', 'docs/architecture.md'] },
-  { name: 'apiSpec', label: 'API Specs', dirs: ['docs/api', 'docs/03_api'], files: ['openapi.yaml', 'openapi.yml', 'openapi.json', 'swagger.json', 'swagger.yaml'] },
-  { name: 'technicalSpec', label: 'Technical Specs', dirs: ['docs/specs', 'docs/technical'], files: ['TECHNICAL.md', 'docs/technical.md'] },
+  {
+    name: 'adr',
+    label: 'ADRs',
+    dirs: ['adr', 'docs/adr', 'docs/02_architecture/ADR'],
+    files: ['ARCHITECTURE.md', 'docs/architecture.md'],
+  },
+  {
+    name: 'apiSpec',
+    label: 'API Specs',
+    dirs: ['docs/api', 'docs/03_api'],
+    files: ['openapi.yaml', 'openapi.yml', 'openapi.json', 'swagger.json', 'swagger.yaml'],
+  },
+  {
+    name: 'technicalSpec',
+    label: 'Technical Specs',
+    dirs: ['docs/specs', 'docs/technical'],
+    files: ['TECHNICAL.md', 'docs/technical.md'],
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -146,8 +239,16 @@ const DOC_ARTIFACT_DETECTORS = [
 const DESIGN_SYSTEM_DETECTORS = [
   { name: 'storybook', label: 'Storybook', dirs: ['.storybook'] },
   { name: 'figma-tokens', label: 'Figma Tokens', files: ['figma-tokens.json'], dirs: ['.figma'] },
-  { name: 'design-tokens', label: 'Design Tokens', dirs: ['tokens', 'design-tokens', 'styles/tokens'] },
-  { name: 'component-library', label: 'Component Library', dirs: ['packages/ui', 'packages/components'] },
+  {
+    name: 'design-tokens',
+    label: 'Design Tokens',
+    dirs: ['tokens', 'design-tokens', 'styles/tokens'],
+  },
+  {
+    name: 'component-library',
+    label: 'Component Library',
+    dirs: ['packages/ui', 'packages/components'],
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -164,28 +265,65 @@ const CROSSCUTTING_DETECTORS = {
     { name: 'nlog', label: 'NLog', csprojRefs: ['NLog'] },
   ],
   authentication: [
-    { name: 'azure-ad-b2c', label: 'Azure AD B2C', deps: ['@azure/msal-browser', '@azure/msal-node', '@azure/msal-react'] },
+    {
+      name: 'azure-ad-b2c',
+      label: 'Azure AD B2C',
+      deps: ['@azure/msal-browser', '@azure/msal-node', '@azure/msal-react'],
+    },
     { name: 'azure-ad', label: 'Azure AD', csprojRefs: ['Microsoft.Identity.Web'] },
     { name: 'auth0', label: 'Auth0', deps: ['auth0', '@auth0/nextjs-auth0', '@auth0/auth0-react'] },
     { name: 'firebase', label: 'Firebase Auth', deps: ['firebase-admin', 'firebase'] },
     { name: 'cognito', label: 'AWS Cognito', deps: ['aws-amplify', '@aws-amplify/auth'] },
     { name: 'keycloak', label: 'Keycloak', deps: ['keycloak-js', 'keycloak-connect'] },
-    { name: 'custom-jwt', label: 'JWT', deps: ['jsonwebtoken'], csprojRefs: ['System.IdentityModel.Tokens.Jwt'] },
+    {
+      name: 'custom-jwt',
+      label: 'JWT',
+      deps: ['jsonwebtoken'],
+      csprojRefs: ['System.IdentityModel.Tokens.Jwt'],
+    },
   ],
   caching: [
-    { name: 'redis', label: 'Redis', deps: ['ioredis', 'redis'], csprojRefs: ['StackExchange.Redis'] },
+    {
+      name: 'redis',
+      label: 'Redis',
+      deps: ['ioredis', 'redis'],
+      csprojRefs: ['StackExchange.Redis'],
+    },
     { name: 'memcached', label: 'Memcached', deps: ['memcached', 'memjs'] },
   ],
   errorHandling: [
-    { name: 'problem-details', label: 'Problem Details (RFC 7807)', csprojRefs: ['Hellang.Middleware.ProblemDetails', 'Microsoft.AspNetCore.Http.Results'] },
+    {
+      name: 'problem-details',
+      label: 'Problem Details (RFC 7807)',
+      csprojRefs: ['Hellang.Middleware.ProblemDetails', 'Microsoft.AspNetCore.Http.Results'],
+    },
   ],
   apiPatterns: [
-    { name: 'api-versioning', label: 'API Versioning', csprojRefs: ['Asp.Versioning'], deps: ['express-api-versioning'] },
-    { name: 'swagger', label: 'Swagger/OpenAPI', csprojRefs: ['Swashbuckle'], deps: ['@nestjs/swagger', 'swagger-ui-express'] },
+    {
+      name: 'api-versioning',
+      label: 'API Versioning',
+      csprojRefs: ['Asp.Versioning'],
+      deps: ['express-api-versioning'],
+    },
+    {
+      name: 'swagger',
+      label: 'Swagger/OpenAPI',
+      csprojRefs: ['Swashbuckle'],
+      deps: ['@nestjs/swagger', 'swagger-ui-express'],
+    },
   ],
   featureFlags: [
-    { name: 'launchdarkly', label: 'LaunchDarkly', deps: ['launchdarkly-node-server-sdk', 'launchdarkly-js-client-sdk'] },
-    { name: 'azure-app-config', label: 'Azure App Config', csprojRefs: ['Microsoft.Azure.AppConfiguration'], deps: ['@azure/app-configuration'] },
+    {
+      name: 'launchdarkly',
+      label: 'LaunchDarkly',
+      deps: ['launchdarkly-node-server-sdk', 'launchdarkly-js-client-sdk'],
+    },
+    {
+      name: 'azure-app-config',
+      label: 'Azure App Config',
+      csprojRefs: ['Microsoft.Azure.AppConfiguration'],
+      deps: ['@azure/app-configuration'],
+    },
     { name: 'unleash', label: 'Unleash', deps: ['unleash-client'] },
     { name: 'flagsmith', label: 'Flagsmith', deps: ['flagsmith'] },
   ],
@@ -229,17 +367,17 @@ function fileExists(projectRoot, pattern) {
     // Check for any file matching the extension
     const ext = pattern.replace('*', '');
     try {
-      return readdirSync(projectRoot).some(f => f.endsWith(ext));
-    } catch { return false; }
+      return readdirSync(projectRoot).some((f) => f.endsWith(ext));
+    } catch {
+      return false;
+    }
   }
   return existsSync(resolve(projectRoot, pattern));
 }
 
 // Directories to skip during discovery — framework internals and build artifacts
 // should not be counted as application source code in consuming repos.
-const SKIP_DIRS = new Set([
-  '.git', 'node_modules', 'dist', 'build', '.next', '.nuxt',
-]);
+const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.nuxt']);
 
 function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
   let count = 0;
@@ -258,7 +396,9 @@ function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
           count++;
         }
       }
-    } catch { /* permission errors */ }
+    } catch {
+      /* permission errors */
+    }
   }
   walk(dir, 0);
   return count;
@@ -267,9 +407,11 @@ function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
 function getTopLevelDirs(projectRoot) {
   try {
     return readdirSync(projectRoot, { withFileTypes: true })
-      .filter(e => e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules')
-      .map(e => e.name);
-  } catch { return []; }
+      .filter((e) => e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules')
+      .map((e) => e.name);
+  } catch {
+    return [];
+  }
 }
 
 function detectMonorepo(projectRoot) {
@@ -284,7 +426,9 @@ function detectMonorepo(projectRoot) {
     try {
       const pkg = JSON.parse(readFileSync(resolve(projectRoot, 'package.json'), 'utf-8'));
       if (pkg.workspaces) indicators.push('npm-workspaces');
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   // Nx
   if (existsSync(resolve(projectRoot, 'nx.json'))) {
@@ -303,7 +447,9 @@ function detectMonorepo(projectRoot) {
     try {
       const cargo = readFileSync(resolve(projectRoot, 'Cargo.toml'), 'utf-8');
       if (cargo.includes('[workspace]')) indicators.push('cargo-workspace');
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   return indicators;
@@ -326,7 +472,9 @@ function getNodeDeps(projectRoot) {
         for (const dep of Object.keys(pkg[section])) deps.add(dep);
       }
     }
-  } catch { /* no package.json or parse error */ }
+  } catch {
+    /* no package.json or parse error */
+  }
   return deps;
 }
 
@@ -344,10 +492,16 @@ function getCsprojContent(projectRoot) {
         if (entry.isDirectory()) {
           walk(full, depth + 1);
         } else if (entry.name.endsWith('.csproj')) {
-          try { content += readFileSync(full, 'utf-8') + '\n'; } catch { /* skip */ }
+          try {
+            content += readFileSync(full, 'utf-8') + '\n';
+          } catch {
+            /* skip */
+          }
         }
       }
-    } catch { /* permission errors */ }
+    } catch {
+      /* permission errors */
+    }
   }
   walk(projectRoot, 0);
   return content;
@@ -359,7 +513,9 @@ function getCsprojContent(projectRoot) {
 function getCargoContent(projectRoot) {
   try {
     return readFileSync(resolve(projectRoot, 'Cargo.toml'), 'utf-8');
-  } catch { return ''; }
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -368,7 +524,9 @@ function getCargoContent(projectRoot) {
 function getGemfileContent(projectRoot) {
   try {
     return readFileSync(resolve(projectRoot, 'Gemfile'), 'utf-8');
-  } catch { return ''; }
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -377,7 +535,9 @@ function getGemfileContent(projectRoot) {
 function getPomContent(projectRoot) {
   try {
     return readFileSync(resolve(projectRoot, 'pom.xml'), 'utf-8');
-  } catch { return ''; }
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -448,56 +608,66 @@ function getPythonDeps(projectRoot) {
         }
       }
     }
-  } catch { /* skip */ }
+  } catch {
+    /* skip */
+  }
   // requirements.txt
   try {
     const content = readFileSync(resolve(projectRoot, 'requirements.txt'), 'utf-8');
     for (const line of content.split('\n')) {
-      const pkg = line.trim().split(/[>=<\[!;#]/)[0].trim();
+      const pkg = line
+        .trim()
+        .split(/[>=<\[!;#]/)[0]
+        .trim();
       if (pkg) deps.add(pkg.toLowerCase());
     }
-  } catch { /* skip */ }
+  } catch {
+    /* skip */
+  }
   return deps;
 }
 
 /**
  * Detects frameworks from a detector list using cached dependency data.
  */
-function detectFromList(detectors, { nodeDeps, csprojContent, cargoContent, gemfileContent, pomContent, pythonDeps, projectRoot }) {
+function detectFromList(
+  detectors,
+  { nodeDeps, csprojContent, cargoContent, gemfileContent, pomContent, pythonDeps, projectRoot }
+) {
   const found = [];
   for (const d of detectors) {
     let matched = false;
     // Check Node.js deps
     if (d.deps?.length && nodeDeps.size > 0) {
-      if (d.deps.some(dep => nodeDeps.has(dep))) matched = true;
+      if (d.deps.some((dep) => nodeDeps.has(dep))) matched = true;
     }
     // Check config files
     if (!matched && d.configs?.length) {
-      if (d.configs.some(c => existsSync(resolve(projectRoot, c)))) matched = true;
+      if (d.configs.some((c) => existsSync(resolve(projectRoot, c)))) matched = true;
     }
     // Check markers (plain files)
     if (!matched && d.markers?.length) {
-      if (d.markers.some(m => existsSync(resolve(projectRoot, m)))) matched = true;
+      if (d.markers.some((m) => existsSync(resolve(projectRoot, m)))) matched = true;
     }
     // Check .csproj references
     if (!matched && d.csprojRefs?.length && csprojContent) {
-      if (d.csprojRefs.some(ref => csprojContent.includes(ref))) matched = true;
+      if (d.csprojRefs.some((ref) => csprojContent.includes(ref))) matched = true;
     }
     // Check Cargo.toml references
     if (!matched && d.cargoRefs?.length && cargoContent) {
-      if (d.cargoRefs.some(ref => cargoContent.includes(ref))) matched = true;
+      if (d.cargoRefs.some((ref) => cargoContent.includes(ref))) matched = true;
     }
     // Check Gemfile references
     if (!matched && d.gemfileRefs?.length && gemfileContent) {
-      if (d.gemfileRefs.some(ref => gemfileContent.includes(ref))) matched = true;
+      if (d.gemfileRefs.some((ref) => gemfileContent.includes(ref))) matched = true;
     }
     // Check pom.xml references
     if (!matched && d.pomRefs?.length && pomContent) {
-      if (d.pomRefs.some(ref => pomContent.includes(ref))) matched = true;
+      if (d.pomRefs.some((ref) => pomContent.includes(ref))) matched = true;
     }
     // Check Python deps
     if (!matched && d.deps?.length && pythonDeps.size > 0) {
-      if (d.deps.some(dep => pythonDeps.has(dep.toLowerCase()))) matched = true;
+      if (d.deps.some((dep) => pythonDeps.has(dep.toLowerCase()))) matched = true;
     }
     // Check file extensions (e.g. .scss files)
     if (!matched && d.fileExt) {
@@ -524,7 +694,14 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
     testing: [],
     documentation: [],
     designSystem: [],
-    crosscutting: { logging: [], authentication: [], caching: [], errorHandling: [], apiPatterns: [], featureFlags: [] },
+    crosscutting: {
+      logging: [],
+      authentication: [],
+      caching: [],
+      errorHandling: [],
+      apiPatterns: [],
+      featureFlags: [],
+    },
     infrastructure: [],
     cicd: [],
     monorepo: { detected: false, tools: [] },
@@ -538,15 +715,18 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
     report.repository.isGit = true;
   }
   if (existsSync(resolve(projectRoot, '.agentkit-repo'))) {
-    report.repository.agentkitOverlay = readFileSync(resolve(projectRoot, '.agentkit-repo'), 'utf-8').trim();
+    report.repository.agentkitOverlay = readFileSync(
+      resolve(projectRoot, '.agentkit-repo'),
+      'utf-8'
+    ).trim();
   }
 
   // --- Tech stack detection ---
   for (const detector of STACK_DETECTORS) {
-    const markerFound = detector.markers.some(m => fileExists(projectRoot, m));
+    const markerFound = detector.markers.some((m) => fileExists(projectRoot, m));
     if (markerFound) {
       const fileCount = countFilesByExt(projectRoot, detector.filePatterns);
-      const configsFound = detector.configFiles.filter(c => existsSync(resolve(projectRoot, c)));
+      const configsFound = detector.configFiles.filter((c) => existsSync(resolve(projectRoot, c)));
       report.techStacks.push({
         name: detector.name,
         label: detector.label,
@@ -558,7 +738,7 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
 
   // --- Determine primary stack ---
   if (report.techStacks.length > 0) {
-    const primary = report.techStacks.reduce((a, b) => a.fileCount > b.fileCount ? a : b);
+    const primary = report.techStacks.reduce((a, b) => (a.fileCount > b.fileCount ? a : b));
     report.primaryStack = primary.name;
   }
 
@@ -569,19 +749,27 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   const gemfileContent = getGemfileContent(projectRoot);
   const pomContent = getPomContent(projectRoot);
   const pythonDeps = getPythonDeps(projectRoot);
-  const depContext = { nodeDeps, csprojContent, cargoContent, gemfileContent, pomContent, pythonDeps, projectRoot };
+  const depContext = {
+    nodeDeps,
+    csprojContent,
+    cargoContent,
+    gemfileContent,
+    pomContent,
+    pythonDeps,
+    projectRoot,
+  };
 
   // --- Framework detection (§11a) ---
   for (const [category, detectors] of Object.entries(FRAMEWORK_DETECTORS)) {
     const found = detectFromList(detectors, depContext);
     if (found.length > 0) {
-      report.frameworks[category] = found.map(f => f.name);
+      report.frameworks[category] = found.map((f) => f.name);
     }
   }
 
   // --- Testing tool detection (§11b) ---
   const testingFound = detectFromList(TESTING_DETECTORS, depContext);
-  report.testing = testingFound.map(t => t.name);
+  report.testing = testingFound.map((t) => t.name);
 
   // --- Documentation artifact detection (§11c) ---
   for (const detector of DOC_ARTIFACT_DETECTORS) {
@@ -614,12 +802,18 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
     let found = false;
     if (detector.dirs) {
       for (const dir of detector.dirs) {
-        if (existsSync(resolve(projectRoot, dir))) { found = true; break; }
+        if (existsSync(resolve(projectRoot, dir))) {
+          found = true;
+          break;
+        }
       }
     }
     if (!found && detector.files) {
       for (const file of detector.files) {
-        if (existsSync(resolve(projectRoot, file))) { found = true; break; }
+        if (existsSync(resolve(projectRoot, file))) {
+          found = true;
+          break;
+        }
       }
     }
     if (found) {
@@ -631,7 +825,7 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   for (const [concern, detectors] of Object.entries(CROSSCUTTING_DETECTORS)) {
     const found = detectFromList(detectors, depContext);
     if (found.length > 0) {
-      report.crosscutting[concern] = found.map(f => f.name);
+      report.crosscutting[concern] = found.map((f) => f.name);
     }
   }
 
@@ -644,7 +838,7 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
 
   // --- Infrastructure detection ---
   for (const detector of INFRA_DETECTORS) {
-    const found = detector.markers.some(m => fileExists(projectRoot, m));
+    const found = detector.markers.some((m) => fileExists(projectRoot, m));
     if (found) {
       report.infrastructure.push(detector.name);
     }
@@ -652,7 +846,7 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
 
   // --- CI/CD detection ---
   for (const detector of CI_DETECTORS) {
-    const found = detector.markers.some(m => fileExists(projectRoot, m));
+    const found = detector.markers.some((m) => fileExists(projectRoot, m));
     if (found) {
       report.cicd.push(detector.name);
     }
@@ -672,16 +866,24 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
 
   // --- Recommendations ---
   if (report.techStacks.length === 0) {
-    report.recommendations.push('No recognised tech stacks detected. Add marker files (package.json, Cargo.toml, etc.) or configure primaryStack manually.');
+    report.recommendations.push(
+      'No recognised tech stacks detected. Add marker files (package.json, Cargo.toml, etc.) or configure primaryStack manually.'
+    );
   }
   if (report.cicd.length === 0) {
-    report.recommendations.push('No CI/CD configuration detected. Consider adding GitHub Actions or another CI pipeline.');
+    report.recommendations.push(
+      'No CI/CD configuration detected. Consider adding GitHub Actions or another CI pipeline.'
+    );
   }
   if (!report.repository.agentkitOverlay) {
-    report.recommendations.push('No .agentkit-repo marker found. Run "agentkit init" to set up an overlay.');
+    report.recommendations.push(
+      'No .agentkit-repo marker found. Run "agentkit init" to set up an overlay.'
+    );
   }
   if (report.testing.length === 0 && report.techStacks.length > 0) {
-    report.recommendations.push('No testing frameworks detected. Consider adding tests with vitest, jest, pytest, or xUnit.');
+    report.recommendations.push(
+      'No testing frameworks detected. Consider adding tests with vitest, jest, pytest, or xUnit.'
+    );
   }
 
   // --- Output ---
@@ -698,7 +900,9 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   console.log('');
   console.log(output);
   const fwCount = Object.values(report.frameworks).flat().length;
-  console.log(`[agentkit:discover] Found ${report.techStacks.length} tech stack(s), ${fwCount} framework(s), ${report.testing.length} test tool(s), ${report.infrastructure.length} infra tool(s), ${report.cicd.length} CI/CD system(s).`);
+  console.log(
+    `[agentkit:discover] Found ${report.techStacks.length} tech stack(s), ${fwCount} framework(s), ${report.testing.length} test tool(s), ${report.infrastructure.length} infra tool(s), ${report.cicd.length} CI/CD system(s).`
+  );
 
   return report;
 }
@@ -732,16 +936,18 @@ function formatMarkdown(report) {
   const fwTotal = Object.values(fw).flat().length;
   if (fwTotal > 0) {
     lines.push(`## Frameworks`, ``);
-    if (fw.frontend?.length) lines.push(`- **Frontend:** ${fw.frontend.join(', ')}`);
-    if (fw.backend?.length) lines.push(`- **Backend:** ${fw.backend.join(', ')}`);
-    if (fw.css?.length) lines.push(`- **CSS:** ${fw.css.join(', ')}`);
-    if (fw.orm?.length) lines.push(`- **ORM:** ${fw.orm.join(', ')}`);
-    if (fw.stateManagement?.length) lines.push(`- **State:** ${fw.stateManagement.join(', ')}`);
+    for (const [category, values] of Object.entries(fw)) {
+      if (!Array.isArray(values) || values.length === 0) continue;
+      const label = category
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/^./, (c) => c.toUpperCase());
+      lines.push(`- **${label}:** ${values.join(', ')}`);
+    }
     lines.push('');
   }
 
   if (report.testing?.length > 0) {
-    lines.push(`## Testing`, ``, report.testing.map(t => `- ${t}`).join('\n'), ``);
+    lines.push(`## Testing`, ``, report.testing.map((t) => `- ${t}`).join('\n'), ``);
   }
 
   if (report.documentation?.length > 0) {
@@ -753,11 +959,13 @@ function formatMarkdown(report) {
   }
 
   if (report.designSystem?.length > 0) {
-    lines.push(`## Design System`, ``, report.designSystem.map(d => `- ${d}`).join('\n'), ``);
+    lines.push(`## Design System`, ``, report.designSystem.map((d) => `- ${d}`).join('\n'), ``);
   }
 
   const cc = report.crosscutting;
-  const ccKeys = Object.keys(cc || {}).filter(k => Array.isArray(cc[k]) ? cc[k].length > 0 : cc[k]);
+  const ccKeys = Object.keys(cc || {}).filter((k) =>
+    Array.isArray(cc[k]) ? cc[k].length > 0 : cc[k]
+  );
   if (ccKeys.length > 0) {
     lines.push(`## Cross-Cutting`, ``);
     for (const k of ccKeys) {
@@ -773,11 +981,11 @@ function formatMarkdown(report) {
   }
 
   if (report.infrastructure.length > 0) {
-    lines.push(`## Infrastructure`, ``, report.infrastructure.map(i => `- ${i}`).join('\n'), ``);
+    lines.push(`## Infrastructure`, ``, report.infrastructure.map((i) => `- ${i}`).join('\n'), ``);
   }
 
   if (report.cicd.length > 0) {
-    lines.push(`## CI/CD`, ``, report.cicd.map(c => `- ${c}`).join('\n'), ``);
+    lines.push(`## CI/CD`, ``, report.cicd.map((c) => `- ${c}`).join('\n'), ``);
   }
 
   lines.push(`## Project Structure`, ``, `Top-level directories:`, ``);

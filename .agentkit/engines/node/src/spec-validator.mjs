@@ -585,6 +585,9 @@ function validateCrossReferences(specs) {
                   `agents.yaml: agent "${agent.id}" notifies references unknown agent "${n}"`
                 );
               }
+              if (n === agent.id) {
+                errors.push(`agents.yaml: agent "${agent.id}" notifies cannot reference itself`);
+              }
             }
           }
         }

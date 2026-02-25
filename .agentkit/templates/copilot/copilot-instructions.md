@@ -46,20 +46,22 @@ When referencing documentation, always check these files first before making
 assumptions about project structure or conventions.
 
 {{#if infraNamingConvention}}
+
 ## Infrastructure Conventions
 
 - Naming convention: `{{infraNamingConvention}}`
-{{#if infraDefaultRegion}}- Default region: {{infraDefaultRegion}}{{/if}}
-{{#if infraOrg}}- Organisation prefix: {{infraOrg}}{{/if}}
-{{#if infraIacToolchain}}- Preferred IaC toolchain: {{infraIacToolchain}}{{/if}}
-{{#if infraStateBackend}}- State backend: {{infraStateBackend}}{{/if}}
-{{#if infraMandatoryTags}}- Mandatory tags: {{infraMandatoryTags}}{{/if}}
-{{/if}}
+  {{#if infraDefaultRegion}}- Default region: {{infraDefaultRegion}}{{/if}}
+  {{#if infraOrg}}- Organisation prefix: {{infraOrg}}{{/if}}
+  {{#if infraIacToolchain}}- Preferred IaC toolchain: {{infraIacToolchain}}{{/if}}
+  {{#if infraStateBackend}}- State backend: {{infraStateBackend}}{{/if}}
+  {{#if infraMandatoryTags}}- Mandatory tags: {{infraMandatoryTags}}{{/if}}
+  {{/if}}
 
 {{#if hasMonitoring}}
+
 ## Observability
 
-- Monitoring provider: {{monitoringProvider}}
+{{#if monitoringProvider}}- Monitoring provider: {{monitoringProvider}}{{/if}}
 {{#if hasAlerting}}- Alerting provider: {{alertingProvider}}{{/if}}
 {{#if hasTracing}}- Tracing provider: {{tracingProvider}}{{/if}}
 {{#if tracingSamplingRate}}- Trace sampling rate: {{tracingSamplingRate}}{{/if}}
@@ -67,9 +69,10 @@ assumptions about project structure or conventions.
 {{/if}}
 
 {{#if hasCompliance}}
+
 ## Compliance and DR
 
-- Framework: {{complianceFramework}}
+{{#if complianceFramework}}- Framework: {{complianceFramework}}{{/if}}
 {{#if drRpoHours}}- DR RPO (hours): {{drRpoHours}}{{/if}}
 {{#if drRtoHours}}- DR RTO (hours): {{drRtoHours}}{{/if}}
 {{#if drTestSchedule}}- DR test schedule: {{drTestSchedule}}{{/if}}

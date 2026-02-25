@@ -4,8 +4,8 @@
  * Tasks are JSON files in .claude/state/tasks/ with lifecycle states,
  * messages, artifacts, dependency tracking, and chained handoffs.
  */
-import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, renameSync } from 'fs';
-import { resolve, basename } from 'path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'fs';
+import { resolve } from 'path';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -13,14 +13,14 @@ import { resolve, basename } from 'path';
 
 /** Valid task lifecycle states. */
 export const TASK_STATES = [
-  'submitted',       // created by delegator, awaiting assignee review
-  'accepted',        // assignee acknowledged the task
-  'working',         // assignee is actively working
-  'input-required',  // assignee needs info from delegator
-  'completed',       // task finished successfully
-  'failed',          // task finished with errors
-  'rejected',        // assignee declined the task
-  'canceled',        // delegator canceled the task
+  'submitted', // created by delegator, awaiting assignee review
+  'accepted', // assignee acknowledged the task
+  'working', // assignee is actively working
+  'input-required', // assignee needs info from delegator
+  'completed', // task finished successfully
+  'failed', // task finished with errors
+  'rejected', // assignee declined the task
+  'canceled', // delegator canceled the task
 ];
 
 /** Terminal states — no further transitions allowed. */
@@ -36,7 +36,13 @@ export const TASK_PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
 export const MESSAGE_ROLES = ['delegator', 'executor'];
 
 /** Valid artifact types. */
-export const ARTIFACT_TYPES = ['files-changed', 'test-results', 'review-findings', 'plan', 'summary'];
+export const ARTIFACT_TYPES = [
+  'files-changed',
+  'test-results',
+  'review-findings',
+  'plan',
+  'summary',
+];
 
 // ---------------------------------------------------------------------------
 // Path helpers
@@ -77,17 +83,24 @@ export function generateTaskId(projectRoot) {
   let seq = 1;
 
   if (existsSync(dir)) {
-    const files = readdirSync(dir).filter(f => f.startsWith(prefix) && f.endsWith('.json'));
-    const nums = files.map(f => {
-      const match = f.replace('.json', '').replace(prefix, '');
-      return parseInt(match, 10);
-    }).filter(n => !isNaN(n));
+    const files = readdirSync(dir).filter((f) => f.startsWith(prefix) && f.endsWith('.json'));
+    const nums = files
+      .map((f) => {
+        const match = f.replace('.json', '').replace(prefix, '');
+        return parseInt(match, 10);
+      })
+      .filter((n) => !isNaN(n));
     if (nums.length > 0) {
       seq = Math.max(...nums) + 1;
     }
   }
 
-  return `${prefix}${String(seq).padStart(3, '0')}`;
+  let candidate = `${prefix}${String(seq).padStart(3, '0')}`;
+  while (existsSync(taskPath(projectRoot, candidate))) {
+    seq += 1;
+    candidate = `${prefix}${String(seq).padStart(3, '0')}`;
+  }
+  return candidate;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,7 +110,7 @@ export function generateTaskId(projectRoot) {
 function writeTaskFile(projectRoot, taskId, data) {
   ensureTasksDir(projectRoot);
   const path = taskPath(projectRoot, taskId);
-  const tmpPath = path + '.tmp';
+  const tmpPath = `${path}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
   writeFileSync(tmpPath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
   renameSync(tmpPath, path);
 }
@@ -136,10 +149,16 @@ export function createTask(projectRoot, taskData) {
     return { task: null, error: 'At least one assignee is required' };
   }
   if (taskData.type && !TASK_TYPES.includes(taskData.type)) {
-    return { task: null, error: `Invalid task type: ${taskData.type}. Valid: ${TASK_TYPES.join(', ')}` };
+    return {
+      task: null,
+      error: `Invalid task type: ${taskData.type}. Valid: ${TASK_TYPES.join(', ')}`,
+    };
   }
   if (taskData.priority && !TASK_PRIORITIES.includes(taskData.priority)) {
-    return { task: null, error: `Invalid priority: ${taskData.priority}. Valid: ${TASK_PRIORITIES.join(', ')}` };
+    return {
+      task: null,
+      error: `Invalid priority: ${taskData.priority}. Valid: ${TASK_PRIORITIES.join(', ')}`,
+    };
   }
 
   // Validate dependsOn references exist
@@ -242,7 +261,7 @@ export function listTasks(projectRoot, filters = {}) {
   const dir = tasksDir(projectRoot);
   if (!existsSync(dir)) return { tasks: [] };
 
-  const files = readdirSync(dir).filter(f => f.endsWith('.json') && !f.endsWith('.tmp'));
+  const files = readdirSync(dir).filter((f) => f.endsWith('.json') && !f.endsWith('.tmp'));
   const tasks = [];
 
   for (const file of files) {
@@ -250,7 +269,11 @@ export function listTasks(projectRoot, filters = {}) {
       const data = JSON.parse(readFileSync(resolve(dir, file), 'utf-8'));
 
       if (filters.status && data.status !== filters.status) continue;
-      if (filters.assignee && !data.assignees.includes(filters.assignee)) continue;
+      if (
+        filters.assignee &&
+        !(Array.isArray(data.assignees) && data.assignees.includes(filters.assignee))
+      )
+        continue;
       if (filters.delegator && data.delegator !== filters.delegator) continue;
       if (filters.type && data.type !== filters.type) continue;
       if (filters.priority && data.priority !== filters.priority) continue;
@@ -263,8 +286,10 @@ export function listTasks(projectRoot, filters = {}) {
 
   // Sort by priority (P0 first), then by creation date (newest first)
   tasks.sort((a, b) => {
-    const pa = TASK_PRIORITIES.indexOf(a.priority);
-    const pb = TASK_PRIORITIES.indexOf(b.priority);
+    const paRaw = TASK_PRIORITIES.indexOf(a.priority);
+    const pbRaw = TASK_PRIORITIES.indexOf(b.priority);
+    const pa = paRaw === -1 ? Number.POSITIVE_INFINITY : paRaw;
+    const pb = pbRaw === -1 ? Number.POSITIVE_INFINITY : pbRaw;
     if (pa !== pb) return pa - pb;
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
@@ -278,14 +303,14 @@ export function listTasks(projectRoot, filters = {}) {
 
 /** Valid state transitions map. */
 const VALID_TRANSITIONS = {
-  'submitted': ['accepted', 'rejected', 'canceled'],
-  'accepted': ['working', 'rejected', 'canceled'],
-  'working': ['completed', 'failed', 'input-required', 'canceled'],
+  submitted: ['accepted', 'rejected', 'canceled'],
+  accepted: ['working', 'rejected', 'canceled'],
+  working: ['completed', 'failed', 'input-required', 'canceled'],
   'input-required': ['working', 'canceled'],
-  'completed': [],
-  'failed': [],
-  'rejected': [],
-  'canceled': [],
+  completed: [],
+  failed: [],
+  rejected: [],
+  canceled: [],
 };
 
 /**
@@ -310,7 +335,17 @@ export function updateTaskStatus(projectRoot, taskId, newStatus, messageData = {
 
   const allowed = VALID_TRANSITIONS[task.status];
   if (!allowed || !allowed.includes(newStatus)) {
-    return { task: null, error: `Invalid transition: ${task.status} → ${newStatus}. Allowed: ${(allowed || []).join(', ') || 'none (terminal state)'}` };
+    return {
+      task: null,
+      error: `Invalid transition: ${task.status} → ${newStatus}. Allowed: ${(allowed || []).join(', ') || 'none (terminal state)'}`,
+    };
+  }
+
+  if (messageData.role && !MESSAGE_ROLES.includes(messageData.role)) {
+    return {
+      task: null,
+      error: `Invalid message role: ${messageData.role}. Valid: ${MESSAGE_ROLES.join(', ')}`,
+    };
   }
 
   const now = new Date().toISOString();
@@ -318,6 +353,7 @@ export function updateTaskStatus(projectRoot, taskId, newStatus, messageData = {
   task.updatedAt = now;
 
   // Add status change message
+  if (!Array.isArray(task.messages)) task.messages = [];
   if (messageData.from || messageData.content) {
     task.messages.push({
       role: messageData.role || 'executor',
@@ -351,7 +387,10 @@ export function addTaskMessage(projectRoot, taskId, message) {
   if (!result.task) return result;
 
   if (!MESSAGE_ROLES.includes(message.role)) {
-    return { task: null, error: `Invalid message role: ${message.role}. Valid: ${MESSAGE_ROLES.join(', ')}` };
+    return {
+      task: null,
+      error: `Invalid message role: ${message.role}. Valid: ${MESSAGE_ROLES.join(', ')}`,
+    };
   }
 
   const task = result.task;
@@ -394,10 +433,14 @@ export function addTaskArtifact(projectRoot, taskId, artifact) {
   if (!result.task) return result;
 
   if (!ARTIFACT_TYPES.includes(artifact.type)) {
-    return { task: null, error: `Invalid artifact type: ${artifact.type}. Valid: ${ARTIFACT_TYPES.join(', ')}` };
+    return {
+      task: null,
+      error: `Invalid artifact type: ${artifact.type}. Valid: ${ARTIFACT_TYPES.join(', ')}`,
+    };
   }
 
   const task = result.task;
+  if (!Array.isArray(task.artifacts)) task.artifacts = [];
   task.artifacts.push({
     ...artifact,
     addedAt: new Date().toISOString(),
@@ -424,7 +467,7 @@ export function checkDependencies(projectRoot) {
 
   for (const task of tasks) {
     if (TERMINAL_STATES.includes(task.status)) continue;
-    if (!task.dependsOn || task.dependsOn.length === 0) continue;
+    if (!Array.isArray(task.dependsOn) || task.dependsOn.length === 0) continue;
 
     const newBlockers = [];
     let hasFailedDep = false;
@@ -445,15 +488,18 @@ export function checkDependencies(projectRoot) {
       }
     }
 
-    const wasBlocked = task.blockedBy.length > 0;
+    const priorBlockers = Array.isArray(task.blockedBy) ? task.blockedBy : [];
+    const wasBlocked = priorBlockers.length > 0;
     task.blockedBy = newBlockers;
-    task.updatedAt = new Date().toISOString();
+    const blockersChanged = JSON.stringify(priorBlockers) !== JSON.stringify(newBlockers);
+    if (blockersChanged) {
+      task.updatedAt = new Date().toISOString();
+      writeTaskFile(projectRoot, task.id, task);
+    }
 
     if (wasBlocked && newBlockers.length === 0 && !hasFailedDep) {
       unblocked.push(task.id);
     }
-
-    writeTaskFile(projectRoot, task.id, task);
   }
 
   return { unblocked, errors };
@@ -525,29 +571,36 @@ export function processHandoffs(projectRoot, delegator = 'orchestrator') {
  * @returns {string}
  */
 export function formatTaskSummary(task) {
+  const safeTask = task && typeof task === 'object' ? task : {};
+  const safeAssignees = Array.isArray(safeTask.assignees) ? safeTask.assignees : [];
+  const safeDependsOn = Array.isArray(safeTask.dependsOn) ? safeTask.dependsOn : [];
+  const safeBlockedBy = Array.isArray(safeTask.blockedBy) ? safeTask.blockedBy : [];
+  const safeHandoffTo = Array.isArray(safeTask.handoffTo) ? safeTask.handoffTo : [];
+  const safeArtifacts = Array.isArray(safeTask.artifacts) ? safeTask.artifacts : [];
+  const safeMessages = Array.isArray(safeTask.messages) ? safeTask.messages : [];
   const lines = [
-    `Task: ${task.id}`,
-    `Title: ${task.title}`,
-    `Type: ${task.type} | Priority: ${task.priority} | Status: ${task.status}`,
-    `Delegator: ${task.delegator} → Assignees: ${task.assignees.join(', ')}`,
+    `Task: ${safeTask.id || 'unknown'}`,
+    `Title: ${safeTask.title || '(untitled)'}`,
+    `Type: ${safeTask.type || 'unknown'} | Priority: ${safeTask.priority || 'unknown'} | Status: ${safeTask.status || 'unknown'}`,
+    `Delegator: ${safeTask.delegator || 'unknown'} → Assignees: ${safeAssignees.join(', ')}`,
   ];
 
-  if (task.dependsOn.length > 0) {
-    lines.push(`Depends on: ${task.dependsOn.join(', ')}`);
+  if (safeDependsOn.length > 0) {
+    lines.push(`Depends on: ${safeDependsOn.join(', ')}`);
   }
-  if (task.blockedBy.length > 0) {
-    lines.push(`Blocked by: ${task.blockedBy.join(', ')}`);
+  if (safeBlockedBy.length > 0) {
+    lines.push(`Blocked by: ${safeBlockedBy.join(', ')}`);
   }
-  if (task.handoffTo.length > 0) {
-    lines.push(`Handoff to: ${task.handoffTo.join(', ')}`);
+  if (safeHandoffTo.length > 0) {
+    lines.push(`Handoff to: ${safeHandoffTo.join(', ')}`);
   }
-  if (task.artifacts.length > 0) {
-    lines.push(`Artifacts: ${task.artifacts.length}`);
+  if (safeArtifacts.length > 0) {
+    lines.push(`Artifacts: ${safeArtifacts.length}`);
   }
 
-  lines.push(`Created: ${task.createdAt}`);
-  lines.push(`Updated: ${task.updatedAt}`);
-  lines.push(`Messages: ${task.messages.length}`);
+  lines.push(`Created: ${safeTask.createdAt || 'unknown'}`);
+  lines.push(`Updated: ${safeTask.updatedAt || 'unknown'}`);
+  lines.push(`Messages: ${safeMessages.length}`);
 
   return lines.join('\n');
 }
@@ -560,15 +613,20 @@ export function formatTaskSummary(task) {
 export function formatTaskList(tasks) {
   if (tasks.length === 0) return 'No tasks found.';
 
+  const escapeCell = (value) =>
+    String(value ?? '')
+      .replace(/\|/g, '\\|')
+      .replace(/\r?\n/g, ' ');
+
   const statusIcon = {
-    'submitted': '📩',
-    'accepted': '✅',
-    'working': '🔨',
+    submitted: '📩',
+    accepted: '✅',
+    working: '🔨',
     'input-required': '❓',
-    'completed': '✔️',
-    'failed': '❌',
-    'rejected': '🚫',
-    'canceled': '🗑️',
+    completed: '✔️',
+    failed: '❌',
+    rejected: '🚫',
+    canceled: '🗑️',
   };
 
   const lines = [
@@ -577,8 +635,11 @@ export function formatTaskList(tasks) {
   ];
 
   for (const task of tasks) {
-    const icon = statusIcon[task.status] || '?';
-    lines.push(`| ${task.id} | ${task.priority} | ${icon} ${task.status} | ${task.type} | ${task.title} | ${task.assignees.join(', ')} |`);
+    const icon = statusIcon[task?.status] || '?';
+    const assignees = Array.isArray(task?.assignees) ? task.assignees.join(', ') : '';
+    lines.push(
+      `| ${escapeCell(task?.id)} | ${escapeCell(task?.priority)} | ${escapeCell(`${icon} ${task?.status || 'unknown'}`)} | ${escapeCell(task?.type)} | ${escapeCell(task?.title)} | ${escapeCell(assignees)} |`
+    );
   }
 
   return lines.join('\n');

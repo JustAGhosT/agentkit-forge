@@ -121,6 +121,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
    ```
 2. For **parallel work**, create independent tasks for each team.
 3. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
+   - `blockedBy` is runtime-derived state from `dependsOn`; do not author it manually.
 4. Each team should:
    - Accept or reject the task (update `status` and add a message).
    - Make minimal, backwards-compatible changes.
@@ -140,7 +141,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 5. Record validation results in `orchestrator.json` and in task artifacts.
 
 ### Phase 5 — Ship
-1. Confirm all checks pass and all tasks are in terminal state.
+1. Confirm all checks pass and all tasks are in terminal state, with no unresolved `failed`/`rejected` tasks.
 2. Invoke `/handoff` to produce a session summary.
 3. Update `orchestrator.json`: set `currentPhase` to 5, clear the lock, update metrics.
 4. Log completion to `events.log`.

@@ -27,7 +27,7 @@ This repository uses the AgentKit Forge unified agent team framework.
 {{#if hasMonitoring}}
 ## Observability
 
-- Monitoring provider: {{monitoringProvider}}
+{{#if monitoringProvider}}- Monitoring provider: {{monitoringProvider}}{{/if}}
 {{#if hasAlerting}}- Alerting provider: {{alertingProvider}}{{/if}}
 {{#if hasTracing}}- Tracing provider: {{tracingProvider}}{{/if}}
 {{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
@@ -36,7 +36,7 @@ This repository uses the AgentKit Forge unified agent team framework.
 {{#if hasCompliance}}
 ## Compliance and DR
 
-- Framework: {{complianceFramework}}
+{{#if complianceFramework}}- Framework: {{complianceFramework}}{{/if}}
 {{#if drRpoHours}}- DR RPO (hours): {{drRpoHours}}{{/if}}
 {{#if drRtoHours}}- DR RTO (hours): {{drRtoHours}}{{/if}}
 {{#if drTestSchedule}}- DR test schedule: {{drTestSchedule}}{{/if}}

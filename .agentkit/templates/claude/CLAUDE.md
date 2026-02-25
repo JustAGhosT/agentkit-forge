@@ -135,7 +135,7 @@ Always run the full test suite before creating a PR.
 - **Hooks**: `.claude/hooks/` — Lifecycle hooks (session-start, protect-sensitive, etc.)
 - **State**: `.claude/state/` — Orchestrator state and session tracking
 
-{{#if hasPatternRepository}}
+{{#if hasAnyPattern}}
 ### Declared Implementation Patterns
 
 {{#if hasPatternRepository}}- Repository pattern{{/if}}

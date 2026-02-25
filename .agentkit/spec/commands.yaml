@@ -299,7 +299,7 @@ commands:
         type: string
         default: null
       - name: --path
-        description: 'Target output path'
+        description: 'Target output path (must be inside workspace root)'
         type: string
         default: null
     allowed-tools:
@@ -321,9 +321,9 @@ commands:
         type: string
         default: null
       - name: --range
-        description: 'Git range used for changelog/commit checks'
+        description: 'Git range used for changelog/commit checks (auto-detected when omitted)'
         type: string
-        default: 'HEAD~10..HEAD'
+        default: null
       - name: --strict
         description: 'Fail on warnings'
         type: boolean

@@ -3,8 +3,8 @@
  * Repository diagnostics and setup checks.
  */
 import { existsSync, readFileSync } from 'fs';
-import { resolve } from 'path';
 import yaml from 'js-yaml';
+import { resolve } from 'path';
 import { validateSpec } from './spec-validator.mjs';
 
 function checkTemplateRoots(agentkitRoot, targets) {
@@ -43,17 +43,24 @@ function checkTemplateRoots(agentkitRoot, targets) {
 
 function loadOverlayRenderTargets(agentkitRoot) {
   const overlayPath = resolve(agentkitRoot, 'overlays', '__TEMPLATE__', 'settings.yaml');
-  if (!existsSync(overlayPath)) return [];
+  if (!existsSync(overlayPath)) return { targets: [], error: null };
   try {
     const data = yaml.load(readFileSync(overlayPath, 'utf-8')) || {};
-    return Array.isArray(data.renderTargets) ? data.renderTargets : [];
-  } catch {
-    return [];
+    return {
+      targets: Array.isArray(data.renderTargets) ? data.renderTargets : [],
+      error: null,
+    };
+  } catch (err) {
+    return {
+      targets: [],
+      error: `Failed to parse overlay settings at ${overlayPath}: ${err.message}`,
+    };
   }
 }
 
 function projectCompleteness(project) {
-  if (!project || typeof project !== 'object') return { percent: 0, present: 0, total: 0, missing: [] };
+  if (!project || typeof project !== 'object')
+    return { percent: 0, present: 0, total: 0, missing: [] };
 
   const fields = [
     'name',
@@ -76,13 +83,19 @@ function projectCompleteness(project) {
     'compliance.audit.eventBus',
   ];
 
-  const get = (obj, path) => path.split('.').reduce((a, k) => (a && a[k] !== undefined ? a[k] : undefined), obj);
+  const get = (obj, path) =>
+    path.split('.').reduce((a, k) => (a && a[k] !== undefined ? a[k] : undefined), obj);
 
   const present = [];
   const missing = [];
   for (const f of fields) {
     const val = get(project, f);
-    if (val !== undefined && val !== null && val !== '' && !(Array.isArray(val) && val.length === 0)) {
+    if (
+      val !== undefined &&
+      val !== null &&
+      val !== '' &&
+      !(Array.isArray(val) && val.length === 0)
+    ) {
       present.push(f);
     } else {
       missing.push(f);
@@ -99,34 +112,63 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   // 1) Spec validation
   const spec = validateSpec(agentkitRoot);
   if (!spec.valid) {
-    findings.push({ severity: 'error', message: `Spec validation failed (${spec.errors.length} errors)` });
+    findings.push({
+      severity: 'error',
+      message: `Spec validation failed (${spec.errors.length} errors)`,
+    });
     for (const e of spec.errors) findings.push({ severity: 'error', message: e });
   } else {
-    findings.push({ severity: 'info', message: `Spec validation passed (${spec.warnings.length} warnings)` });
+    findings.push({
+      severity: 'info',
+      message: `Spec validation passed (${spec.warnings.length} warnings)`,
+    });
+    for (const w of spec.warnings) findings.push({ severity: 'warning', message: w });
   }
 
   // 2) Overlay/template sanity
-  const targets = loadOverlayRenderTargets(agentkitRoot);
+  const { targets, error: overlayError } = loadOverlayRenderTargets(agentkitRoot);
+  if (overlayError) {
+    findings.push({ severity: 'error', message: overlayError });
+  }
   if (targets.length === 0) {
-    findings.push({ severity: 'warning', message: 'No renderTargets defined in overlay settings; sync defaults may be broad.' });
+    findings.push({
+      severity: 'warning',
+      message: 'No renderTargets defined in overlay settings; sync defaults may be broad.',
+    });
   } else {
     const checks = checkTemplateRoots(agentkitRoot, targets);
     for (const c of checks) {
-      if (!c.exists) findings.push({ severity: 'error', message: `Missing template root for target '${c.target}': ${c.path}` });
+      if (!c.exists)
+        findings.push({
+          severity: 'error',
+          message: `Missing template root for target '${c.target}': ${c.path}`,
+        });
     }
     const missingCount = checks.filter((c) => !c.exists).length;
-    if (missingCount === 0) findings.push({ severity: 'info', message: `Template roots present for all ${checks.length} configured targets.` });
+    if (missingCount === 0)
+      findings.push({
+        severity: 'info',
+        message: `Template roots present for all ${checks.length} configured targets.`,
+      });
   }
 
   // 3) project.yaml completeness
-  const projectPath = resolve(agentkitRoot, 'spec', 'project.yaml');
+  const projectPath = existsSync(resolve(projectRoot, '.agentkit', 'spec', 'project.yaml'))
+    ? resolve(projectRoot, '.agentkit', 'spec', 'project.yaml')
+    : resolve(agentkitRoot, 'spec', 'project.yaml');
   if (existsSync(projectPath)) {
     try {
       const project = yaml.load(readFileSync(projectPath, 'utf-8')) || {};
       const c = projectCompleteness(project);
-      findings.push({ severity: 'info', message: `project.yaml completeness: ${c.percent}% (${c.present}/${c.total})` });
+      findings.push({
+        severity: 'info',
+        message: `project.yaml completeness: ${c.percent}% (${c.present}/${c.total})`,
+      });
       if (c.missing.length > 0) {
-        findings.push({ severity: 'warning', message: `Top missing high-impact fields: ${c.missing.slice(0, 5).join(', ')}` });
+        findings.push({
+          severity: 'warning',
+          message: `Top missing high-impact fields: ${c.missing.slice(0, 5).join(', ')}`,
+        });
       }
     } catch (err) {
       findings.push({ severity: 'error', message: `Failed to parse project.yaml: ${err.message}` });

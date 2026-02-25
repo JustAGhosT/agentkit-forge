@@ -2,7 +2,7 @@
 
 ## When to Use
 
-Invoke this rule when the user requests or implies the `{{commandName}}` operation.
+Invoke this command template when the user requests or implies the `{{commandName}}` operation.
 
 ## Purpose
 

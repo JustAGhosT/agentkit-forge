@@ -5,7 +5,7 @@
  */
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
-import { loadState, appendEvent, readEvents, PHASES } from './orchestrator.mjs';
+import { appendEvent, loadState, readEvents } from './orchestrator.mjs';
 import { formatTimestamp } from './runner.mjs';
 
 // ---------------------------------------------------------------------------
@@ -85,8 +85,11 @@ function readBacklog(projectRoot) {
     // Detect table header row — match any pipe-delimited header containing common
     // backlog columns (ID, Priority, Task, Status, Team, etc.)
     if (!inTable && trimmed.startsWith('|')) {
-      const cols = trimmed.split('|').map(c => c.trim().toLowerCase()).slice(1, -1);
-      if (cols.some(c => c === 'id' || c === 'priority' || c === 'task' || c === 'status')) {
+      const cols = trimmed
+        .split('|')
+        .map((c) => c.trim().toLowerCase())
+        .slice(1, -1);
+      if (cols.some((c) => c === 'id' || c === 'priority' || c === 'task' || c === 'status')) {
         headerCols = cols;
         continue;
       }
@@ -99,14 +102,21 @@ function readBacklog(projectRoot) {
     }
 
     if (inTable && trimmed.startsWith('|')) {
-      const parts = trimmed.split('|').map(c => c.trim());
+      const parts = trimmed.split('|').map((c) => c.trim());
       const cells = parts.slice(1, parts.length - 1);
       if (cells.length >= 2) {
         const idIdx = headerCols && headerCols.indexOf('id') >= 0 ? headerCols.indexOf('id') : 0;
-        const titleIdx = headerCols ? Math.max(headerCols.indexOf('title'), headerCols.indexOf('description'), headerCols.indexOf('what'), headerCols.indexOf('task')) : 1;
-        const statusIdx = headerCols && headerCols.indexOf('status') >= 0 ? headerCols.indexOf('status') : 2;
-        const teamIdx = headerCols && headerCols.indexOf('team') >= 0 ? headerCols.indexOf('team') : 3;
-        const priorityIdx = headerCols && headerCols.indexOf('priority') >= 0 ? headerCols.indexOf('priority') : 4;
+        const titleIdx = headerCols
+          ? ['task', 'title', 'description', 'what']
+              .map((name) => headerCols.indexOf(name))
+              .find((idx) => idx >= 0)
+          : 1;
+        const statusIdx =
+          headerCols && headerCols.indexOf('status') >= 0 ? headerCols.indexOf('status') : 2;
+        const teamIdx =
+          headerCols && headerCols.indexOf('team') >= 0 ? headerCols.indexOf('team') : 3;
+        const priorityIdx =
+          headerCols && headerCols.indexOf('priority') >= 0 ? headerCols.indexOf('priority') : 4;
 
         const safeId = idIdx >= 0 && idIdx < cells.length ? idIdx : 0;
         const safeTitle = titleIdx >= 0 && titleIdx < cells.length ? titleIdx : 1;
@@ -165,8 +175,9 @@ export async function runPlan({ projectRoot, flags = {} }) {
   console.log('');
 
   // --- Team Status ---
-  const activeTeams = Object.entries(state.team_progress ?? {})
-    .filter(([_, t]) => t.status !== 'idle');
+  const activeTeams = Object.entries(state.team_progress ?? {}).filter(
+    ([_, t]) => t.status !== 'idle'
+  );
 
   if (activeTeams.length > 0) {
     console.log('--- Active Teams ---');
@@ -181,12 +192,12 @@ export async function runPlan({ projectRoot, flags = {} }) {
   const todoItems = state.todo_items ?? [];
   if (todoItems.length > 0) {
     console.log(`--- Todo Items (${todoItems.length}) ---`);
-    const pending = todoItems.filter(t => t.status === 'pending' || t.status === 'in_progress');
+    const pending = todoItems.filter((t) => t.status === 'pending' || t.status === 'in_progress');
     for (const item of pending.slice(0, 10)) {
       const icon = item.status === 'in_progress' ? '▶' : '○';
       console.log(`  [${icon}] ${item.id}: ${item.title}${item.team ? ` (${item.team})` : ''}`);
     }
-    const done = todoItems.filter(t => t.status === 'done').length;
+    const done = todoItems.filter((t) => t.status === 'done').length;
     if (done > 0) {
       console.log(`  (${done} completed items)`);
     }
@@ -198,7 +209,9 @@ export async function runPlan({ projectRoot, flags = {} }) {
   if (backlog && backlog.length > 0) {
     console.log(`--- Backlog Items (${backlog.length}) ---`);
     for (const item of backlog.slice(0, 10)) {
-      console.log(`  ${item.id}: ${item.title} [${item.status}]${item.team ? ` → ${item.team}` : ''}`);
+      console.log(
+        `  ${item.id}: ${item.title} [${item.status}]${item.team ? ` → ${item.team}` : ''}`
+      );
     }
     if (backlog.length > 10) {
       console.log(`  ... and ${backlog.length - 10} more`);
@@ -223,7 +236,9 @@ export async function runPlan({ projectRoot, flags = {} }) {
   // Log event
   try {
     appendEvent(projectRoot, 'plan_viewed', { phase, phase_name: state.phase_name });
-  } catch (err) { console.warn(`[agentkit:plan] Event logging failed: ${err?.message ?? String(err)}`); }
+  } catch (err) {
+    console.warn(`[agentkit:plan] Event logging failed: ${err?.message ?? String(err)}`);
+  }
 
   return {
     phase,

@@ -2,17 +2,30 @@
  * AgentKit Forge — Tool Manager
  * Handles add/remove/list subcommands for incremental AI tool management.
  */
-import { readFileSync, writeFileSync, existsSync, unlinkSync, realpathSync } from 'fs';
-import { resolve, sep } from 'path';
+import { existsSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'fs';
 import yaml from 'js-yaml';
+import { resolve, sep } from 'path';
 
-const ALL_TOOLS = ['claude', 'cursor', 'windsurf', 'copilot', 'gemini', 'codex', 'warp', 'cline', 'roo', 'ai', 'mcp'];
+const ALL_TOOLS = [
+  'claude',
+  'cursor',
+  'windsurf',
+  'copilot',
+  'gemini',
+  'codex',
+  'warp',
+  'cline',
+  'roo',
+  'ai',
+  'mcp',
+];
 
 const REPO_NAME_PATTERN = /^[A-Za-z0-9._-]+$/;
 
 function sanitizeRepoName(value) {
   if (!value || typeof value !== 'string') return null;
   const trimmed = value.trim();
+  if (trimmed === '.' || trimmed === '..') return null;
   if (!trimmed || /\.\.|[/\\]/.test(trimmed)) return null;
   if (!REPO_NAME_PATTERN.test(trimmed)) return null;
   return trimmed;
@@ -51,11 +64,13 @@ function saveOverlaySettings(settingsPath, settings) {
 export async function runAdd({ agentkitRoot, projectRoot, flags }) {
   const tools = parseToolArgs(flags);
   if (tools.length === 0) {
-    throw new Error('Usage: agentkit add <tool> [tool2 ...]\nAvailable tools: ' + ALL_TOOLS.join(', '));
+    throw new Error(
+      'Usage: agentkit add <tool> [tool2 ...]\nAvailable tools: ' + ALL_TOOLS.join(', ')
+    );
   }
 
   // Validate tool names
-  const invalid = tools.filter(t => !ALL_TOOLS.includes(t));
+  const invalid = tools.filter((t) => !ALL_TOOLS.includes(t));
   if (invalid.length > 0) {
     throw new Error(`Unknown tool(s): ${invalid.join(', ')}\nAvailable: ${ALL_TOOLS.join(', ')}`);
   }
@@ -101,10 +116,12 @@ export async function runAdd({ agentkitRoot, projectRoot, flags }) {
 export async function runRemove({ agentkitRoot, projectRoot, flags }) {
   const tools = parseToolArgs(flags);
   if (tools.length === 0) {
-    throw new Error('Usage: agentkit remove <tool> [--clean]\nAvailable tools: ' + ALL_TOOLS.join(', '));
+    throw new Error(
+      'Usage: agentkit remove <tool> [--clean]\nAvailable tools: ' + ALL_TOOLS.join(', ')
+    );
   }
 
-  const invalid = tools.filter(t => !ALL_TOOLS.includes(t));
+  const invalid = tools.filter((t) => !ALL_TOOLS.includes(t));
   if (invalid.length > 0) {
     throw new Error(`Unknown tool(s): ${invalid.join(', ')}\nAvailable: ${ALL_TOOLS.join(', ')}`);
   }
@@ -163,7 +180,13 @@ function cleanToolFiles(agentkitRoot, projectRoot, tools) {
     claude: ['.claude/', 'CLAUDE.md'],
     cursor: ['.cursor/'],
     windsurf: ['.windsurf/'],
-    copilot: ['.github/copilot-instructions.md', '.github/instructions/', '.github/prompts/', '.github/agents/', '.github/chatmodes/'],
+    copilot: [
+      '.github/copilot-instructions.md',
+      '.github/instructions/',
+      '.github/prompts/',
+      '.github/agents/',
+      '.github/chatmodes/',
+    ],
     gemini: ['GEMINI.md', '.gemini/'],
     codex: ['.agents/'],
     warp: ['WARP.md'],
@@ -173,7 +196,7 @@ function cleanToolFiles(agentkitRoot, projectRoot, tools) {
     mcp: ['mcp/'],
   };
 
-  const prefixesToClean = tools.flatMap(t => toolPrefixes[t] || []);
+  const prefixesToClean = tools.flatMap((t) => toolPrefixes[t] || []);
   let cleaned = 0;
 
   let projectRootReal;
@@ -185,7 +208,12 @@ function cleanToolFiles(agentkitRoot, projectRoot, tools) {
 
   for (const filePath of Object.keys(manifest.files || {})) {
     if (filePath.includes('..') || /^\/|^[A-Za-z]:/i.test(filePath)) continue;
-    if (!prefixesToClean.some(prefix => filePath.startsWith(prefix) || filePath === prefix.replace(/\/$/, ''))) continue;
+    if (
+      !prefixesToClean.some(
+        (prefix) => filePath.startsWith(prefix) || filePath === prefix.replace(/\/$/, '')
+      )
+    )
+      continue;
 
     const fullPath = resolve(projectRoot, filePath);
     try {
@@ -198,7 +226,9 @@ function cleanToolFiles(agentkitRoot, projectRoot, tools) {
       try {
         unlinkSync(fullPath);
         cleaned++;
-      } catch { /* skip files we can't delete */ }
+      } catch {
+        /* skip files we can't delete */
+      }
     }
   }
 
@@ -212,7 +242,7 @@ function cleanToolFiles(agentkitRoot, projectRoot, tools) {
 export async function runList({ agentkitRoot, projectRoot, flags }) {
   const { settings } = loadOverlaySettings(agentkitRoot, projectRoot);
   const enabled = new Set(settings.renderTargets || []);
-  const available = ALL_TOOLS.filter(t => !enabled.has(t));
+  const available = ALL_TOOLS.filter((t) => !enabled.has(t));
 
   console.log(`  Enabled:     ${enabled.size > 0 ? [...enabled].join(', ') : '(none)'}`);
   console.log(`  Available:   ${available.length > 0 ? available.join(', ') : '(all enabled)'}`);

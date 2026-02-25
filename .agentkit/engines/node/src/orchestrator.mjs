@@ -16,6 +16,13 @@ import {
 import yaml from 'js-yaml';
 import { resolve } from 'path';
 import { formatTimestamp } from './runner.mjs';
+import {
+  TERMINAL_STATES,
+  checkDependencies,
+  createTask,
+  formatTaskList,
+  listTasks,
+} from './task-protocol.mjs';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -639,7 +646,8 @@ export function orchestratorProcessHandoffs(projectRoot, state) {
  * @returns {string}
  */
 export function getTasksSummary(projectRoot) {
-  const { tasks: activeTasks } = listTasks(projectRoot);
+  const listResult = listTasks(projectRoot);
+  const activeTasks = Array.isArray(listResult?.tasks) ? listResult.tasks : [];
   if (activeTasks.length === 0) return 'No tasks in the task queue.';
 
   const nonTerminal = activeTasks.filter((t) => !TERMINAL_STATES.includes(t.status));

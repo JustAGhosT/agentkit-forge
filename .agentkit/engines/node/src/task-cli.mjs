@@ -3,9 +3,15 @@
  * CLI entry points for the task delegation protocol.
  */
 import {
-  createTask, getTask, listTasks, formatTaskSummary, formatTaskList,
-  checkDependencies, processHandoffs,
-  TASK_TYPES, TASK_PRIORITIES, TASK_STATES,
+  TASK_PRIORITIES,
+  TASK_TYPES,
+  checkDependencies,
+  createTask,
+  formatTaskList,
+  formatTaskSummary,
+  getTask,
+  listTasks,
+  processHandoffs,
 } from './task-protocol.mjs';
 
 /**
@@ -13,6 +19,19 @@ import {
  * Flags: --status, --assignee, --type, --priority, --id
  */
 export async function runTasks({ projectRoot, flags }) {
+  if (flags.type && !TASK_TYPES.includes(flags.type)) {
+    console.error(
+      `[agentkit:tasks] Invalid --type "${flags.type}". Valid: ${TASK_TYPES.join(', ')}`
+    );
+    process.exit(1);
+  }
+  if (flags.priority && !TASK_PRIORITIES.includes(flags.priority)) {
+    console.error(
+      `[agentkit:tasks] Invalid --priority "${flags.priority}". Valid: ${TASK_PRIORITIES.join(', ')}`
+    );
+    process.exit(1);
+  }
+
   // Single task detail
   if (flags.id) {
     const result = getTask(projectRoot, flags.id);
@@ -21,15 +40,17 @@ export async function runTasks({ projectRoot, flags }) {
       process.exit(1);
     }
     console.log(formatTaskSummary(result.task));
-    if (result.task.messages.length > 0) {
+    const messages = Array.isArray(result.task.messages) ? result.task.messages : [];
+    if (messages.length > 0) {
       console.log('\n--- Messages ---');
-      for (const msg of result.task.messages) {
+      for (const msg of messages) {
         console.log(`  [${msg.timestamp}] ${msg.role}/${msg.from}: ${msg.content}`);
       }
     }
-    if (result.task.artifacts.length > 0) {
+    const artifacts = Array.isArray(result.task.artifacts) ? result.task.artifacts : [];
+    if (artifacts.length > 0) {
       console.log('\n--- Artifacts ---');
-      for (const art of result.task.artifacts) {
+      for (const art of artifacts) {
         console.log(`  ${art.type}: ${art.summary || JSON.stringify(art)}`);
       }
     }
@@ -39,7 +60,9 @@ export async function runTasks({ projectRoot, flags }) {
   // Check dependencies and process handoffs before listing
   const depResult = checkDependencies(projectRoot);
   if (depResult.unblocked.length > 0) {
-    console.log(`[agentkit:tasks] Unblocked ${depResult.unblocked.length} task(s): ${depResult.unblocked.join(', ')}`);
+    console.log(
+      `[agentkit:tasks] Unblocked ${depResult.unblocked.length} task(s): ${depResult.unblocked.join(', ')}`
+    );
   }
 
   const handoffResult = processHandoffs(projectRoot);
@@ -77,17 +100,29 @@ export async function runDelegate({ projectRoot, flags }) {
     console.error('[agentkit:delegate] --title <text> is required');
     process.exit(1);
   }
+  if (flags.type && !TASK_TYPES.includes(flags.type)) {
+    console.error(
+      `[agentkit:delegate] Invalid --type "${flags.type}". Valid: ${TASK_TYPES.join(', ')}`
+    );
+    process.exit(1);
+  }
+  if (flags.priority && !TASK_PRIORITIES.includes(flags.priority)) {
+    console.error(
+      `[agentkit:delegate] Invalid --priority "${flags.priority}". Valid: ${TASK_PRIORITIES.join(', ')}`
+    );
+    process.exit(1);
+  }
 
   const taskData = {
     delegator: 'cli',
-    assignees: flags.to.split(',').map(s => s.trim()),
+    assignees: flags.to.split(',').map((s) => s.trim()),
     title: flags.title,
     description: flags.description || '',
     type: flags.type || 'implement',
     priority: flags.priority || 'P2',
-    dependsOn: flags['depends-on'] ? flags['depends-on'].split(',').map(s => s.trim()) : [],
-    handoffTo: flags['handoff-to'] ? flags['handoff-to'].split(',').map(s => s.trim()) : [],
-    scope: flags.scope ? flags.scope.split(',').map(s => s.trim()) : [],
+    dependsOn: flags['depends-on'] ? flags['depends-on'].split(',').map((s) => s.trim()) : [],
+    handoffTo: flags['handoff-to'] ? flags['handoff-to'].split(',').map((s) => s.trim()) : [],
+    scope: flags.scope ? flags.scope.split(',').map((s) => s.trim()) : [],
   };
 
   const result = createTask(projectRoot, taskData);

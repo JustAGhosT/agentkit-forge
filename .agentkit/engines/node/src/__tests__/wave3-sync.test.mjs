@@ -472,13 +472,18 @@ describe('--quiet, --verbose, --no-clean, --diff flags', () => {
   it('--no-clean preserves orphaned files', { timeout: 25000 }, async () => {
     await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: {} });
     const manifestPath = join(AGENTKIT_ROOT, '.manifest.json');
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-    manifest.files['__TEST_ORPHAN__.md'] = { hash: 'abc' };
-    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
-    const orphanPath = join(projectRoot, '__TEST_ORPHAN__.md');
-    writeFileSync(orphanPath, 'orphan', 'utf-8');
-    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { 'no-clean': true } });
-    expect(existsSync(orphanPath)).toBe(true);
+    const originalManifest = readFileSync(manifestPath, 'utf-8');
+    try {
+      const manifest = JSON.parse(originalManifest);
+      manifest.files['__TEST_ORPHAN__.md'] = { hash: 'abc' };
+      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+      const orphanPath = join(projectRoot, '__TEST_ORPHAN__.md');
+      writeFileSync(orphanPath, 'orphan', 'utf-8');
+      await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { 'no-clean': true } });
+      expect(existsSync(orphanPath)).toBe(true);
+    } finally {
+      writeFileSync(manifestPath, originalManifest, 'utf-8');
+    }
   });
 });
 

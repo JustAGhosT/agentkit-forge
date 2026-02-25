@@ -84,8 +84,8 @@ Propose **5-7** context-specific analysis or hardening tasks (TASK-*): security 
 
 ### Master Summary Table
 
-| ID | Category | Title | Severity | Effort | Status | Location | Impact | Notes |
-|----|----------|-------|----------|--------|--------|----------|--------|-------|
+| ID  | Category | Title | Severity | Effort | Status | Location | Impact | Notes |
+| --- | -------- | ----- | -------- | ------ | ------ | -------- | ------ | ----- |
 
 ### Confirmation
 
@@ -125,7 +125,7 @@ Propose updates to:
 
 ## Output Format
 
-Update the orchestrator state after completing the review:
+Emit the following orchestrator-state update payload after completing the review (do not mutate state directly unless the orchestrator lock is explicitly held by this command):
 
 ```json
 {

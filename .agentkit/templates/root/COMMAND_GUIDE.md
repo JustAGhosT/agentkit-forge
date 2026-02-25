@@ -1,6 +1,6 @@
 # Command Guide — When to Use Which
 
-This guide helps you choose the right command for your situation. All commands share the same **locked resources**: `AGENT_BACKLOG.md`, `.claude/state/orchestrator.json`, `.claude/state/events.log`, and `.claude/state/orchestrator.lock`. The orchestrator, planner, and project reviewer all read and write these shared assets.
+This guide helps you choose the right command for your situation. Most workflow commands read/write shared project state (`AGENT_BACKLOG.md`, `.claude/state/orchestrator.json`, `.claude/state/events.log`). Only `/orchestrate` acquires `.claude/state/orchestrator.lock`.
 
 ---
 
@@ -68,7 +68,7 @@ This guide helps you choose the right command for your situation. All commands s
 - You're about to start work and need a baseline
 - You've made changes and want to confirm nothing is broken
 
-**Shared assets:** Appends to `events.log`. May update `orchestrator.json` health details.
+**Shared assets:** Appends to `events.log`. Reads `orchestrator.json` for context.
 
 ---
 
@@ -80,6 +80,19 @@ This guide helps you choose the right command for your situation. All commands s
 - You need a structured review before merging
 
 **Not for:** Full project audit (use `/project-review`).
+
+**Shared assets:** Reads `AGENT_BACKLOG.md` / `orchestrator.json` for context. Appends findings to `events.log`.
+
+---
+
+### `/handoff` — Session continuity summary
+
+**Use when:**
+- You are ending a session and need to hand over current status
+- You want a concise summary of completed work, open risks, and next steps
+- You need state continuity for another agent/person
+
+**Shared assets:** Reads `AGENT_BACKLOG.md`, `orchestrator.json`, and recent `events.log` entries. Appends handoff event to `events.log`.
 
 ---
 
@@ -96,26 +109,27 @@ This guide helps you choose the right command for your situation. All commands s
 
 ## Quick Decision Tree
 
-| Situation | Command |
-|-----------|---------|
-| New session, full assessment | `/orchestrate` or `/orchestrate --assess-only` |
-| Need a plan before coding | `/plan` |
-| Full project audit / onboarding | `/project-review` |
-| Understand repo structure | `/discover` |
-| Verify build/test/lint | `/healthcheck` |
-| Review a PR or commit range | `/review` |
-| Update backlog from findings | `/sync-backlog` |
-| End of session, hand off | `/handoff` |
+| Situation                       | Command                                        |
+| ------------------------------- | ---------------------------------------------- |
+| New session, full assessment    | `/orchestrate` or `/orchestrate --assess-only` |
+| Need a plan before coding       | `/plan`                                        |
+| Full project audit / onboarding | `/project-review`                              |
+| Understand repo structure       | `/discover`                                    |
+| Verify build/test/lint          | `/healthcheck`                                 |
+| Review a PR or commit range     | `/review`                                      |
+| Update backlog from findings    | `/sync-backlog`                                |
+| End of session, hand off        | `/handoff`                                     |
 
 ---
 
 ## Shared State Files
 
-| File | Purpose | Used by |
-|------|---------|---------|
-| `AGENT_BACKLOG.md` | Prioritized work items, team assignments | Orchestrator, Plan, Project-Review, Sync-Backlog, Team commands |
-| `.claude/state/orchestrator.json` | Phase, team status, metrics, risks, todo items | Orchestrator, Plan, Project-Review, Handoff, Healthcheck |
-| `.claude/state/events.log` | Audit trail of actions | All workflow commands |
-| `.claude/state/orchestrator.lock` | Prevents concurrent orchestrator sessions | Orchestrator only |
+| File                              | Purpose                                        | Used by                                                         |
+| --------------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
+| `AGENT_BACKLOG.md`                | Prioritized work items, team assignments       | Orchestrator, Plan, Project-Review, Sync-Backlog, Team commands |
+| `.claude/state/orchestrator.json` | Phase, team status, metrics, risks, todo items | Orchestrator, Plan, Project-Review, Handoff, Healthcheck        |
+| `.claude/state/events.log`        | Audit trail of actions                         | All workflow commands                                           |
+| `.claude/state/orchestrator.lock` | Prevents concurrent orchestrator sessions      | Orchestrator only                                               |
+| `AGENT_TEAMS.md`                  | Team boundaries and ownership map              | Discover, Orchestrator, Team commands                           |
 
 Always read the latest `AGENT_BACKLOG.md` and `orchestrator.json` before starting work. Append to `events.log` when completing significant actions.

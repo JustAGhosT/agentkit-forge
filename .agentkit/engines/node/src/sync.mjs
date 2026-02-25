@@ -44,6 +44,7 @@ function readText(filePath) {
  */
 function renderTemplate(template, vars) {
   let result = template;
+  const rawTemplateVars = new Set(['commandFlags']);
 
   // Phase 1: Resolve {{#if var}}...{{/if}} blocks (supports nesting)
   result = resolveConditionals(result, vars);
@@ -57,7 +58,11 @@ function renderTemplate(template, vars) {
     const value = vars[key];
     const placeholder = `{{${key}}}`;
     const safeValue =
-      typeof value === 'string' ? sanitizeTemplateValue(value) : JSON.stringify(value);
+      typeof value === 'string'
+        ? rawTemplateVars.has(key)
+          ? value
+          : sanitizeTemplateValue(value)
+        : JSON.stringify(value);
     result = result.split(placeholder).join(safeValue);
   }
 
@@ -197,6 +202,12 @@ function flattenProjectYaml(project) {
   vars.hasPatternEventSourcing = !!patterns.eventSourcing;
   vars.hasPatternMediator = !!patterns.mediator;
   vars.hasPatternUnitOfWork = !!patterns.unitOfWork;
+  vars.hasAnyPattern =
+    vars.hasPatternRepository ||
+    vars.hasPatternCqrs ||
+    vars.hasPatternEventSourcing ||
+    vars.hasPatternMediator ||
+    vars.hasPatternUnitOfWork;
 
   // Documentation
   const docs = project.documentation || {};
@@ -1284,7 +1295,8 @@ function hasGlobOverlap(a, b) {
   const aa = normalizeGlobStem(a);
   const bb = normalizeGlobStem(b);
   if (!aa || !bb) return false;
-  return aa.startsWith(bb) || bb.startsWith(aa) || aa.includes(bb) || bb.includes(aa);
+  if (aa === bb) return true;
+  return aa.startsWith(`${bb}/`) || bb.startsWith(`${aa}/`);
 }
 
 function buildAgentDomainRulesMarkdown(agent, rulesSpec) {

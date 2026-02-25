@@ -185,7 +185,6 @@ agents:
         - infra
       notifies:
         - test-lead
-        - security-auditor
       focus:
         - '.github/workflows/**'
         - 'scripts/**'
@@ -227,7 +226,6 @@ agents:
       depends-on: []
       notifies:
         - devops
-        - security-auditor
       focus:
         - 'infra/**'
         - 'terraform/**'

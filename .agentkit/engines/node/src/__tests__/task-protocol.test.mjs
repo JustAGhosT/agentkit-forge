@@ -1,27 +1,23 @@
 /**
  * Tests for task-protocol.mjs — A2A-lite task delegation protocol.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, existsSync, mkdirSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
+import { join } from 'path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  addTaskArtifact,
+  addTaskMessage,
+  checkDependencies,
   createTask,
+  formatTaskList,
+  formatTaskSummary,
+  generateTaskId,
   getTask,
   listTasks,
-  updateTaskStatus,
-  addTaskMessage,
-  addTaskArtifact,
-  checkDependencies,
   processHandoffs,
-  generateTaskId,
-  formatTaskSummary,
-  formatTaskList,
-  TASK_STATES,
-  TERMINAL_STATES,
-  TASK_TYPES,
-  TASK_PRIORITIES,
+  updateTaskStatus,
 } from '../task-protocol.mjs';
 
 let tmpRoot;
@@ -45,7 +41,9 @@ describe('generateTaskId', () => {
 
     // Create a task so next ID increments
     createTask(tmpRoot, {
-      title: 'First', delegator: 'test', assignees: ['team-backend'],
+      title: 'First',
+      delegator: 'test',
+      assignees: ['team-backend'],
     });
     const id2 = generateTaskId(tmpRoot);
     expect(id2).toMatch(/^task-\d{8}-002$/);
@@ -83,7 +81,8 @@ describe('createTask', () => {
 
   it('returns error for missing title', () => {
     const result = createTask(tmpRoot, {
-      delegator: 'test', assignees: ['team-backend'],
+      delegator: 'test',
+      assignees: ['team-backend'],
     });
     expect(result.error).toContain('title is required');
     expect(result.task).toBeNull();
@@ -91,35 +90,50 @@ describe('createTask', () => {
 
   it('returns error for missing delegator', () => {
     const result = createTask(tmpRoot, {
-      title: 'Test', assignees: ['team-backend'],
+      title: 'Test',
+      assignees: ['team-backend'],
     });
     expect(result.error).toContain('delegator is required');
+    expect(result.task).toBeNull();
   });
 
   it('returns error for empty assignees', () => {
     const result = createTask(tmpRoot, {
-      title: 'Test', delegator: 'test', assignees: [],
+      title: 'Test',
+      delegator: 'test',
+      assignees: [],
     });
     expect(result.error).toContain('At least one assignee');
+    expect(result.task).toBeNull();
   });
 
   it('returns error for invalid task type', () => {
     const result = createTask(tmpRoot, {
-      title: 'Test', delegator: 'test', assignees: ['x'], type: 'invalid',
+      title: 'Test',
+      delegator: 'test',
+      assignees: ['x'],
+      type: 'invalid',
     });
     expect(result.error).toContain('Invalid task type');
+    expect(result.task).toBeNull();
   });
 
   it('returns error for invalid priority', () => {
     const result = createTask(tmpRoot, {
-      title: 'Test', delegator: 'test', assignees: ['x'], priority: 'P9',
+      title: 'Test',
+      delegator: 'test',
+      assignees: ['x'],
+      priority: 'P9',
     });
     expect(result.error).toContain('Invalid priority');
+    expect(result.task).toBeNull();
   });
 
   it('defaults type to implement and priority to P2', () => {
     const result = createTask(tmpRoot, {
-      title: 'Test', delegator: 'test', assignees: ['x'],
+      title: 'Test',
+      delegator: 'test',
+      assignees: ['x'],
     });
     expect(result.task.type).toBe('implement');
     expect(result.task.priority).toBe('P2');
@@ -127,18 +141,25 @@ describe('createTask', () => {
 
   it('returns error for non-existent dependency', () => {
     const result = createTask(tmpRoot, {
-      title: 'Test', delegator: 'test', assignees: ['x'],
+      title: 'Test',
+      delegator: 'test',
+      assignees: ['x'],
       dependsOn: ['task-99999999-999'],
     });
     expect(result.error).toContain('Dependency task not found');
+    expect(result.task).toBeNull();
   });
 
   it('sets blockedBy when dependency is not yet complete', () => {
     const dep = createTask(tmpRoot, {
-      title: 'Dep', delegator: 'test', assignees: ['x'],
+      title: 'Dep',
+      delegator: 'test',
+      assignees: ['x'],
     });
     const result = createTask(tmpRoot, {
-      title: 'Blocked', delegator: 'test', assignees: ['y'],
+      title: 'Blocked',
+      delegator: 'test',
+      assignees: ['y'],
       dependsOn: [dep.task.id],
     });
     expect(result.task.blockedBy).toContain(dep.task.id);
@@ -152,7 +173,9 @@ describe('createTask', () => {
 describe('getTask', () => {
   it('retrieves an existing task', () => {
     const created = createTask(tmpRoot, {
-      title: 'Test', delegator: 'test', assignees: ['x'],
+      title: 'Test',
+      delegator: 'test',
+      assignees: ['x'],
     });
     const result = getTask(tmpRoot, created.task.id);
     expect(result.task).toBeDefined();
@@ -210,7 +233,8 @@ describe('updateTaskStatus', () => {
   it('transitions submitted → accepted', () => {
     const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
     const result = updateTaskStatus(tmpRoot, created.task.id, 'accepted', {
-      from: 'team-backend', content: 'Accepted.',
+      from: 'team-backend',
+      content: 'Accepted.',
     });
     expect(result.task.status).toBe('accepted');
     expect(result.task.messages).toHaveLength(2);
@@ -247,7 +271,8 @@ describe('updateTaskStatus', () => {
   it('supports submitted → rejected', () => {
     const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
     const result = updateTaskStatus(tmpRoot, created.task.id, 'rejected', {
-      from: 'team-backend', content: 'Not in my scope.',
+      from: 'team-backend',
+      content: 'Not in my scope.',
     });
     expect(result.task.status).toBe('rejected');
   });
@@ -270,7 +295,9 @@ describe('addTaskMessage', () => {
   it('adds a message to a task', () => {
     const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
     const result = addTaskMessage(tmpRoot, created.task.id, {
-      role: 'executor', from: 'team-backend', content: 'Working on it.',
+      role: 'executor',
+      from: 'team-backend',
+      content: 'Working on it.',
     });
     expect(result.task.messages).toHaveLength(2);
     expect(result.task.messages[1].content).toBe('Working on it.');
@@ -280,7 +307,9 @@ describe('addTaskMessage', () => {
     const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
     updateTaskStatus(tmpRoot, created.task.id, 'rejected', { from: 'x' });
     const result = addTaskMessage(tmpRoot, created.task.id, {
-      role: 'delegator', from: 'test', content: 'Please reconsider.',
+      role: 'delegator',
+      from: 'test',
+      content: 'Please reconsider.',
     });
     expect(result.error).toContain('terminal state');
   });
@@ -288,7 +317,9 @@ describe('addTaskMessage', () => {
   it('rejects invalid message role', () => {
     const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
     const result = addTaskMessage(tmpRoot, created.task.id, {
-      role: 'observer', from: 'test', content: 'Hi.',
+      role: 'observer',
+      from: 'test',
+      content: 'Hi.',
     });
     expect(result.error).toContain('Invalid message role');
   });
@@ -314,7 +345,10 @@ describe('addTaskArtifact', () => {
   it('adds a test-results artifact', () => {
     const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
     const result = addTaskArtifact(tmpRoot, created.task.id, {
-      type: 'test-results', passed: 10, failed: 0, added: 3,
+      type: 'test-results',
+      passed: 10,
+      failed: 0,
+      added: 3,
     });
     expect(result.task.artifacts[0].passed).toBe(10);
   });
@@ -334,7 +368,9 @@ describe('checkDependencies', () => {
   it('unblocks task when dependency completes', () => {
     const dep = createTask(tmpRoot, { title: 'Dep', delegator: 'test', assignees: ['a'] });
     const blocked = createTask(tmpRoot, {
-      title: 'Blocked', delegator: 'test', assignees: ['b'],
+      title: 'Blocked',
+      delegator: 'test',
+      assignees: ['b'],
       dependsOn: [dep.task.id],
     });
     expect(blocked.task.blockedBy).toContain(dep.task.id);
@@ -355,7 +391,9 @@ describe('checkDependencies', () => {
   it('keeps task blocked when dependency is still in progress', () => {
     const dep = createTask(tmpRoot, { title: 'Dep', delegator: 'test', assignees: ['a'] });
     createTask(tmpRoot, {
-      title: 'Blocked', delegator: 'test', assignees: ['b'],
+      title: 'Blocked',
+      delegator: 'test',
+      assignees: ['b'],
       dependsOn: [dep.task.id],
     });
 
@@ -371,7 +409,9 @@ describe('checkDependencies', () => {
 describe('processHandoffs', () => {
   it('creates follow-up tasks for completed tasks with handoffTo', () => {
     const task = createTask(tmpRoot, {
-      title: 'Schema migration', delegator: 'orchestrator', assignees: ['data'],
+      title: 'Schema migration',
+      delegator: 'orchestrator',
+      assignees: ['data'],
       handoffTo: ['backend'],
       handoffContext: 'Migration applied. Update API to use new cursor field.',
     });
@@ -392,7 +432,9 @@ describe('processHandoffs', () => {
 
   it('does not re-process already processed handoffs', () => {
     const task = createTask(tmpRoot, {
-      title: 'Test', delegator: 'orchestrator', assignees: ['a'],
+      title: 'Test',
+      delegator: 'orchestrator',
+      assignees: ['a'],
       handoffTo: ['b'],
     });
     updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'a' });
@@ -406,7 +448,9 @@ describe('processHandoffs', () => {
 
   it('creates tasks for multiple handoff targets', () => {
     const task = createTask(tmpRoot, {
-      title: 'Shared lib update', delegator: 'orchestrator', assignees: ['platform'],
+      title: 'Shared lib update',
+      delegator: 'orchestrator',
+      assignees: ['platform'],
       handoffTo: ['backend', 'frontend'],
       handoffContext: 'Shared types updated.',
     });
@@ -416,12 +460,14 @@ describe('processHandoffs', () => {
 
     const { created } = processHandoffs(tmpRoot);
     expect(created).toHaveLength(2);
-    expect(created.map(t => t.assignees[0]).sort()).toEqual(['backend', 'frontend']);
+    expect(created.map((t) => t.assignees[0]).sort()).toEqual(['backend', 'frontend']);
   });
 
   it('skips tasks with no handoffTo', () => {
     const task = createTask(tmpRoot, {
-      title: 'Solo', delegator: 'test', assignees: ['x'],
+      title: 'Solo',
+      delegator: 'test',
+      assignees: ['x'],
     });
     updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'x' });
     updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'x' });
@@ -439,8 +485,11 @@ describe('processHandoffs', () => {
 describe('formatTaskSummary', () => {
   it('produces a readable summary', () => {
     const { task } = createTask(tmpRoot, {
-      title: 'Test task', delegator: 'orchestrator', assignees: ['team-backend'],
-      priority: 'P1', handoffTo: ['team-testing'],
+      title: 'Test task',
+      delegator: 'orchestrator',
+      assignees: ['team-backend'],
+      priority: 'P1',
+      handoffTo: ['team-testing'],
     });
     const summary = formatTaskSummary(task);
     expect(summary).toContain('Test task');

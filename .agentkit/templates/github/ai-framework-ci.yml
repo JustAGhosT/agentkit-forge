@@ -113,7 +113,7 @@ jobs:
 
           # Check for .env files in repo (tracked or untracked)
           if { git ls-files --name-only 2>/dev/null; git ls-files --others --exclude-standard --name-only 2>/dev/null; } | grep -qE '\.env($|\.)'; then
-            echo "::error::.env file detected in staged changes"
+            echo "::error::.env file detected in repository files"
             errors=$((errors + 1))
           fi
 
