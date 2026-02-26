@@ -4,7 +4,15 @@
  * Tasks are JSON files in .claude/state/tasks/ with lifecycle states,
  * messages, artifacts, dependency tracking, and chained handoffs.
  */
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync,
+} from 'fs';
 import { resolve } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
 
@@ -123,7 +131,18 @@ function writeTaskFile(projectRoot, taskId, data) {
   const path = taskPath(projectRoot, taskId);
   const tmpPath = `${path}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
   writeFileSync(tmpPath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
-  renameSync(tmpPath, path);
+  try {
+    renameSync(tmpPath, path);
+  } catch (err) {
+    try {
+      unlinkSync(tmpPath);
+    } catch {
+      /* ignore cleanup errors */
+    }
+    if (err.code !== 'EEXIST') {
+      throw err;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -408,6 +427,14 @@ export function addTaskMessage(projectRoot, taskId, message) {
       task: null,
       error: `Invalid message role: ${message.role}. Valid: ${MESSAGE_ROLES.join(', ')}`,
     };
+  }
+
+  if (typeof message.from !== 'string' || message.from.trim() === '') {
+    return { task: null, error: 'Invalid message.from: must be a non-empty string' };
+  }
+
+  if (typeof message.content !== 'string' || message.content.trim() === '') {
+    return { task: null, error: 'Invalid message.content: must be a non-empty string' };
   }
 
   const task = result.task;

@@ -6,13 +6,35 @@
 - Scope: Llama 4 open-weight baseline signals for self-hosted decisions
 - Intended use: source data for team model guides
 
+## At a Glance
+
+| Attribute          | Value                                                    |
+| ------------------ | -------------------------------------------------------- |
+| **Provider**       | Meta AI (Menlo Park, USA)                                |
+| **Founded**        | 2023 (Llama), 2013 (Meta AI)                             |
+| **Architecture**   | Dense transformer + MoE (Llama 4)                        |
+| **Latest model**   | Llama 4 Scout/Maverick                                   |
+| **Context window** | 128K tokens                                              |
+| **License**        | Llama Community License (commercial ok)                  |
+| **Notable**        | Most downloaded AI model, sparked open-source revolution |
+
+## Hugging Face Resources
+
+| Resource               | Model ID                                      | Notes                                    |
+| ---------------------- | --------------------------------------------- | ---------------------------------------- |
+| Llama 4 Scout          | `meta-llama/Llama-4-Scout-17B-16E`            | MoE architecture, 17B active, 16 experts |
+| Llama 4 Scout Instruct | `meta-llama/Llama-4-Scout-17B-16E-Instruct`   | Instruction-tuned variant                |
+| Llama 4 Scout FP8      | `nvidia/Llama-4-Scout-17B-16E-Instruct-FP8`   | NVIDIA quantized version                 |
+| Llama 4 Scout GGUF     | `unsloth/Llama-4-Scout-17B-16E-Instruct-GGUF` | Unsloth quantized version                |
+| Llama 4 collection     | `meta-llama/llama-4`                          | Official collection hub                  |
+
 ## Latest benchmark signals
 
-| Signal | Value | Source | Quality |
-| --- | --- | --- | --- |
-| Open model stance | Llama 4 is positioned for commercial and research use under Llama Community License | [Llama 4 Scout model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E) | Fetched, vendor claim |
-| Multimodal positioning | Instruction-tuned Llama 4 is described for assistant chat and visual reasoning | [Llama 4 Scout model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E) | Fetched, vendor claim |
-| Training scale signal | Llama 4 Scout pretraining reported at ~40T tokens with Aug 2024 data cutoff | [Llama 4 Scout model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E) | Fetched, vendor claim |
+| Signal                 | Value                                                                               | Source                                                                              | Quality               |
+| ---------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------- |
+| Open model stance      | Llama 4 is positioned for commercial and research use under Llama Community License | [Llama 4 Scout model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E) | Fetched, vendor claim |
+| Multimodal positioning | Instruction-tuned Llama 4 is described for assistant chat and visual reasoning      | [Llama 4 Scout model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E) | Fetched, vendor claim |
+| Training scale signal  | Llama 4 Scout pretraining reported at ~40T tokens with Aug 2024 data cutoff         | [Llama 4 Scout model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E) | Fetched, vendor claim |
 
 ## Operational notes
 

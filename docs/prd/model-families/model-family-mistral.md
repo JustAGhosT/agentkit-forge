@@ -6,13 +6,34 @@
 - Scope: Codestral coding capabilities and Mistral API feature surface
 - Intended use: source data for team model guides
 
+## At a Glance
+
+| Attribute          | Value                                                    |
+| ------------------ | -------------------------------------------------------- |
+| **Provider**       | Mistral AI (Paris, France)                               |
+| **Founded**        | 2023                                                     |
+| **Architecture**   | Dense transformer + Mamba (Codestral)                    |
+| **Latest model**   | Codestral 25.08                                          |
+| **Context window** | 128K tokens                                              |
+| **License**        | Proprietary (API) + open weights (Apache 2.0)            |
+| **Notable**        | European AI champion, first with FIM for code completion |
+
+## Hugging Face Resources
+
+| Resource            | Model ID                               | Notes                         |
+| ------------------- | -------------------------------------- | ----------------------------- |
+| Codestral           | `mistralai/Codestral-22B-v0.1`         | Main coding model, 22B params |
+| Codestral community | `mistral-community/Codestral-22B-v0.1` | Community checkpoint          |
+| Mamba variant       | `mistralai/Mamba-Codestral-7B-v0.1`    | Mamba architecture variant    |
+| Base Mistral        | `mistralai/Mistral-7B-v0.1`            | Original Mistral 7B           |
+
 ## Latest benchmark signals
 
-| Signal | Value | Source | Quality |
-| --- | --- | --- | --- |
-| Coding focus | Codestral is positioned as a code-completion model for low-latency, high-frequency coding tasks | [Mistral Codestral docs](https://docs.mistral.ai/models/codestral-25-08) | Fetched, vendor claim |
-| FIM support | Codestral supports Fill-in-the-Middle code completion | [Mistral Codestral docs](https://docs.mistral.ai/models/codestral-25-08) | Fetched, vendor claim |
-| Agent/tool features | Docs list function calling, agents, and built-in tools support | [Mistral Codestral docs](https://docs.mistral.ai/models/codestral-25-08) | Fetched, vendor claim |
+| Signal              | Value                                                                                           | Source                                                                   | Quality               |
+| ------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------- |
+| Coding focus        | Codestral is positioned as a code-completion model for low-latency, high-frequency coding tasks | [Mistral Codestral docs](https://docs.mistral.ai/models/codestral-25-08) | Fetched, vendor claim |
+| FIM support         | Codestral supports Fill-in-the-Middle code completion                                           | [Mistral Codestral docs](https://docs.mistral.ai/models/codestral-25-08) | Fetched, vendor claim |
+| Agent/tool features | Docs list function calling, agents, and built-in tools support                                  | [Mistral Codestral docs](https://docs.mistral.ai/models/codestral-25-08) | Fetched, vendor claim |
 
 ## Operational notes
 

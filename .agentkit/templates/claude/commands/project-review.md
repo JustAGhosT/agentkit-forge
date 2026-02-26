@@ -120,8 +120,8 @@ Propose updates to:
 
 - **Read:** `AGENT_BACKLOG.md` (for existing items), `.claude/state/orchestrator.json` (for project context)
 - **Append to:** `.claude/state/events.log` — write findings for tracking
-- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
-- Consider updating `AGENT_BACKLOG.md` with new items from your findings (or recommend `/sync-backlog`).
+- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock. Commands must not mutate state directly unless explicitly documented.
+- To add items to the backlog, use `/sync-backlog` command instead of direct file edits to avoid race conditions with the orchestrator.
 
 ## Output Format
 

@@ -128,5 +128,4 @@ ranking tables until benchmark metrics are validated.
 
 - PRD-001: LLM Decision Engine
 - PRD-002: LLM Selection Scorecard Guide
-- PRD-003: Weighted Matrix example
 - Model Family Benchmark Dossiers: `docs/prd/model-families/README.md`

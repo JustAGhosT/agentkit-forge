@@ -55,9 +55,11 @@ Run release-readiness checks beyond `/check` before merge/ship.
    - Threshold: fail when total coverage delta < 0.00 percentage points unless
      an active waiver entry is present in `.claude/state/coverage-waivers.md`
    - Waiver detection rule: parse `.claude/state/coverage-waivers.md` and accept
-     waiver entries only when all required fields are present (`id`, `author`,
+     waiver entries only when all required fields are present (`author`,
      `rationale`, `linkedIssueOrPr`, `expiresAt`) and `expiresAt` is in the
-     future at preflight runtime
+     future at preflight runtime. The waiver ID is extracted from the heading
+     text after the literal prefix "coverage-waiver:" (e.g., heading pattern
+     "## coverage-waiver: cw-2026-02-25-auth-refactor").
    - Example valid waiver entry:
      ```markdown
      ## coverage-waiver: cw-2026-02-25-auth-refactor

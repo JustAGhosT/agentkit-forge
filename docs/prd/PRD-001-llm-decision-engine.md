@@ -240,7 +240,7 @@ Acceptance criteria:
 ```yaml
 agents:
   - name: codebot
-    llm: claude-3-opus  # Replace with current recommended Anthropic model at deployment time
+    llm: claude-3-5-sonnet  # Replace with current recommended Anthropic model at deployment time
     rationale: Best for code generation and large context tasks.
     weights:
       quality: 5
@@ -293,6 +293,8 @@ agents:
 
 ### Telemetry Privacy
 
+> **Note:** GDPR/CCPA compliance details are pending finalization. Telemetry collection will be designed to comply with applicable data protection regulations when implemented.
+
 Telemetry privacy requirements are documented in the Non-Functional Requirements section above. See GDPR/CCPA compliance requirements for details.
 
 See also: Open Questions table — telemetry privacy question has been migrated there for tracking.
@@ -305,7 +307,7 @@ See also: Open Questions table — telemetry privacy question has been migrated 
 | ----- | ------------------------------------------- | -------------- |
 | v1    | Scorecards, static config, docs             | +4 weeks       |
 | v2    | Dynamic mapping, feedback loop, optional UI | +8 weeks       |
-| v3+   | Marketplace and expanded benchmarks         | Q4 2025 (CY+1) |
+| v3+   | Marketplace and expanded benchmarks         | Q4 2026 (CY+1) |
 
 ## Constraints and Dependencies
 
@@ -352,7 +354,7 @@ See also: Open Questions table — telemetry privacy question has been migrated 
 
 ### Example Coding Scorecard Snapshot
 
-> **Last Updated:** February 2025 — verify current model capabilities before deployment
+> **Last Updated:** February 2025 — verify current model capabilities before deployment. ⚠️ **Warning:** Data is approximately one year old and may not reflect current model capabilities. See the "Rapidly Changing Model Capabilities" and "Model Capability Verification" sections for guidance on verifying up-to-date performance before deployment.
 
 | Model                     | Code Quality | Reasoning | Context | Cost | Speed | Compatibility | Lock-in | Quirks                                 |
 | ------------------------- | ------------ | --------- | ------- | ---- | ----- | ------------- | ------- | -------------------------------------- |

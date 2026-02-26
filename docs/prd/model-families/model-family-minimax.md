@@ -6,15 +6,38 @@
 - Scope: coding and agentic workflow benchmark signals
 - Intended use: source data for team model guides
 
+## At a Glance
+
+| Attribute          | Value                                                               |
+| ------------------ | ------------------------------------------------------------------- |
+| **Provider**       | MiniMax (Shenzhen, China)                                           |
+| **Founded**        | 2021                                                                |
+| **Architecture**   | Dense transformer                                                   |
+| **Latest model**   | MiniMax M2.5                                                        |
+| **Context window** | 128K-200K tokens                                                    |
+| **License**        | Proprietary (API) + open weights                                    |
+| **Notable**        | ~$0.09/problem on SWE-rebench (cheapest), competitive with Opus 4.6 |
+
+## Hugging Face Resources
+
+| Resource | Model ID                 | Notes                |
+| -------- | ------------------------ | -------------------- |
+| M2.5     | `MiniMaxAI/MiniMax-M2.5` | Latest MiniMax model |
+| M2.1     | `MiniMaxAI/MiniMax-M2.1` | Previous version     |
+| M2       | `MiniMaxAI/MiniMax-M2`   | M2 base              |
+| M1       | `MiniMaxAI/MiniMax-M1`   | M1 base              |
+
+> **Note:** MiniMax is a Chinese AI company with strong coding benchmarks. Access via API (platform.minimax.io) or through third-party providers. The M2.5 model shows competitive coding performance at lower cost.
+
 ## Latest benchmark signals
 
-| Signal | Value | Source | Quality |
-| --- | --- | --- | --- |
-| Droid harness comparison | M2.5: 79.7 vs Opus 4.6: 78.9 | [MiniMax M2.5 model card](https://huggingface.co/MiniMaxAI/MiniMax-M2.5) | Fetched, vendor claim |
-| OpenCode harness comparison | M2.5: 76.1 vs Opus 4.6: 75.9 | [MiniMax M2.5 model card](https://huggingface.co/MiniMaxAI/MiniMax-M2.5) | Fetched, vendor claim |
-| SWE-Bench runtime efficiency | 22.8 min vs 31.3 min (M2.1), ~37% faster | [MiniMax M2.5 model card](https://huggingface.co/MiniMaxAI/MiniMax-M2.5) | Fetched, vendor claim |
-| SWE-Bench token usage | 3.52M tokens/task vs 3.72M (M2.1) | [MiniMax M2.5 model card](https://huggingface.co/MiniMaxAI/MiniMax-M2.5) | Fetched, vendor claim |
-| SWE-rebench note | MiniMax M2.5 reported at ~$0.09 per problem | [SWE-rebench](https://swe-rebench.com/) | Fetched, independent benchmark |
+| Signal                       | Value                                       | Source                                                                   | Quality                        |
+| ---------------------------- | ------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------ |
+| Droid harness comparison     | M2.5: 79.7 vs Opus 4.6: 78.9                | [MiniMax M2.5 model card](https://huggingface.co/MiniMaxAI/MiniMax-M2.5) | Fetched, vendor claim          |
+| OpenCode harness comparison  | M2.5: 76.1 vs Opus 4.6: 75.9                | [MiniMax M2.5 model card](https://huggingface.co/MiniMaxAI/MiniMax-M2.5) | Fetched, vendor claim          |
+| SWE-Bench runtime efficiency | 22.8 min vs 31.3 min (M2.1), ~37% faster    | [MiniMax M2.5 model card](https://huggingface.co/MiniMaxAI/MiniMax-M2.5) | Fetched, vendor claim          |
+| SWE-Bench token usage        | 3.52M tokens/task vs 3.72M (M2.1)           | [MiniMax M2.5 model card](https://huggingface.co/MiniMaxAI/MiniMax-M2.5) | Fetched, vendor claim          |
+| SWE-rebench note             | MiniMax M2.5 reported at ~$0.09 per problem | [SWE-rebench](https://swe-rebench.com/)                                  | Fetched, independent benchmark |
 
 ## Operational notes
 

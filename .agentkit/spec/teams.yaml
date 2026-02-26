@@ -36,7 +36,7 @@ teams:
   - id: devops
     name: DEVOPS
     focus: 'CI/CD, pipelines, automation'
-    scope: ['.github/workflows/**', 'scripts/**', 'docker/**', 'Dockerfile*']
+    scope: ['.github/workflows/**', 'scripts/**', 'docker/**', '**/Dockerfile*']
     accepts: [implement, review, plan]
     handoff-chain: [testing, security]
 
@@ -57,7 +57,7 @@ teams:
   - id: docs
     name: DOCUMENTATION
     focus: 'Docs, ADRs, guides'
-    scope: ['docs/**', '*.md', 'ADR/**']
+    scope: ['docs/**', '**/*.md', 'ADR/**']
     accepts: [implement, review, document]
     handoff-chain: []
 

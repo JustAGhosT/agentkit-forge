@@ -550,7 +550,7 @@ describe('processHandoffs', () => {
 
     const firstRun = processHandoffs(tmpRoot);
     expect(firstRun.errors.length).toBeGreaterThan(0);
-    expect(firstRun.created).toBe(0);
+    expect(firstRun.created).toHaveLength(0);
     const after = getTask(tmpRoot, task.task.id);
     expect(after.task._handoffProcessed).toBeFalsy();
   });

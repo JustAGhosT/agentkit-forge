@@ -501,6 +501,7 @@ agents:
       depends-on: []
       notifies:
         - devops
+        - environment-manager
       focus:
         - 'auth/**'
         - 'security/**'
@@ -680,6 +681,7 @@ agents:
         scenarios that span multiple system components.
       accepts:
         - implement
+        - review
         - test
       depends-on:
         - backend

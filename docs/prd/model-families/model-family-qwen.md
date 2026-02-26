@@ -6,6 +6,31 @@
 - Scope: coding benchmark behavior for Qwen3 variants
 - Intended use: source data for team model guides
 
+## At a Glance
+
+| Attribute          | Value                                                         |
+| ------------------ | ------------------------------------------------------------- |
+| **Provider**       | Alibaba Cloud (Hangzhou, China)                               |
+| **Founded**        | 2023 (Qwen), 2009 (Alibaba Cloud)                             |
+| **Architecture**   | Dense transformer + MoE                                       |
+| **Latest model**   | Qwen3, Qwen2.5-Coder                                          |
+| **Context window** | 128K-1M tokens                                                |
+| **License**        | Open weights (Apache 2.0) + API                               |
+| **Notable**        | Best open-source on SWE-rebench pass@5, extensive model sizes |
+
+## Hugging Face Resources
+
+| Resource           | Model ID                          | Notes                       |
+| ------------------ | --------------------------------- | --------------------------- |
+| Qwen3-32B          | `Qwen/Qwen3-32B`                  | 32B parameter model         |
+| Qwen3-32B Instruct | `Qwen/Qwen3-32B-Instruct`         | Instruction-tuned           |
+| Qwen3-235B-A22B    | `Qwen/Qwen3-235B-A22B`            | MoE, 235B total, 22B active |
+| Qwen2.5-Coder      | `Qwen/Qwen2.5-Coder-32B-Instruct` | Code-specialized            |
+| Qwen2.5            | `Qwen/Qwen2.5-72B-Instruct`       | General purpose             |
+| Qwen2.5-VL         | `Qwen/Qwen2.5-VL-72B-Instruct`    | Vision variant              |
+
+> **Note:** Qwen (Alibaba) provides extensive open-weight models on Hugging Face. Qwen2.5-Coder is specifically optimized for code tasks.
+
 ## Latest benchmark signals
 
 | Signal                                              | Value                                                             | Source                                                             | Quality                        |

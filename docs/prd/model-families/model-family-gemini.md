@@ -6,6 +6,29 @@
 - Scope: coding, agentic, and speed-relevant benchmark signals
 - Intended use: source data for team model guides
 
+## At a Glance
+
+| Attribute          | Value                                               |
+| ------------------ | --------------------------------------------------- |
+| **Provider**       | Google DeepMind (London/Mountain View)              |
+| **Founded**        | 2010 (DeepMind), 2023 (Gemini)                      |
+| **Architecture**   | Dense transformer + MoE                             |
+| **Latest model**   | Gemini 3 Pro/Flash                                  |
+| **Context window** | 1M tokens (2M experimental)                         |
+| **License**        | Proprietary (API) + limited open weights            |
+| **Notable**        | Native multimodal from ground up, 2M context leader |
+
+## Hugging Face Resources
+
+| Resource         | Model ID                      | Notes                      |
+| ---------------- | ----------------------------- | -------------------------- |
+| Gemini 2.0 Flash | `google/gemini-2.0-flash-exp` | Experimental Flash variant |
+| Gemini 1.5 Pro   | `google/gemini-1.5-pro`       | 1M context, API access     |
+| Gemini 1.5 Flash | `google/gemini-1.5-flash`     | Fast variant, 1M context   |
+| Gemini Flash 2.0 | `google/gemini-2.0-flash`     | Production Flash           |
+
+> **Note:** Google publishes most Gemini models via Google AI Studio and Vertex AI, not Hugging Face. The above are available experimental/public variants.
+
 ## Latest benchmark signals
 
 | Signal                        | Value                                                      | Source                                                           | Quality                        |

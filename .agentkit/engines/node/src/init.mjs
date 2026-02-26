@@ -51,7 +51,9 @@ const PRESETS = {
 };
 
 function applyPresetDefaults(project, preset) {
-  if (!preset || !project) return project;
+  if (!project) {
+    throw new TypeError('applyPresetDefaults: project is required');
+  }
   if (preset !== 'infra') return project;
 
   project.deployment = project.deployment || {};

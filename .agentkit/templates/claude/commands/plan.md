@@ -88,13 +88,13 @@ Example:
 List every file that will be created or modified, with the type of change:
 
 ```
-| File | Action | Description |
-|------|--------|-------------|
-| `src/middleware/rateLimit.ts` | CREATE | Rate limiting middleware |
-| `src/lib/redis.ts` | MODIFY | Add Redis client export |
-| `src/routes/auth.ts` | MODIFY | Attach rate limit middleware |
-| `src/middleware/__tests__/rateLimit.test.ts` | CREATE | Rate limit tests |
-| `package.json` | MODIFY | Add ioredis dependency |
+| File                                         | Action | Description                  |
+| -------------------------------------------- | ------ | ---------------------------- |
+| `src/middleware/rateLimit.ts`                | CREATE | Rate limiting middleware     |
+| `src/lib/redis.ts`                           | MODIFY | Add Redis client export      |
+| `src/routes/auth.ts`                         | MODIFY | Attach rate limit middleware |
+| `src/middleware/__tests__/rateLimit.test.ts` | CREATE | Rate limit tests             |
+| `package.json`                               | MODIFY | Add ioredis dependency       |
 ```
 
 ### 5. Validation Plan
@@ -135,13 +135,14 @@ List anything that could go wrong or needs human attention:
 
 Write the complete plan as a structured markdown document. Do NOT create a file — output the plan directly so the orchestrator or user can review it before implementation begins.
 
-## Shared State (read before planning, write after)
+## State Management
 
+### Reading State (before planning)
 - **Read:** `AGENT_BACKLOG.md` (for item context), `.claude/state/orchestrator.json` (for phase/team status)
-- **Append to:** `.claude/state/events.log`
-- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
 
-## State Updates
+### Writing State (after planning)
+- **Append to:** `.claude/state/events.log` (see format below)
+- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
 
 Append to `.claude/state/events.log`:
 

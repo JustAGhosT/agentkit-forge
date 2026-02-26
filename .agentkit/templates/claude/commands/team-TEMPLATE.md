@@ -36,12 +36,19 @@ Follow these steps in order for every work session:
 1. List files in `.claude/state/tasks/` and read any with status `submitted`
    where `assignees` includes `{{teamId}}`.
 2. For each matching task:
-   - If the task is within your scope and type matches your accepted types,
-     **accept** it: update `status` to `accepted`, add a message with
-     `role: "executor"`, `from: "{{teamId}}"`, `content: "Accepted."`,
-     and `statusChange: "accepted"`.
+   - **Acquire a lock** on the task file (e.g., `.claude/state/tasks/{task-id}.lock`)
+     before re-checking the status. If lock acquisition fails, abort and skip this task.
+   - **Re-check status** under the lock: read the task file again and verify
+     `status === "submitted"`. If it has changed, release the lock and abort handling
+     that task.
+   - If still `submitted` and the task is within your scope and type matches your
+     accepted types, **accept** it: perform an atomic update that sets `status` to
+     `accepted`, adds a message with `role: "executor"`, `from: "{{teamId}}"`,
+     `content: "Accepted."`, and `statusChange: "accepted"`. Release the lock after
+     the atomic update completes.
    - If the task is outside your scope or type, **reject** it: set `status`
      to `rejected`, add a message explaining why and suggesting a better team.
+     Release the lock after the update.
 3. After accepting, update `status` to `working` and begin implementation.
 4. If no delegated tasks exist, fall through to Step 1 (backlog-based work).
 

@@ -6,14 +6,36 @@
 - Scope: Nova family signals relevant to AWS-first deployments
 - Intended use: source data for team model guides
 
+## At a Glance
+
+| Attribute          | Value                                                  |
+| ------------------ | ------------------------------------------------------ |
+| **Provider**       | Amazon Web Services (Seattle, USA)                     |
+| **Founded**        | 2006 (AWS), 2024 (Nova)                                |
+| **Architecture**   | Dense transformer                                      |
+| **Latest model**   | Nova Premier, Pro, Lite, Micro                         |
+| **Context window** | 300K tokens (Premier)                                  |
+| **License**        | Proprietary (AWS Bedrock only)                         |
+| **Notable**        | AWS-native, GovCloud support, cheapest bedrock pricing |
+
+## Hugging Face Resources
+
+| Resource          | Model ID                                  | Notes                    |
+| ----------------- | ----------------------------------------- | ------------------------ |
+| Organization      | `amazon`                                  | Official AWS Amazon org  |
+| AGI research      | `amazon-agi`                              | Amazon AGI research team |
+| Nova Canvas evals | `amazon-agi/Amazon-Nova-1.0-Canvas-evals` | Evaluation datasets      |
+
+> **Note:** Amazon Nova models are primarily accessed via AWS Bedrock, not direct Hugging Face inference. The org pages provide research context and eval data.
+
 ## Latest benchmark signals
 
-| Signal | Value | Source | Quality |
-| --- | --- | --- | --- |
-| Family categories | Nova is grouped into understanding, creative, and speech model categories | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
-| Understanding lineup | Nova Premier, Pro, Lite, and Micro are documented for multimodal/text understanding tasks | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
-| Use-case positioning | AWS lists RAG systems and agentic applications across Nova understanding models | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
-| Region/governance signal | Regional availability and GovCloud support are explicitly documented | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
+| Signal                   | Value                                                                                     | Source                                                                                      | Quality               |
+| ------------------------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------- |
+| Family categories        | Nova is grouped into understanding, creative, and speech model categories                 | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
+| Understanding lineup     | Nova Premier, Pro, Lite, and Micro are documented for multimodal/text understanding tasks | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
+| Use-case positioning     | AWS lists RAG systems and agentic applications across Nova understanding models           | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
+| Region/governance signal | Regional availability and GovCloud support are explicitly documented                      | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
 
 ## Operational notes
 

@@ -43,6 +43,8 @@ AgentKit Forge generates configuration files for whichever tools your team uses.
 
 From the root of your project repository:
 
+> **Note:** Replace `your-org` with your GitHub organization or the actual repository URL.
+
 ```bash
 git submodule add https://github.com/your-org/agentkit-forge.git .agentkit
 git submodule update --init --recursive
@@ -96,7 +98,7 @@ node .agentkit/engines/node/src/cli.mjs sync
 
 This reads your overlay settings and the core spec, then renders configuration files for every tool listed in `renderTargets`.
 
-Commit the agentkit directory (the generated outputs are gitignored):
+Commit the .agentkit directory (the generated outputs are gitignored):
 
 ```bash
 git add .agentkit/ .gitignore .gitattributes
@@ -279,18 +281,18 @@ These commands validate and improve code quality.
 
 These commands activate specialized agent teams for focused work.
 
-| Command          | Team                | Focus Area                                    |
-| ---------------- | ------------------- | --------------------------------------------- |
-| `/team-backend`  | Backend (T1)        | API routes, services, core server logic       |
-| `/team-frontend` | Frontend (T2)       | UI components, client state, accessibility    |
-| `/team-data`     | Data (T3)           | Database, models, migrations, queries         |
-| `/team-infra`    | Infrastructure (T4) | CI/CD, Docker, cloud configuration            |
-| `/team-devops`   | DevOps (T5)         | Pipelines, containers, automation             |
-| `/team-testing`  | Testing (T6)        | Test strategy, coverage, benchmarks           |
-| `/team-security` | Security (T7)       | Auth, compliance, audit                       |
-| `/team-docs`     | Documentation (T8)  | Docs, ADRs, runbooks, guides                  |
-| `/team-product`  | Product (T9)        | Feature specs, PRDs, roadmap                  |
-| `/team-quality`  | Quality (T10)       | Quality assurance, test strategy, reliability |
+| Command             | Team                | Focus Area                                    |
+| ------------------- | ------------------- | --------------------------------------------- |
+| `/team-backend`     | Backend (T1)        | API routes, services, core server logic       |
+| `/team-frontend`    | Frontend (T2)       | UI components, client state, accessibility    |
+| `/team-data`        | Data (T3)           | Database, models, migrations, queries         |
+| `/team-infra`       | Infrastructure (T4) | CI/CD, Docker, cloud configuration            |
+| `/team-auth`        | Auth (T5)           | Authentication & authorization                |
+| `/team-integration` | Integration (T6)    | Third-party services & webhooks               |
+| `/team-docs`        | Documentation (T7)  | Docs, ADRs, runbooks, guides                  |
+| `/team-devex`       | DevEx (T8)          | Tooling, linting, DX improvements             |
+| `/team-platform`    | Platform (T9)       | Shared libraries & core modules               |
+| `/team-quality`     | Quality (T10)       | Quality assurance, test strategy, reliability |
 
 ---
 

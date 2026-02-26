@@ -628,11 +628,19 @@ function validateCrossReferences(specs) {
       if (!Array.isArray(chain)) {
         errors.push(`teams.yaml: team "${team.id}" handoff-chain must be an array`);
       } else {
-        teamHandoffMap.set(
-          team.id,
-          chain.filter((target) => typeof target === 'string')
-        );
-        for (const target of chain) {
+        // Validate each element and collect errors for non-strings
+        const validChain = [];
+        chain.forEach((target, index) => {
+          if (typeof target !== 'string') {
+            errors.push(
+              `teams.yaml: team "${team.id}" handoff-chain element at index ${index} must be a string`
+            );
+          } else {
+            validChain.push(target);
+          }
+        });
+        teamHandoffMap.set(team.id, validChain);
+        for (const target of validChain) {
           if (!teamIds.has(target)) {
             errors.push(
               `teams.yaml: team "${team.id}" handoff-chain references unknown team "${target}"`

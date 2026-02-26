@@ -115,13 +115,12 @@ data are the source of truth.
 These models are now included in intake analysis but are excluded from weighted
 ranking tables until benchmark metrics are validated.
 
-| Model                        | Cost Multiplier | Status                                      |
-| ---------------------------- | --------------- | ------------------------------------------- |
-| Gemini 3 Flash High          | 1.75x           | Added to intake, pending scorecard metrics  |
-| Gemini 3 Pro High Thinking   | 2x              | Added to intake, pending scorecard metrics  |
-| Gemini 3.1 Pro High Thinking | 1x              | Added to intake, pending scorecard metrics  |
-| GLM 4.7 (Beta)               | 0.25x           | Added to intake, beta reliability watch     |
-| GLM-5 (New)                  | 1.5x            | Added to intake, replaces prior GLM-5 entry |
+| Model                        | Cost Multiplier | Status                                     |
+| ---------------------------- | --------------- | ------------------------------------------ |
+| Gemini 3 Flash High          | 1.75x           | Added to intake, pending scorecard metrics |
+| Gemini 3 Pro High Thinking   | 2x              | Added to intake, pending scorecard metrics |
+| Gemini 3.1 Pro High Thinking | 1x              | Added to intake, pending scorecard metrics |
+| GLM 4.7 (Beta)               | 0.25x           | Added to intake, beta reliability watch    |
 
 ## Related Documentation
 

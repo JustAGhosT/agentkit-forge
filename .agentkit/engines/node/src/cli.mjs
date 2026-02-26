@@ -305,7 +305,7 @@ async function main() {
   // Record command invocation for cost tracking (best-effort)
   try {
     const { recordCommand } = await import('./cost-tracker.mjs');
-    recordCommand(AGENTKIT_ROOT, command);
+    recordCommand(AGENTKIT_ROOT, command).catch(() => {});
   } catch {
     /* cost tracking is optional */
   }

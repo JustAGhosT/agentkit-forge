@@ -230,8 +230,7 @@ Valid commands: init, sync, validate, discover, spec-validate, orchestrate, plan
 ```
 
 Verify you are using one of the valid commands listed above. The
-`project-review` command is slash-command-only and cannot be run from the CLI
-directly.
+`project-review`, `scaffold`, and `preflight` commands are slash-command-only and cannot be run from the CLI directly.
 
 ### "Cannot find module" or import errors
 

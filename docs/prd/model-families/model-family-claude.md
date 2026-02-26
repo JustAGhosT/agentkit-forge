@@ -6,15 +6,38 @@
 - Scope: benchmark signals relevant to coding and agentic workflows
 - Intended use: source data for team model guides
 
+## At a Glance
+
+| Attribute          | Value                                            |
+| ------------------ | ------------------------------------------------ |
+| **Provider**       | Anthropic (San Francisco, USA)                   |
+| **Founded**        | 2021                                             |
+| **Architecture**   | Dense transformer (not MoE)                      |
+| **Latest model**   | Claude Opus 4.6                                  |
+| **Context window** | 200K tokens (1M beta for Opus)                   |
+| **Output limit**   | 128K tokens                                      |
+| **License**        | Proprietary (API only)                           |
+| **Notable**        | First with native MCP support, 1M context leader |
+
+## Hugging Face Resources
+
+| Resource            | Model ID                                                     | Notes                         |
+| ------------------- | ------------------------------------------------------------ | ----------------------------- |
+| Distilled (Opus)    | `TeichAI/claude-45-opus` collection                          | Distilled models and datasets |
+| Distilled (Sonnet)  | `TeichAI/claude-45-sonnet` collection                        | Distilled models and datasets |
+| Distilled reasoning | `TeichAI/Qwen3-14B-Claude-Sonnet-4.5-Reasoning-Distill-GGUF` | Qwen-based distillation       |
+
+> **Note:** Anthropic does not publish official Claude models on Hugging Face. The above are community-distilled variants. For production use, access via Anthropic API.
+
 ## Latest benchmark signals
 
-| Signal                 | Value                                                    | Source                                                               | Quality                        |
-| ---------------------- | -------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------ |
-| MRCR v2 (8-needle, 1M) | Opus 4.6: 76%; Sonnet 4.5: 18.5%                         | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
-| SWE-bench Verified     | Averaged over 25 trials; 81.42% with prompt modification | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
-| MCP Atlas              | 62.7% at high effort                                     | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
-| BrowseComp             | 86.8% with multi-agent harness                           | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
-| SWE-rebench status     | Claude Opus 4.6 reported at #1; Claude Code best pass@5  | [SWE-rebench](https://swe-rebench.com/)                              | Fetched, independent benchmark |
+| Signal                 | Value                                                                        | Source                                                               | Quality                        |
+| ---------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------ |
+| MRCR v2 (8-needle, 1M) | Opus 4.6: 76%; Sonnet 4.5: 18.5%                                             | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
+| SWE-bench Verified     | Averaged over 25 trials; 81.42% with prompt modification                     | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
+| MCP Atlas              | 62.7% at high effort                                                         | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
+| BrowseComp             | 86.8% with multi-agent harness                                               | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
+| SWE-rebench status     | Claude Opus 4.6 reported at #1; Claude Sonnet (code-specialized) best pass@5 | [SWE-rebench](https://swe-rebench.com/)                              | Fetched, independent benchmark |
 
 ## Operational notes
 

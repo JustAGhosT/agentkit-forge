@@ -36,27 +36,29 @@
 
 ## Model Rankings (Final Scores)
 
-### Tier 1: Recommended (Score >= 8.80)
+### Tier 1: Quality-First (Score 8.50+)
 
-| Model              | Score | Key Strengths              | Notes                           |
-| ------------------ | ----- | -------------------------- | ------------------------------- |
-| GPT-5.3 Codex High | 9.05  | Top reasoning quality      | Best for strategic product work |
-| Claude Opus 4.6    | 8.85  | High context and reasoning | Strong PRD authoring option     |
+| Model              | Model ID           | Score | Key Strengths            | Notes                           |
+| ------------------ | ------------------ | ----- | ------------------------ | ------------------------------- |
+| GPT-5.3 Codex High | gpt-5.3-codex-high | 9.10  | Best coding quality      | Primary for complex PRDs/specs  |
+| Claude Opus 4.6    | claude-opus-4-6    | 9.05  | Synthesis and reasoning  | Best for high-context documents |
+| Claude Sonnet 4.6  | claude-sonnet-4-6  | 8.90  | Balanced profile         | Default for most product work   |
+| Gemini 2.5 Pro     | gemini-2-5-pro     | 8.85  | Large context, reasoning | Good for multi-file analysis    |
 
-### Tier 2: Strong Alternatives (Score 8.20-8.79)
+### Tier 2: Balanced (Score 8.00-8.49)
 
-| Model             | Score | Key Strengths             | Notes                                 |
-| ----------------- | ----- | ------------------------- | ------------------------------------- |
-| SWE-Llama         | 8.60  | Strong structured output  | Useful when product docs include code |
-| Claude Sonnet 4.6 | 8.40  | Lower-cost Claude profile | Routine roadmap and PRD updates       |
-| Gemini 2.5 Pro    | 8.25  | Large context window      | Useful for wide portfolio context     |
+| Model             | Model ID          | Score | Key Strengths             | Notes                                 |
+| ----------------- | ----------------- | ----- | ------------------------- | ------------------------------------- |
+| SWE-Llama         | swe-llama         | 8.60  | Strong structured output  | Useful when product docs include code |
+| Claude Sonnet 4.6 | claude-sonnet-4-6 | 8.40  | Lower-cost Claude profile | Routine roadmap and PRD updates       |
+| Gemini 2.5 Pro    | gemini-2-5-pro    | 8.25  | Large context window      | Useful for wide portfolio context     |
 
 ### Tier 3: Cost-Aware (Score 7.00-7.99)
 
-| Model     | Score | Key Strengths    | Notes                           |
-| --------- | ----- | ---------------- | ------------------------------- |
-| o3        | 7.45  | Low cost profile | Non-critical docs and summaries |
-| Kimi K2.5 | 7.35  | Budget option    | Lightweight product artifacts   |
+| Model     | Model ID  | Score | Key Strengths    | Notes                           |
+| --------- | --------- | ----- | ---------------- | ------------------------------- |
+| o3        | o3        | 7.45  | Low cost profile | Non-critical docs and summaries |
+| Kimi K2.5 | kimi-k2-5 | 7.35  | Budget option    | Lightweight product artifacts   |
 
 ## Decision Policy
 
@@ -115,13 +117,12 @@ remain the source of truth.
 These models are now included in intake analysis but are excluded from weighted
 ranking tables until benchmark metrics are validated.
 
-| Model                        | Cost Multiplier | Status                                      |
-| ---------------------------- | --------------- | ------------------------------------------- |
-| Gemini 3 Flash High          | 1.75x           | Added to intake, pending scorecard metrics  |
-| Gemini 3 Pro High Thinking   | 2x              | Added to intake, pending scorecard metrics  |
-| Gemini 3.1 Pro High Thinking | 1x              | Added to intake, pending scorecard metrics  |
-| GLM 4.7 (Beta)               | 0.25x           | Added to intake, beta reliability watch     |
-| GLM-5 (New)                  | 1.5x            | Added to intake, replaces prior GLM-5 entry |
+| Model                        | Cost Multiplier | Status                                     |
+| ---------------------------- | --------------- | ------------------------------------------ |
+| Gemini 3 Flash High          | 1.75x           | Added to intake, pending scorecard metrics |
+| Gemini 3 Pro High Thinking   | 2x              | Added to intake, pending scorecard metrics |
+| Gemini 3.1 Pro High Thinking | 1x              | Added to intake, pending scorecard metrics |
+| GLM 4.7 (Beta)               | 0.25x           | Added to intake, beta reliability watch    |
 
 ## Related Documentation
 

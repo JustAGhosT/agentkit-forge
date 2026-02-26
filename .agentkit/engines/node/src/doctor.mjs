@@ -3,7 +3,7 @@
  * Repository diagnostics and setup checks.
  */
 import { existsSync, readFileSync } from 'fs';
-import yaml from 'js-yaml';
+import yaml, { FAILSAFE_SCHEMA } from 'js-yaml';
 import { resolve } from 'path';
 import { validateSpec } from './spec-validator.mjs';
 
@@ -54,7 +54,7 @@ function loadOverlayRenderTargets(agentkitRoot) {
   const overlayPath = resolve(agentkitRoot, 'overlays', '__TEMPLATE__', 'settings.yaml');
   if (!existsSync(overlayPath)) return { targets: [], error: null };
   try {
-    const data = yaml.load(readFileSync(overlayPath, 'utf-8')) || {};
+    const data = yaml.load(readFileSync(overlayPath, 'utf-8'), { schema: FAILSAFE_SCHEMA }) || {};
     return {
       targets: Array.isArray(data.renderTargets) ? data.renderTargets : [],
       error: null,
@@ -120,19 +120,34 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   const specRoot = resolveSpecRoot(agentkitRoot, projectRoot);
 
   // 1) Spec validation
-  const spec = validateSpec(specRoot);
-  if (!spec.valid) {
+  let spec;
+  try {
+    spec = validateSpec(specRoot);
+  } catch (err) {
     findings.push({
       severity: 'error',
-      message: `Spec validation failed (${spec.errors.length} errors)`,
+      message: `Spec validation failed: ${err.message}`,
     });
-    for (const e of spec.errors) findings.push({ severity: 'error', message: e });
-  } else {
-    findings.push({
-      severity: 'info',
-      message: `Spec validation passed (${spec.warnings.length} warnings)`,
-    });
-    for (const w of spec.warnings) findings.push({ severity: 'warning', message: w });
+    if (err.stack) {
+      findings.push({ severity: 'error', message: `Stack: ${err.stack}` });
+    }
+    spec = null;
+  }
+
+  if (spec) {
+    if (!spec.valid) {
+      findings.push({
+        severity: 'error',
+        message: `Spec validation failed (${spec.errors.length} errors)`,
+      });
+      for (const e of spec.errors) findings.push({ severity: 'error', message: e });
+    } else {
+      findings.push({
+        severity: 'info',
+        message: `Spec validation passed (${spec.warnings.length} warnings)`,
+      });
+      for (const w of spec.warnings) findings.push({ severity: 'warning', message: w });
+    }
   }
 
   // 2) Overlay/template sanity
@@ -165,7 +180,8 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   const projectPath = resolve(specRoot, 'spec', 'project.yaml');
   if (existsSync(projectPath)) {
     try {
-      const project = yaml.load(readFileSync(projectPath, 'utf-8')) || {};
+      const project =
+        yaml.load(readFileSync(projectPath, 'utf-8'), { schema: FAILSAFE_SCHEMA }) || {};
       const c = projectCompleteness(project);
       findings.push({
         severity: 'info',

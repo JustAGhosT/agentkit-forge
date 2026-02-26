@@ -208,11 +208,11 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 | File                              | Purpose                                        | Used by                                                                                                                          |
 | --------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `AGENT_BACKLOG.md`                | Prioritized work items, team assignments       | Orchestrator, Plan, Project-Review, Review, Handoff, Sync-Backlog, Team commands                                                 |
+| `AGENT_BACKLOG.md`                | Prioritized work items, team assignments       | Orchestrator, Plan, Project-Review, Review, Handoff, Sync-Backlog, Team commands (`/team-*`)                                     |
 | `.claude/state/orchestrator.json` | Phase, team status, metrics, risks, todo items | Orchestrator, Plan, Project-Review, Review, Handoff, Healthcheck, Sync-Backlog                                                   |
 | `.claude/state/events.log`        | Audit trail of actions                         | Orchestrator, Plan, Project-Review, Discover, Healthcheck, Review, Handoff, Sync-Backlog, Tasks (`--process-handoffs`), Delegate |
 | `.claude/state/tasks/*.json`      | Delegated task protocol queue                  | Delegate, Tasks, Orchestrator                                                                                                    |
 | `.claude/state/orchestrator.lock` | Prevents concurrent orchestrator sessions      | Orchestrator only                                                                                                                |
-| `AGENT_TEAMS.md`                  | Team boundaries and ownership map              | Discover, Orchestrator, Team commands                                                                                            |
+| `AGENT_TEAMS.md`                  | Team boundaries and ownership map              | Discover, Orchestrator, Team commands (`/team-*`)                                                                                |
 
 Always read the latest `AGENT_BACKLOG.md` and `orchestrator.json` before starting work. Append to `events.log` when completing significant actions.

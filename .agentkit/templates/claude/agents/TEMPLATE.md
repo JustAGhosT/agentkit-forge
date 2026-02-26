@@ -13,7 +13,13 @@
 {{#if architecturePattern}}- **Architecture:** {{architecturePattern}}{{/if}}
 {{#if defaultBranch}}- **Default branch:** {{defaultBranch}}{{/if}}
 
-Always scan the codebase within your focus area before making changes. Read `AGENT_BACKLOG.md` for items assigned to your domain. Check `AGENT_TEAMS.md` for team boundaries and overlap.
+Always scan the codebase within your focus area before making changes.
+
+## Shared State
+
+- **Read:** `AGENT_BACKLOG.md` (for existing items), `AGENT_TEAMS.md` (for team boundaries), `.claude/state/orchestrator.json` (for project context)
+- **Append to:** `.claude/state/events.log` — write findings for tracking
+- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
 
 ## Category
 

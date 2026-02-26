@@ -199,7 +199,7 @@ All project documentation follows the unified 8-category structure in `docs/`:
 {{#if cloudProvider}}- **Cloud**: {{cloudProvider}}{{/if}}
 {{#if iacTool}}- **IaC**: {{iacTool}}{{/if}}
 
-- **Containerized**: {{#if containerRuntime}}{{containerRuntime}}{{else}}Docker{{/if}}
+- **Containerized**: {{#if containerRuntime}}{{containerRuntime}}{{else}}not specified{{/if}}
 
 {{#if environments}}- **Environments**: {{environments}}{{/if}}
 {{/if}}

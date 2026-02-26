@@ -6,6 +6,28 @@
 - Scope: coding and agentic benchmark signals for GPT/Codex family
 - Intended use: source data for team model guides
 
+## At a Glance
+
+| Attribute          | Value                                                          |
+| ------------------ | -------------------------------------------------------------- |
+| **Provider**       | OpenAI (San Francisco, USA)                                    |
+| **Founded**        | 2015                                                           |
+| **Architecture**   | Dense transformer + MoE variants                               |
+| **Latest model**   | GPT-5.2 Codex                                                  |
+| **Context window** | 128K-200K tokens                                               |
+| **Output limit**   | 100K tokens                                                    |
+| **License**        | Proprietary (API only)                                         |
+| **Notable**        | Invented transformer architecture, Codex powers GitHub Copilot |
+
+## Hugging Face Resources
+
+| Resource        | Model ID                  | Notes                                   |
+| --------------- | ------------------------- | --------------------------------------- |
+| Distilled GPT-4 | Various community uploads | Multiple quantized variants             |
+| Codex via API   | N/A                       | Access via OpenAI API (`gpt-5.2-codex`) |
+
+> **Note:** OpenAI does not publish official model weights on Hugging Face. Access GPT and Codex models via OpenAI API. Community distilled versions exist but are not official.
+
 ## Latest benchmark signals
 
 | Signal                           | Value                                                                   | Source                                                                                    | Quality                             |
@@ -27,7 +49,7 @@
 
 1. Keep GPT/Codex in high tiers for coding-heavy teams where pass@2 and
    tool-usage quality matter most.
-2. Use cost controls for high-effort variants due potentially large run cost.
+2. Use cost controls for high-effort variants due to the potentially large run cost.
 3. Prefer Codex variants when agentic tool calls dominate the workflow.
 
 ## Data gaps to close

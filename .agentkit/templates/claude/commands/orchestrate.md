@@ -33,6 +33,11 @@ The orchestrator, `/plan`, and `/project-review` all use the same state files. T
 | `events.log`        | Audit trail            | Append          | Append | Append         |
 | `orchestrator.lock` | Session lock           | Acquire/Release | —      | —              |
 
+> **Coordination requirement for `events.log`:** Writers (`/plan`, `/project-review`) must either use atomic append semantics (open with `O_APPEND` or equivalent) or acquire `orchestrator.lock` before appending to prevent interleaved writes. The Orchestrator always holds the lock when writing. Example atomic append (Node.js):
+> ```js
+> fs.openSync(path, 'a')  // O_APPEND flag ensures atomic append
+> ```
+
 ### State File: `.claude/state/orchestrator.json`
 
 If this file does not exist, create it from the following template:
@@ -54,7 +59,7 @@ If this file does not exist, create it from the following template:
     "totalRetries": 0,
     "allowReset": false,
     "lastResetAt": null,
-    "retryEscalated": null
+    "retryEscalated": null  // Object: { reason: string, at: string (ISO-8601), roundKey: string, roundRetryCount: number }
   },
   "metrics": {
     "totalChanges": 0,
@@ -79,7 +84,7 @@ For machine-identifiable events, use JSON lines format:
 
 ```json
 {"eventType": "DESCOPED", "taskId": "<task-id>", "reason": "<descoping rationale>", "actor": "<user or orchestrator>", "timestamp": "<ISO-8601>"}
-{"eventType": "CANCELED", "taskId": "<task-id>", "reason": "dependency-cycle", "cycleId": "<cycle-id>", "cycleMembers": ["<task-id-1>"], "actor": "orchestrator", "timestamp": "<ISO-8601>"}
+{"eventType": "CANCELED", "taskId": "<task-id>", "reason": "dependency-cycle", "cycleId": "<cycle-id>", "cycleMembers": ["<task-id-1>", "<task-id-2>"], "actor": "orchestrator", "timestamp": "<ISO-8601>"}
 ```
 
 **eventType enum values:** `DESCOPED`, `CANCELED`, `COMPLETED`, `FAILED`, `REJECTED`, `STARTED`, `BLOCKED`, `UNBLOCKED`, `DELEGATED`, `ACCEPTED`, `RETRY_ESCALATED`
@@ -87,6 +92,28 @@ For machine-identifiable events, use JSON lines format:
 **cycleId format:** Use a deterministic identifier per detected cycle. Generate once per cycle using a sorted-hash of member task IDs (e.g., SHA-256 of `task-id-1,task-id-2,...` truncated to 12 chars) or a UUID generated at detection time and reused for all events from that cycle.
 
 Required fields for DESCOPED events: `eventType` (must be "DESCOPED"), `taskId`, `reason`. Optional: `actor`, `timestamp`.
+
+**Required and optional fields by eventType:**
+
+| eventType                     | Required fields                                                               | Optional fields     |
+| ----------------------------- | ----------------------------------------------------------------------------- | ------------------- |
+| `COMPLETED`                   | `taskId`, `timestamp`                                                         | `actor`, `metadata` |
+| `FAILED`                      | `taskId`, `reason`, `timestamp`                                               | `actor`, `metadata` |
+| `REJECTED`                    | `taskId`, `reason`, `timestamp`                                               | `actor`, `metadata` |
+| `CANCELED`                    | `taskId`, `reason`, `timestamp`                                               | `actor`, `metadata` |
+| `CANCELED` (dependency-cycle) | `taskId`, `reason`="dependency-cycle", `cycleId`, `cycleMembers`, `timestamp` | `actor`, `metadata` |
+| `DESCOPED`                    | `taskId`, `reason`, `timestamp`                                               | `actor`, `metadata` |
+| `STARTED`                     | `taskId`, `timestamp`                                                         | `actor`, `metadata` |
+| `BLOCKED`                     | `taskId`, `blockedBy`, `timestamp`                                            | `actor`, `metadata` |
+| `UNBLOCKED`                   | `taskId`, `timestamp`                                                         | `actor`, `metadata` |
+| `DELEGATED`                   | `taskId`, `assignees`, `timestamp`                                            | `actor`, `metadata` |
+| `ACCEPTED`                    | `taskId`, `timestamp`                                                         | `actor`, `metadata` |
+| `RETRY_ESCALATED`             | `reason`, `roundKey`, `roundRetryCount`, `timestamp`                          | `actor`, `metadata` |
+
+Example with all optional fields:
+```json
+{"eventType": "COMPLETED", "taskId": "task-20260226-001", "actor": "team-backend", "metadata": {"duration_ms": 45000}, "timestamp": "2026-02-26T10:30:00Z"}
+```
 
 Create this file if it does not exist.
 
@@ -178,8 +205,9 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
        - `working -> completed|failed|canceled|rejected`
        - `submitted -> rejected`
 7. Between delegation rounds, run dependency checks:
-   - Scan tasks where `blockedBy` is non-empty and check if blocking tasks are now complete.
-   - Skip any task already in a terminal state (`completed`, `failed`, `rejected`, `canceled`) — these should have been excluded from the scan.
+   - **Re-derive blockedBy** from each task's `dependsOn` field at the start of each delegation round (do not manually mutate blockedBy; recompute it fresh each round).
+   - Consider tasks with non-empty derived `blockedBy` as blocked.
+   - Ignore tasks whose state is one of: `completed`, `failed`, `rejected`, `canceled` (terminal states).
    - Update `blockedBy` arrays and unblock tasks whose dependencies are satisfied.
 8. Process handoffs: for completed tasks with `handoffTo`, create follow-up tasks for the downstream team with the `handoffContext` carried forward.
 9. Monitor progress via task status and log team outputs to `events.log`.
@@ -191,18 +219,38 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 3. Invoke `/review` on all changed files since the orchestration began.
 4. If any check or review finding requires changes, create new tasks for the relevant teams and loop back to Phase 3.
 5. Enforce a bounded retry policy for replacement-task loops using persisted `orchestrator.json.retryPolicy` fields (`maxRetryCount`, default 2; per-round `roundRetries`; optional reset metadata).
-   - Track retries per round or issue key (for example `round-4` or `validation:<issue-id>`) in `retryPolicy.roundRetries[roundKey]`.
+
+   **Retry key convention:**
+   - Use `"round-<n>"` format (e.g., `"round-4"`) for whole-round retries.
+   - Use `"validation:<issue-id>"` format only for per-issue retries.
+   - Do not mix formats; pick one and stay consistent.
+
+   **Retry flow:**
+   - Track retries per round or issue key in `retryPolicy.roundRetries[roundKey]`.
    - On each replacement-task retry, increment `retryPolicy.roundRetries[roundKey]` and `retryPolicy.totalRetries`, then persist `orchestrator.json` before continuing.
    - If `retryPolicy.roundRetries[roundKey] >= retryPolicy.maxRetryCount`, escalate and stop automatic retries for that round/issue.
-   - When escalation occurs, append a structured entry to `events.log` and persist `retryPolicy.retryEscalated = { "reason": "retry-limit-reached", "at": "<ISO-8601 timestamp>", "roundKey": "<round-or-issue-key>", "roundRetryCount": <number> }`.
-   - Only reset retry counters when an explicit reset decision is recorded (via `allowReset` and a new `lastResetAt` timestamp); otherwise preserve counters across retries.
+   - When escalation occurs:
+     1. Append a structured entry to `events.log`:
+        ```json
+        {"eventType": "RETRY_ESCALATED", "reason": "retry-limit-reached", "roundKey": "round-4", "roundRetryCount": 2, "timestamp": "2026-02-26T10:30:00Z"}
+        ```
+     2. Persist `retryPolicy.retryEscalated = { "reason": "retry-limit-reached", "at": "<ISO-8601 timestamp>", "roundKey": "<round-or-issue-key>", "roundRetryCount": <number> }`.
+     3. Continue overall processing (move to Phase 5) without further automatic retries for that key until human intervention.
+
+   **Reset behavior:**
+   - A human or controller must explicitly set `retryPolicy.allowReset = true` AND update `retryPolicy.lastResetAt` to an ISO-8601 timestamp.
+   - Both `allowReset === true` AND `lastResetAt` newer than the last escalation are required to clear `retryPolicy.roundRetries` for the given keys.
+   - Code must enforce that resets only occur when both conditions are met.
 6. Record validation results in `orchestrator.json` and in task artifacts, including resolution metadata for failed/rejected tasks.
 
 ### Phase 5 — Ship
 
 1. Confirm all checks pass and all tasks are in a terminal state (`completed`, `failed`, `rejected`, `canceled`). Before proceeding:
-   - every `failed`/`rejected`/`canceled` task must be superseded by a `completed` task that addresses the same backlog item, unless the task was intentionally descoped;
-   - intentionally descoped `failed`/`rejected`/`canceled` tasks may proceed without a superseding task only when the descoping rationale is recorded in `events.log`.
+   - **Supersession verification:** Scan all tasks in terminal states (`failed`, `rejected`, `canceled`). For each such task, verify that either:
+     1. A `completed` task exists whose `supersedes` field references that task-id, OR
+     2. An entry with `eventType: "DESCOPED"` exists in `events.log` for that task-id.
+   - If neither condition is true for any terminal task, halt orchestration and surface the unresolved task(s) for human review.
+   - Intentionally descoped tasks may proceed without a superseding task only when the descoping rationale is recorded in `events.log` (condition 2 above).
 2. Invoke `/handoff` to produce a session summary.
 3. Update `orchestrator.json`: set `currentPhase` to 5, clear the lock, update metrics.
 4. Log completion to `events.log`.

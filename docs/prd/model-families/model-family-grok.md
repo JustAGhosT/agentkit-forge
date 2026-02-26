@@ -6,14 +6,36 @@
 - Scope: coding and agentic benchmark signals for Grok coding models
 - Intended use: source data for team model guides
 
+## At a Glance
+
+| Attribute          | Value                                                   |
+| ------------------ | ------------------------------------------------------- |
+| **Provider**       | xAI (Austin, USA)                                       |
+| **Founded**        | 2023                                                    |
+| **Architecture**   | MoE (314B params for Grok-1)                            |
+| **Latest model**   | Grok-2, Grok Code Fast 1                                |
+| **Context window** | 128K tokens                                             |
+| **License**        | Proprietary (API) + open weights                        |
+| **Notable**        | Elon Musk's AI company, "max fun" mode, 70.8% SWE-bench |
+
+## Hugging Face Resources
+
+| Resource      | Model ID                     | Notes                        |
+| ------------- | ---------------------------- | ---------------------------- |
+| Grok-1        | `xai-org/grok-1`             | 314B MoE model, open weights |
+| Grok-1 Vision | `xai-org/grok-1-vision-beta` | Vision capabilities          |
+| Grok-2        | `xai-org/grok-2`             | Latest Grok-2 release        |
+
+> **Note:** xAI publishes Grok models via API (x.ai API) and has released open-weight versions on Hugging Face. The open-weight Grok-1 is notable as a 314B parameter MoE model.
+
 ## Latest benchmark signals
 
-| Signal | Value | Source | Quality |
-| --- | --- | --- | --- |
-| SWE-Bench Verified (full subset) | 70.8% for grok-code-fast-1 | [xAI Grok Code Fast 1](https://x.ai/news/grok-code-fast-1) | Fetched, vendor claim |
-| Pricing (input/output/cached input) | $0.20 / $1.50 / $0.02 per 1M tokens | [xAI Grok Code Fast 1](https://x.ai/news/grok-code-fast-1) | Fetched, vendor claim |
-| Tool-use positioning | Trained for grep/terminal/file editing workflows | [xAI Grok Code Fast 1](https://x.ai/news/grok-code-fast-1) | Fetched, vendor claim |
-| Ecosystem trend note | Grok models added to SWE-rebench leaderboard news stream | [SWE-rebench](https://swe-rebench.com/) | Fetched, independent benchmark |
+| Signal                              | Value                                                    | Source                                                     | Quality                        |
+| ----------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------ |
+| SWE-Bench Verified (full subset)    | 70.8% for grok-code-fast-1                               | [xAI Grok Code Fast 1](https://x.ai/news/grok-code-fast-1) | Fetched, vendor claim          |
+| Pricing (input/output/cached input) | $0.20 / $1.50 / $0.02 per 1M tokens                      | [xAI Grok Code Fast 1](https://x.ai/news/grok-code-fast-1) | Fetched, vendor claim          |
+| Tool-use positioning                | Trained for grep/terminal/file editing workflows         | [xAI Grok Code Fast 1](https://x.ai/news/grok-code-fast-1) | Fetched, vendor claim          |
+| Ecosystem trend note                | Grok models added to SWE-rebench leaderboard news stream | [SWE-rebench](https://swe-rebench.com/)                    | Fetched, independent benchmark |
 
 ## Operational notes
 

@@ -571,8 +571,8 @@ export function getStatus(projectRoot, agentkitRoot) {
  */
 export function delegateTask(projectRoot, state, taskData) {
   const result = createTask(projectRoot, {
-    delegator: taskData.delegator || 'orchestrator',
     ...taskData,
+    delegator: taskData.delegator || 'orchestrator',
   });
 
   if (result.error) {
@@ -582,10 +582,15 @@ export function delegateTask(projectRoot, state, taskData) {
   const task = result.task;
 
   // Update orchestrator state — track active tasks per team
-  const newState = { ...state };
+  // Deep clone to ensure immutability
+  const newState = {
+    ...state,
+    active_tasks: state.active_tasks ? JSON.parse(JSON.stringify(state.active_tasks)) : {},
+    team_progress: state.team_progress ? JSON.parse(JSON.stringify(state.team_progress)) : {},
+  };
   if (!newState.active_tasks) newState.active_tasks = {};
 
-  for (const assignee of task.assignees) {
+  for (const assignee of task.assignees || []) {
     if (!newState.active_tasks[assignee]) {
       newState.active_tasks[assignee] = [];
     }
@@ -613,7 +618,15 @@ export function delegateTask(projectRoot, state, taskData) {
  */
 export function orchestratorCheckDependencies(projectRoot, state) {
   const { unblocked, errors } = checkDependencies(projectRoot);
-  return { state, unblocked, errors };
+
+  // Clone state to ensure immutability
+  const newState = {
+    ...state,
+    active_tasks: state.active_tasks ? { ...state.active_tasks } : {},
+    team_progress: state.team_progress ? { ...state.team_progress } : {},
+  };
+
+  return { state: newState, unblocked, errors };
 }
 
 /**
@@ -626,11 +639,15 @@ export function orchestratorCheckDependencies(projectRoot, state) {
 export function orchestratorProcessHandoffs(projectRoot, state) {
   const { created, errors } = processHandoffs(projectRoot, 'orchestrator');
 
-  let newState = { ...state };
+  // Deep clone to ensure immutability
+  const newState = {
+    ...state,
+    active_tasks: state.active_tasks ? JSON.parse(JSON.stringify(state.active_tasks)) : {},
+  };
   for (const task of created) {
     // Track new handoff tasks in orchestrator state
     if (!newState.active_tasks) newState.active_tasks = {};
-    for (const assignee of task.assignees) {
+    for (const assignee of task.assignees || []) {
       if (!newState.active_tasks[assignee]) {
         newState.active_tasks[assignee] = [];
       }

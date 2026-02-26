@@ -267,12 +267,12 @@ overrides via YAML and JSON.
 
 ## Timeline and Milestones
 
-| Phase             | Status      | Dates    | Scope                               | Dependencies                |
-| ----------------- | ----------- | -------- | ----------------------------------- | --------------------------- |
-| Scorecard launch  | Complete    | Apr 2024 | Model families, dashboard, config   | Model and telemetry data    |
-| Mapping API       | Complete    | May 2024 | Read and write APIs, fallback logic | Backend and security review |
-| Analytics rollout | Complete    | Jun 2024 | KPI tracking and alerting           | BI integration              |
-| Ongoing updates   | In Progress | Monthly  | Continuous scorecard refresh        | Vendor feeds                |
+| Phase             | Status      | Dates   | Scope                               | Dependencies                |
+| ----------------- | ----------- | ------- | ----------------------------------- | --------------------------- |
+| Scorecard launch  | Complete    | Q2 2024 | Model families, dashboard, config   | Model and telemetry data    |
+| Mapping API       | Complete    | Q3 2024 | Read and write APIs, fallback logic | Backend and security review |
+| Analytics rollout | Complete    | Q4 2024 | KPI tracking and alerting           | BI integration              |
+| Ongoing updates   | In Progress | Monthly | Continuous scorecard refresh        | Vendor feeds                |
 
 ## Constraints and Dependencies
 
@@ -301,9 +301,9 @@ overrides via YAML and JSON.
 
 | Question                                        | Owner           | Target Date | Resolution | Impact if Unresolved       |
 | ----------------------------------------------- | --------------- | ----------- | ---------- | -------------------------- |
-| Can custom fine-tuned models be plug-and-play?  | Product Manager | Jul 2024    | Deferred   | Lower extensibility        |
-| Will vendors provide early deprecation signals? | ML Engineer     | Jun 2024    | Resolved   | Unexpected fallback events |
-| What telemetry granularity is sufficient?       | BI Analyst      | May 2024    | Resolved   | Lower metric confidence    |
+| Can custom fine-tuned models be plug-and-play?  | Product Manager | TBD         | Open       | Lower extensibility        |
+| Will vendors provide early deprecation signals? | ML Engineer     | TBD         | Open       | Unexpected fallback events |
+| What telemetry granularity is sufficient?       | BI Analyst      | TBD         | Open       | Lower metric confidence    |
 
 ## Appendix
 

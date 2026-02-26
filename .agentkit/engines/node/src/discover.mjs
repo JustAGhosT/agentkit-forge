@@ -407,7 +407,13 @@ function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
 function getTopLevelDirs(projectRoot) {
   try {
     return readdirSync(projectRoot, { withFileTypes: true })
-      .filter((e) => e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules')
+      .filter(
+        (e) =>
+          e.isDirectory() &&
+          !e.name.startsWith('.') &&
+          e.name !== 'node_modules' &&
+          !SKIP_DIRS.has(e.name)
+      )
       .map((e) => e.name);
   } catch {
     return [];
@@ -715,10 +721,14 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
     report.repository.isGit = true;
   }
   if (existsSync(resolve(projectRoot, '.agentkit-repo'))) {
-    report.repository.agentkitOverlay = readFileSync(
-      resolve(projectRoot, '.agentkit-repo'),
-      'utf-8'
-    ).trim();
+    try {
+      report.repository.agentkitOverlay = readFileSync(
+        resolve(projectRoot, '.agentkit-repo'),
+        'utf-8'
+      ).trim();
+    } catch {
+      /* ignore read errors for .agentkit-repo */
+    }
   }
 
   // --- Tech stack detection ---

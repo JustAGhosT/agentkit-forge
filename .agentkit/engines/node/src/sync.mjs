@@ -1314,8 +1314,7 @@ function normalizeGlobStem(glob) {
   if (typeof glob !== 'string' || !glob.trim()) return '';
   const raw = glob.trim().replace(/\\/g, '/');
   if (raw === '*' || raw === '**' || raw === '**/*' || raw === '*/**') return '__WILDCARD_ALL__';
-  return glob
-    .replace(/\\/g, '/')
+  return raw
     .replace(/^\.\//, '')
     .replace(/\*\*\/\*/g, '')
     .replace(/\*\*/g, '')

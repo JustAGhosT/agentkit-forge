@@ -469,24 +469,47 @@ describe('--quiet, --verbose, --no-clean, --diff flags', () => {
     }
   });
 
-  it('--no-clean preserves orphaned files', { timeout: 25000 }, async () => {
-    await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: {} });
-    const manifestPath = join(AGENTKIT_ROOT, '.manifest.json');
-    const originalManifest = existsSync(manifestPath) ? readFileSync(manifestPath, 'utf-8') : null;
-    const manifest = originalManifest ? JSON.parse(originalManifest) : { files: {} };
-    manifest.files['__TEST_ORPHAN__.md'] = { hash: 'abc' };
-    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
-    const orphanPath = join(projectRoot, '__TEST_ORPHAN__.md');
-    writeFileSync(orphanPath, 'orphan', 'utf-8');
+  it('--no-clean preserves orphaned files', { timeout: 25000, sequential: true }, async () => {
+    // Create isolated temp agentkit root to avoid mutating shared state
+    const tempAgentkitRoot = resolve(
+      tmpdir(),
+      `agentkit-wave3-manifest-test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
+    mkdirSync(tempAgentkitRoot, { recursive: true });
+
+    // Copy essential files from AGENTKIT_ROOT to temp
+    const essentialFiles = ['.manifest.json', 'spec', 'templates', 'engines'];
+    for (const file of essentialFiles) {
+      const src = join(AGENTKIT_ROOT, file);
+      const dest = join(tempAgentkitRoot, file);
+      if (existsSync(src)) {
+        // Use simple copy for files, recursive for directories
+        if (file === '.manifest.json') {
+          if (existsSync(src)) {
+            writeFileSync(dest, readFileSync(src, 'utf-8'), 'utf-8');
+          }
+        } else {
+          const { cpSync } = await import('fs');
+          cpSync(src, dest, { recursive: true });
+        }
+      }
+    }
+
     try {
-      await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot, flags: { 'no-clean': true } });
+      await runSync({ agentkitRoot: tempAgentkitRoot, projectRoot, flags: {} });
+      const manifestPath = join(tempAgentkitRoot, '.manifest.json');
+      const originalManifest = existsSync(manifestPath)
+        ? readFileSync(manifestPath, 'utf-8')
+        : null;
+      const manifest = originalManifest ? JSON.parse(originalManifest) : { files: {} };
+      manifest.files['__TEST_ORPHAN__.md'] = { hash: 'abc' };
+      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+      const orphanPath = join(projectRoot, '__TEST_ORPHAN__.md');
+      writeFileSync(orphanPath, 'orphan', 'utf-8');
+      await runSync({ agentkitRoot: tempAgentkitRoot, projectRoot, flags: { 'no-clean': true } });
       expect(existsSync(orphanPath)).toBe(true);
     } finally {
-      if (originalManifest !== null) {
-        writeFileSync(manifestPath, originalManifest, 'utf-8');
-      } else {
-        rmSync(manifestPath, { force: true });
-      }
+      rmSync(tempAgentkitRoot, { recursive: true, force: true });
     }
   });
 });

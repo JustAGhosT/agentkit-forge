@@ -25,9 +25,11 @@ function parseCsvFlag(value) {
 }
 
 function appendTaskAuditEvent(projectRoot, payload) {
+  const timestamp = new Date().toISOString();
   const event = {
-    timestamp: new Date().toISOString(),
+    timestamp,
     ...payload,
+    timestamp: payload.timestamp || timestamp,
   };
 
   try {
@@ -88,9 +90,14 @@ export async function runTasks({ projectRoot, flags }) {
 
   // Check dependencies and process handoffs before listing
   const depResult = await checkDependencies(projectRoot);
-  if (depResult.unblocked.length > 0) {
+  if (depResult.errors?.length > 0) {
+    for (const err of depResult.errors) {
+      console.error(`[agentkit:tasks] Dependency check error: ${err}`);
+    }
+  }
+  if ((depResult.unblocked ?? []).length > 0) {
     console.log(
-      `[agentkit:tasks] Unblocked ${depResult.unblocked.length} task(s): ${depResult.unblocked.join(', ')}`
+      `[agentkit:tasks] Unblocked ${depResult.unblocked.length} task(s): ${(depResult.unblocked ?? []).join(', ')}`
     );
   }
 
@@ -135,7 +142,12 @@ export async function runTasks({ projectRoot, flags }) {
   if (flags.type) filters.type = flags.type;
   if (flags.priority) filters.priority = flags.priority;
 
-  const { tasks } = await listTasks(projectRoot, filters);
+  const listResult = await listTasks(projectRoot, filters);
+  if (listResult.error) {
+    console.error(`[agentkit:tasks] ${listResult.error}`);
+    process.exit(1);
+  }
+  const tasks = listResult.tasks || [];
   if (tasks.length === 0) {
     console.log('[agentkit:tasks] No tasks found.');
     return;
