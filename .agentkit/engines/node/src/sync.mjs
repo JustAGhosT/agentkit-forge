@@ -460,9 +460,10 @@ function flattenCrosscutting(cc, vars) {
  * rendered output is executed in a shell context (e.g., hook scripts).
  */
 function sanitizeTemplateValue(value) {
-  // Remove characters that enable shell injection: $ `` ; | & etc.
-  // Allow parentheses for readable content (e.g. "IO operations (file system, network, database)")
-  return value.replace(/[`$\\;|&<>!{}]/g, '');
+  let s = value;
+  s = s.replace(/\$\([^)]*\)/g, (m) => m.slice(2, -1));
+  s = s.replace(/[`$\\;|&<>!{}]/g, '');
+  return s;
 }
 
 function formatCommandFlags(flags) {
