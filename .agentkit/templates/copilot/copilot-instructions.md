@@ -66,7 +66,7 @@ assumptions about project structure or conventions.
 {{#if tracingProvider}}- Tracing provider: {{tracingProvider}}{{/if}}
 {{#if tracingSamplingRate}}- Trace sampling rate: {{tracingSamplingRate}}{{/if}}
 {{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
-{{#unless monitoringProvider}}{{#unless alertingProvider}}{{#unless tracingProvider}}{{#unless hasCentralisedLogging}}- No monitoring configured{{/unless}}{{/unless}}{{/unless}}{{/unless}}
+{{#unless hasAnyMonitoringConfig}}- No monitoring configured{{/unless}}
 {{/if}}
 
 {{#if hasCompliance}}
@@ -78,7 +78,7 @@ assumptions about project structure or conventions.
 {{#if drRtoHours}}- DR RTO (hours): {{drRtoHours}}{{/if}}
 {{#if drTestSchedule}}- DR test schedule: {{drTestSchedule}}{{/if}}
 {{#if auditEventBus}}- Audit event bus: {{auditEventBus}}{{/if}}
-{{#unless complianceFramework}}{{#unless drRpoHours}}{{#unless drRtoHours}}{{#unless drTestSchedule}}{{#unless auditEventBus}}- No compliance/DR configuration{{/unless}}{{/unless}}{{/unless}}{{/unless}}{{/unless}}
+{{#unless hasAnyComplianceConfig}}- No compliance/DR configuration{{/unless}}
 {{/if}}
 
 ## Working with Issues

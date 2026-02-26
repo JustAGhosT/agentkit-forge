@@ -26,6 +26,17 @@ Always scan the codebase within your focus area before making changes.
 - **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns
   the lock.
 
+### Concurrency Controls
+
+Shared files are accessed by multiple agents. To prevent race conditions:
+
+1. **Per-resource file locks**: Use `.lock` files with exclusive creation for writes
+2. **Orchestrator-mediated updates**: For critical state changes, route through orchestrator API
+3. **Append-only operations**: Use line-based newline-terminated appends for events.log
+4. **Lock ownership**: orchestrator.lock remains solely owned by the orchestrator
+
+Protocol: Acquire lock → modify → release lock in finally. Never write directly without coordination.
+
 ## Category
 
 {{agentCategory}}
@@ -42,28 +53,28 @@ Always scan the codebase within your focus area before making changes.
 
 {{agentToolsList}}
 
-{{#if hasAgentDomainRules}}
+{{#if agentDomainRules}}
 
 ## Domain Rules
 
 {{agentDomainRules}}
 {{/if}}
 
-{{#if hasAgentConventions}}
+{{#if agentConventions}}
 
 ## Conventions
 
 {{agentConventions}}
 {{/if}}
 
-{{#if hasAgentExamples}}
+{{#if agentExamples}}
 
 ## Examples
 
 {{agentExamples}}
 {{/if}}
 
-{{#if hasAgentAntiPatterns}}
+{{#if agentAntiPatterns}}
 
 ## Anti-Patterns
 

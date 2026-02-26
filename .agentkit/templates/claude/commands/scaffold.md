@@ -11,6 +11,13 @@ rules before writing custom logic.
 
 `/scaffold --type <endpoint|component|module|migration|test|service> --name <name> [--stack <stack>] [--path <path>]`
 
+### Parameters
+
+- `--type` (required): Scaffold type - one of `endpoint`, `component`, `module`, `migration`, `test`, `service`
+- `--name` (required): Name for the scaffolded artifact
+- `--stack` (optional): Technology stack or framework variant. Examples: `react`, `nextjs`, `express`, `nest`. Selects stack-specific templates or overrides. Default: project default stack
+- `--path` (optional): Target directory path. Default: inferred from type and project structure
+
 ## Workflow
 
 1. Read `project.yaml`, `rules.yaml`, and relevant agent/team scopes.

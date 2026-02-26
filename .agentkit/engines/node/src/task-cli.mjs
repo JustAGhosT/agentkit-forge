@@ -75,7 +75,7 @@ export async function runTasks({ projectRoot, flags }) {
     if (messages.length > 0) {
       console.log('\n--- Messages ---');
       for (const msg of messages) {
-        console.log(`  [${msg.timestamp}] ${msg.role}/${msg.from}: ${msg.content}`);
+        console.log(`  [${msg.timestamp}] ${msg.role}/${msg.from || 'unknown'}: ${msg.content}`);
       }
     }
     const artifacts = Array.isArray(result.task.artifacts) ? result.task.artifacts : [];
@@ -166,6 +166,12 @@ export async function runDelegate({ projectRoot, flags }) {
     console.error('[agentkit:delegate] --to <team> is required');
     process.exit(1);
   }
+
+  const assignees = parseCsvFlag(flags.to);
+  if (!assignees.length) {
+    console.error('[agentkit:delegate] --to <team> is required');
+    process.exit(1);
+  }
   if (!flags.title) {
     console.error('[agentkit:delegate] --title <text> is required');
     process.exit(1);
@@ -185,7 +191,7 @@ export async function runDelegate({ projectRoot, flags }) {
 
   const taskData = {
     delegator: 'cli',
-    assignees: parseCsvFlag(flags.to),
+    assignees: assignees,
     title: flags.title,
     description: flags.description || '',
     type: flags.type || 'implement',

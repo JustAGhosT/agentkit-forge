@@ -469,7 +469,7 @@ describe('--quiet, --verbose, --no-clean, --diff flags', () => {
     }
   });
 
-  it('--no-clean preserves orphaned files', { timeout: 25000, sequential: true }, async () => {
+  test.sequential('--no-clean preserves orphaned files', async () => {
     // Create isolated temp agentkit root to avoid mutating shared state
     const tempAgentkitRoot = resolve(
       tmpdir(),

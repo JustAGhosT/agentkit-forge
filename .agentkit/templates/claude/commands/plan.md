@@ -147,7 +147,12 @@ Write the complete plan as a structured markdown document. Do NOT create a file 
 
 Append to `.claude/state/events.log`:
 
-1. Acquire `.claude/state/events.log.lock` (with timeout + retry/backoff).
+1. Acquire `.claude/state/events.log.lock` with specific parameters:
+   - Initial timeout: 5 seconds
+   - Maximum retry attempts: 3
+   - Exponential backoff: 2x multiplier between retries
+   - Stale-lock cleanup: treat locks older than 30 seconds as stale, remove before acquiring
+   - On complete failure: log warning and skip events.log append (plan still considered successful)
 2. Open `.claude/state/events.log` in append mode and write one complete line.
 3. Flush and `fsync` before releasing the lock.
 4. Release `.claude/state/events.log.lock`.

@@ -1,6 +1,6 @@
 ---
 {{#if commandDescription}}
-description: "{{commandDescription}}"
+description: {{escapeYamlString commandDescription}}
 {{/if}}
 allowed-tools: Bash(git *), Bash(find *), Bash(ls *), Bash(cat *), Bash(head *), Bash(wc *)
 ---

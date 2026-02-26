@@ -283,15 +283,17 @@ agents:
     rationale: Best for code generation and large context tasks.
     weights:
       quality: 5
+      reasoning: 4
       cost: 3
       speed: 2
       context: 3
+      compatibility: 1
       lock_in: 1
       quirks: 1
     audit_trail:
       - version: v1.2
         changed_by_ref: usr_7f3c9a2e (pseudonymous actor reference)
-        date: 2024-06-12
+        date: 2026-03-03
 ```
 
 > **Note:** The `llm` value is illustrative. Configure the current recommended model from your provider at deployment/configuration time.
@@ -439,14 +441,18 @@ Project start date: **2026-03-03**
 
 > **Last Updated:** February 2026 — verify current model capabilities before deployment. ⚠️ **Warning:** Model capabilities evolve rapidly. This table shows illustrative scoring patterns; live data is maintained in the model family dossiers and team guides. See the "Rapidly Changing Model Capabilities" and "Model Capability Verification" sections for guidance on verifying up-to-date performance before deployment.
 
-| Model                     | Code Quality | Reasoning | Context | Cost | Speed | Compatibility | Lock-in | Quirks                                 |
-| ------------------------- | ------------ | --------- | ------- | ---- | ----- | ------------- | ------- | -------------------------------------- |
-| GPT-4o                    | TBD          | TBD       | 128K    | $$   | TBD   | High          | Low     | Rate-limit spikes                      |
-| Claude 3.5 Sonnet         | TBD          | TBD       | 200K    | $$   | TBD   | High          | Low     | Strong coding, cost-effective          |
-| Claude 3 Opus             | TBD          | TBD       | 200K    | $$$  | TBD   | High          | Medium  | Very verbose near high context         |
-| Gemini 2.5 Pro            | TBD          | TBD       | 1M      | $$   | TBD   | High          | Low     | Upgradeable context, strong reasoning  |
-| Gemini Ultra (deprecated) | TBD          | TBD       | 128K    | $$   | TBD   | Medium        | Medium  | Historical only, API quota constraints |
-| OSS Code LLaMA            | TBD          | TBD       | 16K     | Free | TBD   | Medium        | None    | Endpoint and hallucination tuning      |
+| Model                     | Code Quality | Reasoning | Context | Cost | Speed | Compatibility | Lock-in | Quirks                                                                      |
+| ------------------------- | ------------ | --------- | ------- | ---- | ----- | ------------- | ------- | --------------------------------------------------------------------------- |
+| GPT-4o                    | TBD          | TBD       | 128K    | $$   | TBD   | High          | Low     | Rate-limit spikes, extensive profile variants, token efficiency             |
+| Claude 3.5 Sonnet         | TBD          | TBD       | 200K    | $$   | TBD   | High          | Low     | Native MCP support, verbose near high context, consistent quality           |
+| Claude 3 Opus             | TBD          | TBD       | 200K    | $$$  | TBD   | High          | Medium  | Very verbose near high context, 1M context beta, premium pricing            |
+| Gemini 2.5 Pro            | TBD          | TBD       | 1M      | $$   | TBD   | High          | Low     | Massive context, Flash>Pro performance inversion, regional variability      |
+| Gemini Ultra (deprecated) | TBD          | TBD       | 128K    | $$   | TBD   | Medium        | Medium  | Historical only, API quota constraints, documentation timeouts              |
+| DeepSeek V3.2             | TBD          | TBD       | 128K    | $    | TBD   | Medium        | Low     | Highest token efficiency, chat/reasoner split, limited Transformers support |
+| Grok Code Fast 1          | TBD          | TBD       | 128K    | $    | TBD   | Medium        | Low     | "Max fun" mode, vendor-reported only, tool-use training, open weights       |
+| GLM-5                     | TBD          | TBD       | 1M      | $    | TBD   | Medium        | None    | Cheapest API pricing, APAC multilingual advantage, documentation gaps       |
+| Codestral 25.08           | TBD          | TBD       | 128K    | $$   | TBD   | High          | Low     | Strong FIM support, European data residency, low-latency focus              |
+| Command A                 | TBD          | TBD       | 128K    | $$   | TBD   | High          | Medium  | Enterprise RAG specialist, platform dependencies, embedding strength        |
 
 *Note: Model names reflect current API conventions as of Feb 2026. "Gemini Ultra" is deprecated; current Gemini family includes Gemini 1.5/2.0/3.x variants. Authoritative data maintained in model family dossiers.*
 

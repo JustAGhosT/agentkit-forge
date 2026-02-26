@@ -53,8 +53,8 @@ Run release-readiness checks beyond `/check` before merge/ship.
      `origin/HEAD`) for the same coverage metric
      source used by this repo (coverage summary/tool output)
    - Threshold: fail when total coverage delta < 0.00 percentage points unless
-     an active waiver entry is present in `.claude/state/coverage-waivers.md`
-   - Waiver detection rule: parse `.claude/state/coverage-waivers.md` and accept
+     an active waiver entry is present in `.agentkit/state/coverage-waivers.md`
+   - Waiver detection rule: parse `.agentkit/state/coverage-waivers.md` and accept
      waiver entries only when all required fields are present (`author`,
      `rationale`, `linkedIssueOrPr`, `expiresAt`) and `expiresAt` is in the
      future at preflight runtime. The waiver ID is extracted from the heading

@@ -160,10 +160,10 @@ Note: Cost-Aware Alt is provided for all teams to keep fallback policy explicit 
 # .agentkit.yaml
 agents:
   backend:
-    default_model: claude-3-opus
-    alternate_model: kimi
+    default_model: claude-3-5-sonnet
+    alternate_model: kimi-k2
     weights: [30, 25, 10, 25, 5, 5]
-    rationale: Claude for code/context, Kimi for cost fallback
+    rationale: Claude 3.5 Sonnet for code/context, Kimi K2 for cost fallback
   frontend:
     default_model: gpt-4o
     alternate_model: claude-3-5-sonnet

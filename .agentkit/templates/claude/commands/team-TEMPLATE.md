@@ -36,31 +36,28 @@ Follow these steps in order for every work session:
 1. List files in `.claude/state/tasks/` and read any with status `submitted`
    where `assignees` includes `{{teamId}}`.
 2. For each matching task:
-   - **Acquire a lock lease** on `.claude/state/tasks/{task-id}.lock` before
-     re-checking status. Write lock metadata on acquire:
-     `{"owner":"{{teamId}}","acquiredAt":"<ISO>","expiresAt":"<ISO>","ttlMs":30000}`.
+   - **Acquire a lock lease** on `.claude/state/tasks/{task-id}.lock` using exclusive-create:
+     attempt atomic create of lock file with metadata; if successful, write lock content.
+     If create fails (contended), apply timeout + retry with bounded attempts and jittered backoff.
+     Lock metadata: `{"owner":"{{teamId}}","acquiredAt":"<ISO>","expiresAt":"<ISO>","ttlMs":30000}`.
    - **Lock acquisition policy:** use timeout + retry with bounded attempts
      (for example max 5 attempts) and jittered backoff (for example 100-500ms).
      If acquisition fails after max attempts, skip this task.
-   - **Stale-lock takeover:** if an existing lock has `expiresAt < now`, treat it
-     as stale, remove it, and attempt acquisition again.
-   - **Deadlock mitigation:** enforce one-task-at-a-time lock ordering
-     (lexicographic task-id order) and randomized backoff before retry/takeover.
+   - **Stale-lock takeover:** perform atomic conditional takeover to avoid TOCTOU race. Use a single conditional delete/update operation (e.g., findOneAndDelete / DELETE ... WHERE expiresAt < now AND id = <lockId>) or a transactional compare-and-set that only removes the lock if its `expiresAt` is still < now (or still equals the value you read). Do not check expiresAt and then separately remove the lock.
+   - **Deadlock mitigation:** attempt lock acquisition in lexicographic task-id order and, if acquisition fails, apply randomized backoff before retrying the same lock. **Global coordination requirement:** the lexicographic ordering only prevents deadlocks if every agent follows the exact same ordering when acquiring locks - this is a strong system-wide constraint. All agents must use the same ordering. Alternative approaches include timeout-based deadlock detection + retry, lock leasing with expiration, or deadlock detection using wait-for graphs.
    - **Renew lock lease** for long operations: if work under lock exceeds 50% of
-     TTL, refresh `expiresAt` before continuing.
+     TTL, refresh `expiresAt` before continuing. If refreshing the lock fails or returns a conflict (another agent claimed the lock), the agent must abort the current operation, roll back any partial changes, release/clear local lock state, and surface an explicit error. Retry/backoff is only allowed for transient errors, not for lease conflicts.
    - **Re-check status under lock:** read task file again and verify
      `status === "submitted"`. If changed, release lock and skip.
-   - If still `submitted` and task is within scope and accepted type, **accept**
-     it with an **atomic update**: write updated JSON to temp file in same
-     directory, fsync temp, then `rename` over original (single-file replace).
-     Set `status` to `accepted` and append message:
-     `role: "executor"`, `from: "{{teamId}}"`, `content: "Accepted."`,
-     `statusChange: "accepted"`.
+   - If still `submitted` and task is within scope and accepted type, perform a single atomic transition from "submitted"→"working":
+     write updated JSON to temp file in same directory with deterministic naming (taskID + .tmp + pid/timestamp),
+     set `status` to "working", append executor message, fsync temp, then `rename` over original.
+     If rename fails, attempt immediate unlink of temp file and log error with context.
+     Recommend periodic cleanup job for stale temp files older than configurable TTL.
    - If outside scope/type, **reject** with the same atomic update mechanism:
-     set `status` to `rejected`, append reason + suggested team.
+     set `status` to "rejected", append reason + suggested team.
    - **Always release lock** in `finally` after accept/reject/skip paths.
-3. After accepting, update `status` to `working` and begin implementation.
-4. If no delegated tasks exist, fall through to Step 1 (backlog-based work).
+3. If no delegated tasks exist, fall through to Step 1 (backlog-based work).
 
 ### Step 1: Identify Work Items
 
@@ -173,11 +170,18 @@ After completing your work, produce a summary:
 If you were working on a delegated task from `.claude/state/tasks/`:
 
 1. Add a `files-changed` artifact listing all modified files.
-2. Add a `test-results` artifact with pass/fail/added counts.
+2. Add a `test-results` artifact with pass/fail counts and both `added` and `modified` numeric fields (e.g., `{"passed": 42, "failed": 0, "added": 5, "modified": 12}`).
 3. Update `status` to `completed` (or `failed` if quality gate failed).
 4. Add a final message summarising what was done.
-5. If the task has a `handoffTo` array, populate `handoffContext` with
-   a one-paragraph summary of what was done and what the next team needs.
+5. If the task has a `handoffTo` array, check handoff history to prevent cycles:
+   - Verify no team in `handoffTo` is already present in the complete task.handoffHistory ∪ {currentTeam}
+   - Verify resulting handoff depth would not exceed maximum (recommended: max 3 handoffs)
+   - If either condition fails, implement concrete fallback:
+     1. Set task.status to "blocked" (or "needs-review")
+     2. Append clear explanatory message to task.handoffContext describing the cycle or depth violation
+     3. Create entry in events.log containing task id, violating teams, depth, and timestamp for human review
+     4. Call system notification hook to alert on-call reviewers so orchestrator can pause auto-followups until resolved
+   Then populate `handoffContext` with a one-paragraph summary of what was done and what the next team needs.
    The orchestrator will auto-create follow-up tasks.
 6. If no `handoffTo` is set but you identified downstream work, set
    `handoffTo` to the appropriate team(s) from your handoff chain:
@@ -203,6 +207,7 @@ If `.claude/state/orchestrator.json` exists, update the team entry:
       "itemsCompleted": ["<item titles>"],
       "filesChanged": ["<file paths>"],
       "testsAdded": <number>,
+      "testsModified": <number>,
       "gateStatus": "<PASS|FAIL>"
     }
   }

@@ -81,7 +81,51 @@ Validation rules:
 - `agentId`, `team`, `modelId` required
 - all weights required, integer range `0-100`
 - sum of weights must equal `100`
-- `reason` required for model changes on existing agent mapping
+- `reason` required for updates to existing agent mapping (when agentId already exists). Optional for initial creation.
+- API determines create vs update by checking existence of agentId in datastore.
+
+Examples:
+
+Create (no reason required):
+```json
+{
+  "agentId": "backend.api-refactor",
+  "modelId": "claude-opus-4-6",
+  "team": "backend",
+  "weights": {
+    "quality": 5,
+    "reasoning": 4,
+    "cost": 3,
+    "context": 3,
+    "speed": 2,
+    "compatibility": 1,
+    "lock_in": 1,
+    "quirks": 1
+  }
+}
+```
+
+Update (reason required):
+```json
+{
+  "agentId": "backend.api-refactor",
+  "modelId": "claude-opus-4-6",
+  "team": "backend",
+  "weights": {
+    "quality": 5,
+    "reasoning": 4,
+    "cost": 3,
+    "context": 3,
+    "speed": 2,
+    "compatibility": 1,
+    "lock_in": 1,
+    "quirks": 1
+  },
+  "reason": "Updated to improve code generation quality"
+}
+```
+
+Error when reason missing on update: `400 Bad Request - reason field required for updates`
 
 Response - 200:
 
@@ -177,7 +221,12 @@ Response fields:
 
 Returns benchmark and telemetry rollup.
 
-Required fields:
+The response must always include these metric keys. Each metric is an object with:
+
+- `value` (number or null): The metric value, null indicates not available
+- `status` ("current" | "stale" | "not-evaluated"): Data availability indicator
+
+Required keys (always present, value may be null):
 
 - `sweBenchVerified`
 - `aiderPassAt1`
@@ -185,8 +234,6 @@ Required fields:
 - `costPerSuccess`
 - `p95LatencyMs`
 - `lastEvaluatedAt`
-
-If not available, each metric is returned as an object with explicit properties:
 
 ```json
 {
@@ -226,8 +273,8 @@ Each metric object contains:
 ### Retry and Backoff
 
 - Retryable statuses: `429`, `500`, `502`, `503`, `504`
-- Backoff: exponential with jitter (`250ms`, `500ms`, `1s`, `2s`, max `5s`)
-- Max retries: 4
+- Backoff: exponential with jitter - delays before each retry: `250ms`, `500ms`, `1s`, `2s`, capped at `5s`
+- Max retries: 4 (4 retry attempts = 5 total attempts including initial request)
 
 ### Fallback Behavior
 
@@ -241,6 +288,6 @@ On repeated provider failure:
 ## 4) Data Contracts and Compatibility Notes
 
 - All timestamps are ISO-8601 UTC
-- All IDs are stable lowercase kebab-case except `updatedByRef` pseudonymous refs
+- All IDs are stable lowercase alphanumeric allowing dots (.), dashes (-), and underscores (_), except `updatedByRef` pseudonymous refs (examples: agentId, modelId, auditEventId)
 - Backward compatible additions allowed; breaking changes require version bump
 - v1 uses REST contract as source of truth; gRPC parity must preserve field names and semantics

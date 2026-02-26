@@ -204,9 +204,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 ---
 
-## Shared State Files
-
-### Team commands (`/team-*`)
+## Team Commands (`/team-*`)
 
 Team commands execute focused implementation sessions using team-specific scope
 and handoff rules from `AGENT_TEAMS.md`.
@@ -221,6 +219,10 @@ and handoff rules from `AGENT_TEAMS.md`.
 - `/team-docs`
 - `/team-product`
 - `/team-quality`
+
+---
+
+## Shared State Files
 
 Use `/orchestrate --team <name>` when you need orchestration state updates,
 task delegation, and cross-team coordination around the same team scope.

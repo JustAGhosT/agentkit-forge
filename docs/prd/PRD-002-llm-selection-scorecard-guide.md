@@ -370,12 +370,19 @@ cost and latency for selected agents.
 | Kimi K2 Thinking | 4.2  | 4.4       | 256K           | Standard | $    | Partial       | Strong pass@1 profile; verify provider integration   |
 | Grok Code Fast 1 | 4.0  | 4.2       | 131K           | Fast     | $    | Experimental  | Strong speed/cost profile; evolving ecosystem        |
 
+**Model naming convention:** In configuration files, model names use lowercase with hyphens (e.g., "Claude Opus 4.6" → "claude-opus-4-6").
+
+**Cost notation:**
+- $ = Low cost (e.g., < $0.50 per 1M tokens)
+- $$ = Medium cost (e.g., $0.50–$5 per 1M tokens)
+- $$$ = High cost (e.g., > $5 per 1M tokens)
+
 ## Agent Mapping Example
 
 ```yaml
 agents:
   - name: bug_fixer
-    model: gpt-4o
+    model: claude-opus-4-6
     weights:
       code_quality: 0.5
       reasoning: 0.3
@@ -490,7 +497,7 @@ Use scorecards as guidance, then tune by team outcome data.
 | Windsurf    | OpenAI                               | GPT-5.3-Codex Medium Fast         | N/?             | Paid      |                    4 | Codex, New + Fast                           | TBD                                               |                     TBD |        TBD | TBD                                        | TBD            | Fast                          | TBD         | TBD                              | TBD                    |
 | Windsurf    | OpenAI                               | GPT-5.3-Codex High                | N/?             | Paid      |                  2.5 | Codex, New                                  | TBD                                               |                     TBD |        TBD | TBD                                        | TBD            | TBD                           | TBD         | TBD                              | TBD                    |
 | Windsurf    | OpenAI                               | GPT-5.3-Codex High Fast           | N/?             | Paid      |                    5 | Codex, New + Fast                           | TBD                                               |                     TBD |        TBD | TBD                                        | TBD            | Fast                          | TBD         | TBD                              | TBD                    |
-| Windsurf    | OpenAI                               | GPT-5.3-Codex X-High              | N/?             | Paid      |                    8 | Codex, New, X-High                          | TBD                                               |                     TBD |        TBD | TBD                                        | TBD            | TBD                           | TBD         | TBD                              | TBD                    |
+| Windsurf    | OpenAI                               | GPT-5.3-Codex XHigh               | N/?             | Paid      |                    8 | Codex, New, XHigh                           | TBD                                               |                     TBD |        TBD | TBD                                        | TBD            | TBD                           | TBD         | TBD                              | TBD                    |
 | Windsurf    | OpenAI                               | GPT-5.3-Codex XHigh Fast          | N/?             | Paid      |                    6 | Codex, New, XHigh + Fast                    | TBD                                               |                     TBD |        TBD | TBD                                        | TBD            | Fast                          | TBD         | TBD                              | TBD                    |
 | Windsurf    | OpenAI?                              | o3                                | Y/?             | Paid      |                    1 | reasoning family; label unclear             | TBD                                               |                     TBD |        TBD | TBD                                        | TBD            | Standard                      | TBD         | TBD                              | TBD                    |
 | Windsurf    | OpenAI?                              | o3 High Reasoning                 | Y               | Paid      |                    1 | explicit "High Reasoning"                   | TBD                                               |                     TBD |        TBD | TBD                                        | TBD            | Standard                      | TBD         | TBD                              | TBD                    |
@@ -510,7 +517,7 @@ Use scorecards as guidance, then tune by team outcome data.
 - **Cost multiplier normalization:** Free is stored as 0 in the multiplier column for arithmetic convenience.
 - **Claude Sonnet 4.6 promo:** represented as two rows to make the multiplier
   unambiguous (No thinking vs With thinking).
-- **Minimax M2.5 promo:** set to 0.25x as per banner (overrides earlier 1x).
+- **Minimax M2.5 promo:** set to 0.25x as per banner (overrides a preliminary 1x setting).
 - Capability columns are intentionally **TBD** unless independently validated.
 - If preferred, this can be collapsed to one row per base model by introducing a
   dedicated -Thinking modes & multipliers- column.

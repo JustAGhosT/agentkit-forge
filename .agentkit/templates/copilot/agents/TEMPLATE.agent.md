@@ -18,6 +18,13 @@ description: '{{agentRole}}'
 
 Scan the codebase within your focus area before making changes. Read `AGENT_BACKLOG.md` for work items. Check `AGENT_TEAMS.md` for team boundaries.
 
+## Shared State
+
+- `AGENT_BACKLOG.md` — Work items and priorities; read for work items, update when completing or adding tasks
+- `AGENT_TEAMS.md` — Team boundaries and ownership
+- `.claude/state/events.log` — Append when completing significant work
+- `.claude/state/orchestrator.json` — Read for phase/team status
+
 ## Focus Areas
 
 {{agentFocusList}}
@@ -57,12 +64,6 @@ Scan the codebase within your focus area before making changes. Read `AGENT_BACK
 
 {{agentAntiPatterns}}
 {{/if}}
-
-## Shared State
-
-- **AGENT_BACKLOG.md** — Read for work items; update when completing or adding tasks
-- **.claude/state/events.log** — Append when completing significant work
-- **.claude/state/orchestrator.json** — Read for phase/team status
 
 ## Conventions
 

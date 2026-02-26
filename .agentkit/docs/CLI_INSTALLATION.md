@@ -226,11 +226,12 @@ suitable for CI gates. Use `--bail` to stop on the first failing check.
 
 ```
 Unknown command: "foo"
-Valid commands: init, sync, validate, discover, spec-validate, orchestrate, plan, check, review, handoff, healthcheck, cost, project-review, add, remove, list, tasks, delegate, doctor, scaffold, preflight
+Valid commands: init, sync, validate, discover, spec-validate, orchestrate, plan, check, review, handoff, healthcheck, cost, add, remove, list, tasks, delegate, doctor
 ```
 
-Verify you are using one of the valid commands listed above. The
-`project-review`, `scaffold`, and `preflight` commands are slash-command-only and cannot be run from the CLI directly.
+Note: project-review, scaffold, and preflight are slash-command-only and cannot be invoked from the CLI. They are available via supported IDE extensions or chat assistants with authenticated sessions and open workspaces.
+
+Verify you are using one of the valid CLI commands listed above.
 
 ### "Cannot find module" or import errors
 

@@ -126,7 +126,7 @@ export function generateTaskId(projectRoot) {
 // Atomic write helper
 // ---------------------------------------------------------------------------
 
-function writeTaskFile(projectRoot, taskId, data) {
+async function writeTaskFile(projectRoot, taskId, data) {
   ensureTasksDir(projectRoot);
   const path = taskPath(projectRoot, taskId);
   const tmpPath = `${path}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
@@ -135,25 +135,41 @@ function writeTaskFile(projectRoot, taskId, data) {
     renameSync(tmpPath, path);
   } catch (err) {
     if (err?.code === 'EEXIST') {
-      try {
-        unlinkSync(path);
-        renameSync(tmpPath, path);
-        return;
-      } catch (retryErr) {
+      // Retry with exponential backoff without unlinking first
+      let retryCount = 0;
+      const maxRetries = 4;
+      const baseDelay = 50;
+
+      while (retryCount < maxRetries) {
         try {
-          unlinkSync(tmpPath);
-        } catch {
-          /* ignore cleanup errors */
+          // Attempt atomic replace directly
+          renameSync(tmpPath, path);
+          return;
+        } catch (retryErr) {
+          if (retryErr?.code === 'EEXIST' && retryCount < maxRetries - 1) {
+            retryCount++;
+            const delay = baseDelay * Math.pow(2, retryCount) + Math.random() * 50;
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+          // Final cleanup on last retry or different error
+          try {
+            unlinkSync(tmpPath);
+          } catch {
+            /* ignore cleanup errors */
+          }
+          throw retryErr;
         }
-        throw retryErr;
       }
+    } else {
+      // Non-EEXIST error, cleanup temp file
+      try {
+        unlinkSync(tmpPath);
+      } catch {
+        /* ignore cleanup errors */
+      }
+      throw err;
     }
-    try {
-      unlinkSync(tmpPath);
-    } catch {
-      /* ignore cleanup errors */
-    }
-    throw err;
   }
 }
 
@@ -165,21 +181,18 @@ function writeTaskFile(projectRoot, taskId, data) {
  * Create a new task.
  * @param {string} projectRoot
  * @param {object} taskData
- * @param {string} taskData.type - One of TASK_TYPES
- * @param {string} taskData.delegator - Who created this task
- * @param {string[]} taskData.assignees - Target agents/teams
- * @param {string} taskData.title
- * @param {string} [taskData.description]
- * @param {string[]} [taskData.acceptanceCriteria]
- * @param {string[]} [taskData.scope]
+ * @param {string} taskData.title - Human-readable title
+ * @param {string} taskData.delegator - Who created the task
+ * @param {string[]} taskData.assignees - Teams/agents this task is assigned to
+ * @param {string} [taskData.type] - One of TASK_TYPES (default 'feature')
  * @param {string} [taskData.priority] - One of TASK_PRIORITIES (default P2)
  * @param {string[]} [taskData.dependsOn] - Task IDs that must complete first
  * @param {string[]} [taskData.handoffTo] - Teams to auto-delegate to on completion
  * @param {string} [taskData.handoffContext] - Context for the handoff
  * @param {object} [taskData.context] - Additional context (backlogItemId, relatedFiles, etc.)
- * @returns {{ task: object, error?: string }}
+ * @returns {Promise<{ task: object, error?: string }>}
  */
-export function createTask(projectRoot, taskData) {
+export async function createTask(projectRoot, taskData) {
   // Validate required fields
   if (!taskData.title || typeof taskData.title !== 'string') {
     return { task: null, error: 'Task title is required' };
@@ -266,7 +279,7 @@ export function createTask(projectRoot, taskData) {
     task.blockedBy = [...blockers];
   }
 
-  writeTaskFile(projectRoot, taskId, task);
+  await writeTaskFile(projectRoot, taskId, task);
   return { task };
 }
 
@@ -362,16 +375,17 @@ const VALID_TRANSITIONS = {
 };
 
 /**
- * Update a task's status with validation.
+ * Update a task's status.
  * @param {string} projectRoot
  * @param {string} taskId
- * @param {string} newStatus
- * @param {object} [messageData]
- * @param {string} [messageData.from] - Who is making this change
+ * @param {string} newStatus - One of TASK_STATES
+ * @param {object} [messageData] - Optional message data to add with status change
+ * @param {string} [messageData.role] - Message role (default: 'executor')
+ * @param {string} [messageData.from] - Message sender (default: 'unknown')
  * @param {string} [messageData.content] - Optional message content
- * @returns {{ task: object|null, error?: string }}
+ * @returns {Promise<{ task: object|null, error?: string }>}
  */
-export function updateTaskStatus(projectRoot, taskId, newStatus, messageData = {}) {
+export async function updateTaskStatus(projectRoot, taskId, newStatus, messageData = {}) {
   const result = getTask(projectRoot, taskId);
   if (!result.task) return result;
 
@@ -412,7 +426,7 @@ export function updateTaskStatus(projectRoot, taskId, newStatus, messageData = {
     });
   }
 
-  writeTaskFile(projectRoot, taskId, task);
+  await writeTaskFile(projectRoot, taskId, task);
   return { task };
 }
 
@@ -428,9 +442,9 @@ export function updateTaskStatus(projectRoot, taskId, newStatus, messageData = {
  * @param {string} message.role - 'delegator' or 'executor'
  * @param {string} message.from - Who sent the message
  * @param {string} message.content - Message content
- * @returns {{ task: object|null, error?: string }}
+ * @returns {Promise<{ task: object|null, error?: string }>}
  */
-export function addTaskMessage(projectRoot, taskId, message) {
+export async function addTaskMessage(projectRoot, taskId, message) {
   const result = getTask(projectRoot, taskId);
   if (!result.task) return result;
 
@@ -456,6 +470,7 @@ export function addTaskMessage(projectRoot, taskId, message) {
   }
 
   const now = new Date().toISOString();
+  if (!Array.isArray(task.messages)) task.messages = [];
   task.messages.push({
     role: message.role,
     from: message.from,
@@ -464,7 +479,7 @@ export function addTaskMessage(projectRoot, taskId, message) {
   });
   task.updatedAt = now;
 
-  writeTaskFile(projectRoot, taskId, task);
+  await writeTaskFile(projectRoot, taskId, task);
   return { task };
 }
 
@@ -483,9 +498,9 @@ export function addTaskMessage(projectRoot, taskId, message) {
  * @param {number} [artifact.passed] - Tests passed (for test-results)
  * @param {number} [artifact.failed] - Tests failed (for test-results)
  * @param {number} [artifact.added] - Tests added (for test-results)
- * @returns {{ task: object|null, error?: string }}
+ * @returns {Promise<{ task: object|null, error?: string }>}
  */
-export function addTaskArtifact(projectRoot, taskId, artifact) {
+export async function addTaskArtifact(projectRoot, taskId, artifact) {
   const result = getTask(projectRoot, taskId);
   if (!result.task) return result;
 
@@ -505,7 +520,7 @@ export function addTaskArtifact(projectRoot, taskId, artifact) {
   });
   task.updatedAt = now;
 
-  writeTaskFile(projectRoot, taskId, task);
+  await writeTaskFile(projectRoot, taskId, task);
   return { task };
 }
 
@@ -516,9 +531,9 @@ export function addTaskArtifact(projectRoot, taskId, artifact) {
 /**
  * Check all tasks and unblock those whose dependencies have completed.
  * @param {string} projectRoot
- * @returns {{ unblocked: string[], errors: string[] }}
+ * @returns {Promise<{ unblocked: string[], errors: string[] }>}
  */
-export function checkDependencies(projectRoot) {
+export async function checkDependencies(projectRoot) {
   const { tasks } = listTasks(projectRoot);
   const unblocked = [];
   const errors = [];
@@ -555,7 +570,7 @@ export function checkDependencies(projectRoot) {
     const blockersChanged = JSON.stringify(priorBlockers) !== JSON.stringify(newBlockers);
     if (blockersChanged) {
       task.updatedAt = new Date().toISOString();
-      writeTaskFile(projectRoot, task.id, task);
+      await writeTaskFile(projectRoot, task.id, task);
     }
 
     if (wasBlocked && newBlockers.length === 0 && !hasFailedDep) {
@@ -617,13 +632,12 @@ function detectDependencyCycles(tasks) {
 // ---------------------------------------------------------------------------
 
 /**
- * Process completed tasks that have handoffTo defined.
- * Creates new tasks for downstream teams.
+ * Process completed tasks with handoffTo and create follow-up tasks.
  * @param {string} projectRoot
  * @param {string} [delegator] - Who to attribute the new tasks to (default: 'orchestrator')
- * @returns {{ created: object[], errors: string[] }}
+ * @returns {Promise<{ created: object[], errors: string[] }>}
  */
-export function processHandoffs(projectRoot, delegator = 'orchestrator') {
+export async function processHandoffs(projectRoot, delegator = 'orchestrator') {
   const { tasks } = listTasks(projectRoot, { status: 'completed' });
   const created = [];
   const errors = [];
@@ -631,12 +645,19 @@ export function processHandoffs(projectRoot, delegator = 'orchestrator') {
   for (const task of tasks) {
     if (!Array.isArray(task.handoffTo) || task.handoffTo.length === 0) continue;
 
-    // Check if handoff already processed (look for a _handoffProcessed flag)
-    if (task._handoffProcessed) continue;
+    // Initialize handoff tracking if not present
+    if (!task._handoffProcessedTargets) {
+      task._handoffProcessedTargets = [];
+    }
 
     let hadFailures = false;
 
     for (const targetTeam of task.handoffTo) {
+      // Skip if this target was already processed
+      if (task._handoffProcessedTargets.includes(targetTeam)) {
+        continue;
+      }
+
       const result = createTask(projectRoot, {
         type: task.type || 'implement',
         delegator,
@@ -659,14 +680,18 @@ export function processHandoffs(projectRoot, delegator = 'orchestrator') {
         errors.push(`Failed to create handoff task for ${targetTeam}: ${result.error}`);
       } else {
         created.push(result.task);
+        // Mark this target as processed
+        task._handoffProcessedTargets.push(targetTeam);
+        task.updatedAt = new Date().toISOString();
+        await writeTaskFile(projectRoot, task.id, task);
       }
     }
 
-    // Mark handoff as processed only when all downstream task creations succeed.
-    if (!hadFailures) {
+    // Mark handoff as fully processed when all targets are done
+    if (task._handoffProcessedTargets.length === task.handoffTo.length) {
       task._handoffProcessed = true;
       task.updatedAt = new Date().toISOString();
-      writeTaskFile(projectRoot, task.id, task);
+      await writeTaskFile(projectRoot, task.id, task);
     }
   }
 

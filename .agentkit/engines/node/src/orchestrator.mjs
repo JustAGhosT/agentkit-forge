@@ -562,15 +562,14 @@ export function getStatus(projectRoot, agentkitRoot) {
 // ---------------------------------------------------------------------------
 
 /**
- * Delegate a task to one or more teams via the task protocol.
- * Creates a task file and updates orchestrator state.
+ * Delegate a task to a team/agent.
  * @param {string} projectRoot
  * @param {object} state - Current orchestrator state
  * @param {object} taskData - Task creation data (see task-protocol.mjs createTask)
- * @returns {{ state: object, task: object|null, error?: string }}
+ * @returns {Promise<{ state: object, task: object|null, error?: string }>}
  */
-export function delegateTask(projectRoot, state, taskData) {
-  const result = createTask(projectRoot, {
+export async function delegateTask(projectRoot, state, taskData) {
+  const result = await createTask(projectRoot, {
     ...taskData,
     delegator: taskData.delegator || 'orchestrator',
   });
@@ -611,13 +610,13 @@ export function delegateTask(projectRoot, state, taskData) {
 }
 
 /**
- * Check task dependencies and unblock tasks. Updates orchestrator state.
+ * Check task dependencies and unblock tasks. Returns cloned state with unblocked tasks applied.
  * @param {string} projectRoot
  * @param {object} state - Current orchestrator state
- * @returns {{ state: object, unblocked: string[], errors: string[] }}
+ * @returns {Promise<{ state: object, unblocked: string[], errors: string[] }>}
  */
-export function orchestratorCheckDependencies(projectRoot, state) {
-  const { unblocked, errors } = checkDependencies(projectRoot);
+export async function orchestratorCheckDependencies(projectRoot, state) {
+  const { unblocked, errors } = await checkDependencies(projectRoot);
 
   // Clone state to ensure immutability
   const newState = {
@@ -625,6 +624,19 @@ export function orchestratorCheckDependencies(projectRoot, state) {
     active_tasks: state.active_tasks ? JSON.parse(JSON.stringify(state.active_tasks)) : {},
     team_progress: state.team_progress ? JSON.parse(JSON.stringify(state.team_progress)) : {},
   };
+
+  // Apply unblocked tasks to state
+  if (unblocked.length > 0 && newState.team_progress) {
+    for (const taskId of unblocked) {
+      // Mark unblocked tasks as ready/available in team_progress
+      for (const [teamId, progress] of Object.entries(newState.team_progress)) {
+        if (progress.tasks && progress.tasks[taskId]) {
+          progress.tasks[taskId].status = 'ready';
+          progress.tasks[taskId].blocked = false;
+        }
+      }
+    }
+  }
 
   return { state: newState, unblocked, errors };
 }
@@ -634,24 +646,40 @@ export function orchestratorCheckDependencies(projectRoot, state) {
  * Updates orchestrator state with new delegations.
  * @param {string} projectRoot
  * @param {object} state - Current orchestrator state
- * @returns {{ state: object, created: object[], errors: string[] }}
+ * @returns {Promise<{ state: object, created: object[], errors: string[] }>}
  */
-export function orchestratorProcessHandoffs(projectRoot, state) {
-  const { created, errors } = processHandoffs(projectRoot, 'orchestrator');
+export async function orchestratorProcessHandoffs(projectRoot, state) {
+  const { created, errors } = await processHandoffs(projectRoot, 'orchestrator');
 
   // Deep clone to ensure immutability
   const newState = {
     ...state,
     active_tasks: state.active_tasks ? JSON.parse(JSON.stringify(state.active_tasks)) : {},
+    team_progress: state.team_progress ? JSON.parse(JSON.stringify(state.team_progress)) : {},
   };
   for (const task of created) {
     // Track new handoff tasks in orchestrator state
     if (!newState.active_tasks) newState.active_tasks = {};
+    if (!newState.team_progress) newState.team_progress = {};
+
     for (const assignee of task.assignees || []) {
+      // Update active_tasks
       if (!newState.active_tasks[assignee]) {
         newState.active_tasks[assignee] = [];
       }
       newState.active_tasks[assignee].push(task.id);
+
+      // Update team_progress to match delegateTask behavior
+      if (!newState.team_progress[assignee]) {
+        newState.team_progress[assignee] = {
+          status: 'in_progress',
+          tasks: {},
+          last_updated: new Date().toISOString(),
+        };
+      } else {
+        newState.team_progress[assignee].status = 'in_progress';
+        newState.team_progress[assignee].last_updated = new Date().toISOString();
+      }
     }
   }
 

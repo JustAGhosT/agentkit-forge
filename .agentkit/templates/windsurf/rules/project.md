@@ -27,7 +27,7 @@ This repository uses the AgentKit Forge unified agent team framework.
 {{#if infraStateBackend}}- State backend: {{infraStateBackend}}{{/if}}
 {{/if}}
 
-{{#if hasMonitoring}}
+{{#if hasAnyMonitoring}}
 
 ## Observability
 
@@ -35,10 +35,16 @@ This repository uses the AgentKit Forge unified agent team framework.
 {{#if alertingProvider}}- Alerting provider: {{alertingProvider}}{{/if}}
 {{#if tracingProvider}}- Tracing provider: {{tracingProvider}}{{/if}}
 {{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
-{{#unless monitoringProvider}}{{#unless alertingProvider}}{{#unless tracingProvider}}{{#unless hasCentralisedLogging}}- No monitoring configured{{/unless}}{{/unless}}{{/unless}}{{/unless}}
 {{/if}}
 
-{{#if hasCompliance}}
+{{#unless hasAnyMonitoring}}
+
+## No Monitoring
+
+- No monitoring configured
+{{/unless}}
+
+{{#if hasAnyComplianceConfig}}
 
 ## Compliance and DR
 
@@ -47,7 +53,11 @@ This repository uses the AgentKit Forge unified agent team framework.
 {{#if drRtoHours}}- DR RTO (hours): {{drRtoHours}}{{/if}}
 {{#if drTestSchedule}}- DR test schedule: {{drTestSchedule}}{{/if}}
 {{#if auditEventBus}}- Audit event bus: {{auditEventBus}}{{/if}}
-{{#unless complianceFramework}}{{#unless drRpoHours}}{{#unless drRtoHours}}{{#unless drTestSchedule}}{{#unless auditEventBus}}- No compliance/DR configuration{{/unless}}{{/unless}}{{/unless}}{{/unless}}{{/unless}}
+{{else}}
+
+## No Compliance and DR
+
+- No compliance/DR configuration
 {{/if}}
 
 ## Non-negotiables
