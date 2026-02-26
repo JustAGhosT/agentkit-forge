@@ -185,8 +185,19 @@ function cleanRemovedToolFiles(projectRoot, manifest, tools) {
   let cleaned = 0;
 
   const hasPrefixBoundaryMatch = (filePath, prefix) => {
-    const normalizedPrefix = prefix.replace(/\/+$/, '');
-    return filePath === normalizedPrefix || filePath.startsWith(`${normalizedPrefix}/`);
+    // Directory prefixes are configured with a trailing slash (e.g. ".claude/"),
+    // while file prefixes omit it (e.g. "CLAUDE.md"). We:
+    // - match any path under a directory prefix
+    // - require exact equality for file prefixes
+    const isDirPrefix = prefix.endsWith('/');
+
+    if (isDirPrefix) {
+      const normalizedDirPrefix = prefix.replace(/\/+$/, '') + '/';
+      return filePath.startsWith(normalizedDirPrefix);
+    }
+
+    const normalizedFilePrefix = prefix.replace(/\/+$/, '');
+    return filePath === normalizedFilePrefix;
   };
 
   let projectRootReal;
