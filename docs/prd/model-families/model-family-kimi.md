@@ -8,15 +8,15 @@
 
 ## At a Glance
 
-| Attribute          | Value                                                        |
-| ------------------ | ------------------------------------------------------------ |
-| **Provider**       | Moonshot AI (Beijing, China)                                 |
-| **Founded**        | 2023                                                         |
-| **Architecture**   | Dense transformer with thinking modes                        |
-| **Latest model**   | Kimi K2.5                                                    |
-| **Context window** | 128K-200K tokens                                             |
-| **License**        | Proprietary (API) + open weights on HF                       |
-| **Notable**        | #1 on SWE-rebench pass@1 (Feb 2026), strong Chinese language |
+| Attribute          | Value                                                            |
+| ------------------ | ---------------------------------------------------------------- |
+| **Provider**       | Moonshot AI (Beijing, China)                                     |
+| **Founded**        | 2023                                                             |
+| **Architecture**   | Dense transformer with thinking modes                            |
+| **Latest model**   | Kimi K2.5                                                        |
+| **Context window** | 256K tokens                                                      |
+| **License**        | Proprietary (API) + open weights on HF                           |
+| **Notable**        | Kimi K2 Thinking — #1 on SWE-rebench pass@1 (43.8%); K2.5: 37.9% |
 
 ## Hugging Face Resources
 
@@ -34,6 +34,14 @@
 | Open-source pass@1 leadership note | Kimi K2 Thinking reported as best pass@1 this month          | [SWE-rebench](https://swe-rebench.com/) | Fetched, independent benchmark |
 | K2 Thinking vs K2.5                | 43.8% vs 37.9% on SWE-rebench metric                         | [SWE-rebench](https://swe-rebench.com/) | Fetched, independent benchmark |
 | Deployment tradeoff note           | Better quality may come with different token/latency profile | [SWE-rebench](https://swe-rebench.com/) | Fetched, independent benchmark |
+
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified       | HLE           | SWE-rebench                                   | Aider         | Coding ability summary                                         | Decision Readiness | When to use                                                   | Source quality                      | Last verified |
+| ---------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | -------------------------- | ------------- | --------------------------------------------- | ------------- | -------------------------------------------------------------- | ------------------ | ------------------------------------------------------------- | ----------------------------------- | ------------- |
+| Kimi K2    | Windsurf        | Kimi K2                  | Paid      |                   0.5 |  Not evaluated | Not evaluated              | Not evaluated | Family-level carryover from K2 Thinking notes | Not evaluated | Lower-cost Kimi branch for routine coding and multilingual use | Medium             | Cost-sensitive coding workloads with good baseline quality    | PRD-002 + independent family signal | 2026-02-26    |
+| Kimi K2    | Windsurf/Intake | Kimi K2                  | Paid      |                   1.0 |  Not evaluated | 65.8% (SWE-Bench Verified) | Not evaluated | Not evaluated                                 | Not evaluated | Strong agentic coding; outperforms GPT-4.1; rivals Claude Opus | Medium             | Agentic workflows requiring multi-step reasoning and tool use | PRD-002 + Fireworks blog            | 2026-02-26    |
+| Kimi K2.5  | Windsurf        | Kimi K2.5 (New)          | Paid      |                   1.0 |  Not evaluated | Not evaluated              | Not evaluated | 37.9% (family benchmark note)                 | Not evaluated | Newer Kimi branch with stronger general coding reliability     | Medium             | Balanced quality/cost coding where Kimi integration is stable | PRD-002 + independent family signal | 2026-02-26    |
 
 ## Operational notes
 

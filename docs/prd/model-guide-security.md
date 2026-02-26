@@ -34,30 +34,52 @@
 
 `Final Score = max(0, Weighted Score - lock_in_penalty - quirks_penalty)`
 
+## Cost Evidence Method
+
+- Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
+  inputs are available.
+- Cost normalization formulas:
+
+`effective_cost = cost_multiplier * normalized_tokens_per_problem`
+
+`normalized_tokens_per_problem = model_tokens_per_problem / baseline_tokens_per_problem`
+
+`cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
+
+- Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
+  scores unchanged and mark cost evidence as `Not evaluated`.
+
+## Cost Evidence Status and Recalculation
+
+- Current status: tokens/problem evidence remains `Not evaluated` for the ranked
+  set in this guide.
+- Recalculation result: per approved fallback policy, Cost scores and final
+  weighted scores remain unchanged in this revision.
+
 ## Model Rankings (Final Scores)
 
 ### Tier 1: Recommended (Score >= 9.00)
 
-| Model              | Score | Key Strengths                       | Notes                          |
-| ------------------ | ----- | ----------------------------------- | ------------------------------ |
-| GPT-5.3 Codex High | 9.15  | Top reasoning and security analysis | Best default for audits        |
-| Claude Opus 4.6    | 9.10  | Strong security reasoning           | Strong auth and policy reviews |
+| Model              | Score | Speed    | Key Strengths                       | Notes                          |
+| ------------------ | ----- | -------- | ----------------------------------- | ------------------------------ |
+| GPT-5.3 Codex High | 9.15  | Fast     | Top reasoning and security analysis | Best default for audits        |
+| Claude Opus 4.6    | 9.10  | Standard | Strong security reasoning           | Strong auth and policy reviews |
 
 ### Tier 2: Strong Alternatives (Score 8.30-8.99)
 
-| Model             | Score | Key Strengths                | Notes                             |
-| ----------------- | ----- | ---------------------------- | --------------------------------- |
-| SWE-Llama         | 8.60  | Code specialization          | Useful for secure refactoring     |
-| Gemini 2.5 Pro    | 8.55  | Strong reasoning and context | Good for large security codebases |
-| Claude Sonnet 4.6 | 8.45  | Lower-cost Claude profile    | Routine policy checks             |
-| GLM-5             | 8.30  | Multilingual support         | Regional or mixed-stack usage     |
+| Model             | Score | Speed    | Key Strengths                | Notes                             |
+| ----------------- | ----- | -------- | ---------------------------- | --------------------------------- |
+| SWE-Llama         | 8.60  | Standard | Code specialization          | Useful for secure refactoring     |
+| Gemini 2.5 Pro    | 8.55  | Standard | Strong reasoning and context | Good for large security codebases |
+| Claude Sonnet 4.6 | 8.45  | Standard | Lower-cost Claude profile    | Routine policy checks             |
+| GLM-5             | 8.30  | Fast     | Multilingual support         | Regional or mixed-stack usage     |
 
 ### Tier 3: Cost-Aware (Score 7.00-7.99)
 
-| Model     | Score | Key Strengths | Notes                         |
-| --------- | ----- | ------------- | ----------------------------- |
-| Kimi K2.5 | 7.60  | Budget option | Non-critical validation tasks |
-| o3        | 7.45  | Low cost      | High-volume routine checks    |
+| Model     | Score | Speed    | Key Strengths | Notes                         |
+| --------- | ----- | -------- | ------------- | ----------------------------- |
+| Kimi K2.5 | 7.60  | Standard | Budget option | Non-critical validation tasks |
+| o3        | 7.45  | Fast     | Low cost      | High-volume routine checks    |
 
 ## Decision Policy
 
@@ -69,7 +91,8 @@ Fallback triggers:
 
 - Provider outage or repeated 5xx: route to next highest compatible model.
 - 7-day spend overrun above 15%: route low-risk checks to cost-aware model.
-- P95 latency regression above 25%: switch to faster model in same score band.
+- P95 latency regression above 25%: switch to the model with lower P95/higher
+  throughput from the **Speed** column within the same score band.
 - Deprecation notice: migrate in next release cycle with audit note.
 
 ## Override and Audit Example

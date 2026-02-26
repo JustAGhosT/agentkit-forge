@@ -235,7 +235,7 @@ All project documentation follows the unified 8-category structure in `docs/`:
 
 ## Compliance and Resilience
 
-- **Framework**: {{complianceFramework}}
+{{#if complianceFramework}}- **Framework**: {{complianceFramework}}{{/if}}
 {{#if drRpoHours}}- **DR RPO (hours)**: {{drRpoHours}}{{/if}}
 {{#if drRtoHours}}- **DR RTO (hours)**: {{drRtoHours}}{{/if}}
 {{#if drTestSchedule}}- **DR test schedule**: {{drTestSchedule}}{{/if}}

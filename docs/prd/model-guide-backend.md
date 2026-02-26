@@ -36,10 +36,27 @@ These are the operational backend weights used by the decision engine.
 
 `Final Score = max(0, Weighted Score - lock_in_penalty - quirks_penalty)`
 
-- Tie-break order:
-  1. Higher Compatibility
-  2. Higher Cost score (lower real spend)
-  3. Higher Speed
+## Cost Evidence Method
+
+- Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
+  inputs are available.
+- Cost normalization formulas:
+
+`effective_cost = cost_multiplier * normalized_tokens_per_problem`
+
+`normalized_tokens_per_problem = model_tokens_per_problem / baseline_tokens_per_problem`
+
+`cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
+
+- Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
+  scores unchanged and mark cost evidence as `Not evaluated`.
+
+## Cost Evidence Status and Recalculation
+
+- Current status: tokens/problem evidence remains `Not evaluated` for the ranked
+  set in this guide.
+- Recalculation result: per approved fallback policy, Cost scores and final
+  weighted scores remain unchanged in this revision.
 
 ## Model Rankings (Final Scores)
 
@@ -72,10 +89,15 @@ These are the operational backend weights used by the decision engine.
 
 ### Tier 4: Experimental (Score < 7.00)
 
-| Model        | Score | Key Strengths   | Notes                          |
-| ------------ | ----- | --------------- | ------------------------------ |
-| xAI Grok-3   | 6.60  | Fast iteration  | Use behind explicit guardrails |
-| GPT-OSS 120B | TBD   | OSS portability | Requires internal validation   |
+| Model      | Score | Key Strengths  | Notes                          |
+| ---------- | ----- | -------------- | ------------------------------ |
+| xAI Grok-3 | 6.60  | Fast iteration | Use behind explicit guardrails |
+
+### Unscored / Pending Evaluation
+
+| Model        | Score | Key Strengths   | Notes                        |
+| ------------ | ----- | --------------- | ---------------------------- |
+| GPT-OSS 120B | N/A   | OSS portability | Pending benchmark validation |
 
 ## Decision Policy
 
@@ -85,8 +107,12 @@ These are the operational backend weights used by the decision engine.
 
 Fallback triggers:
 
-- Provider outage or repeated 5xx: route to next highest tier with equal or
-  better compatibility.
+- Provider outage or repeated 5xx: route to next highest tier model that meets
+  this compatibility checklist:
+  1. Same provider **or** compatible API contract and response schema.
+  2. Equal or greater context window for the target workflow.
+  3. Supports required tool-calling/JSON behavior for backend agents.
+  4. Compatible billing/project policy constraints.
 - 7-day spend exceeds budget by 15%: switch eligible tasks to cost-aware
   alternate.
 - P95 latency regression above 25%: prefer a faster model in same tier.

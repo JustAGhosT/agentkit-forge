@@ -17,9 +17,14 @@ Always scan the codebase within your focus area before making changes.
 
 ## Shared State
 
-- **Read:** `AGENT_BACKLOG.md` (for existing items), `AGENT_TEAMS.md` (for team boundaries), `.claude/state/orchestrator.json` (for project context)
-- **Append to:** `.claude/state/events.log` — write findings for tracking
-- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
+- **`AGENT_BACKLOG.md`** — Read for existing items; update when completing or
+  adding tasks in your scope.
+- **`AGENT_TEAMS.md`** — Read for team boundaries and ownership.
+- **`.claude/state/events.log`** — Append findings and significant work updates.
+- **`.claude/state/orchestrator.json`** — Read for project context; update your
+  team status entry after meaningful progress.
+- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns
+  the lock.
 
 ## Category
 
@@ -64,12 +69,6 @@ Always scan the codebase within your focus area before making changes.
 
 {{agentAntiPatterns}}
 {{/if}}
-
-## Shared State
-
-- **AGENT_BACKLOG.md** — Read for work items; update when completing or adding tasks
-- **.claude/state/events.log** — Append when completing significant work
-- **.claude/state/orchestrator.json** — Read for phase/team status; update team entry when done
 
 ## Guidelines
 

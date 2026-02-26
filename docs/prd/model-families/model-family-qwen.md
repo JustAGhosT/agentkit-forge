@@ -20,14 +20,15 @@
 
 ## Hugging Face Resources
 
-| Resource           | Model ID                          | Notes                       |
-| ------------------ | --------------------------------- | --------------------------- |
-| Qwen3-32B          | `Qwen/Qwen3-32B`                  | 32B parameter model         |
-| Qwen3-32B Instruct | `Qwen/Qwen3-32B-Instruct`         | Instruction-tuned           |
-| Qwen3-235B-A22B    | `Qwen/Qwen3-235B-A22B`            | MoE, 235B total, 22B active |
-| Qwen2.5-Coder      | `Qwen/Qwen2.5-Coder-32B-Instruct` | Code-specialized            |
-| Qwen2.5            | `Qwen/Qwen2.5-72B-Instruct`       | General purpose             |
-| Qwen2.5-VL         | `Qwen/Qwen2.5-VL-72B-Instruct`    | Vision variant              |
+| Resource           | Model ID                          | Notes                                                                        |
+| ------------------ | --------------------------------- | ---------------------------------------------------------------------------- |
+| Qwen3-32B          | `Qwen/Qwen3-32B`                  | 32B parameter model                                                          |
+| Qwen3-32B Instruct | `Qwen/Qwen3-32B-Instruct`         | Instruction-tuned                                                            |
+| Qwen3-235B-A22B    | `Qwen/Qwen3-235B-A22B`            | MoE, 235B total, 22B active                                                  |
+| Qwen3-Coder-Next   | `N/A (leaderboard label)`         | Mentioned in SWE-rebench note; canonical HF ID not confirmed in this dossier |
+| Qwen2.5-Coder      | `Qwen/Qwen2.5-Coder-32B-Instruct` | Code-specialized                                                             |
+| Qwen2.5            | `Qwen/Qwen2.5-72B-Instruct`       | General purpose                                                              |
+| Qwen2.5-VL         | `Qwen/Qwen2.5-VL-72B-Instruct`    | Vision variant                                                               |
 
 > **Note:** Qwen (Alibaba) provides extensive open-weight models on Hugging Face. Qwen2.5-Coder is specifically optimized for code tasks.
 

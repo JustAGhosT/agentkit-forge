@@ -34,30 +34,58 @@
 
 `Final Score = max(0, Weighted Score - lock_in_penalty - quirks_penalty)`
 
+## Cost Evidence Method
+
+- Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
+  inputs are available.
+- Cost normalization formulas:
+
+`effective_cost = cost_multiplier * normalized_tokens_per_problem`
+
+`normalized_tokens_per_problem = model_tokens_per_problem / baseline_tokens_per_problem`
+
+`cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
+
+- Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
+  scores unchanged and mark cost evidence as `Not evaluated`.
+
+## Cost Evidence Status and Recalculation
+
+- Current status: tokens/problem evidence remains `Not evaluated` for the ranked
+  set in this guide.
+- Recalculation result: per approved fallback policy, Cost scores and final
+  weighted scores remain unchanged in this revision.
+
 ## Model Rankings (Final Scores)
 
 ### Tier 1: Recommended (Score >= 8.40)
 
-| Model              | Score | Key Strengths                | Notes                        |
-| ------------------ | ----- | ---------------------------- | ---------------------------- |
-| Claude Opus 4.6    | 8.45  | High context and consistency | Best for large docs and ADRs |
-| GPT-5.3 Codex High | 8.40  | Strong reasoning             | Good for strategy-heavy docs |
+| Model              | Model ID           | Score | Key Strengths                | Notes                        |
+| ------------------ | ------------------ | ----- | ---------------------------- | ---------------------------- |
+| Claude Opus 4.6    | claude-opus-4-6    | 8.45  | High context and consistency | Best for large docs and ADRs |
+| GPT-5.3 Codex High | gpt-5.3-codex-high | 8.40  | Strong reasoning             | Good for strategy-heavy docs |
 
 ### Tier 2: Strong Alternatives (Score 8.10-8.39)
 
-| Model             | Score | Key Strengths             | Notes                            |
-| ----------------- | ----- | ------------------------- | -------------------------------- |
-| SWE-Llama         | 8.25  | Code example quality      | Good for docs with code snippets |
-| GLM-5             | 8.15  | Multilingual support      | Useful for localization work     |
-| Gemini 2.5 Pro    | 8.15  | 1M context window         | Good for very large doc sets     |
-| Claude Sonnet 4.6 | 8.10  | Lower-cost Claude profile | Routine documentation updates    |
+| Model             | Model ID          | Score | Key Strengths             | Notes                            |
+| ----------------- | ----------------- | ----- | ------------------------- | -------------------------------- |
+| SWE-Llama         | swe-llama         | 8.25  | Code example quality      | Good for docs with code snippets |
+| GLM-5             | glm-5             | 8.15  | Multilingual support      | Useful for localization work     |
+| Gemini 2.5 Pro    | gemini-2-5-pro    | 8.15  | 1M context window         | Good for very large doc sets     |
+| Claude Sonnet 4.6 | claude-sonnet-4-6 | 8.10  | Lower-cost Claude profile | Routine documentation updates    |
 
 ### Tier 3: Cost-Aware (Score 7.50-8.09)
 
-| Model        | Score | Key Strengths         | Notes                         |
-| ------------ | ----- | --------------------- | ----------------------------- |
-| o3           | 7.75  | Low cost              | Fast, lightweight docs edits  |
-| Minimax M2.5 | 7.55  | Regional availability | APAC-oriented fallback option |
+| Model        | Model ID     | Score | Key Strengths         | Notes                         |
+| ------------ | ------------ | ----- | --------------------- | ----------------------------- |
+| o3           | o3           | 7.75  | Low cost              | Fast, lightweight docs edits  |
+| Minimax M2.5 | minimax-m2-5 | 7.55  | Regional availability | APAC-oriented fallback option |
+
+### Display Name and Config ID Note
+
+Ranking tables show both display names and runtime IDs. YAML fields
+`team_defaults.default_model`, `team_defaults.fallback_model`, and
+`agents.<agent>.model_override` must use **Model ID** values.
 
 ## Decision Policy
 

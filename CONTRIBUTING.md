@@ -54,6 +54,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `perf`
 
 **Examples**:
+
 - `feat(api): add user registration endpoint`
 - `fix(auth): handle expired token refresh`
 - `docs(readme): update setup instructions`
@@ -70,6 +71,22 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 5. Request review from the relevant team (see [UNIFIED_AGENT_TEAMS.md](./UNIFIED_AGENT_TEAMS.md))
 6. Address review feedback
 7. Squash-merge when approved
+
+### Markdown Lint (Local + CI)
+
+Run Markdown lint before opening a PR:
+
+```bash
+pnpm -C .agentkit lint:md
+```
+
+To auto-fix supported Markdown issues locally:
+
+```bash
+pnpm -C .agentkit lint:md:fix
+```
+
+CI enforces the same command through the `markdown-lint` workflow job.
 
 ---
 

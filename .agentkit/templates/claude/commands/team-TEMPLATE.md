@@ -11,7 +11,7 @@ You are **{{teamName}}** (`{{teamId}}`). Your focus area is: **{{teamFocus}}**.
 
 You work on files matching the following patterns:
 
-```
+```text
 {{teamScope}}
 ```
 
@@ -36,19 +36,29 @@ Follow these steps in order for every work session:
 1. List files in `.claude/state/tasks/` and read any with status `submitted`
    where `assignees` includes `{{teamId}}`.
 2. For each matching task:
-   - **Acquire a lock** on the task file (e.g., `.claude/state/tasks/{task-id}.lock`)
-     before re-checking the status. If lock acquisition fails, abort and skip this task.
-   - **Re-check status** under the lock: read the task file again and verify
-     `status === "submitted"`. If it has changed, release the lock and abort handling
-     that task.
-   - If still `submitted` and the task is within your scope and type matches your
-     accepted types, **accept** it: perform an atomic update that sets `status` to
-     `accepted`, adds a message with `role: "executor"`, `from: "{{teamId}}"`,
-     `content: "Accepted."`, and `statusChange: "accepted"`. Release the lock after
-     the atomic update completes.
-   - If the task is outside your scope or type, **reject** it: set `status`
-     to `rejected`, add a message explaining why and suggesting a better team.
-     Release the lock after the update.
+   - **Acquire a lock lease** on `.claude/state/tasks/{task-id}.lock` before
+     re-checking status. Write lock metadata on acquire:
+     `{"owner":"{{teamId}}","acquiredAt":"<ISO>","expiresAt":"<ISO>","ttlMs":30000}`.
+   - **Lock acquisition policy:** use timeout + retry with bounded attempts
+     (for example max 5 attempts) and jittered backoff (for example 100-500ms).
+     If acquisition fails after max attempts, skip this task.
+   - **Stale-lock takeover:** if an existing lock has `expiresAt < now`, treat it
+     as stale, remove it, and attempt acquisition again.
+   - **Deadlock mitigation:** enforce one-task-at-a-time lock ordering
+     (lexicographic task-id order) and randomized backoff before retry/takeover.
+   - **Renew lock lease** for long operations: if work under lock exceeds 50% of
+     TTL, refresh `expiresAt` before continuing.
+   - **Re-check status under lock:** read task file again and verify
+     `status === "submitted"`. If changed, release lock and skip.
+   - If still `submitted` and task is within scope and accepted type, **accept**
+     it with an **atomic update**: write updated JSON to temp file in same
+     directory, fsync temp, then `rename` over original (single-file replace).
+     Set `status` to `accepted` and append message:
+     `role: "executor"`, `from: "{{teamId}}"`, `content: "Accepted."`,
+     `statusChange: "accepted"`.
+   - If outside scope/type, **reject** with the same atomic update mechanism:
+     set `status` to `rejected`, append reason + suggested team.
+   - **Always release lock** in `finally` after accept/reject/skip paths.
 3. After accepting, update `status` to `working` and begin implementation.
 4. If no delegated tasks exist, fall through to Step 1 (backlog-based work).
 
@@ -109,6 +119,7 @@ After completing your changes, run the equivalent of `/check`:
 5. **Build** the project to confirm nothing is broken.
 
 If any check fails:
+
 - Fix the issue if it is caused by your changes.
 - If it is a pre-existing failure, note it as a finding but do not block your work.
 
@@ -116,7 +127,7 @@ If any check fails:
 
 After completing your work, produce a summary:
 
-```
+````markdown
 ## {{teamName}} Report
 
 **Session:** <timestamp>
@@ -153,7 +164,7 @@ After completing your work, produce a summary:
 
 ### Remaining Backlog Items
 - <items in our scope that were not addressed this session>
-```
+````
 
 ## State Updates
 
@@ -178,7 +189,7 @@ If you were working on a delegated task from `.claude/state/tasks/`:
 
 Append to `.claude/state/events.log`:
 
-```
+```text
 [<timestamp>] [TEAM] [{{teamId}}] Completed <N> items. Changes: <file count> files. Tests: <added count> added, <modified count> modified. Gate: <PASS|FAIL>.
 ```
 

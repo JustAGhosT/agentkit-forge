@@ -34,24 +34,46 @@
 
 `Final Score = max(0, Weighted Score - lock_in_penalty - quirks_penalty)`
 
+## Cost Evidence Method
+
+- Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
+  inputs are available.
+- Cost normalization formulas:
+
+`effective_cost = cost_multiplier * normalized_tokens_per_problem`
+
+`normalized_tokens_per_problem = model_tokens_per_problem / baseline_tokens_per_problem`
+
+`cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
+
+- Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
+  scores unchanged and mark cost evidence as `Not evaluated`.
+
+## Cost Evidence Status and Recalculation
+
+- Current status: tokens/problem evidence remains `Not evaluated` for the ranked
+  set in this guide.
+- Recalculation result: per approved fallback policy, Cost scores and final
+  weighted scores remain unchanged in this revision.
+
 ## Model Rankings (Final Scores)
 
 ### Tier 1: Quality-First (Score 8.50+)
 
-| Model              | Model ID           | Score | Key Strengths            | Notes                           |
-| ------------------ | ------------------ | ----- | ------------------------ | ------------------------------- |
-| GPT-5.3 Codex High | gpt-5.3-codex-high | 9.10  | Best coding quality      | Primary for complex PRDs/specs  |
-| Claude Opus 4.6    | claude-opus-4-6    | 9.05  | Synthesis and reasoning  | Best for high-context documents |
-| Claude Sonnet 4.6  | claude-sonnet-4-6  | 8.90  | Balanced profile         | Default for most product work   |
-| Gemini 2.5 Pro     | gemini-2-5-pro     | 8.85  | Large context, reasoning | Good for multi-file analysis    |
+| Model              | Model ID           | Configuration | Score | Key Strengths            | Notes                                 |
+| ------------------ | ------------------ | ------------- | ----- | ------------------------ | ------------------------------------- |
+| GPT-5.3 Codex High | gpt-5.3-codex-high | Quality-first | 9.10  | Best coding quality      | Primary for complex PRDs/specs        |
+| Claude Opus 4.6    | claude-opus-4-6    | Quality-first | 9.05  | Synthesis and reasoning  | Best for high-context documents       |
+| Claude Sonnet 4.6  | claude-sonnet-4-6  | Quality-first | 8.90  | Balanced profile         | Default for most product work         |
+| Gemini 2.5 Pro     | gemini-2-5-pro     | Quality-first | 8.85  | Large context, reasoning | Good for multi-file analysis          |
+| SWE-Llama          | swe-llama          | Quality-first | 8.60  | Strong structured output | Useful when product docs include code |
 
 ### Tier 2: Balanced (Score 8.00-8.49)
 
-| Model             | Model ID          | Score | Key Strengths             | Notes                                 |
-| ----------------- | ----------------- | ----- | ------------------------- | ------------------------------------- |
-| SWE-Llama         | swe-llama         | 8.60  | Strong structured output  | Useful when product docs include code |
-| Claude Sonnet 4.6 | claude-sonnet-4-6 | 8.40  | Lower-cost Claude profile | Routine roadmap and PRD updates       |
-| Gemini 2.5 Pro    | gemini-2-5-pro    | 8.25  | Large context window      | Useful for wide portfolio context     |
+| Model             | Model ID          | Configuration | Score | Key Strengths             | Notes                             |
+| ----------------- | ----------------- | ------------- | ----- | ------------------------- | --------------------------------- |
+| Claude Sonnet 4.6 | claude-sonnet-4-6 | Balanced-cost | 8.40  | Lower-cost Claude profile | Routine roadmap and PRD updates   |
+| Gemini 2.5 Pro    | gemini-2-5-pro    | Balanced-cost | 8.25  | Large context window      | Useful for wide portfolio context |
 
 ### Tier 3: Cost-Aware (Score 7.00-7.99)
 

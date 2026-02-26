@@ -12,7 +12,7 @@
 | ------------------ | ------------------------------------------------------------------- |
 | **Provider**       | IBM (Armonk, USA)                                                   |
 | **Founded**        | 1911 (IBM), 2023 (Granite)                                          |
-| **Architecture**   | Dense transformer                                                   |
+| **Architecture**   | Hybrid Mamba/transformer (Mamba-2/transformer)                      |
 | **Latest model**   | Granite 4.0                                                         |
 | **Context window** | 128K tokens                                                         |
 | **License**        | Apache 2.0 (open weights)                                           |
@@ -35,6 +35,12 @@
 | Enterprise alignment   | IBM describes GRC (Governance, Risk, and Compliance)-oriented data curation and enterprise deployment focus            | [Granite 4.0 repository](https://github.com/ibm-granite/granite-4.0-language-models) | Fetched, vendor claim |
 | Licensing posture      | Granite 4.0 models are documented under Apache 2.0 license                                                             | [Granite 4.0 repository](https://github.com/ibm-granite/granite-4.0-language-models) | Fetched, vendor claim |
 | Agent readiness signal | Repository includes tool-calling examples for AI agents                                                                | [Granite 4.0 repository](https://github.com/ibm-granite/granite-4.0-language-models) | Fetched, vendor claim |
+
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model   | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                    | Decision Readiness | When to use                                                | Source quality       | Last verified |
+| ------------ | --------------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | --------------------------------------------------------- | ------------------ | ---------------------------------------------------------- | -------------------- | ------------- |
+| Granite Code | Windsurf/Intake | Granite Code             | Paid      |                   0.5 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Enterprise-grade open code LLM; 116 languages; Apache 2.0 | Medium             | Enterprise code tasks requiring license-permissible models | PRD-002 + IBM GitHub | 2026-02-26    |
 
 ## Operational notes
 

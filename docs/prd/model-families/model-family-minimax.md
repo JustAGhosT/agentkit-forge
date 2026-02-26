@@ -39,6 +39,13 @@
 | SWE-Bench token usage        | 3.52M tokens/task vs 3.72M (M2.1)           | [MiniMax M2.5 model card](https://huggingface.co/MiniMaxAI/MiniMax-M2.5) | Fetched, vendor claim          |
 | SWE-rebench note             | MiniMax M2.5 reported at ~$0.09 per problem | [SWE-rebench](https://swe-rebench.com/)                                  | Fetched, independent benchmark |
 
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model   | Environment     | Profile variants covered | Cost tier | Cost multiplier range |    Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench        | Aider         | Coding ability summary      | Decision Readiness | When to use             | Source quality         | Last verified |
+| ------------ | --------------- | ------------------------ | --------- | --------------------: | ----------------: | -------------------- | ------------- | ------------------ | ------------- | --------------------------- | ------------------ | ----------------------- | ---------------------- | ------------- |
+| Minimax M2.5 | Windsurf/Intake | MiniMax M2.5             | Paid      |                   0.5 | 3.52M tokens/task | Not evaluated        | Not evaluated | Not evaluated      | Not evaluated | Droid: 79.7; OpenCode: 76.1 | Medium             | Real-world productivity | PRD-002 + MiniMax blog | 2026-02-26    |
+| Minimax M2.5 | Windsurf        | Minimax M2.5 (New)       | Paid      |                  0.25 | 3.52M tokens/task | Vendor signals       | Not evaluated | Cost note (~$0.09) | Not evaluated | Strong cost-performance     | Medium             | High-volume coding      | Vendor + independent   | 2026-02-26    |
+
 ## Operational notes
 
 - MiniMax claims strong coding performance with much lower operating cost than

@@ -1,0 +1,9 @@
+{
+  "name": "agentkit-forge-root",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "lint:md": "pnpm -C .agentkit lint:md",
+    "lint:md:fix": "pnpm -C .agentkit lint:md:fix"
+  }
+}

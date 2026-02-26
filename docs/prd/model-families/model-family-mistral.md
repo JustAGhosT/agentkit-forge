@@ -8,15 +8,15 @@
 
 ## At a Glance
 
-| Attribute          | Value                                                    |
-| ------------------ | -------------------------------------------------------- |
-| **Provider**       | Mistral AI (Paris, France)                               |
-| **Founded**        | 2023                                                     |
-| **Architecture**   | Dense transformer + Mamba (Codestral)                    |
-| **Latest model**   | Codestral 25.08                                          |
-| **Context window** | 128K tokens                                              |
-| **License**        | Proprietary (API) + open weights (Apache 2.0)            |
-| **Notable**        | European AI champion, first with FIM for code completion |
+| Attribute          | Value                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| **Provider**       | Mistral AI (Paris, France)                                                           |
+| **Founded**        | 2023                                                                                 |
+| **Architecture**   | Dense transformer + Mamba (Codestral)                                                |
+| **Latest model**   | Codestral 25.08                                                                      |
+| **Context window** | 128K tokens ([Codestral 25.08 docs](https://docs.mistral.ai/models/codestral-25-08)) |
+| **License**        | Proprietary (API) + open weights (Apache 2.0)                                        |
+| **Notable**        | European AI champion, strong FIM support for code completion                         |
 
 ## Hugging Face Resources
 
@@ -34,6 +34,12 @@
 | Coding focus        | Codestral is positioned as a code-completion model for low-latency, high-frequency coding tasks | [Mistral Codestral docs](https://docs.mistral.ai/models/codestral-25-08) | Fetched, vendor claim |
 | FIM support         | Codestral supports Fill-in-the-Middle code completion                                           | [Mistral Codestral docs](https://docs.mistral.ai/models/codestral-25-08) | Fetched, vendor claim |
 | Agent/tool features | Docs list function calling, agents, and built-in tools support                                  | [Mistral Codestral docs](https://docs.mistral.ai/models/codestral-25-08) | Fetched, vendor claim |
+
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model      | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified                              | HLE           | SWE-rebench   | Aider         | Coding ability summary                        | Decision Readiness | When to use                                          | Source quality         | Last verified |
+| --------------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | ------------------------------------------------- | ------------- | ------------- | ------------- | --------------------------------------------- | ------------------ | ---------------------------------------------------- | ---------------------- | ------------- |
+| Codestral 25.08 | Windsurf/Intake | Codestral 25.08          | Paid      |                   1.0 |  Not evaluated | Devstral Small 1.1: 53.6%; Devstral Medium: 61.6% | Not evaluated | Not evaluated | Not evaluated | Top open-model SWE-bench Verified performance | Medium             | Enterprise coding where open-weight SOTA is required | PRD-002 + Mistral blog | 2026-02-26    |
 
 ## Operational notes
 

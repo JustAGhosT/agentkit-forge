@@ -39,6 +39,13 @@
 | BrowseComp             | 86.8% with multi-agent harness                                               | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
 | SWE-rebench status     | Claude Opus 4.6 reported at #1; Claude Sonnet (code-specialized) best pass@5 | [SWE-rebench](https://swe-rebench.com/)                              | Fetched, independent benchmark |
 
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model        | Environment      | Profile variants covered | Cost tier            | Cost multiplier range | Tokens/problem | SWE-bench / Verified                       | HLE           | SWE-rebench                            | Aider         | Coding ability summary                                       | Decision Readiness | When to use                                                  | Source quality               | Last verified |
+| ----------------- | ---------------- | ------------------------ | -------------------- | --------------------: | -------------: | ------------------------------------------ | ------------- | -------------------------------------- | ------------- | ------------------------------------------------------------ | ------------------ | ------------------------------------------------------------ | ---------------------------- | ------------- |
+| Claude Opus 4.6   | Cursor, Windsurf | Opus 4.6                 | Paid / Not evaluated |         Not evaluated |  Not evaluated | 81.42% (25-trial average, prompt-modified) | Not evaluated | #1 reported on SWE-rebench news stream | Not evaluated | Highest-confidence Claude line for deep coding reasoning     | Medium             | Complex refactoring, architecture, deep reasoning            | Vendor + independent mix     | 2026-02-26    |
+| Claude 3.5 Sonnet | Windsurf/Intake  | Claude 3.5 Sonnet        | Paid                 |                   2.0 |  Not evaluated | 49.0% (SWE-bench Verified)                 | Not evaluated | Not evaluated                          | Not evaluated | State-of-the-art coding; beats previous SOTA; strong agentic | High               | Production coding where quality and reliability are critical | PRD-002 + Anthropic research | 2026-02-26    |
+
 ## Operational notes
 
 - Anthropic also states Opus 4.6 supports 1M context (beta), up to 128k output,

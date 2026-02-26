@@ -37,6 +37,13 @@
 | Tool-use positioning                | Trained for grep/terminal/file editing workflows         | [xAI Grok Code Fast 1](https://x.ai/news/grok-code-fast-1) | Fetched, vendor claim          |
 | Ecosystem trend note                | Grok models added to SWE-rebench leaderboard news stream | [SWE-rebench](https://swe-rebench.com/)                    | Fetched, independent benchmark |
 
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model       | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified                 | HLE           | SWE-rebench   | Aider         | Coding ability summary                                           | Decision Readiness | When to use                                         | Source quality                     | Last verified |
+| ---------------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | ------------------------------------ | ------------- | ------------- | ------------- | ---------------------------------------------------------------- | ------------------ | --------------------------------------------------- | ---------------------------------- | ------------- |
+| Grok 3           | Windsurf/Intake | Grok 3                   | Paid      |                   1.0 |  Not evaluated | Not evaluated                        | Not evaluated | Not evaluated | Not evaluated | Reasoning agent with strong math and coding capabilities         | Medium             | Complex reasoning tasks requiring test-time compute | PRD-002 + xAI blog                 | 2026-02-26    |
+| Grok Code Fast 1 | Windsurf        | Grok Code Fast 1         | Free      |                   0.0 |  Not evaluated | 70.8% (vendor-reported, full subset) | Not evaluated | Not evaluated | Not evaluated | Speed/cost-tuned coding profile with strong tool-use positioning | Medium             | Quick code generation and free-tier coding tasks    | Vendor claim + independent mention | 2026-02-26    |
+
 ## Operational notes
 
 - xAI emphasizes end-user coding workflow speed and cost rather than only

@@ -37,6 +37,12 @@
 | Use-case positioning     | AWS lists RAG systems and agentic applications across Nova understanding models           | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
 | Region/governance signal | Regional availability and GovCloud support are explicitly documented                      | [Amazon Nova overview](https://docs.aws.amazon.com/nova/latest/userguide/what-is-nova.html) | Fetched, vendor claim |
 
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                                       | Decision Readiness | When to use                                              | Source quality                | Last verified |
+| ---------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | ---------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------- | ----------------------------- | ------------- |
+| Nova Pro   | Windsurf/Intake | Nova Pro                 | Paid      |                   1.0 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Lower-end intelligence (AA Index: 13); well-priced; multimodal; 300k context | Medium             | Cost-conscious apps needing large context and multimodal | PRD-002 + Artificial Analysis | 2026-02-26    |
+
 ## Operational notes
 
 - Nova should be assessed as a strategic option in AWS-heavy environments.

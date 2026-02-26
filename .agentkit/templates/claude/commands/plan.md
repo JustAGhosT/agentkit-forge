@@ -142,9 +142,15 @@ Write the complete plan as a structured markdown document. Do NOT create a file 
 
 ### Writing State (after planning)
 - **Append to:** `.claude/state/events.log` (see format below)
+- **Acquire and release:** `.claude/state/events.log.lock` around every append.
 - **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
 
 Append to `.claude/state/events.log`:
+
+1. Acquire `.claude/state/events.log.lock` (with timeout + retry/backoff).
+2. Open `.claude/state/events.log` in append mode and write one complete line.
+3. Flush and `fsync` before releasing the lock.
+4. Release `.claude/state/events.log.lock`.
 
 ```
 [<timestamp>] [PLAN] [ORCHESTRATOR] Plan created for: "<goal summary>". Steps: <count>. Files: <count>.

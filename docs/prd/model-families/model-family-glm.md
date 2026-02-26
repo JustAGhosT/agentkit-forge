@@ -38,12 +38,18 @@
 | Open-source ranking note       | GLM-4.7 described as strongest OSS model on leaderboard | [SWE-rebench](https://swe-rebench.com/)                                         | Fetched, independent benchmark |
 | Throughput/latency snapshot    | GLM-5 summary cites 61.2 t/s and 1.37s TTFT             | [Artificial Analysis model summary](https://artificialanalysis.ai/models/glm-5) | Search snippet only            |
 
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model | Environment     | Profile variants covered | Cost tier | Cost multiplier range |                                              Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench                                                           | Aider         | Coding ability summary                                                      | Decision Readiness | When to use                                                       | Source quality                    | Last verified |
+| ---------- | --------------- | ------------------------ | --------- | --------------------: | ----------------------------------------------------------: | -------------------- | ------------- | --------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------- | --------------------------------- | ------------- |
+| GLM-5      | Windsurf        | GLM-5                    | Paid      |                  0.75 | Best tokens/problem note (exact numeric value not captured) | Not evaluated        | Not evaluated | Leaderboard token-efficiency + rank notes                             | Not evaluated | High token-efficiency open-family candidate for coding                      | Medium             | Cost-sensitive and multilingual coding workloads                  | Independent leaderboard + PRD-002 | 2026-02-26    |
+| GLM-5      | Windsurf/Intake | GLM-5 (base)             | Paid      |                   1.5 |                                               Not evaluated | Not evaluated        | Not evaluated | Best-in-class among open-source on reasoning/coding/agentic (HF card) | Not evaluated | Scales to 744B parameters (40B active) with DSA; strong agentic performance | Medium             | Cost-aware open-weight SOTA for complex systems and agentic tasks | PRD-002 + HuggingFace card        | 2026-02-26    |
+| GLM 4.7    | Windsurf        | GLM 4.7 (Beta)           | Paid      |                  0.25 |                                               Not evaluated | Not evaluated        | Not evaluated | Family-level carryover from GLM leaderboard notes                     | Not evaluated | Lower-cost GLM intake row pending full benchmark coverage                   | Low                | Intake evaluation where very low multiplier is desired            | PRD-002 matrix + family signals   | 2026-02-26    |
+
 ## Operational notes
 
 - GLM appears strong on efficiency-oriented coding benchmarks in independent
   leaderboard commentary.
-- Detailed GLM-5 model page could not be fetched directly in this environment,
-  so throughput/latency figures are currently snippet-quality only.
 
 ## Guidance for model guides
 

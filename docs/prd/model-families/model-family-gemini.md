@@ -37,6 +37,14 @@
 | Google launch claim           | Gemini 3 Flash reported at 54.2% on Terminal-Bench 2.0     | [Google Gemini 3](https://blog.google/products/gemini/gemini-3/) | Search snippet (page timeout)  |
 | Google launch claim           | Gemini 3 Pro reported at 1487 Elo on WebDev Arena          | [Google Gemini 3](https://blog.google/products/gemini/gemini-3/) | Search snippet (page timeout)  |
 
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model     | Environment     | Profile variants covered     | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench                                                                 | Aider         | Coding ability summary                                       | Decision Readiness | When to use                                                  | Source quality                | Last verified |
+| -------------- | --------------- | ---------------------------- | --------- | --------------------: | -------------: | -------------------- | ------------- | --------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------ | ------------------ | ------------------------------------------------------------ | ----------------------------- | ------------- |
+| Gemini 3 Flash | Windsurf        | Gemini 3 Flash High          | Paid      |                  1.75 |  Not evaluated | Not evaluated        | Not evaluated | 57.6% (Flash preview)                                                       | Not evaluated | Strong speed-oriented coding/agent profile in family signals | Medium             | Fast coding loops where turnaround time is priority          | Independent + vendor snippet  | 2026-02-26    |
+| Gemini 3 Pro   | Windsurf        | Gemini 3 Pro High Thinking   | Paid      |                   2.0 |  Not evaluated | Not evaluated        | Not evaluated | 56.5% (Pro preview)                                                         | Not evaluated | Higher-reasoning Gemini branch with strong context potential | Medium             | High-context coding and reasoning-heavy multi-file workflows | Independent + vendor snippet  | 2026-02-26    |
+| Gemini 3.1 Pro | Windsurf/Intake | Gemini 3.1 Pro High Thinking | Paid      |                   2.0 |  Not evaluated | Not evaluated        | Not evaluated | Significantly outperforms Gemini 3 Pro on reasoning benchmarks (model card) | Not evaluated | Enhanced reasoning and multimodal capabilities over 3 Pro    | Medium             | Complex reasoning tasks requiring enhanced capabilities      | PRD-002 + DeepMind model card | 2026-02-26    |
+
 ## Operational notes
 
 - In currently accessible benchmark data, Gemini Flash can outperform Gemini

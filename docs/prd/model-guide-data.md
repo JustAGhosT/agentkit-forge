@@ -34,30 +34,85 @@
 
 `Final Score = max(0, Weighted Score - lock_in_penalty - quirks_penalty)`
 
+## Cost Evidence Method
+
+- Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
+  inputs are available.
+- Cost normalization formulas:
+
+`effective_cost = cost_multiplier * normalized_tokens_per_problem`
+
+`normalized_tokens_per_problem = model_tokens_per_problem / baseline_tokens_per_problem`
+
+`cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
+
+- Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
+  scores unchanged and mark cost evidence as `Not evaluated`.
+
+## Cost Evidence Status and Recalculation
+
+- Current status: tokens/problem evidence remains `Not evaluated` for the ranked
+  set in this guide.
+- Recalculation result: per approved fallback policy, Cost scores and final
+  weighted scores remain unchanged in this revision.
+
 ## Model Rankings (Final Scores)
 
 ### Tier 1: Recommended (Score >= 8.50)
 
-| Model              | Score | Key Strengths                | Notes                    |
-| ------------------ | ----- | ---------------------------- | ------------------------ |
-| Claude Opus 4.6    | 8.65  | Strong context and reasoning | Best for complex schemas |
-| GPT-5.3 Codex High | 8.60  | Strong code and reasoning    | Premium option           |
+| Model              | Model ID           | Score | Key Strengths                | Notes                    |
+| ------------------ | ------------------ | ----- | ---------------------------- | ------------------------ |
+| Claude Opus 4.6    | claude-opus-4-6    | 8.65  | Strong context and reasoning | Best for complex schemas |
+| GPT-5.3 Codex High | gpt-5.3-codex-high | 8.60  | Strong code and reasoning    | Premium option           |
 
 ### Tier 2: Strong Alternatives (Score 8.00-8.49)
 
-| Model             | Score | Key Strengths             | Notes                         |
-| ----------------- | ----- | ------------------------- | ----------------------------- |
-| SWE-Llama         | 8.30  | Code specialization       | Good for migration-heavy work |
-| GLM-5             | 8.20  | Multilingual support      | Good for mixed data sources   |
-| Gemini 2.5 Pro    | 8.20  | Large context window      | Useful for wide schemas       |
-| Claude Sonnet 4.6 | 8.15  | Lower-cost Claude profile | Good for routine tasks        |
+| Model             | Model ID          | Score | Key Strengths             | Notes                         |
+| ----------------- | ----------------- | ----- | ------------------------- | ----------------------------- |
+| SWE-Llama         | swe-llama         | 8.30  | Code specialization       | Good for migration-heavy work |
+| GLM-5             | glm-5             | 8.20  | Multilingual support      | Good for mixed data sources   |
+| Gemini 2.5 Pro    | gemini-2-5-pro    | 8.20  | Large context window      | Useful for wide schemas       |
+| Claude Sonnet 4.6 | claude-sonnet-4-6 | 8.15  | Lower-cost Claude profile | Good for routine tasks        |
 
 ### Tier 3: Cost-Aware (Score 7.00-7.99)
 
-| Model     | Score | Key Strengths | Notes                          |
-| --------- | ----- | ------------- | ------------------------------ |
-| o3        | 7.25  | Low cost      | Suitable for simple migrations |
-| Kimi K2.5 | 7.25  | Budget option | Basic schema operations        |
+| Model     | Model ID  | Score | Key Strengths | Notes                          |
+| --------- | --------- | ----- | ------------- | ------------------------------ |
+| o3        | o3        | 7.25  | Low cost      | Suitable for simple migrations |
+| Kimi K2.5 | kimi-k2-5 | 7.25  | Budget option | Basic schema operations        |
+
+### Display Name to Config ID Mapping
+
+`team_defaults.*.default_model`, `fallback_model`, and
+`agents.*.model_override` expect **Model ID** values (not display names).
+
+| Display name       | Config ID            |
+| ------------------ | -------------------- |
+| Claude Opus 4.6    | `claude-opus-4-6`    |
+| GPT-5.3 Codex High | `gpt-5.3-codex-high` |
+| SWE-Llama          | `swe-llama`          |
+| GLM-5              | `glm-5`              |
+| Gemini 2.5 Pro     | `gemini-2-5-pro`     |
+| Claude Sonnet 4.6  | `claude-sonnet-4-6`  |
+| o3                 | `o3`                 |
+| Kimi K2.5          | `kimi-k2-5`          |
+
+### Penalty Inputs Used in Final Scores
+
+Formula reminder:
+
+`Final Score = max(0, Weighted Score - lock_in_penalty - quirks_penalty)`
+
+| Model ID           | lock_in_penalty | quirks_penalty |
+| ------------------ | --------------- | -------------- |
+| claude-opus-4-6    | 0.10            | 0.05           |
+| gpt-5.3-codex-high | 0.12            | 0.08           |
+| swe-llama          | 0.05            | 0.05           |
+| glm-5              | 0.06            | 0.04           |
+| gemini-2-5-pro     | 0.07            | 0.05           |
+| claude-sonnet-4-6  | 0.07            | 0.03           |
+| o3                 | 0.03            | 0.02           |
+| kimi-k2-5          | 0.04            | 0.03           |
 
 ## Decision Policy
 

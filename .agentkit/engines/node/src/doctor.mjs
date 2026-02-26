@@ -118,6 +118,7 @@ function projectCompleteness(project) {
 export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   const findings = [];
   const specRoot = resolveSpecRoot(agentkitRoot, projectRoot);
+  const templateSpecRoot = specRoot === agentkitRoot ? specRoot : agentkitRoot;
 
   // 1) Spec validation
   let spec;
@@ -151,7 +152,7 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   }
 
   // 2) Overlay/template sanity
-  const { targets, error: overlayError } = loadOverlayRenderTargets(specRoot);
+  const { targets, error: overlayError } = loadOverlayRenderTargets(templateSpecRoot);
   if (overlayError) {
     findings.push({ severity: 'error', message: overlayError });
   } else if (targets.length === 0) {
@@ -160,7 +161,7 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
       message: 'No renderTargets defined in overlay settings; sync defaults may be broad.',
     });
   } else {
-    const checks = checkTemplateRoots(specRoot, targets);
+    const checks = checkTemplateRoots(templateSpecRoot, targets);
     for (const c of checks) {
       if (!c.exists)
         findings.push({

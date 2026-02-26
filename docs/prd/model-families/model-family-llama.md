@@ -13,7 +13,7 @@
 | **Provider**       | Meta AI (Menlo Park, USA)                                |
 | **Founded**        | 2023 (Llama), 2013 (Meta AI)                             |
 | **Architecture**   | Dense transformer + MoE (Llama 4)                        |
-| **Latest model**   | Llama 4 Scout/Maverick                                   |
+| **Latest model**   | Llama 4 Scout                                            |
 | **Context window** | 128K tokens                                              |
 | **License**        | Llama Community License (commercial ok)                  |
 | **Notable**        | Most downloaded AI model, sparked open-source revolution |
@@ -35,6 +35,12 @@
 | Open model stance      | Llama 4 is positioned for commercial and research use under Llama Community License | [Llama 4 Scout model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E) | Fetched, vendor claim |
 | Multimodal positioning | Instruction-tuned Llama 4 is described for assistant chat and visual reasoning      | [Llama 4 Scout model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E) | Fetched, vendor claim |
 | Training scale signal  | Llama 4 Scout pretraining reported at ~40T tokens with Aug 2024 data cutoff         | [Llama 4 Scout model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E) | Fetched, vendor claim |
+
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model    | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                                    | Decision Readiness | When to use                                                   | Source quality                | Last verified |
+| ------------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | ------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------- | ----------------------------- | ------------- |
+| Llama 4 Scout | Windsurf/Intake | Llama 4 Scout            | Paid      |                   1.0 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Above average intelligence (AA Index: 13); fast; very verbose; multimodal | Medium             | Multimodal tasks requiring fast processing with large context | PRD-002 + Artificial Analysis | 2026-02-26    |
 
 ## Operational notes
 

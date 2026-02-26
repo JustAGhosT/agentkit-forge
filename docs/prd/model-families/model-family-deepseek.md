@@ -8,15 +8,18 @@
 
 ## At a Glance
 
-| Attribute          | Value                                                            |
-| ------------------ | ---------------------------------------------------------------- |
-| **Provider**       | DeepSeek AI (Hangzhou, China)                                    |
-| **Founded**        | 2023                                                             |
-| **Architecture**   | MoE (Mixture of Experts)                                         |
-| **Latest model**   | DeepSeek V3.2                                                    |
-| **Context window** | 64K-128K tokens                                                  |
-| **License**        | Open weights (MIT/Apache) + API                                  |
-| **Notable**        | Open-source breakthrough, ~$6M training cost, R1 reasoning model |
+| Attribute          | Value                                                               |
+| ------------------ | ------------------------------------------------------------------- |
+| **Provider**       | DeepSeek AI (Hangzhou, China)                                       |
+| **Founded**        | 2023                                                                |
+| **Architecture**   | MoE (Mixture of Experts)                                            |
+| **Latest model**   | DeepSeek V3.2                                                       |
+| **Context window** | 64K-128K tokens                                                     |
+| **License**        | Open weights (MIT/Apache) + API                                     |
+| **Notable**        | Open-source breakthrough, ~$6M training cost, strong reasoning line |
+
+R1 is a DeepSeek reasoning-family model (not a separate external project) and
+is tracked as part of the broader DeepSeek model line.
 
 ## Hugging Face Resources
 
@@ -38,6 +41,12 @@
 | Context limit     | DeepSeek-V3.2 API modes listed with 128K context limit         | [DeepSeek API quick start](https://api-docs.deepseek.com/)             | Fetched, vendor claim |
 | Tool-use behavior | V3.2 supports tool use in both thinking and non-thinking modes | [DeepSeek V3.2 release](https://api-docs.deepseek.com/news/news251201) | Fetched, vendor claim |
 | Release coverage  | V3.2 and V3.2-Speciale documented as current release line      | [DeepSeek V3.2 release](https://api-docs.deepseek.com/news/news251201) | Fetched, vendor claim |
+
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model    | Environment     | Profile variants covered             | Cost tier     | Cost multiplier range |                                                       Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench                                         | Aider         | Coding ability summary                                                | Decision Readiness | When to use                                                    | Source quality                 | Last verified |
+| ------------- | --------------- | ------------------------------------ | ------------- | --------------------: | -------------------------------------------------------------------: | -------------------- | ------------- | --------------------------------------------------- | ------------- | --------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------- | ------------------------------ | ------------- |
+| DeepSeek V3.2 | Windsurf/Intake | `deepseek-chat`, `deepseek-reasoner` | Not evaluated |         Not evaluated | Highest tokens/problem across evaluated models (leaderboard insight) | Not evaluated        | Not evaluated | SOTA among open-weight models (leaderboard insight) | Not evaluated | Tracked as chat/reasoner split with strong open-weight coding signals | Medium             | Cost/quality experiments where open-weight SOTA signal matters | PRD-002 + vendor + SWE-rebench | 2026-02-26    |
 
 ## Operational notes
 

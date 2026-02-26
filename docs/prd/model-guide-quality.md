@@ -34,6 +34,28 @@
 
 `Final Score = max(0, Weighted Score - lock_in_penalty - quirks_penalty)`
 
+## Cost Evidence Method
+
+- Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
+  inputs are available.
+- Cost normalization formulas:
+
+`effective_cost = cost_multiplier * normalized_tokens_per_problem`
+
+`normalized_tokens_per_problem = model_tokens_per_problem / baseline_tokens_per_problem`
+
+`cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
+
+- Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
+  scores unchanged and mark cost evidence as `Not evaluated`.
+
+## Cost Evidence Status and Recalculation
+
+- Current status: tokens/problem evidence remains `Not evaluated` for the ranked
+  set in this guide.
+- Recalculation result: per approved fallback policy, Cost scores and final
+  weighted scores remain unchanged in this revision.
+
 ## Model Rankings (Final Scores)
 
 ### Tier 1: Recommended (Score >= 8.60)
@@ -44,13 +66,13 @@
 | GPT-5.3 Codex High | 8.80  | Strong reasoning and analysis | Strong bug triage option      |
 | SWE-Llama          | 8.60  | Code specialization           | Good for refactoring flows    |
 
-### Tier 2: Strong Alternatives (Score 8.20-8.59)
+### Tier 2: Strong Alternatives (Score 8.00-8.59)
 
-| Model             | Score | Key Strengths             | Notes                         |
-| ----------------- | ----- | ------------------------- | ----------------------------- |
-| Claude Sonnet 4.6 | 8.45  | Lower-cost Claude profile | Routine review workflows      |
-| Gemini 2.5 Pro    | 8.40  | Large context support     | Good for wide monorepo audits |
-| GLM-5             | 8.20  | Multilingual support      | Mixed stack review support    |
+| Model                 | Score | Key Strengths             | Notes                                    |
+| --------------------- | ----- | ------------------------- | ---------------------------------------- |
+| Claude Sonnet 4.6     | 8.45  | Lower-cost Claude profile | Routine review workflows                 |
+| Gemini 2.5 Pro        | 8.40  | Large context support     | Good for wide monorepo audits            |
+| GLM-5 (prior version) | 8.20  | Multilingual support      | Deprecated; replaced by GLM-5 (New) eval |
 
 ### Tier 3: Cost-Aware (Score 7.00-7.99)
 
@@ -58,6 +80,10 @@
 | --------- | ----- | ------------- | --------------------------- |
 | Kimi K2.5 | 7.55  | Budget option | Non-critical review batches |
 | o3        | 7.45  | Low cost      | High-volume routine checks  |
+
+### Tier 4: Experimental (Score < 7.00)
+
+No models currently assigned. Add entries here when validated scores drop below 7.00.
 
 ## Decision Policy
 
@@ -116,13 +142,13 @@ remain the source of truth.
 These models are now included in intake analysis but are excluded from weighted
 ranking tables until benchmark metrics are validated.
 
-| Model                        | Cost Multiplier | Status                                      |
-| ---------------------------- | --------------- | ------------------------------------------- |
-| Gemini 3 Flash High          | 1.75x           | Added to intake, pending scorecard metrics  |
-| Gemini 3 Pro High Thinking   | 2x              | Added to intake, pending scorecard metrics  |
-| Gemini 3.1 Pro High Thinking | 1x              | Added to intake, pending scorecard metrics  |
-| GLM 4.7 (Beta)               | 0.25x           | Added to intake, beta reliability watch     |
-| GLM-5 (New)                  | 1.5x            | Added to intake, replaces prior GLM-5 entry |
+| Model                        | Cost Multiplier | Status                                                                |
+| ---------------------------- | --------------- | --------------------------------------------------------------------- |
+| Gemini 3 Flash High          | 1.75x           | Added to intake, pending scorecard metrics                            |
+| Gemini 3 Pro High Thinking   | 2x              | Added to intake, pending scorecard metrics                            |
+| Gemini 3.1 Pro High Thinking | 1x              | Added to intake, pending scorecard metrics                            |
+| GLM 4.7 (Beta)               | 0.25x           | Added to intake, beta reliability watch                               |
+| GLM-5 (New)                  | 1.5x            | Replacement for GLM-5 (prior version); pending full benchmark scoring |
 
 ## Related Documentation
 

@@ -33,10 +33,15 @@ The orchestrator, `/plan`, and `/project-review` all use the same state files. T
 | `events.log`        | Audit trail            | Append          | Append | Append         |
 | `orchestrator.lock` | Session lock           | Acquire/Release | —      | —              |
 
-> **Coordination requirement for `events.log`:** Writers (`/plan`, `/project-review`) must either use atomic append semantics (open with `O_APPEND` or equivalent) or acquire `orchestrator.lock` before appending to prevent interleaved writes. The Orchestrator always holds the lock when writing. Example atomic append (Node.js):
-> ```js
-> fs.openSync(path, 'a')  // O_APPEND flag ensures atomic append
-> ```
+**Coordination requirement for `events.log`:** Writers (`/plan`,
+`/project-review`) must either use atomic append semantics (open with
+`O_APPEND` or equivalent) or acquire `orchestrator.lock` before appending to
+prevent interleaved writes. The Orchestrator always holds the lock when
+writing. Example atomic append (Node.js):
+
+```js
+fs.openSync(path, 'a')  // O_APPEND flag ensures atomic append
+```
 
 ### State File: `.claude/state/orchestrator.json`
 
@@ -91,7 +96,7 @@ For machine-identifiable events, use JSON lines format:
 
 **cycleId format:** Use a deterministic identifier per detected cycle. Generate once per cycle using a sorted-hash of member task IDs (e.g., SHA-256 of `task-id-1,task-id-2,...` truncated to 12 chars) or a UUID generated at detection time and reused for all events from that cycle.
 
-Required fields for DESCOPED events: `eventType` (must be "DESCOPED"), `taskId`, `reason`. Optional: `actor`, `timestamp`.
+Required fields for DESCOPED events: `eventType` (must be "DESCOPED"), `taskId`, `reason`, `timestamp`. Optional: `actor`.
 
 **Required and optional fields by eventType:**
 
@@ -111,6 +116,7 @@ Required fields for DESCOPED events: `eventType` (must be "DESCOPED"), `taskId`,
 | `RETRY_ESCALATED`             | `reason`, `roundKey`, `roundRetryCount`, `timestamp`                          | `actor`, `metadata` |
 
 Example with all optional fields:
+
 ```json
 {"eventType": "COMPLETED", "taskId": "task-20260226-001", "actor": "team-backend", "metadata": {"duration_ms": 45000}, "timestamp": "2026-02-26T10:30:00Z"}
 ```

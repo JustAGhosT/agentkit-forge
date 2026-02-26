@@ -134,14 +134,26 @@ function writeTaskFile(projectRoot, taskId, data) {
   try {
     renameSync(tmpPath, path);
   } catch (err) {
+    if (err?.code === 'EEXIST') {
+      try {
+        unlinkSync(path);
+        renameSync(tmpPath, path);
+        return;
+      } catch (retryErr) {
+        try {
+          unlinkSync(tmpPath);
+        } catch {
+          /* ignore cleanup errors */
+        }
+        throw retryErr;
+      }
+    }
     try {
       unlinkSync(tmpPath);
     } catch {
       /* ignore cleanup errors */
     }
-    if (err.code !== 'EEXIST') {
-      throw err;
-    }
+    throw err;
   }
 }
 

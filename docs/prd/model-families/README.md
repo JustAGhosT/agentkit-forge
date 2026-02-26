@@ -26,6 +26,8 @@ can use a shared evidence base.
 - [Cohere (Command)](./model-family-cohere.md)
 - [Amazon Nova](./model-family-amazon-nova.md)
 - [IBM Granite](./model-family-ibm-granite.md)
+- [Cursor Composer](./model-family-cursor-composer.md)
+- [Windsurf SWE](./model-family-windsurf-swe.md)
 
 ## How to Use With Team Model Guides
 

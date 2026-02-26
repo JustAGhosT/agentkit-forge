@@ -112,11 +112,17 @@ competitive advantage for team productivity, governance, and cost control.
 
 ## Measurable Objectives
 
-| Objective                 | Baseline                    | Target                      | Timeline            |
-| ------------------------- | --------------------------- | --------------------------- | ------------------- |
-| Model-agent optimality    | Manual                      | 90% mapped in 1 week        | 1-2 sprints post-GA |
-| Config update frequency   | 2 updates/month             | +25% in v1                  | 1 month             |
-| Code quality (lint/tests) | 75% pass rate, 40% coverage | 85% pass rate, 50% coverage | 1 quarter           |
+| Objective                 | Baseline                    | Target                                                          | Measurement method and scope                                                         | Owner                      | Target date |
+| ------------------------- | --------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------- | ----------- |
+| Model-agent optimality    | 0% QA-validated assignments | >=90% of active agents have a QA-accepted model assignment      | Weekly audit of `agent->model` mappings for all active agents in `.agentkit/spec`    | Product Lead + QA Lead     | 2026-05-15  |
+| Config update frequency   | 2 updates/month aggregate   | >=3 updates/month aggregate (rolling 30-day window)             | Count merged mapping updates in `.agentkit/spec` and runtime mapping changelog       | Platform Lead              | 2026-06-01  |
+| Code quality (lint/tests) | 75% pass rate, 40% coverage | >=85% lint/test pass rate and >=50% coverage for mapping module | CI reports for `llm map` and scorecard modules; measured weekly and reported monthly | Engineering Lead + QA Lead | 2026-06-30  |
+
+Metric legend:
+
+- **GA milestone:** v1 GA date = `2026-05-01`.
+- **Mapped:** an agent mapping that passed schema validation and QA acceptance.
+- **v1:** scorecards + static mapping release scope in Timeline and Milestones.
 
 ## Stakeholders
 
@@ -196,6 +202,23 @@ Acceptance criteria:
 - Knowledge base support for features, quirks, and rationale.
 - Audit trail for mapping decisions and model switches.
 
+### Audit Trail Requirements (Mapping and Model Switches)
+
+- **Storage mechanism options:** append-only audit database, immutable object
+  store, or git-backed file history.
+- **Chosen default (v1):** append-only audit table with write-once records,
+  replicated nightly to immutable object storage for tamper-evident retention.
+- **Mutability rules:** records are immutable; only annotated follow-up entries
+  are allowed (no in-place edits/deletes).
+- **Write provenance:** every write stores actor reference, source command/API,
+  request ID, and signature/hash chain pointer.
+- **Access controls:** RBAC enforced.
+  - Read: Product Lead, Platform Lead, Security Lead, Compliance Analyst.
+  - Write: Orchestrator service and authorized admins only.
+  - Annotate/revoke: Security Lead + Platform Lead (dual approval).
+- **PII handling:** no raw usernames in audit records; store pseudonymous
+  `actor_ref` values only (hashed/indirect identifiers).
+
 ### Scoring Inputs (Default Weights)
 
 - Code generation quality: 5
@@ -211,7 +234,21 @@ Acceptance criteria:
 - Support 50+ agents per project.
 - Safe edit controls for mapping changes.
 - Non-blocking fallback if data feeds fail.
-- Full change history with rationale.
+- Full change history with rationale, export support, and tamper evidence.
+
+### Full Change History and Governance Requirements
+
+- **Retention policy:**
+  - Hot retention: 13 months queryable.
+  - Archive retention: 36 months immutable archive.
+  - Auto-purge: archive records older than retention unless legal hold applies.
+  - GDPR/CCPA deletion requests: apply subject-key tombstoning and remove
+    reversible identity links while retaining non-PII compliance evidence.
+- **Query and export:** search/filter by `actor_ref`, model, timestamp,
+  change-type, and team; support paginated UI plus CSV/JSON exports.
+- **Role-filtered views:** exports and dashboards must apply RBAC filtering.
+- **Compliance checklist linkage:** privacy controls in this section and
+  `Telemetry Privacy` are required before v1 release sign-off.
 
 ## Mesh Layer Mapping
 
@@ -228,12 +265,14 @@ Acceptance criteria:
 - Internal config API for reading and writing mapping files.
 - CLI commands for mapping and scorecards.
 - Model metadata endpoints for latest capability and cost data.
+- Detailed contracts: `docs/prd/PRD-001-technical-api-contracts.md`
 
 ### External Dependencies
 
 - LLM providers (OpenAI, Anthropic, Google, OSS)
 - Benchmark or scoring data feeds
 - Code quality analysis plugins
+- Auth and rate-limit middleware for provider integration clients
 
 ## Data Model Example
 
@@ -251,7 +290,7 @@ agents:
       quirks: 1
     audit_trail:
       - version: v1.2
-        changed_by: <username>
+        changed_by_ref: usr_7f3c9a2e (pseudonymous actor reference)
         date: 2024-06-12
 ```
 
@@ -293,21 +332,41 @@ agents:
 
 ### Telemetry Privacy
 
-> **Note:** GDPR/CCPA compliance details are pending finalization. Telemetry collection will be designed to comply with applicable data protection regulations when implemented.
+Collected telemetry (v1 scope):
 
-Telemetry privacy requirements are documented in the Non-Functional Requirements section above. See GDPR/CCPA compliance requirements for details.
+- `actor_ref` (pseudonymous identifier, never raw username)
+- timestamp (UTC)
+- event type (`mapping_created`, `mapping_updated`, `fallback_triggered`, etc.)
+- model ID before/after change
+- team/agent identifiers
+- request ID / command source
 
-See also: Open Questions table — telemetry privacy question has been migrated there for tracking.
+Privacy and compliance controls:
+
+- **Consent:** explicit opt-in text in setup flow; consent event logged with
+  timestamp and policy version.
+- **Anonymization/pseudonymization:** user identity stored as one-way hashed
+  reference or indirect ID; direct identifiers excluded from telemetry payloads.
+- **Retention/deletion:** apply retention policy from Non-Functional
+  requirements; support GDPR/CCPA deletion request workflow via actor-key
+  unlinking + tombstone record.
+- **Access control:** RBAC-restricted telemetry access with audit logging.
+- **Legal review:** Product Lead + Legal must sign off before v1 release.
+
+This section is normative for GDPR/CCPA handling and supersedes placeholders.
+Open Questions tracks the legal sign-off gate only.
 
 ## Timeline and Milestones
 
-> **Note:** Targets are relative to project start date.
+Project start date: **2026-03-03**
 
-| Phase | Scope                                       | Target         |
-| ----- | ------------------------------------------- | -------------- |
-| v1    | Scorecards, static config, docs             | +4 weeks       |
-| v2    | Dynamic mapping, feedback loop, optional UI | +8 weeks       |
-| v3+   | Marketplace and expanded benchmarks         | Q4 2026 (CY+1) |
+> **Note:** All milestone dates below are absolute and derived from the project start date.
+
+| Phase | Scope                                       | Target                |
+| ----- | ------------------------------------------- | --------------------- |
+| v1    | Scorecards, static config, docs             | 2026-03-31            |
+| v2    | Dynamic mapping, feedback loop, optional UI | 2026-04-28            |
+| v3+   | Marketplace and expanded benchmarks         | Target month: 2026-11 |
 
 ## Constraints and Dependencies
 
@@ -335,11 +394,11 @@ See also: Open Questions table — telemetry privacy question has been migrated 
 
 ## Open Questions
 
-| Question                                                                                       | Owner            | Target Resolution | Impact if Unresolved           |
-| ---------------------------------------------------------------------------------------------- | ---------------- | ----------------- | ------------------------------ |
-| How should scorecards auto-refresh?                                                            | Product Lead     | v1-v2 planning    | Lower trust in recommendations |
-| Are stack-specific biases material?                                                            | Engineering Lead | v2                | Suboptimal model choices       |
-| How will telemetry handle consent, anonymisation, retention, and legal compliance (GDPR/CCPA)? | Product Lead     | v1 planning       | Legal risk, user trust issues  |
+| Question                                                                                       | Status                              | Owner(s)                    | Target Resolution                            | Acceptance Criteria                                                                | Impact if Unresolved           |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------ |
+| How should scorecards auto-refresh?                                                            | Blocked pending question resolution | Product Lead, Platform Lead | 2026-03-14 (before v1 architecture freeze)   | ADR approved with refresh cadence, automation owner, manual override path          | Lower trust in recommendations |
+| Are stack-specific biases material?                                                            | Blocked pending question resolution | Engineering Lead, QA Lead   | 2026-03-21 (v1 assessment gate)              | v1 stack-bias assessment completed with mitigations and published assumptions      | Suboptimal model choices       |
+| How will telemetry handle consent, anonymisation, retention, and legal compliance (GDPR/CCPA)? | Blocked pending legal sign-off      | Product Lead, Legal Counsel | Before v1 release (no later than 2026-03-28) | Legal sign-off recorded for Telemetry Privacy policy and deletion-request workflow | Legal risk, user trust issues  |
 
 ## Appendix
 
@@ -351,6 +410,30 @@ See also: Open Questions table — telemetry privacy question has been migrated 
 | LangChain                | No                  | Partial           | No              | No          |
 | OSS Agent Bundles        | No                  | No                | No              | No          |
 | Enterprise RAG Platforms | Yes                 | Partial           | Yes             | Partial     |
+
+### Scorecard Refresh and Lifecycle Policy (v1)
+
+- **Minimum refresh frequency:** weekly scheduled refresh (every Monday 08:00
+  UTC) plus on-demand refresh after major provider release notes.
+- **Authoritative sources:**
+  - Independent benchmarks (SWE-bench, Aider, SWE-rebench where available)
+  - Vendor release notes and model cards
+  - Internal CI telemetry (pass rate, latency, cost-per-success)
+- **Source registry:** capture sources and fetch timestamp in
+  `docs/prd/model-families/*.md` and scorecard ingestion logs.
+- **New model onboarding process:**
+  1. Intake request by Platform Lead.
+  2. Required benchmark set executed (SWE-bench slice, Aider subset, latency and cost run).
+  3. Metadata fields completed: provider, model ID, context, pricing, tool support,
+     reliability confidence, source quality.
+  4. QA + Product approval before ranking inclusion.
+- **Deprecation workflow:**
+  - Mark model as deprecated when provider EOL, repeated reliability failure, or
+    security/compliance concern is confirmed.
+  - Publish deprecation notice in scorecard and model guide release notes.
+  - Move deprecated models to archive section in next refresh cycle.
+- **Auto-refresh implementation (resolved for v1):** CI scheduled job + manual
+  override command. v1 owner: Platform Lead. v1->v2 evolution owner: Product Lead.
 
 ### Example Coding Scorecard Snapshot
 

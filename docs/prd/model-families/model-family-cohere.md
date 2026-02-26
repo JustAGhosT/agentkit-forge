@@ -38,6 +38,12 @@
 | API entry point    | Command models are served through Cohere Chat endpoint                                                        | [Cohere models overview](https://docs.cohere.com/docs/models) | Fetched, vendor claim |
 | Platform coverage  | Docs include platform mapping for Bedrock/SageMaker naming and usage                                          | [Cohere models overview](https://docs.cohere.com/docs/models) | Fetched, vendor claim |
 
+## Models tracked from PRD-002 (base + profiles)
+
+| Base model | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                  | Decision Readiness | When to use                                        | Source quality            | Last verified |
+| ---------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | ------------------------------------------------------- | ------------------ | -------------------------------------------------- | ------------------------- | ------------- |
+| Command A  | Windsurf/Intake | Command A                | Paid      |                   1.0 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Enterprise-ready LLM with RAG and tool use capabilities | Medium             | Enterprise applications requiring RAG and tool use | PRD-002 + Cohere research | 2026-02-26    |
+
 ## Operational notes
 
 - Cohere has strong enterprise-oriented positioning for RAG and agent workflows.

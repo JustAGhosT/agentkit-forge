@@ -113,7 +113,15 @@ and overlay configuration examples.
 
 Formula:
 
-Weighted Score = sum(metricWeight x modelScore) / 100
+Weighted Score = (Code x Code_Weight + Reasoning x Reasoning_Weight + Cost x Cost_Weight + Context x Context_Weight + Speed x Speed_Weight + Compatibility x Compatibility_Weight) / 100
+
+Cost evidence method used by team model guides:
+
+- `effective_cost = cost_multiplier * normalized_tokens_per_problem`
+- `normalized_tokens_per_problem = model_tokens_per_problem / baseline_tokens_per_problem`
+- `cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
+- If `tokens/problem` is missing, keep existing Cost scores unchanged and mark
+  cost evidence as `Not evaluated`.
 
 Sample backend calculation (Claude 3 Opus):
 
@@ -121,26 +129,26 @@ Sample backend calculation (Claude 3 Opus):
 
 | Team     | Claude 3 Opus | GPT-5.x | Gemini | Kimi | Minimax | GLM-4 | xAI Grok | SWE-Llama |   o3 | Top Choices                | Cost-Aware Alt     |
 | -------- | ------------: | ------: | -----: | ---: | ------: | ----: | -------: | --------: | ---: | -------------------------- | ------------------ |
-| Backend  |          9.10 |    9.10 |   8.05 | 7.15 |    7.25 |  7.55 |     6.60 |      8.35 | 7.20 | Claude, GPT-5.x, SWE-Llama | Kimi, o3           |
-| Frontend |          7.75 |    8.10 |   8.45 | 8.05 |    8.20 |  8.35 |     7.40 |      8.30 | 8.05 | Gemini, SWE-Llama, Minimax | o3, Kimi           |
-| Data     |          8.65 |    8.60 |   8.20 | 7.25 |    7.35 |  8.20 |     7.10 |      8.30 | 7.25 | Claude, SWE-Llama, GPT-5.x | o3, Kimi           |
-| Infra    |          8.55 |    8.35 |   8.20 | 8.05 |    8.05 |  8.15 |     8.00 |      8.20 | 8.05 | Claude, Gemini, GPT-5.x    | o3, Kimi           |
-| DevOps   |          8.50 |    8.30 |   8.15 | 8.10 |    8.05 |  8.10 |     8.05 |      8.10 | 8.05 | Claude, Gemini, xAI Grok   | o3, Kimi           |
-| Testing  |          8.80 |    8.75 |   8.20 | 7.90 |    7.95 |  8.35 |     7.30 |      8.65 | 7.65 | Claude, SWE-Llama, GPT-5.x | o3, Kimi           |
-| Security |          9.10 |    9.15 |   8.55 | 7.60 |    7.65 |  8.30 |     7.75 |      8.60 | 7.45 | GPT-5.x, Claude, SWE-Llama | o3, Kimi           |
-| Docs     |          8.45 |    8.40 |   8.15 | 7.45 |    7.55 |  8.15 |     7.40 |      8.25 | 7.75 | Claude, GPT-5.x, SWE-Llama | o3, Minimax (APAC) |
-| Product  |          8.85 |    9.05 |   8.25 | 7.35 |    7.40 |  8.10 |     7.45 |      8.60 | 7.45 | GPT-5.x, Claude, SWE-Llama | o3, Kimi           |
-| Quality  |          8.80 |    8.80 |   8.40 | 7.55 |    7.65 |  8.20 |     7.40 |      8.60 | 7.45 | Claude, SWE-Llama, GPT-5.x | o3, Kimi           |
+| Backend  |          9.10 |    9.10 |   8.10 | 7.00 |    7.30 |  7.70 |     6.50 |      8.30 | 7.25 | Claude, GPT-5.x, SWE-Llama | Kimi, o3           |
+| Frontend |          8.65 |    8.75 |   8.35 | 7.35 |    7.75 |  7.70 |     6.95 |      8.15 | 7.50 | GPT-5.x, Claude, Gemini    | o3, Kimi           |
+| Data     |          9.25 |    8.95 |   8.10 | 6.90 |    7.30 |  7.85 |     6.60 |      8.15 | 7.25 | Claude, GPT-5.x, SWE-Llama | o3, Kimi           |
+| Infra    |          8.45 |    8.60 |   8.25 | 7.40 |    7.75 |  7.85 |     6.85 |      8.10 | 7.60 | GPT-5.x, Claude, Gemini    | o3, Kimi           |
+| DevOps   |          8.20 |    8.50 |   8.30 | 7.60 |    7.90 |  7.80 |     6.90 |      8.10 | 7.70 | GPT-5.x, Gemini, Claude    | o3, Kimi           |
+| Testing  |          8.80 |    8.95 |   8.20 | 7.20 |    7.50 |  7.75 |     6.65 |      8.25 | 7.40 | GPT-5.x, Claude, SWE-Llama | o3, Kimi           |
+| Security |          8.90 |    9.00 |   8.30 | 7.30 |    7.50 |  7.90 |     6.60 |      8.20 | 7.40 | GPT-5.x, Claude, Gemini    | o3, Kimi           |
+| Docs     |          9.15 |    8.85 |   8.20 | 6.90 |    7.40 |  8.05 |     6.80 |      8.05 | 7.35 | Claude, GPT-5.x, Gemini    | o3, Minimax (APAC) |
+| Product  |          9.00 |    8.90 |   8.25 | 7.15 |    7.45 |  8.05 |     6.65 |      8.10 | 7.40 | Claude, GPT-5.x, Gemini    | o3, Kimi           |
+| Quality  |          9.00 |    9.10 |   8.20 | 7.15 |    7.40 |  7.70 |     6.55 |      8.30 | 7.30 | GPT-5.x, Claude, SWE-Llama | o3, Kimi           |
 
-Note: Cost-Aware Alt shown for teams with cost weight >= 25 (e.g., DevOps, Infra) — other teams may omit alternates.
+Note: Cost-Aware Alt is provided for all teams to keep fallback policy explicit and operational.
 
 ## Edge Cases and Commentary
 
 - Backend/Testing: SWE-Llama can outperform on Python/Rust-heavy repos.
 - DevOps/Infra: xAI Grok and GLM-4 may be favored for specific infra or region
   constraints.
-- Cost spikes: On threshold breach (for example above 15%), teams switch to
-  cost-aware alternates.
+- Cost spikes: On threshold breach (for example, more than 15% over allocated
+  monthly budget), teams switch to cost-aware alternates.
 - Frontend quirks: Custom transpilers may favor Gemini for TS AST behavior.
 - API compatibility: Some providers may lack advanced explainability features;
   route reviews back to Claude or GPT families.
