@@ -265,7 +265,8 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 1. Confirm all checks pass and all tasks are in a terminal state (`completed`, `failed`, `rejected`, `canceled`). Before proceeding:
    - **Supersession verification:** Scan all tasks in terminal states (`failed`, `rejected`, `canceled`). For each such task, verify that either:
      1. A `completed` task exists whose `supersedes` field references that task-id, OR
-     2. An entry with `eventType: "DESCOPED"` exists in `events.log` for that task-id.
+     2. An entry with `eventType: "DESCOPED"` exists in `events.log` for that task-id, OR
+     3. An entry with `eventType: "CANCELED"` and `event.reason: "dependency-cycle"` exists in `events.log` for that task-id.
    - If neither condition is true for any terminal task, halt orchestration and surface the unresolved task(s) for human review.
    - Intentionally descoped tasks may proceed without a superseding task only when the descoping rationale is recorded in `events.log` (condition 2 above).
 2. Invoke `/handoff` to produce a session summary.

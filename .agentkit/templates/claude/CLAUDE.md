@@ -129,7 +129,7 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 
 ### API
 
-- Versioning: **{{apiVersioning}}**{{/if}}
+- Versioning: **{{apiVersioning}}**
 {{#if hasApiPagination}}- Pagination: **{{apiPagination}}**{{/if}}
 {{#if apiResponseFormat}}- Response format: **{{apiResponseFormat}}**{{/if}}
 

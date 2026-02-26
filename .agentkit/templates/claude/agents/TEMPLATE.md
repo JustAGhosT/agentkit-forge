@@ -30,10 +30,21 @@ Always scan the codebase within your focus area before making changes.
 
 Shared files are accessed by multiple agents. To prevent race conditions:
 
-1. **Per-resource file locks**: Use `.lock` files with exclusive creation for writes
+1. **Per-resource file locks**: Use `.lock` files with atomic file creation (O_EXCL or equivalent) for writes
 2. **Orchestrator-mediated updates**: For critical state changes, route through orchestrator API
 3. **Append-only operations**: Use line-based newline-terminated appends for events.log
 4. **Lock ownership**: orchestrator.lock remains solely owned by the orchestrator
+
+**Lock Acquisition Protocol:**
+- Attempt atomic creation of `.lock` file with 30s timeout
+- Retry every 1s up to 3 attempts with exponential backoff
+- Treat locks older than 5 minutes as stale (log and remove before retry)
+- Always release locks in a finally block
+- On repeated failure, escalate to orchestrator via `/orchestrate` endpoint
+
+**Special Cases:**
+- `orchestrator.lock` remains exclusively owned by orchestrator
+- Append-only `events.log` writes should still acquire lock before appending
 
 Protocol: Acquire lock → modify → release lock in finally. Never write directly without coordination.
 

@@ -142,6 +142,17 @@ async function writeTaskFile(projectRoot, taskId, data) {
 
       while (retryCount < maxRetries) {
         try {
+          // On Windows, attempt atomic replace by removing target first
+          if (process.platform === 'win32') {
+            try {
+              unlinkSync(path);
+            } catch (unlinkErr) {
+              if (unlinkErr?.code !== 'ENOENT') {
+                throw unlinkErr;
+              }
+              // ENOENT is fine - target doesn't exist, continue with rename
+            }
+          }
           // Attempt atomic replace directly
           renameSync(tmpPath, path);
           return;
@@ -184,7 +195,7 @@ async function writeTaskFile(projectRoot, taskId, data) {
  * @param {string} taskData.title - Human-readable title
  * @param {string} taskData.delegator - Who created the task
  * @param {string[]} taskData.assignees - Teams/agents this task is assigned to
- * @param {string} [taskData.type] - One of TASK_TYPES (default 'feature')
+ * @param {string} [taskData.type] - One of TASK_TYPES (default 'implement')
  * @param {string} [taskData.priority] - One of TASK_PRIORITIES (default P2)
  * @param {string[]} [taskData.dependsOn] - Task IDs that must complete first
  * @param {string[]} [taskData.handoffTo] - Teams to auto-delegate to on completion
@@ -658,7 +669,7 @@ export async function processHandoffs(projectRoot, delegator = 'orchestrator') {
         continue;
       }
 
-      const result = createTask(projectRoot, {
+      const result = await createTask(projectRoot, {
         type: task.type || 'implement',
         delegator,
         assignees: [targetTeam],

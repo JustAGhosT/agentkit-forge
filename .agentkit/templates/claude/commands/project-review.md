@@ -119,13 +119,16 @@ Propose updates to:
 ## Shared State (read before review, write after)
 
 - **Read:** `AGENT_BACKLOG.md` (for existing items), `.claude/state/orchestrator.json` (for project context)
-- **Append to:** `.claude/state/events.log` — **ALLOWED EXCEPTION**: Appending newline-terminated, atomic entries to `.claude/state/events.log` is explicitly permitted as the only direct-write exception to the "do NOT mutate state directly" rule. Use line-based appends to keep each write within atomic boundaries (POSIX PIPE_BUF ~4KB). For writes exceeding PIPE_BUF, either split into multiple atomic entries, write a small metadata entry with payload in separate per-event file, or route large findings through `/sync-backlog`.
+- **Append to:** `.claude/state/events.log` — **ALLOWED EXCEPTION**: Appending newline-terminated, atomic entries to `.claude/state/events.log` is explicitly permitted as the only direct-write exception to the "do NOT mutate state directly" rule. Each append must be a single-line JSON object (newline-terminated) with minimum format: `{"timestamp":"ISO8601","event_type":"string","data":{}}`. Use line-based appends to keep each write within atomic boundaries. Note: POSIX PIPE_BUF applies to pipes, not regular files; for file writes use file locking via flock/fcntl, route through message queue/database, or ensure single-process writes. For writes exceeding atomic boundaries, split into multiple atomic entries, write small metadata entry with payload in separate per-event file, or route large findings through `/sync-backlog`. Do not change AGENT_BACKLOG.md directly and continue to avoid acquiring `.claude/state/orchestrator.lock`.
 - **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock. Commands must not mutate other state files directly unless explicitly documented.
 - **Backlog changes:** Must use `/sync-backlog` command instead of direct `AGENT_BACKLOG.md` edits to avoid race conditions with the orchestrator.
 
 ## Output Format
 
 Emit the following orchestrator-state update payload after completing the review (do not mutate state directly):
+
+- **Output to stdout:** Single-line JSON object for orchestrator/runner capture
+- **Append to events.log:** Full, timestamped JSON payload for persistent audit
 
 ```json
 {

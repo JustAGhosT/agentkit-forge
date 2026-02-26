@@ -36,17 +36,24 @@ Follow these steps in order for every work session:
 1. List files in `.claude/state/tasks/` and read any with status `submitted`
    where `assignees` includes `{{teamId}}`.
 2. For each matching task:
-   - **Acquire a lock lease** on `.claude/state/tasks/{task-id}.lock` using exclusive-create:
-     attempt atomic create of lock file with metadata; if successful, write lock content.
+   - **Acquire a lock lease** on `.claude/state/tasks/{task-id}.lock` using filesystem-based atomic creation:
+     attempt atomic create of lock file with O_CREAT|O_EXCL flags; if successful, write lock content.
      If create fails (contended), apply timeout + retry with bounded attempts and jittered backoff.
      Lock metadata: `{"owner":"{{teamId}}","acquiredAt":"<ISO>","expiresAt":"<ISO>","ttlMs":30000}`.
    - **Lock acquisition policy:** use timeout + retry with bounded attempts
      (for example max 5 attempts) and jittered backoff (for example 100-500ms).
      If acquisition fails after max attempts, skip this task.
-   - **Stale-lock takeover:** perform atomic conditional takeover to avoid TOCTOU race. Use a single conditional delete/update operation (e.g., findOneAndDelete / DELETE ... WHERE expiresAt < now AND id = <lockId>) or a transactional compare-and-set that only removes the lock if its `expiresAt` is still < now (or still equals the value you read). Do not check expiresAt and then separately remove the lock.
+   - **Stale-lock takeover:** perform atomic conditional takeover using filesystem primitives. Use exclusive flock + stat+unlink guarded operation that only removes the lock if its `expiresAt` is still < now (or still equals the value you read). Do not check expiresAt and then separately remove the lock.
    - **Deadlock mitigation:** attempt lock acquisition in lexicographic task-id order and, if acquisition fails, apply randomized backoff before retrying the same lock. **Global coordination requirement:** the lexicographic ordering only prevents deadlocks if every agent follows the exact same ordering when acquiring locks - this is a strong system-wide constraint. All agents must use the same ordering. Alternative approaches include timeout-based deadlock detection + retry, lock leasing with expiration, or deadlock detection using wait-for graphs.
    - **Renew lock lease** for long operations: if work under lock exceeds 50% of
      TTL, refresh `expiresAt` before continuing. If refreshing the lock fails or returns a conflict (another agent claimed the lock), the agent must abort the current operation, roll back any partial changes, release/clear local lock state, and surface an explicit error. Retry/backoff is only allowed for transient errors, not for lease conflicts.
+
+**Rollback Strategy for Lock Renewal Failures:**
+- **Transaction logging:** Record per-task transaction log (operations and temp paths) when obtaining lock
+- **Work against temps:** Perform all file-modifying work against temp files, only atomically rename/move temps to final paths on success
+- **Cleanup routine:** On lease-refresh failure or lease conflict, run cleanup routine that reads transaction log to revert committed steps and remove abandoned temp files
+- **Error reporting:** Surface explicit error including transaction log reference and affected "expiresAt"/lock id for recovery
+- **Log retention:** Maintain retention/rotation policy for stale logs and temp files (configurable TTL, default 24h)
    - **Re-check status under lock:** read task file again and verify
      `status === "submitted"`. If changed, release lock and skip.
    - If still `submitted` and task is within scope and accepted type, perform a single atomic transition from "submitted"→"working":
@@ -181,6 +188,13 @@ If you were working on a delegated task from `.claude/state/tasks/`:
      2. Append clear explanatory message to task.handoffContext describing the cycle or depth violation
      3. Create entry in events.log containing task id, violating teams, depth, and timestamp for human review
      4. Call system notification hook to alert on-call reviewers so orchestrator can pause auto-followups until resolved
+
+**Notification Hook Interface:**
+- **Hook name:** `notifyOnCall(handoffEvent)`
+- **Parameters:** `{taskId, violatingTeams, depth, timestamp, message}`
+- **Implementation options:** HTTP endpoint, event bus, or local file sink (`.claude/state/alerts.json`)
+- **Failure handling:** Log notify error, mark as "attempted" in events.log, continue with task.status = "blocked"
+- **Optional:** Yes - if hook fails, continue with blocking behavior and surface error in logs
    Then populate `handoffContext` with a one-paragraph summary of what was done and what the next team needs.
    The orchestrator will auto-create follow-up tasks.
 6. If no `handoffTo` is set but you identified downstream work, set

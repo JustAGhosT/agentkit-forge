@@ -118,11 +118,18 @@ function readBacklog(projectRoot) {
         const priorityIdx =
           headerCols && headerCols.indexOf('priority') >= 0 ? headerCols.indexOf('priority') : 4;
 
-        const safeId = idIdx >= 0 && idIdx < cells.length ? idIdx : 0;
-        const safeTitle = titleIdx >= 0 && titleIdx < cells.length ? titleIdx : 1;
-        const safeStatus = statusIdx >= 0 && statusIdx < cells.length ? statusIdx : 2;
-        const safeTeam = teamIdx >= 0 && teamIdx < cells.length ? teamIdx : 3;
-        const safePriority = priorityIdx >= 0 && priorityIdx < cells.length ? priorityIdx : 4;
+        const maxIndex = Math.max(0, cells.length - 1);
+        const safeId = idIdx >= 0 && idIdx < cells.length ? idIdx : Math.min(idIdx, maxIndex);
+        const safeTitle =
+          titleIdx >= 0 && titleIdx < cells.length ? titleIdx : Math.min(titleIdx, maxIndex);
+        const safeStatus =
+          statusIdx >= 0 && statusIdx < cells.length ? statusIdx : Math.min(statusIdx, maxIndex);
+        const safeTeam =
+          teamIdx >= 0 && teamIdx < cells.length ? teamIdx : Math.min(teamIdx, maxIndex);
+        const safePriority =
+          priorityIdx >= 0 && priorityIdx < cells.length
+            ? priorityIdx
+            : Math.min(priorityIdx, maxIndex);
 
         items.push({
           id: (cells[safeId] ?? '').toString(),

@@ -151,10 +151,10 @@ Append to `.claude/state/events.log`:
    - Initial timeout: 5 seconds
    - Maximum retry attempts: 3
    - Exponential backoff: 2x multiplier between retries
-   - Stale-lock cleanup: treat locks older than 30 seconds as stale, remove before acquiring
-   - On complete failure: log warning and skip events.log append (plan still considered successful)
+   - Stale-lock cleanup: use atomic lock-acquisition pattern (create-and-link with unique temp file, OS file-lock primitive like flock/fcntl, or CAS-style retry loop) instead of blind removal; if stale lock observed, perform re-check/claim step before proceeding
+   - On complete failure: require each appended event to carry monotonic sequence number/checkpoint and periodic validator that scans for gaps; emit metric/alert (events_append_failures counter and events_audit_gap_gauge) when append fails with retry/backoff; provide fallback persistence path (write to durable store like DB or S3 via failover function) and mark plan execution state as "degraded_audit" rather than fully successful so callers can surface issue in observability dashboards
 2. Open `.claude/state/events.log` in append mode and write one complete line.
-3. Flush and `fsync` before releasing the lock.
+3. Flush and `fsync` before releasing the lock. If `fsync` fails, retry once after 100ms delay; if second attempt also fails, release lock and mark operation as append failure (consistent with line 155 behavior).
 4. Release `.claude/state/events.log.lock`.
 
 ```
