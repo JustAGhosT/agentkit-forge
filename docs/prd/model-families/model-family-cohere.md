@@ -13,19 +13,19 @@
 | **Provider**       | Cohere (Toronto, Canada)                                        |
 | **Founded**        | 2019                                                            |
 | **Architecture**   | Dense transformer                                               |
-| **Latest model**   | Command R7B                                                     |
+| **Latest model**   | Command A (March 2025 release)                                  |
 | **Context window** | 128K tokens                                                     |
 | **License**        | Proprietary (API) + open weights                                |
 | **Notable**        | Enterprise RAG specialist, strong embeddings (embed-english-v3) |
 
 ## Hugging Face Resources
 
-| Resource     | Model ID                     | Notes                      |
-| ------------ | ---------------------------- | -------------------------- |
-| Command R    | `cohere/command-r`           | 35B parameter model        |
-| Command R+   | `cohere/command-r-plus`      | Enhanced reasoning variant |
-| Command R7B  | `cohere/command-r7b-12-2024` | December 2024 release      |
-| Embed models | `cohere/embed-english-v3.0`  | Text embedding models      |
+| Resource     | Model ID                              | Notes                      |
+| ------------ | ------------------------------------- | -------------------------- |
+| Command R    | `CohereLabs/c4ai-command-r`           | 35B parameter model        |
+| Command R+   | `CohereLabs/c4ai-command-r-plus`      | Enhanced reasoning variant |
+| Command R7B  | `CohereLabs/c4ai-command-r7b-12-2024` | December 2024 release      |
+| Embed models | `CohereLabs/embed-english-v3.0`       | Text embedding models      |
 
 > **Note:** Cohere provides both API access and select open-weight models on Hugging Face. Enterprise features require API access.
 

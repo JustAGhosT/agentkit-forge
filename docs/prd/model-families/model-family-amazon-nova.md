@@ -14,7 +14,7 @@
 | **Founded**        | 2006 (AWS), 2024 (Nova)                                |
 | **Architecture**   | Dense transformer                                      |
 | **Latest model**   | Nova Premier, Pro, Lite, Micro                         |
-| **Context window** | 300K tokens (Premier)                                  |
+| **Context window** | 300K tokens (Nova Premier)                             |
 | **License**        | Proprietary (AWS Bedrock only)                         |
 | **Notable**        | AWS-native, GovCloud support, cheapest bedrock pricing |
 
@@ -39,9 +39,9 @@
 
 ## Models tracked from PRD-002 (base + profiles)
 
-| Base model | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                                       | Decision Readiness | When to use                                              | Source quality                | Last verified |
-| ---------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | ---------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------- | ----------------------------- | ------------- |
-| Nova Pro   | Windsurf/Intake | Nova Pro                 | Paid      |                   1.0 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Lower-end intelligence (AA Index: 13); well-priced; multimodal; 300k context | Medium             | Cost-conscious apps needing large context and multimodal | PRD-002 + Artificial Analysis | 2026-02-26    |
+| Base model | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                                                                                | Decision Readiness | When to use                                              | Source quality                | Last verified |
+| ---------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------- | ----------------------------- | ------------- |
+| Nova Pro   | Windsurf/Intake | Nova Pro                 | Paid      |                   1.0 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Lower-end intelligence (AA Index: 13 — measures coding ability on 0–100 scale); well-priced; multimodal; 300k context | Medium             | Cost-conscious apps needing large context and multimodal | PRD-002 + Artificial Analysis | 2026-02-26    |
 
 ## Operational notes
 

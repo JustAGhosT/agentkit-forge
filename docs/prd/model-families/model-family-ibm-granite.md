@@ -38,9 +38,9 @@
 
 ## Models tracked from PRD-002 (base + profiles)
 
-| Base model   | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                    | Decision Readiness | When to use                                                | Source quality       | Last verified |
-| ------------ | --------------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | --------------------------------------------------------- | ------------------ | ---------------------------------------------------------- | -------------------- | ------------- |
-| Granite Code | Windsurf/Intake | Granite Code             | Paid      |                   0.5 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Enterprise-grade open code LLM; 116 languages; Apache 2.0 | Medium             | Enterprise code tasks requiring license-permissible models | PRD-002 + IBM GitHub | 2026-02-26    |
+| Base model   | Environment     | Profile variants covered                               | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                    | Decision Readiness | When to use                                                | Source quality       | Last verified |
+| ------------ | --------------- | ------------------------------------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | --------------------------------------------------------- | ------------------ | ---------------------------------------------------------- | -------------------- | ------------- |
+| Granite Code | Windsurf/Intake | Granite Code (code-specialized variant of Granite 4.0) | Paid      |                   0.5 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Enterprise-grade open code LLM; 116 languages; Apache 2.0 | Medium             | Enterprise code tasks requiring license-permissible models | PRD-002 + IBM GitHub | 2026-02-26    |
 
 ## Operational notes
 

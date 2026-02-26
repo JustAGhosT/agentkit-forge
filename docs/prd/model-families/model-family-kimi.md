@@ -8,15 +8,15 @@
 
 ## At a Glance
 
-| Attribute          | Value                                                            |
-| ------------------ | ---------------------------------------------------------------- |
-| **Provider**       | Moonshot AI (Beijing, China)                                     |
-| **Founded**        | 2023                                                             |
-| **Architecture**   | Dense transformer with thinking modes                            |
-| **Latest model**   | Kimi K2.5                                                        |
-| **Context window** | 256K tokens                                                      |
-| **License**        | Proprietary (API) + open weights on HF                           |
-| **Notable**        | Kimi K2 Thinking — #1 on SWE-rebench pass@1 (43.8%); K2.5: 37.9% |
+| Attribute          | Value                                                                 |
+| ------------------ | --------------------------------------------------------------------- |
+| **Provider**       | Moonshot AI (Beijing, China)                                          |
+| **Founded**        | 2023                                                                  |
+| **Architecture**   | Dense transformer with thinking modes                                 |
+| **Latest model**   | Kimi K2.5                                                             |
+| **Context window** | 256K tokens                                                           |
+| **License**        | Proprietary (API) + open weights on HF                                |
+| **Notable**        | Kimi K2 Thinking mode — #1 on SWE-rebench pass@1 (43.8%); K2.5: 37.9% |
 
 ## Hugging Face Resources
 
@@ -46,6 +46,7 @@
 ## Operational notes
 
 - Kimi currently shows a strong split between thinking and non-thinking modes.
+- "Thinking" is a runtime mode/parameter of Kimi K2, not a separate model variant.
 - Variant choice should be tied to time-to-solution and token budget limits.
 
 ## Guidance for model guides

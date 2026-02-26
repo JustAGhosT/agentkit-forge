@@ -165,15 +165,15 @@ agents:
     weights: [30, 25, 10, 25, 5, 5]
     rationale: Claude for code/context, Kimi for cost fallback
   frontend:
-    default_model: gemini-ultra
-    alternate_model: o3
+    default_model: gpt-4o
+    alternate_model: claude-3-5-sonnet
     weights: [15, 15, 20, 15, 25, 10]
-    rationale: Gemini for TypeScript nuance, o3 for cost
+    rationale: GPT-4o for TypeScript nuance, Claude 3.5 Sonnet for cost
   testing:
-    default_model: claude-3-opus
-    alternate_model: swe-llama
+    default_model: claude-3-5-sonnet
+    alternate_model: gpt-4o
     weights: [25, 20, 15, 20, 10, 10]
-    rationale: Claude for multi-language tests, SWE-Llama for CI-heavy flows
+    rationale: Claude 3.5 Sonnet for multi-language tests, GPT-4o for CI-heavy flows
 ```
 
 ## Quick Override Rules

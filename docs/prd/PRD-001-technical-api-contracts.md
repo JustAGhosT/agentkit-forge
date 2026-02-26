@@ -186,7 +186,23 @@ Required fields:
 - `p95LatencyMs`
 - `lastEvaluatedAt`
 
-If not available, field value is `null` with `status: "not-evaluated"`.
+If not available, each metric is returned as an object with explicit properties:
+
+```json
+{
+  "sweBenchVerified": { "value": null, "status": "not-evaluated" },
+  "aiderPassAt1": { "value": 45.2, "status": "current" },
+  "aiderPassAt2": { "value": null, "status": "not-evaluated" },
+  "costPerSuccess": { "value": 0.85, "status": "current" },
+  "p95LatencyMs": { "value": 1250, "status": "current" },
+  "lastEvaluatedAt": { "value": "2026-02-15T10:30:00Z", "status": "current" }
+}
+```
+
+Each metric object contains:
+
+- `value`: numeric value or null if unavailable
+- `status`: "current", "stale", or "not-evaluated"
 
 ### 2.3 Polling and Cache Policy
 

@@ -622,8 +622,8 @@ export function orchestratorCheckDependencies(projectRoot, state) {
   // Clone state to ensure immutability
   const newState = {
     ...state,
-    active_tasks: state.active_tasks ? { ...state.active_tasks } : {},
-    team_progress: state.team_progress ? { ...state.team_progress } : {},
+    active_tasks: state.active_tasks ? JSON.parse(JSON.stringify(state.active_tasks)) : {},
+    team_progress: state.team_progress ? JSON.parse(JSON.stringify(state.team_progress)) : {},
   };
 
   return { state: newState, unblocked, errors };

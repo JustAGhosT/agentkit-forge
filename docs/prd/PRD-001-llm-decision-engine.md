@@ -437,16 +437,18 @@ Project start date: **2026-03-03**
 
 ### Example Coding Scorecard Snapshot
 
-> **Last Updated:** February 2025 — verify current model capabilities before deployment. ⚠️ **Warning:** Data is approximately one year old and may not reflect current model capabilities. See the "Rapidly Changing Model Capabilities" and "Model Capability Verification" sections for guidance on verifying up-to-date performance before deployment.
+> **Last Updated:** February 2026 — verify current model capabilities before deployment. ⚠️ **Warning:** Model capabilities evolve rapidly. This table shows illustrative scoring patterns; live data is maintained in the model family dossiers and team guides. See the "Rapidly Changing Model Capabilities" and "Model Capability Verification" sections for guidance on verifying up-to-date performance before deployment.
 
 | Model                     | Code Quality | Reasoning | Context | Cost | Speed | Compatibility | Lock-in | Quirks                                 |
 | ------------------------- | ------------ | --------- | ------- | ---- | ----- | ------------- | ------- | -------------------------------------- |
-| GPT-4o                    | 9.5          | 9.3       | 128K    | $$   | 9.2   | High          | Low     | Rate-limit spikes                      |
-| Claude 3.5 Sonnet         | 9.6          | 9.2       | 200K    | $$   | 9.0   | High          | Low     | Strong coding, cost-effective          |
-| Claude 3 Opus             | 9.7          | 9.0       | 200K    | $$$  | 8.5   | High          | Medium  | Very verbose near high context         |
-| Gemini 2.5 Pro            | 8.9          | 8.8       | 1M      | $$   | 9.0   | High          | Low     | Upgradeable context, strong reasoning  |
-| Gemini Ultra (deprecated) | 8.7          | 8.6       | 128K    | $$   | 8.9   | Medium        | Medium  | Historical only, API quota constraints |
-| OSS Code LLaMA            | 8.0          | 7.8       | 16K     | Free | 8.5   | Medium        | None    | Endpoint and hallucination tuning      |
+| GPT-4o                    | TBD          | TBD       | 128K    | $$   | TBD   | High          | Low     | Rate-limit spikes                      |
+| Claude 3.5 Sonnet         | TBD          | TBD       | 200K    | $$   | TBD   | High          | Low     | Strong coding, cost-effective          |
+| Claude 3 Opus             | TBD          | TBD       | 200K    | $$$  | TBD   | High          | Medium  | Very verbose near high context         |
+| Gemini 2.5 Pro            | TBD          | TBD       | 1M      | $$   | TBD   | High          | Low     | Upgradeable context, strong reasoning  |
+| Gemini Ultra (deprecated) | TBD          | TBD       | 128K    | $$   | TBD   | Medium        | Medium  | Historical only, API quota constraints |
+| OSS Code LLaMA            | TBD          | TBD       | 16K     | Free | TBD   | Medium        | None    | Endpoint and hallucination tuning      |
+
+*Note: Model names reflect current API conventions as of Feb 2026. "Gemini Ultra" is deprecated; current Gemini family includes Gemini 1.5/2.0/3.x variants. Authoritative data maintained in model family dossiers.*
 
 ### Recommendations
 

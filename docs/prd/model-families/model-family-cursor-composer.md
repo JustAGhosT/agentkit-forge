@@ -8,28 +8,28 @@
 
 ## At a Glance
 
-| Attribute          | Value                                           |
-| ------------------ | ----------------------------------------------- |
-| **Provider**       | Cursor / Anysphere                              |
-| **Architecture**   | Not evaluated (proprietary)                     |
-| **Latest model**   | Composer 1.5                                    |
-| **Context window** | Not evaluated                                   |
-| **License**        | Proprietary (in-product model)                  |
-| **Notable**        | Cursor-native agentic model with adaptive think |
+| Attribute          | Value                                              |
+| ------------------ | -------------------------------------------------- |
+| **Provider**       | Cursor / Anysphere                                 |
+| **Architecture**   | Not evaluated (proprietary)                        |
+| **Latest model**   | Composer 1.5                                       |
+| **Context window** | Not evaluated                                      |
+| **License**        | Proprietary (in-product model)                     |
+| **Notable**        | Cursor-native agentic model with adaptive thinking |
 
 ## Latest benchmark signals
 
-| Signal                            | Value                                                                        | Source                                                       | Quality               |
-| --------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------- |
-| RL scaling statement              | Composer 1.5 was trained with 20x more RL scaling than Composer 1            | [Cursor Composer 1.5 blog](https://cursor.com/blog/composer-1-5) | Fetched, vendor claim |
-| Thinking and adaptive behavior    | Composer 1.5 is a thinking model with adaptive thinking depth by task        | [Cursor Composer 1.5 blog](https://cursor.com/blog/composer-1-5) | Fetched, vendor claim |
-| Long-task behavior                | Composer 1.5 supports self-summarization when context is exhausted           | [Cursor Composer 1.5 blog](https://cursor.com/blog/composer-1-5) | Fetched, vendor claim |
-| Terminal-Bench reference in notes | Cursor references Terminal-Bench 2.0 methodology in release benchmark notes  | [Cursor Composer 1.5 blog](https://cursor.com/blog/composer-1-5) | Fetched, vendor claim |
+| Signal                            | Value                                                                       | Source                                                           | Quality               |
+| --------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------- |
+| RL scaling statement              | Composer 1.5 was trained with 20x more RL scaling than Composer 1           | [Cursor Composer 1.5 blog](https://cursor.com/blog/composer-1-5) | Fetched, vendor claim |
+| Thinking and adaptive behavior    | Composer 1.5 is a thinking model with adaptive thinking depth by task       | [Cursor Composer 1.5 blog](https://cursor.com/blog/composer-1-5) | Fetched, vendor claim |
+| Long-task behavior                | Composer 1.5 supports self-summarization when context is exhausted          | [Cursor Composer 1.5 blog](https://cursor.com/blog/composer-1-5) | Fetched, vendor claim |
+| Terminal-Bench reference in notes | Cursor references Terminal-Bench 2.0 methodology in release benchmark notes | [Cursor Composer 1.5 blog](https://cursor.com/blog/composer-1-5) | Fetched, vendor claim |
 
 ## Models tracked from PRD-002 (base + profiles)
 
-| Base model   | Environment | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench | Aider        | Coding ability summary                                         | Decision Readiness | When to use                                         | Source quality              | Last verified |
-| ------------ | ----------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ----------- | ------------ | -------------------------------------------------------------- | ------------------ | --------------------------------------------------- | --------------------------- | ------------- |
+| Base model   | Environment | Profile variants covered | Cost tier     | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                        | Decision Readiness | When to use                                                | Source quality               | Last verified |
+| ------------ | ----------- | ------------------------ | ------------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | ------------------------------------------------------------- | ------------------ | ---------------------------------------------------------- | ---------------------------- | ------------- |
 | Composer 1.5 | Cursor      | Composer 1.5             | Not evaluated |         Not evaluated |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Cursor-native coding agent model; adaptive thinking and speed | Low                | Cursor-first IDE agent flows where native behavior matters | PRD-002 matrix + vendor docs | 2026-02-26    |
 
 ## Operational notes

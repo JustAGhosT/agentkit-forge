@@ -8,29 +8,29 @@
 
 ## At a Glance
 
-| Attribute          | Value                                                       |
-| ------------------ | ----------------------------------------------------------- |
-| **Provider**       | Cognition / Windsurf                                        |
-| **Architecture**   | Frontier-size proprietary model (base model not disclosed)  |
-| **Latest model**   | SWE-1.5                                                     |
-| **Context window** | Not evaluated                                               |
-| **License**        | Proprietary (in-product model family)                       |
+| Attribute          | Value                                                        |
+| ------------------ | ------------------------------------------------------------ |
+| **Provider**       | Cognition / Windsurf                                         |
+| **Architecture**   | Frontier-size proprietary model (base model not disclosed)   |
+| **Latest model**   | SWE-1.5                                                      |
+| **Context window** | Not evaluated                                                |
+| **License**        | Proprietary (in-product model family)                        |
 | **Notable**        | Near Claude 4.5-level performance claim at much higher speed |
 
 ## Latest benchmark signals
 
-| Signal                              | Value                                                                 | Source                                                    | Quality               |
-| ----------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------- | --------------------- |
-| In-house model family positioning   | SWE-1.5 listed as Windsurf's best released agentic coding model       | [Windsurf models docs](https://docs.windsurf.com/windsurf/models) | Fetched, vendor claim |
-| Speed/performance positioning       | Near Claude 4.5-level performance and about 13x faster claim          | [Windsurf models docs](https://docs.windsurf.com/windsurf/models) | Fetched, vendor claim |
-| Inference throughput                | Up to 950 tokens/second with Cerebras serving path                    | [Cognition SWE-1.5](https://cognition.ai/blog/swe-1-5)  | Fetched, vendor claim |
-| Public benchmark framing            | Near-frontier performance statement using SWE-Bench Pro               | [Cognition SWE-1.5](https://cognition.ai/blog/swe-1-5)  | Fetched, vendor claim |
+| Signal                            | Value                                                           | Source                                                            | Quality               |
+| --------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------- | --------------------- |
+| In-house model family positioning | SWE-1.5 listed as Windsurf's best released agentic coding model | [Windsurf models docs](https://docs.windsurf.com/windsurf/models) | Fetched, vendor claim |
+| Speed/performance positioning     | Near Claude 4.5-level performance and about 13x faster claim    | [Windsurf models docs](https://docs.windsurf.com/windsurf/models) | Fetched, vendor claim |
+| Inference throughput              | Up to 950 tokens/second with Cerebras serving path              | [Cognition SWE-1.5](https://cognition.ai/blog/swe-1-5)            | Fetched, vendor claim |
+| Public benchmark framing          | Near-frontier performance statement using SWE-Bench Pro         | [Cognition SWE-1.5](https://cognition.ai/blog/swe-1-5)            | Fetched, vendor claim |
 
 ## Models tracked from PRD-002 (base + profiles)
 
-| Base model | Environment | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench | Aider        | Coding ability summary                                          | Decision Readiness | When to use                                                     | Source quality              | Last verified |
-| ---------- | ----------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ----------- | ------------ | --------------------------------------------------------------- | ------------------ | --------------------------------------------------------------- | --------------------------- | ------------- |
-| SWE-1.5    | Windsurf    | SWE-1.5, SWE-1.5 Fast    | Free/Paid |               0.0-0.5 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Native Windsurf coding-agent line tuned for fast in-IDE workflows | Medium             | Fast IDE-first coding loops, high-volume agentic edit workflows | PRD-002 matrix + vendor docs | 2026-02-26    |
+| Base model | Environment | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                                                        | Decision Readiness | When to use                                                     | Source quality               | Last verified |
+| ---------- | ----------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | --------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------- | ---------------------------- | ------------- |
+| SWE-1.5    | Windsurf    | SWE-1.5, SWE-1.5 Fast    | Free/Paid |               0.0-0.5 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Native Windsurf coding-agent line tuned for fast in-IDE workflows; 13x faster than Claude 4.5 | Medium             | Fast IDE-first coding loops, high-volume agentic edit workflows | PRD-002 matrix + vendor docs | 2026-02-26    |
 
 ## Operational notes
 

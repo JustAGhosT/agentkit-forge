@@ -1353,7 +1353,8 @@ function buildAgentDomainRulesMarkdown(agent, rulesSpec) {
       ? ruleSet.conventions
           .map((c) => {
             const severity = c.severity ? ` [${c.severity}]` : '';
-            const ruleText = typeof c.rule === 'string' ? c.rule.trim() : String(c.rule || '');
+            const ruleText =
+              typeof c.rule === 'string' ? c.rule.trim() : JSON.stringify(c.rule || null);
             return `- **${c.id}**${severity}: ${ruleText}`;
           })
           .join('\n')
@@ -1407,7 +1408,13 @@ function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsS
           .map((ex) => {
             const title = ex?.title || 'Example';
             const code = ex?.code || '';
-            return `### ${title}\n\n\`\`\`\n${code}\n\`\`\``;
+            // Find the longest run of backticks in the code
+            const maxBackticks = (code.match(/`+/g) || []).reduce(
+              (max, match) => Math.max(max, match.length),
+              0
+            );
+            const fence = '`'.repeat(Math.max(maxBackticks + 1, 4));
+            return `### ${title}\n\n${fence}\n${code}\n${fence}`;
           })
           .join('\n\n')
       : '';

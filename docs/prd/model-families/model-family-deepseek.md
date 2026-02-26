@@ -21,6 +21,8 @@
 R1 is a DeepSeek reasoning-family model (not a separate external project) and
 is tracked as part of the broader DeepSeek model line.
 
+**Versioning Note:** "DeepSeek V3.2" represents the semantic release version for production use, while "DeepSeek-V3-0324" is a dated snapshot tag for reproducibility. V3.2 is the canonical current release.
+
 ## Hugging Face Resources
 
 | Resource        | Model ID                             | Notes                               |

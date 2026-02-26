@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft
+Active
 
 ## Module / Feature Name
 
@@ -362,13 +362,13 @@ cost and latency for selected agents.
 
 > **Note:** This scorecard provides a baseline reference. Detailed weighted scores for each team are in PRD-003.
 
-| Model              | Code | Reasoning | Context        | Speed    | Cost | Compatibility | Notes                                                |
-| ------------------ | ---- | --------- | -------------- | -------- | ---- | ------------- | ---------------------------------------------------- |
-| Claude Opus 4.6    | 5.0  | 4.5       | 200K (1M beta) | Standard | $$$  | Native        | Conservative in speculative code                     |
-| GPT-5.3 Codex High | 5.0  | 5.0       | 200K           | Fast     | $$$  | Full          | Strong agentic coding and tool-use reliability       |
-| Gemini 3 Pro       | 4.8  | 4.8       | 1M+            | Standard | $$   | Full          | Large-context workflows; structured output improving |
-| Kimi K2 Thinking   | 4.2  | 4.4       | 256K           | Standard | $    | Partial       | Strong pass@1 profile; verify provider integration   |
-| Grok Code Fast 1   | 4.0  | 4.2       | 131K           | Fast     | $    | Experimental  | Strong speed/cost profile; evolving ecosystem        |
+| Model            | Code | Reasoning | Context        | Speed    | Cost | Compatibility | Notes                                                |
+| ---------------- | ---- | --------- | -------------- | -------- | ---- | ------------- | ---------------------------------------------------- |
+| Claude Opus 4.6  | 5.0  | 4.5       | 200K (1M beta) | Standard | $$$  | Native        | Conservative in speculative code                     |
+| GPT-4o           | 4.8  | 4.7       | 128K           | Fast     | $$   | Full          | Strong general-purpose coding and tool-use           |
+| Gemini 1.5 Pro   | 4.6  | 4.5       | 1M             | Standard | $$   | Full          | Large-context workflows; structured output improving |
+| Kimi K2 Thinking | 4.2  | 4.4       | 256K           | Standard | $    | Partial       | Strong pass@1 profile; verify provider integration   |
+| Grok Code Fast 1 | 4.0  | 4.2       | 131K           | Fast     | $    | Experimental  | Strong speed/cost profile; evolving ecosystem        |
 
 ## Agent Mapping Example
 
@@ -517,13 +517,20 @@ Use scorecards as guidance, then tune by team outcome data.
 
 ### Pending Benchmark Annex (Not evaluated models)
 
-| Model family / models                                                | Owner               | Target ETA | Reason                                                           |
-| -------------------------------------------------------------------- | ------------------- | ---------- | ---------------------------------------------------------------- |
-| Cursor model metadata (all listed Cursor rows)                       | Platform Lead       | 2026-03-31 | Cursor UI source does not expose structured capability metadata  |
-| Gemini 3 / SWE-1.5 capability details                                | ML Engineer         | 2026-03-21 | Awaiting validated provider documentation + internal harness run |
-| GLM-5 / GLM 4.7 capability details                                   | Integrations Lead   | 2026-03-21 | Pending provider normalization + reliability replication         |
-| DeepSeek / Codestral / Llama 4 / Cohere / Nova / Granite intake rows | Platform + QA Leads | 2026-03-28 | Pending independent benchmark replication before non-TBD scoring |
-| Minimax M2.1/M2.5 full capability details                            | Integrations Lead   | 2026-03-21 | Promo pricing known; capability validation pending               |
+| Model family / models                                                | Evidence Status | Owner               | Target ETA | Reason                                                           |
+| -------------------------------------------------------------------- | --------------- | ------------------- | ---------- | ---------------------------------------------------------------- |
+| Cursor model metadata (all listed Cursor rows)                       | Unverified      | Platform Lead       | 2026-03-31 | Cursor UI source does not expose structured capability metadata  |
+| Gemini 3 / SWE-1.5 capability details                                | Preliminary     | ML Engineer         | 2026-03-21 | Awaiting validated provider documentation + internal harness run |
+| GLM-5 / GLM 4.7 capability details                                   | Preliminary     | Integrations Lead   | 2026-03-21 | Pending provider normalization + reliability replication         |
+| DeepSeek / Codestral / Llama 4 / Cohere / Nova / Granite intake rows | Preliminary     | Platform + QA Leads | 2026-03-28 | Pending independent benchmark replication before non-TBD scoring |
+| Minimax M2.1/M2.5 full capability details                            | Preliminary     | Integrations Lead   | 2026-03-21 | Promo pricing known; capability validation pending               |
+
+**Contingency Actions:**
+
+- Use best-available evaluated sibling models for production routing
+- Apply conservative safety margins for unvalidated models
+- Hold non-critical feature rollouts until validation completes
+- Reassign ownership if benchmarks miss ETAs by >2 weeks
 
 ### Best For Guidance
 

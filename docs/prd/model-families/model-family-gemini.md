@@ -22,12 +22,12 @@
 
 | Resource         | Model ID                      | Notes                      |
 | ---------------- | ----------------------------- | -------------------------- |
-| Gemini 2.0 Flash | `google/gemini-2.0-flash-exp` | Experimental Flash variant |
 | Gemini 1.5 Pro   | `google/gemini-1.5-pro`       | 1M context, API access     |
 | Gemini 1.5 Flash | `google/gemini-1.5-flash`     | Fast variant, 1M context   |
-| Gemini Flash 2.0 | `google/gemini-2.0-flash`     | Production Flash           |
+| Gemini 2.0 Flash | `google/gemini-2.0-flash-exp` | Experimental Flash variant |
+| Gemini 2.0 Flash | `google/gemini-2.0-flash`     | Production Flash           |
 
-> **Note:** Google publishes most Gemini models via Google AI Studio and Vertex AI, not Hugging Face. The above are available experimental/public variants.
+> **Note:** Google publishes most Gemini models via Google AI Studio and Vertex AI, not Hugging Face. The above are available experimental/public variants. Gemini 3/3.1 references are preview/announcement-only and not yet available on Hugging Face.
 
 ## Latest benchmark signals
 

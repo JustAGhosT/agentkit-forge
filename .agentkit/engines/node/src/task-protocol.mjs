@@ -455,13 +455,14 @@ export function addTaskMessage(projectRoot, taskId, message) {
     return { task: null, error: `Cannot add messages to task in terminal state: ${task.status}` };
   }
 
+  const now = new Date().toISOString();
   task.messages.push({
     role: message.role,
     from: message.from,
-    timestamp: new Date().toISOString(),
+    timestamp: now,
     content: message.content,
   });
-  task.updatedAt = new Date().toISOString();
+  task.updatedAt = now;
 
   writeTaskFile(projectRoot, taskId, task);
   return { task };
@@ -497,11 +498,12 @@ export function addTaskArtifact(projectRoot, taskId, artifact) {
 
   const task = result.task;
   if (!Array.isArray(task.artifacts)) task.artifacts = [];
+  const now = new Date().toISOString();
   task.artifacts.push({
     ...artifact,
-    addedAt: new Date().toISOString(),
+    addedAt: now,
   });
-  task.updatedAt = new Date().toISOString();
+  task.updatedAt = now;
 
   writeTaskFile(projectRoot, taskId, task);
   return { task };
