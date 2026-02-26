@@ -16,7 +16,7 @@
 | **Latest model**   | Llama 4 Scout                                            |
 | **Context window** | 128K tokens                                              |
 | **License**        | Llama Community License (commercial ok)                  |
-| **Notable**        | Most downloaded AI model, sparked open-source revolution |
+| **Notable**        | One of the most downloaded models; contributed to growth of open-source adoption |
 
 ## Hugging Face Resources
 
@@ -40,7 +40,7 @@
 
 | Base model    | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified | HLE           | SWE-rebench   | Aider         | Coding ability summary                                                                                                                                                    | Decision Readiness | When to use                                                   | Source quality                | Last verified |
 | ------------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | -------------------- | ------------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------- | ----------------------------- | ------------- |
-| Llama 4 Scout | Windsurf/Intake | Llama 4 Scout            | Paid      |                   1.0 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Above average intelligence (AA Index scale TBD — verify definition); fast; very verbose; multimodal | Medium             | Multimodal tasks requiring fast processing with large context | PRD-002 + Artificial Analysis | 2026-02-26    |
+| Llama 4 Scout | Windsurf/Intake | Llama 4 Scout            | Paid      |                   1.0 |  Not evaluated | Not evaluated        | Not evaluated | Not evaluated | Not evaluated | Above average intelligence; fast; very verbose; multimodal | Medium             | Multimodal tasks requiring fast processing with large context | PRD-002 + Artificial Analysis | 2026-02-26    |
 
 ## Operational notes
 

@@ -13,7 +13,7 @@
 {{#if architecturePattern}}- **Architecture:** {{architecturePattern}}{{/if}}
 {{#if defaultBranch}}- **Default branch:** {{defaultBranch}}{{/if}}
 
-Always scan the codebase within your focus area before making changes.
+Always scan the codebase within your focus area (the repo folders and modules you're assigned or listed under 'Focus Areas') before making changes.
 
 ## Shared State
 
@@ -38,13 +38,22 @@ Shared files are accessed by multiple agents. To prevent race conditions:
 **Lock Acquisition Protocol:**
 - Attempt atomic creation of `.lock` file with a 30s total timeout
 - If creation fails, retry up to 3 times with exponential backoff (initial delay 1s, then 2s, then 4s)
-- Stale-lock takeover: (A) **flock+conditional-unlink**: hold exclusive flock for the entire sequence (open + flock(EXLOCK) → read lock file → check expiresAt → unlink/write new lock → release flock). (B) **rename-based replacement** (use when flock unavailable): read lock file → if expiresAt < now, atomically rename stale lock to temp → re-check staleness from temp → write new lock to canonical path only if temp still represents the stale lock. Decision: prefer (A) on POSIX; use (B) on platforms without flock.
+- **Stale-lock takeover:**
+  - **(A) flock+conditional-unlink:** open + flock(EXLOCK) → read lock file → check expiresAt → unlink/write new lock → release flock.
+  - **(B) rename-based replacement:** read lock file → if expiresAt < now, atomically rename stale lock to temp → re-check staleness from temp → write new lock to canonical path only if temp still represents the stale lock.
+  - Prefer (A) on POSIX; use (B) on platforms without flock.
 - Always release locks in a finally block
 - On repeated failure, escalate to orchestrator via `/orchestrate` endpoint
 
 **Special Cases:**
 - `orchestrator.lock` remains exclusively owned by orchestrator
-- Append-only `events.log` writes: atomic append semantics (O_APPEND, line-based newline-terminated) are only guaranteed on local POSIX filesystems; write-size limits apply (e.g. PIPE_BUF ≈ 4KB). NFS, SMB, and distributed stores may not guarantee atomic appends. When filesystem type is uncertain or `.claude/state/` may be network-mounted, acquire `orchestrator.lock` (or `events.log.lock`) before writing to avoid interleaved writes.
+- Append-only `events.log` writes:
+  - Guarantee applies only to local POSIX filesystems; relies on O_APPEND and newline-terminated line-based writes.
+  - Write-size limits (e.g., PIPE_BUF ≈ 4KB) can cause non-atomic writes.
+  - NFS/SMB/distributed stores may not guarantee atomic appends.
+  - When filesystem type is uncertain or `.claude/state/` may be network-mounted, acquire `orchestrator.lock` before writing to avoid interleaved writes.
+
+- **Append-only vs lock pattern:** Append-only operations to `events.log` are coordinated and do not require the Acquire lock → modify → release lock in finally pattern. Non-append writes or modifications to shared mutable state must use that pattern.
 
 Protocol: Acquire lock → modify → release lock in finally. Never write directly without coordination.
 

@@ -38,6 +38,7 @@
 
 - Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
   inputs are available.
+- **Baseline definition:** `baseline_tokens_per_problem` is the average tokens per problem for the reference (baseline) model; `baseline_effective_cost` = baseline cost_multiplier × normalized baseline tokens. These values are maintained in the scorecard or config.
 - Cost normalization formulas:
 
 `effective_cost = cost_multiplier * normalized_tokens_per_problem`
@@ -46,6 +47,7 @@
 
 `cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
 
+- **model_effective_cost == 0:** Treat as infinite cost or skip evaluation and mark as Not evaluated.
 - Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
   scores unchanged and mark cost evidence as `Not evaluated`.
 

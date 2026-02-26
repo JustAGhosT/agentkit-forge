@@ -52,7 +52,7 @@ function isShellScriptTarget(targetPath) {
  */
 function renderTemplate(template, vars, targetPath = '') {
   let result = template;
-  const allowRawVars = !isShellScriptTarget(targetPath);
+  const allowRawVars = isShellScriptTarget(targetPath);
 
   // Phase 1: Resolve {{#if var}}...{{/if}} blocks (supports nesting)
   result = resolveConditionals(result, vars);

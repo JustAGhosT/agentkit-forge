@@ -141,14 +141,22 @@ Write the complete plan as a structured markdown document. Do NOT create a file 
 - **Read:** `AGENT_BACKLOG.md` (for item context), `.claude/state/orchestrator.json` (for phase/team status)
 
 ### Writing State (after planning)
+
 - **Append to:** `.claude/state/events.log` (see format below)
-- **Acquire and release:** `.claude/state/events.log.lock` around every append.
 - **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
 
-Safely append a single-line, timestamped log entry to `.claude/state/events.log` using file locking to avoid concurrent writes. Log format: `[<timestamp>] [PLAN] [ORCHESTRATOR] <brief summary>. Steps: <count>. Files: <count>.` Use an appropriate atomic lock/acquire pattern for your environment; include retry/backoff and stale-lock handling as needed; surface failures to observability. Provide a fallback persistence path and degraded state on append failure. Require graceful error handling and logging on append failures rather than prescribing low-level algorithms, timeouts, or metric names.
+Requirements:
+
+- Log format: `[<timestamp>] [PLAN] [PLANNER] <brief summary>. Steps: <count>. Files: <count>.`
+- Append single-line timestamped entries with file locking to avoid concurrent writes.
+- Use an appropriate atomic lock/acquire pattern for the environment.
+- Include retry/backoff and stale-lock handling where needed.
+- Surface failures to observability systems.
+- Provide a fallback persistence path and degraded state on append failure.
+- Require graceful error handling and logging on append failures.
 
 ```
-[<timestamp>] [PLAN] [ORCHESTRATOR] Plan created for: "<goal summary>". Steps: <count>. Files: <count>.
+[<timestamp>] [PLAN] [PLANNER] Plan created for: "<goal summary>". Steps: <count>. Files: <count>.
 ```
 
 ## Rules

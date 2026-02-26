@@ -23,7 +23,7 @@
 | Resource      | Model ID                     | Notes                        |
 | ------------- | ---------------------------- | ---------------------------- |
 | Grok-1        | `xai-org/grok-1`             | 314B MoE model, open weights |
-| Grok-1 Vision | `xai-org/grok-1-vision-beta` (API-only; verify HF availability) | Vision capabilities; may be API-only, not public HF weights |
+| Grok-1 Vision | `xai-org/grok-1-vision-beta` | API-only; not available on Hugging Face |
 | Grok-2        | `xai-org/grok-2`             | Latest Grok-2 release        |
 
 > **Note:** xAI publishes Grok models via API (x.ai API) and has released open-weight versions on Hugging Face. The open-weight Grok-1 is notable as a 314B parameter MoE model.

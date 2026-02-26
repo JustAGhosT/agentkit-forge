@@ -978,7 +978,7 @@ A chronological log of every significant action:
 
 ```
 [2026-02-22T14:00:00Z] [DISCOVERY] [ORCHESTRATOR] Discovery complete. Stacks: TypeScript, React. Build: pnpm. Tests: Vitest. Issues: 0.
-[2026-02-22T14:15:00Z] [PLAN] [ORCHESTRATOR] Plan created for: "Add notification system". Steps: 8. Files: 12.
+[2026-02-22T14:15:00Z] [PLAN] [PLANNER] Plan created for: "Add notification system". Steps: 8. Files: 12.
 [2026-02-22T17:45:00Z] [TEAM] [T1] Completed 3 items. Changes: 5 files. Tests: 12 added. Gate: PASS.
 [2026-02-22T17:45:30Z] [HANDOFF] [ORCHESTRATOR] Session complete. Done: 3 items. Blockers: 0. Next: "Build frontend components".
 [2026-02-23T10:00:00Z] [TEAM] [T2] Completed 3 items. Changes: 6 files. Tests: 15 added. Gate: PASS.

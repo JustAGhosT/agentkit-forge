@@ -17,7 +17,7 @@ Defines concrete API contracts for:
 Protocol:
 
 - Primary: REST/JSON over HTTPS
-- Secondary: gRPC parity planned for v2 (same schema semantics)
+- Secondary: gRPC parity planned for v2 (same schema semantics; v1 REST is source of truth until then)
 
 Auth:
 
@@ -86,10 +86,9 @@ Validation rules:
 
 Examples:
 
-Create (no reason required):
+Create (no reason required; agentId supplied in URL path):
 ```json
 {
-  "agentId": "backend.api-refactor",
   "modelId": "claude-opus-4-6",
   "team": "backend",
   "weights": {
@@ -122,7 +121,19 @@ Update (reason required; agentId in path, not body):
 
 Error when reason missing on update: `400 Bad Request - reason field required for updates`
 
-Response - 200:
+Response - 200 (update):
+
+```json
+{
+  "ok": true,
+  "agentId": "backend.api-refactor",
+  "modelId": "claude-opus-4-6",
+  "updatedAt": "2026-03-10T08:13:00Z",
+  "auditEventId": "evt_01J2..."
+}
+```
+
+Response - 201 (create):
 
 ```json
 {
@@ -237,7 +248,7 @@ Required keys (always present, value may be null):
   "aiderPassAt2": { "value": null, "status": "not-evaluated" },
   "costPerSuccess": { "value": 0.85, "status": "current" },
   "p95LatencyMs": { "value": 1250, "status": "current" },
-  "lastEvaluatedAt": { "value": 1739619000, "status": "current" }
+  "lastEvaluatedAt": { "value": "2025-03-17T12:00:00Z", "status": "current" }
 }
 ```
 
@@ -285,4 +296,4 @@ On repeated provider failure:
 - All timestamps are ISO-8601 UTC
 - All IDs are stable lowercase alphanumeric allowing dots (.), dashes (-), and underscores (_), except `updatedByRef` pseudonymous refs (examples: agentId, modelId, auditEventId)
 - Backward compatible additions allowed; breaking changes require version bump
-- v1 uses REST contract as source of truth; gRPC parity must preserve field names and semantics
+- v1 uses REST contract as source of truth; gRPC parity in v2 will preserve field names and semantics

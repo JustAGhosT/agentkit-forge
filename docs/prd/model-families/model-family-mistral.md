@@ -12,7 +12,7 @@
 | ------------------ | ------------------------------------------------------------------------------------ |
 | **Provider**       | Mistral AI (Paris, France)                                                           |
 | **Founded**        | 2023                                                                                 |
-| **Architecture**   | Dense transformer + Mamba (Codestral)                                                |
+| **Architecture**   | Codestral 22B / 25.08: Transformer; Mamba-Codestral-7B: Mamba2 (linear-time inference) |
 | **Latest model**   | Codestral 25.08                                                                      |
 | **Context window** | 128K tokens ([Codestral 25.08 docs](https://docs.mistral.ai/models/codestral-25-08)) |
 | **License**        | Proprietary (API) + open weights (Apache 2.0)                                        |

@@ -13,15 +13,10 @@ This document provides a concrete implementation plan for adding numerical quirk
 ### Base Quirk Score Calculation
 
 ```
-Base Quirk Score = sum(Positive Quirks × +0.1) + sum(Negative Quirks × -0.1) + sum(Operational Quirks × -0.05)
+Base Quirk Score = sum(all quirk scores)
 ```
 
-Or equivalently:
-```
-Base Quirk Score = (Positive_Quirks_Sum × 0.1) - (Negative_Quirks_Sum × 0.1) - (Operational_Quirks_Sum × 0.05)
-```
-
-> **Note:** Negative and operational quirks contribute negative values to the base score (they are subtracted, not added with negative signs).
+Individual quirk values are defined per-model in the tables below (e.g., Claude: Native MCP Support = +0.3, Consistent Output Quality = +0.2, Verbose Near High Context = -0.2). Weights are not uniform; each quirk has its own assigned value. Possible score range is approximately -0.3 to +0.3 per model.
 
 ### Final Score Integration
 
@@ -168,8 +163,8 @@ Modify scoring logic in `llm-decision-engine`:
 const QUIRK_SCORES = {
   // Positive quirks
   native_mcp: 0.3,
-  consistent_quality: 0.1,
-  strong_agentic: 0.1,
+  consistent_quality: 0.2,
+  strong_agentic: 0.2,
   token_efficiency: 0.2,
   massive_context: 0.3,
   open_weight_breakthrough: 0.2,
@@ -187,10 +182,10 @@ const QUIRK_SCORES = {
   strong_embeddings: 0.2,
   tool_using_agents: 0.1,
 
-  // Negative quirks (-0.1 each)
-  verbose_high_context: -0.1,
+  // Negative quirks
+  verbose_high_context: -0.2,
   premium_pricing: -0.1,
-  rate_limiting: -0.1,
+  rate_limiting: -0.2,
   rate_limit_spikes: -0.3,
   profile_complexity: -0.1,
   cost_volatility: -0.2,
@@ -273,9 +268,9 @@ backend:
   quirks_weighting:
     # Override default quirk weights for team-specific priorities
     # Keys reference QUIRK_SCORES entries; values are multipliers (default: 1.0)
-    native_mcp: 0.4      # Multiply MCP impact by 0.4 (reduces from +0.1 to +0.04)
+    native_mcp: 0.4      # Multiply MCP impact by 0.4 (reduces from +0.3 to +0.12)
     token_efficiency: 0.3 # Multiply token efficiency impact by 0.3
-    rate_limiting: 0.4    # Scale penalty: 0.4 means 40% of original (-0.1 × 0.4 = -0.04)
+    rate_limiting: 0.4    # Scale penalty: 0.4 means 40% of original (-0.2 × 0.4 = -0.08)
 ```
 
 > **Note:** The `quirks_weighting` config multiplies the base QUIRK_SCORES values as plain scalars. Negative base × positive multiplier remains negative. A value of 1.0 keeps the default weight. Use positive magnitude (e.g., 0.4 for 40% of original) to scale penalties. This allows teams to tune quirk importance without redefining the base scores.
@@ -290,7 +285,7 @@ frontend:
   quirks_weighting:
     multimodal: 0.3      # UI/UX advantage
     speed_advantage: 0.4 # Fast iteration
-    api_evolution: -0.2   # Stability preference
+    api_evolution: 0.2   # Scale down penalty (positive multiplier reduces negative base)
 ```
 
 ## Monitoring Metrics

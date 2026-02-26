@@ -38,16 +38,15 @@
 
 - Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
   inputs are available.
-- Cost normalization formulas:
+- **Edge case handling (evaluate before computing normalized_tokens_per_problem):**
+  - If `baseline_tokens_per_problem == 0`: if `cost_multiplier == 0`, set `cost_score = 10`; else set `cost_score = clamp(10 * (1 / cost_multiplier), 0, 10)`. Do not compute `normalized_tokens_per_problem` when baseline is zero.
+  - If `model_effective_cost == 0`: cost_score = 10 (best possible).
+  - If `normalized_tokens_per_problem == 0`: cost_score = 10 (best possible, zero token usage).
+- Cost normalization formulas (only when `baseline_tokens_per_problem != 0`):
 
 `effective_cost = cost_multiplier * normalized_tokens_per_problem`
 
 `normalized_tokens_per_problem = model_tokens_per_problem / baseline_tokens_per_problem`
-
-**Edge case handling:**
-  - If `baseline_tokens_per_problem == 0`: if `cost_multiplier == 0`, set cost_score = 10 (max); otherwise compute cost_score = 10 * (1 / cost_multiplier) and clamp to 0-10.
-  - If `model_effective_cost == 0`: cost_score = 10 (best possible).
-  - If `normalized_tokens_per_problem == 0`: cost_score = 10 (best possible, zero token usage).
 
 `cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
 

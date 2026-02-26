@@ -112,7 +112,7 @@ team_defaults:
 agents:
   ci-failure-triage:
     team: devops
-    model_override: gpt-5.2-medium-thinking-fast
+    model_override: gemini-2-5-pro
     reason: "Need faster iterative diagnostics"
 audit:
   changed_by: "<owner>"

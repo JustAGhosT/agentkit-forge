@@ -97,6 +97,8 @@ Fallback triggers:
 
 ## Override and Audit Example
 
+> **Note:** Table display names (e.g., "GPT-5.3 Codex High", "Claude Opus 4.6") map to kebab-case config IDs: `gpt-5.3-codex-high`, `claude-opus-4-6`.
+
 ```yaml
 team_defaults:
   security:

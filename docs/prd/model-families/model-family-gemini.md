@@ -13,7 +13,8 @@
 | **Provider**       | Google DeepMind (London/Mountain View)              |
 | **Founded**        | 2010 (DeepMind), 2023 (Gemini)                      |
 | **Architecture**   | Dense transformer + MoE                             |
-| **Latest model**   | Gemini 3 Pro/Flash                                  |
+| **Latest announced** | Gemini 3 Pro/Flash (preview-only)                  |
+| **Latest production** | Gemini 2.0 Flash, Gemini 1.5 Pro (see table below) |
 | **Context window** | 1M tokens (2M experimental)                         |
 | **License**        | Proprietary (API) + limited open weights            |
 | **Notable**        | Native multimodal from ground up, 2M context leader |

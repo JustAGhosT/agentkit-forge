@@ -23,7 +23,7 @@
 
 - Metric scale: `0-10` where `10` is best.
 - Weight sum must equal `100`.
-- Base formula:
+- Base formula (short names map to Weighting Profile: Code = Code Quality / `code_quality`, Reasoning = `reasoning`, Cost = `cost`, Context = `context`, Speed = `speed`, Compatibility = `compatibility`):
 
 `Weighted Score = (Code*5 + Reasoning*20 + Cost*10 + Context*45 + Speed*5 + Compatibility*15) / 100`
 
@@ -81,6 +81,12 @@
 | o3           | o3           | 7.75  | Low cost              | Fast, lightweight docs edits  |
 | Minimax M2.5 | minimax-m2-5 | 7.55  | Regional availability | APAC-oriented fallback option |
 
+### Tier 4: Not Recommended (Score < 7.50)
+
+| Model | Model ID | Score | Key Strengths | Notes |
+| ----- | -------- | ----- | ------------- | ----- |
+| (placeholder) | — | — | — | Models scoring below 7.50 are not recommended for production or primary documentation tasks |
+
 ### Display Name and Config ID Note
 
 Ranking tables show both display names and runtime IDs. YAML fields
@@ -101,6 +107,8 @@ Fallback triggers:
 - Model deprecation notice: migrate in next release cycle with audit note.
 
 ## Override and Audit Example
+
+> **Note:** This example uses `fallback_model: gpt-5.3-codex-high` for illustration; per Decision Policy, cost-aware alternate is `o3` and APAC alternate is `Minimax M2.5`.
 
 ```yaml
 team_defaults:
@@ -136,13 +144,14 @@ audit:
 | Confidence                 | Medium                                              |
 | Owner                      | Docs + Platform leads                               |
 
-Note: PRD-003 is an illustrative matrix. Runtime config and scorecard data
-remain the source of truth.
+Note: PRD-003 provides an illustrative weighted matrix example; for actual implementation, runtime config and scorecard data remain the source of truth.
 
 ## Newly Tracked Models (Pending Full Benchmark Scoring)
 
 These models are now included in intake analysis but are excluded from weighted
 ranking tables until benchmark metrics are validated.
+
+**Cost Multiplier:** 1x = baseline model cost (reference model or average). Multipliers are relative to this baseline.
 
 | Model                        | Cost Multiplier | Status                                     |
 | ---------------------------- | --------------- | ------------------------------------------ |

@@ -36,6 +36,7 @@
 
 ## Cost Evidence Method
 
+- **Baseline definition:** `baseline_tokens_per_problem` and `baseline_effective_cost` come from the reference (baseline) model; `baseline_effective_cost` = baseline cost_multiplier × normalized baseline tokens. These values are maintained in the scorecard or config.
 - Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
   inputs are available.
 - Cost normalization formulas:
@@ -104,6 +105,16 @@ Fallback triggers:
 - 7-day spend overrun above 15%: move routine UI tasks to cost-aware model.
 - P95 latency regression above 25%: switch to faster model in same score band.
 - Deprecation notice: migrate during next release window with audit note.
+
+## Model Identifier Mapping
+
+| Display Name | Config ID |
+| ------------ | --------- |
+| Gemini 2.5 Pro | gemini-2-5-pro |
+| GPT-5.2 Medium Thinking Fast | gpt-5.2-medium-thinking-fast |
+| SWE-Llama | swe-llama |
+
+YAML fields `team_defaults.frontend.default_model`, `team_defaults.frontend.fallback_model`, and `agents.<agent>.model_override` must use **Config ID** values.
 
 ## Override and Audit Example
 

@@ -40,8 +40,10 @@ prevent interleaved writes. The Orchestrator always holds the lock when
 writing. O_APPEND atomic-append semantics are only guaranteed on local POSIX
 filesystems and may not be reliable on NFS, SMB, or distributed storage. When
 filesystem type is uncertain or `.claude/state/` may be network-mounted,
-callers should acquire `orchestrator.lock` (or `events.log.lock`) before
-writing to avoid interleaved writes. Example atomic append (Node.js):
+callers must acquire `orchestrator.lock` before writing to avoid interleaved
+writes. **Contention handling:** Wait with exponential backoff and retry; use
+a configurable timeout and abort after timeout. Callers must respect the lock
+acquisition protocol and abort after timeout. Example atomic append (Node.js):
 
 ```js
 const fs = require('fs');
@@ -108,7 +110,7 @@ For machine-identifiable events, use JSON lines format:
 
 **eventType enum values:** `DESCOPED`, `CANCELED`, `COMPLETED`, `FAILED`, `REJECTED`, `STARTED`, `BLOCKED`, `UNBLOCKED`, `DELEGATED`, `ACCEPTED`, `RETRY_ESCALATED`
 
-**cycleId format:** Use a deterministic identifier per detected cycle. Generate once per cycle using a sorted-hash of member task IDs (e.g., SHA-256 of `task-id-1,task-id-2,...` truncated to 12 chars) or a UUID generated at detection time and reused for all events from that cycle.
+**cycleId format:** Generate a deterministic identifier per detected cycle. Hash the sorted list of member task IDs with SHA-256 and truncate to 12 chars. Reuse the same cycleId for all events from that cycle.
 
 Required fields for DESCOPED events: `eventType` (must be "DESCOPED"), `taskId`, `reason`, `timestamp`. Optional: `actor`.
 
@@ -198,9 +200,9 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 3. For **parallel work**, create independent tasks for each team.
 4. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
    - `blockedBy` is runtime-derived state from `dependsOn`; do not author it manually.
-   - **Derivation algorithm:** For each task at the start of each delegation round, compute `blockedBy` from its `dependsOn` array by: (1) taking the task IDs in `dependsOn`, (2) removing any IDs that refer to tasks whose status is in terminal states (`completed`, `failed`, `rejected`, `canceled`), (3) using the remaining IDs as `blockedBy` (empty array means unblocked). Treat missing or nonexistent `dependsOn` IDs as non-blocking (exclude them).
+   - **Derivation algorithm:** For each task at the start of each delegation round, compute `blockedBy` from its `dependsOn` array by: (1) taking the task IDs in `dependsOn`, (2) removing any IDs that refer to tasks whose status is in terminal states (`completed`, `failed`, `rejected`, `canceled`), (3) using the remaining IDs as `blockedBy` (empty array means unblocked). Treat missing or nonexistent `dependsOn` IDs as non-blocking (exclude them). **Validation pass:** For each `dependsOn` ID that does not match any known task ID, emit a warning (or configurable error) with the depending task ID and the missing reference. Include task id, missing dependsOn id, and location. Continue treating missing IDs as non-blocking.
 5. Immediately after task creation, run the dependency derivation pass once to populate `blockedBy` from `dependsOn` before the first execution round.
-   - **Cycle detection (fail-fast):** Perform DFS from every unvisited task following `dependsOn` edges; detect back edges to extract each cycle's member path (including self-loops, multi-node cycles, and disjoint cycles). For each detected cycle: assign a unique `cycleId` (e.g., SHA-256 of sorted member IDs truncated to 12 characters); emit an `events.log` entry per cycle member with `eventType:"CANCELED"`, `taskId`, `reason:"dependency-cycle"`, `cycleId`, `cycleMembers`, `actor:"orchestrator"`, `timestamp` (ISO-8601); set cycle members to `canceled`. Do NOT perform transitive cancellation of dependent tasks yet. Add defensive logging at cycle detection and when computing `cycleId`/`cycleMembers`. Unit tests must cover self-loops, single cycles, and multiple disjoint cycles.
+   - **Cycle detection (fail-fast):** Perform DFS from every unvisited task following `dependsOn` edges; detect back edges to extract each cycle's member path (including self-loops, multi-node cycles, and disjoint cycles). For each detected cycle: assign a unique `cycleId` (e.g., SHA-256 of sorted member IDs truncated to 12 characters); emit an `events.log` entry per cycle member with `eventType:"CANCELED"`, `taskId`, `reason:"dependency-cycle"`, `cycleId`, `cycleMembers`, `actor:"orchestrator"`, `timestamp` (ISO-8601); set cycle members to `canceled`. **Cycle-canceled task handling (Option 2):** Downstream tasks that depend on cycle-canceled tasks remain explicitly blocked. When re-deriving `blockedBy`, treat canceled dependencies as terminal (remove them from `blockedBy`). Do NOT perform transitive cancellation. Add defensive logging at cycle detection and when computing `cycleId`/`cycleMembers`. Unit tests must cover self-loops, single cycles, multiple disjoint cycles, and downstream tasks blocked by canceled dependencies.
 6. Each team should:
    - Accept or reject the task (update `status` and add a message).
    - Make minimal, backwards-compatible changes.
@@ -255,7 +257,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
    **Reset behavior:**
    - A human or controller must explicitly set `retryPolicy.allowReset = true` AND update `retryPolicy.lastResetAt` to an ISO-8601 timestamp (RFC3339 UTC with millisecond precision, trailing 'Z').
    - If `retryEscalated === null`, allow reset when `retryPolicy.allowReset === true` (no timestamp comparison needed).
-   - If `retryEscalated` is non-null, require ALL of: (1) `retryPolicy.allowReset === true`, (2) `retryPolicy.lastResetAt !== null`, (3) validate `lastResetAt` as ISO-8601, (4) call `isTimestampNewer(retryPolicy.lastResetAt, retryEscalated.at)` returning true before clearing `retryPolicy.roundRetries`. The helper `isTimestampNewer(newTs, oldTs)` must: validate non-null ISO-8601 strings; normalize both to UTC; return false for invalid inputs (null, undefined, malformed). Unit tests: same timestamps, timezone differences, null/undefined, invalid ISO strings.
+   - If `retryEscalated` is non-null, require ALL of: (1) `retryPolicy.allowReset === true`, (2) `retryPolicy.lastResetAt !== null`, (3) validate `lastResetAt` as ISO-8601, (4) call `isTimestampNewer(retryPolicy.lastResetAt, retryEscalated.at)` returning true before clearing `retryPolicy.roundRetries`. **When `isTimestampNewer` returns false:** Do NOT clear `roundRetries`; leave it unchanged; surface or log "reset prevented: lastResetAt not newer than retryEscalated.at"; return or propagate a failure status so callers know the reset did not occur. The helper `isTimestampNewer(newTs, oldTs)` must: validate non-null ISO-8601 strings; normalize both to UTC; return false for invalid inputs (null, undefined, malformed). Unit tests: same timestamps, timezone differences, null/undefined, invalid ISO strings, and the case where isTimestampNewer returns false (roundRetries remains intact).
 6. Record validation results in `orchestrator.json` and in task artifacts, including resolution metadata for failed/rejected tasks.
 
 ### Phase 5 — Ship
@@ -264,9 +266,9 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
    - **Supersession verification:** Scan all tasks in terminal states (`failed`, `rejected`, `canceled`). For each such task, verify that either:
      1. A `completed` task exists whose `supersedes` field references that task-id, OR
      2. An entry with `eventType: "DESCOPED"` exists in `events.log` for that task-id, OR
-     3. An entry with `eventType: "CANCELED"` and `event.reason: "dependency-cycle"` exists in `events.log` for that task-id.
+     3. An entry with `eventType: "CANCELED"` exists in `events.log` for that task-id (any reason, including `dependency-cycle`, user/manual, or non-replacement cancellation).
    - If neither condition is true for any terminal task, halt orchestration and surface the unresolved task(s) for human review.
-   - Intentionally descoped tasks may proceed without a superseding task only when the descoping rationale is recorded in `events.log` (condition 2 above).
+   - **DESCOPED vs CANCELED:** Emit DESCOPED for intentional removal that needs rationale recorded; emit CANCELED for user/manual or non-replacement cancellation.
 2. Invoke `/handoff` to produce a session summary.
 3. Update `orchestrator.json`: set `currentPhase` to 5, clear the lock, update metrics.
 4. Log completion to `events.log`.

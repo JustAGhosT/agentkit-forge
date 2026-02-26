@@ -688,6 +688,10 @@ export async function orchestratorProcessHandoffs(projectRoot, state) {
           tasks: {},
           last_updated: new Date().toISOString(),
         };
+        newState.team_progress[assignee].tasks[task.id] = {
+          status: 'in_progress',
+          present: true,
+        };
       } else {
         if (!newState.team_progress[assignee].tasks) {
           newState.team_progress[assignee].tasks = {};

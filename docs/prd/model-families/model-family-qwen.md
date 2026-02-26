@@ -34,6 +34,8 @@
 
 ## Latest benchmark signals (data date: 2025-05-08 — ~9 months old)
 
+> **Note:** Newer benchmark data may not be available due to Aider/SWE-rebench publication cycles and access constraints. Updates are expected as new evaluations are published.
+
 | Signal                                              | Value                                                             | Source                                                             | Quality                        |
 | --------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------ |
 | Qwen3-235B-A22B (VLLM, no_think, whole)             | Pass rate 2: 65.3% (225 tests)                                    | [Aider Qwen3 benchmarks](https://aider.chat/2025/05/08/qwen3.html) | Fetched, independent benchmark |
