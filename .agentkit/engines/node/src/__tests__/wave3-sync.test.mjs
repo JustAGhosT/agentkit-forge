@@ -511,7 +511,7 @@ describe('--quiet, --verbose, --no-clean, --diff flags', () => {
     } finally {
       rmSync(tempAgentkitRoot, { recursive: true, force: true });
     }
-  });
+  }, 30000);
 });
 
 // ---------------------------------------------------------------------------

@@ -12,13 +12,9 @@ Standards for all Rust code. Emphasizes explicit error handling, safety, and too
 
 ## Conventions
 
-- **rs-error-handling** [error]: Use explicit error handling with Result and Option types. Define custom error types using thiserror for libraries and anyhow for applications. Chain errors with context using .context or .with_context.
-- **rs-no-unwrap** [error]: Never use .unwrap or .expect in non-test code. Use proper error propagation with the ? operator instead. In tests, .unwrap is acceptable for assertions. Panicking in production code is a bug.
+- **rs-error-handling** [error]: Use explicit error handling with Result and Option types. Define custom error types using thiserror for libraries and anyhow for applications. Chain errors with context using .context() or .with_context().
+- **rs-no-unwrap** [error]: Never use .unwrap() or .expect() in non-test code. Use proper error propagation with the ? operator instead. In tests, .unwrap() is acceptable for assertions. Panicking in production code is a bug.
 - **rs-clippy** [error]: All code must pass 'cargo clippy' with no warnings. Use #[allow(clippy::...)] only with an explanatory comment when a lint is genuinely inapplicable.
 - **rs-fmt** [error]: All code must be formatted with 'cargo fmt'
-- **rs-unsafe** [error]: Unsafe code is forbidden workspace-wide; never use unsafe blocks.
-- **rs-documentation** [warning]: All public items must have documentation comments ///. Include examples in doc comments for complex APIs. Run 'cargo doc' with no warnings.
-- **rs-memory** [warning]: Prefer by-reference over unnecessary clones. Avoid cloning when a reference suffices.
-- **rs-async-io** [warning]: Use async I/O for I/O-bound crates; support async/await and wasm where applicable.
-- **rs-tls** [error]: Use rustls; forbid native-tls (see RUSTSEC-2025-0004).
-- **rs-testing** [warning]: Use #[cfg(test)] modules and #[test] for unit tests.
+- **rs-unsafe** [error]: Minimize use of unsafe blocks. Every unsafe block must have a SAFETY comment explaining why the invariants are upheld. Prefer safe abstractions. New unsafe code requires review by a second contributor.
+- **rs-documentation** [warning]: All public items must have documentation comments (///). Include examples in doc comments for complex APIs. Run 'cargo doc' with no warnings.

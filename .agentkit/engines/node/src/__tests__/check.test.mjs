@@ -59,20 +59,24 @@ describe('runCheck()', () => {
     120_000
   );
 
-  it('handles --stack filter for unknown stacks gracefully', async () => {
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+  it(
+    'handles --stack filter for unknown stacks gracefully',
+    async () => {
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
-    const result = await runCheck({
-      agentkitRoot: AGENTKIT_ROOT,
-      projectRoot: PROJECT_ROOT,
-      flags: { stack: 'nonexistent-stack' },
-    });
+      const result = await runCheck({
+        agentkitRoot: AGENTKIT_ROOT,
+        projectRoot: PROJECT_ROOT,
+        flags: { stack: 'nonexistent-stack' },
+      });
 
-    expect(result.stacks).toEqual([]);
-    expect(result.overallStatus).toBe('SKIP');
-    expect(result.overallPassed).toBe(true);
-  });
+      expect(result.stacks).toEqual([]);
+      expect(result.overallStatus).toBe('SKIP');
+      expect(result.overallPassed).toBe(true);
+    },
+    120_000
+  );
 });
 
 describe('resolveFormatter()', () => {

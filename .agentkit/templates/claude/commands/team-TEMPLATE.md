@@ -22,7 +22,7 @@ Stay within your scope. If you discover work that belongs to another team, log i
 This team participates in the **task delegation protocol**. Tasks are JSON
 files in `.claude/state/tasks/` that carry structured work between agents.
 
-**Allowed task statuses:** `submitted`, `accepted`, `working`, `input-required`, `completed`, `failed`, `rejected`, `canceled`, `blocked`, `needs-review`. The status `blocked-auto` is not valid; use `blocked` or `ready-for-followup` as appropriate. Human clearance is required to move from `needs-review` to `ready-for-followup`.
+**Allowed task statuses:** `submitted`, `accepted`, `working`, `input-required`, `completed`, `failed`, `rejected`, `canceled`, `BLOCKED_ON_CANCELED`. These align with the runtime task protocol; use only canonical statuses.
 
 **MAX_HANDOFF_CHAIN_DEPTH:** 5 (configurable). Rationale: limits handoff chain length to avoid unbounded delegation; default balances flexibility with traceability.
 

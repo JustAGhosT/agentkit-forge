@@ -258,17 +258,18 @@ function flattenProjectYaml(project, docsSpec = null) {
   if (infra.modulesRepo) vars.infraModulesRepo = infra.modulesRepo;
   if (infra.lockProvider && infra.lockProvider !== 'none')
     vars.infraLockProvider = infra.lockProvider;
-  vars.hasAnyInfraConfig =
-    !!vars.infraNamingConvention ||
-    !!vars.infraDefaultRegion ||
-    !!vars.infraOrg ||
-    !!vars.infraIacToolchain ||
-    !!vars.infraStateBackend;
   const tagging = infra.tagging || {};
   if (Array.isArray(tagging.mandatory) && tagging.mandatory.length > 0) {
     vars.infraMandatoryTags = tagging.mandatory.join(', ');
     vars.hasInfraTags = true;
   }
+  vars.hasAnyInfraConfig =
+    !!vars.infraNamingConvention ||
+    !!vars.infraDefaultRegion ||
+    !!vars.infraOrg ||
+    !!vars.infraIacToolchain ||
+    !!vars.infraStateBackend ||
+    !!vars.infraMandatoryTags;
   if (Array.isArray(tagging.optional)) vars.infraOptionalTags = tagging.optional.join(', ');
 
   // Observability
@@ -459,9 +460,9 @@ function flattenCrosscutting(cc, vars) {
  * rendered output is executed in a shell context (e.g., hook scripts).
  */
 function sanitizeTemplateValue(value) {
-  // Remove characters that enable shell injection: $() `` ; | & etc.
-  // Allow common safe characters: alphanumeric, spaces, hyphens, underscores, dots, slashes, @
-  return value.replace(/[`$\\;|&<>!{}()]/g, '');
+  // Remove characters that enable shell injection: $ `` ; | & etc.
+  // Allow parentheses for readable content (e.g. "IO operations (file system, network, database)")
+  return value.replace(/[`$\\;|&<>!{}]/g, '');
 }
 
 function formatCommandFlags(flags) {
@@ -1387,7 +1388,7 @@ function buildAgentDomainRulesMarkdown(agent, rulesSpec) {
       : '';
 
     if (conventions) {
-      matched.push(`### ${ruleSet.domain}\n${conventions}`);
+      matched.push(`### ${ruleSet.domain}\n\n${conventions}`);
     }
   }
 

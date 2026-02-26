@@ -9,7 +9,7 @@ description: "Team INFRA — IaC, cloud, Terraform/Bicep"
 
 # Team: INFRA
 
-**Focus**: IaC, cloud, Terraform/Bicep/Pulumi
+**Focus**: IaC, cloud, Terraform/Bicep
 **Scope**: infra/**, terraform/**, bicep/**, pulumi/**
 
 ## Persona

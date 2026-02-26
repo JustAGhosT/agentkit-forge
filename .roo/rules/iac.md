@@ -20,10 +20,10 @@ Standards for all Infrastructure as Code. Covers Terraform and Terragrunt conven
 
 - **iac-naming-convention** [error]: All cloud resources must follow the naming convention org-env-project-resourcetype-region. The default org is "nl", the default region is "southafricanorth". Deviations require a comment explaining why. Use locals blocks to compose names from variables.
 - **iac-toolchain** [error]: Use Terraform for resource definitions and Terragrunt for DRY configuration, remote state management, and environment orchestration. All environments must be managed through Terragrunt live configurations.
-- **iac-state-backend** [critical]: Terraform state must be stored remotely Azure Storage / S3 / GCS with locking enabled. Never commit .tfstate files. State backend configuration must be managed through Terragrunt to avoid duplication.
+- **iac-state-backend** [critical]: Terraform state must be stored remotely (Azure Storage / S3 / GCS) with locking enabled. Never commit .tfstate files. State backend configuration must be managed through Terragrunt to avoid duplication.
 - **iac-modules** [error]: Reusable infrastructure must be extracted into versioned Terraform modules. Modules must have README.md, variables.tf, outputs.tf, and examples/. Pin module versions in consumers — never use unversioned source references.
 - **iac-tagging** [error]: All taggable resources must include mandatory tags: environment, project, owner, and cost-center. Use a shared locals block or Terragrunt inputs to enforce consistent tagging across all resources.
-- **iac-plan-before-apply** [critical]: Always run 'terraform plan' or 'terragrunt plan' and review the diff before applying. CI pipelines must include a plan stage with human approval gate before apply. Never use -auto-approve in production environments.
+- **iac-plan-before-apply** [critical]: Always run 'terraform plan' (or 'terragrunt plan') and review the diff before applying. CI pipelines must include a plan stage with human approval gate before apply. Never use -auto-approve in production environments.
 - **iac-no-hardcoded-secrets** [critical]: Never hardcode secrets, connection strings, or credentials in .tf or .hcl files. Use Key Vault / Secrets Manager references, or pass secrets via environment variables in CI. Sensitive variables must be marked sensitive = true.
 - **iac-fmt** [error]: All Terraform code must pass 'terraform fmt -check'
 - **iac-validate** [error]: All Terraform configurations must pass 'terraform validate'

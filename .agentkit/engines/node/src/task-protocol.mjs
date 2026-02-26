@@ -174,8 +174,16 @@ export function generateTaskId(projectRoot) {
     }
   }
 
+  const maxRetries = 1000;
+  let attempts = 0;
   let candidate = `${prefix}${String(seq).padStart(3, '0')}-${generateRandomSuffix()}`;
   while (existsSync(taskPath(projectRoot, candidate))) {
+    attempts += 1;
+    if (attempts >= maxRetries) {
+      throw new Error(
+        `generateTaskId: exceeded max retries (${maxRetries}) resolving collision in ${projectRoot}`
+      );
+    }
     seq += 1;
     candidate = `${prefix}${String(seq).padStart(3, '0')}-${generateRandomSuffix()}`;
   }

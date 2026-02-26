@@ -17,13 +17,11 @@ Invoke this skill when you need to perform the `orchestrate` operation.
 
 ## Instructions
 
-1. Parse arguments and scan repo state (AGENT_BACKLOG.md, orchestrator.json, task queue).
-2. Perform high-level design: draft strategy, constraints, success criteria.
-3. Map sub-tasks to team agents; produce concrete task specs (inputs, expected outputs, validation rules) for each.
-4. Delegate to appropriate team agents; track progress.
-5. Collect and synthesize agent outputs into a unified result.
-6. Run final validation/quality gates; iterate if needed.
-7. Produce a clear report of decisions and outcomes.
+1. Parse any arguments provided
+2. Scan relevant files to understand the current state
+3. Execute the task following project conventions
+4. Validate the output against quality gates
+5. Report results clearly
 
 ## Project Context
 

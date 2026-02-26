@@ -18,8 +18,7 @@
 | **License**        | Open weights (MIT/Apache) + API                                     |
 | **Notable**        | Open-source breakthrough, ~$6M training cost, strong reasoning capabilities |
 
-R1 is a DeepSeek reasoning-family model (not a separate external project) and
-is tracked as part of the broader DeepSeek model line.
+R1 corresponds to the tracked model ID `deepseek-reasoner` (DeepSeek reasoning-family). It is not a separate external project and is tracked as part of the broader DeepSeek model line.
 
 **Versioning Note:** "DeepSeek V3.2" represents the semantic release version for production use, while "DeepSeek-V3-0324" is a dated snapshot tag for reproducibility. V3.2 is the canonical current release.
 

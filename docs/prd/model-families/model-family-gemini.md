@@ -19,16 +19,18 @@
 | **License**        | Proprietary (API) + limited open weights            |
 | **Notable**        | Native multimodal from ground up, 2M context leader |
 
-## Hugging Face Resources
+## Google API Model Identifiers
 
-| Resource         | Model ID                      | Notes                      |
+These are Google API/Studio/Vertex model identifiers (access via Google AI Studio, Vertex AI, or Gemini API). They are not Hugging Face repository paths.
+
+| Model            | API identifier                | Notes                      |
 | ---------------- | ----------------------------- | -------------------------- |
-| Gemini 1.5 Pro   | `google/gemini-1.5-pro`       | 1M context, API access     |
+| Gemini 1.5 Pro   | `google/gemini-1.5-pro`      | 1M context, API access     |
 | Gemini 1.5 Flash | `google/gemini-1.5-flash`     | Fast variant, 1M context   |
 | Gemini 2.0 Flash | `google/gemini-2.0-flash-exp` | Experimental Flash variant |
 | Gemini 2.0 Flash | `google/gemini-2.0-flash`     | Production Flash           |
 
-> **Note:** Google publishes most Gemini models via Google AI Studio and Vertex AI, not Hugging Face. The table above lists Gemini 1.5/2.0 as the latest publicly available production models on Hugging Face. Gemini 3/3.1 are preview/announcement-only and not yet available on Hugging Face.
+> **Note:** Google publishes most Gemini models via Google AI Studio and Vertex AI, not Hugging Face. Gemini 3/3.1 are preview/announcement-only and not yet available.
 
 ## Latest benchmark signals
 

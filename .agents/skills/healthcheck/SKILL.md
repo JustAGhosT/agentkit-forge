@@ -17,11 +17,11 @@ Invoke this skill when you need to perform the `healthcheck` operation.
 
 ## Instructions
 
-1. **Build:** Run stack-specific build (npm run build, yarn build, mvn compile, gradle build, cargo build, dotnet build).
-2. **Test:** Run tests (npm test, pytest, mvn test, go test). Success: exit 0; failure: non-zero exit.
-3. **Lint:** Run linter (eslint, flake8, golangci-lint, cargo clippy). Validate config files (package.json, pyproject.toml, .eslintrc, Dockerfile) via schema check or CLI validation.
-4. **Config:** Verify config files exist and parse.
-5. **Exit:** Report pass/fail per check; fail overall if any required check fails.
+1. Parse any arguments provided
+2. Scan relevant files to understand the current state
+3. Execute the task following project conventions
+4. Validate the output against quality gates
+5. Report results clearly
 
 ## Project Context
 

@@ -40,7 +40,7 @@ Scan the codebase within your focus area before making changes. Read `AGENT_BACK
 
 ## Responsibilities
 
-- Design and maintain CI/CD pipelines: GitHub Actions, Azure DevOps
+- Design and maintain CI/CD pipelines (GitHub Actions, Azure DevOps)
 - Optimize build times and caching strategies
 - Maintain Docker configurations and multi-stage builds
 - Implement deployment automation for all environments
@@ -62,6 +62,7 @@ Scan the codebase within your focus area before making changes. Read `AGENT_BACK
 ## Domain Rules
 
 ### security
+
 - **sec-no-secrets** [critical]: Never read, print, log, or expose secrets, API keys, tokens, passwords, or connection strings in code, logs, or error messages. Use environment variables or secret managers. Never commit .env files, credentials, or private keys to version control.
 - **sec-least-privilege** [error]: Apply least privilege principle everywhere: IAM roles, database permissions, API scopes, file system access. Request only the minimum permissions required for the operation. Document why each permission is needed.
 - **sec-deny-by-default** [error]: All access control must be deny-by-default. Authentication is required for all endpoints unless explicitly marked as public. Authorization checks must be performed at the handler level, not middleware alone. Default to most restrictive settings.

@@ -41,7 +41,7 @@ Scan the codebase within your focus area before making changes. Read `AGENT_BACK
 ## Responsibilities
 
 - Enforce brand guidelines across all UI components and marketing pages
-- Maintain design token definitions: colors, typography, spacing
+- Maintain design token definitions (colors, typography, spacing)
 - Review visual changes for brand consistency
 - Ensure logo usage, color palette, and typography follow brand standards
 - Validate marketing materials and landing pages
@@ -58,10 +58,11 @@ Scan the codebase within your focus area before making changes. Read `AGENT_BACK
 ## Domain Rules
 
 ### security
+
 - **sec-no-secrets** [critical]: Never read, print, log, or expose secrets, API keys, tokens, passwords, or connection strings in code, logs, or error messages. Use environment variables or secret managers. Never commit .env files, credentials, or private keys to version control.
 - **sec-least-privilege** [error]: Apply least privilege principle everywhere: IAM roles, database permissions, API scopes, file system access. Request only the minimum permissions required for the operation. Document why each permission is needed.
 - **sec-deny-by-default** [error]: All access control must be deny-by-default. Authentication is required for all endpoints unless explicitly marked as public. Authorization checks must be performed at the handler level, not middleware alone. Default to most restrictive settings.
-- **sec-input-validation** [error]: All external input must be validated and sanitized. Use schema validation libraries zod, FluentValidation, pydantic, serde at system boundaries. Never trust client-side validation alone.
+- **sec-input-validation** [error]: All external input must be validated and sanitized. Use schema validation libraries (zod, FluentValidation, pydantic, serde) at system boundaries. Never trust client-side validation alone.
 - **sec-dependency-audit** [warning]: Dependencies must be audited for known vulnerabilities before adoption and on a regular schedule. Pin dependency versions. Review transitive dependencies for supply chain risk.
 - **sec-encryption** [error]: Sensitive data must be encrypted at rest and in transit. Use TLS 1.2+ for all network communication. Use AES-256 or equivalent for data at rest. Never implement custom cryptography.
 

@@ -46,7 +46,7 @@
 
 `cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
 
-- Fallback policy (approved by platform leads on 2026-02-26; see decision record AKF-INFRA-001): if `tokens/problem` is missing, keep current Cost scores unchanged and mark cost evidence as `Not evaluated`.
+- Fallback policy (approved by platform leads on 2026-02-26; see [AKF-INFRA-001](../../03_architecture/03_decisions/0002-fallback-policy-tokens-problem.md)): if `tokens/problem` is missing, keep current Cost scores unchanged and mark cost evidence as `Not evaluated`.
 
 ## Cost Evidence Status and Recalculation
 
@@ -79,7 +79,7 @@
 
 | Model      | Score | Key Strengths              | Notes                       |
 | ---------- | ----- | -------------------------- | --------------------------- |
-| o3         | 8.05  | Low cost and stable output | Cost-aware default fallback |
+| o3         | 8.05  | Low-cost and stable output | Cost-aware default fallback |
 | Kimi K2.5  | 8.05  | Budget option              | Non-critical infra tasks    |
 | xAI Grok-3 | 8.00  | Fast iteration             | Infra experimentation only  |
 

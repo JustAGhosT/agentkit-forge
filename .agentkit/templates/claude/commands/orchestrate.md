@@ -253,9 +253,11 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
    - If `retryPolicy.roundRetries[roundKey] >= retryPolicy.maxRetryCount`, escalate and stop automatic retries for that round/issue.
    - When escalation occurs:
      1. Append a structured entry to `events.log`:
+
         ```json
         {"eventType": "RETRY_ESCALATED", "reason": "retry-limit-reached", "roundKey": "round-4", "roundRetryCount": 2, "timestamp": "2026-02-26T10:30:00Z"}
         ```
+
      2. Persist `retryPolicy.retryEscalated = { "reason": "retry-limit-reached", "at": "<ISO-8601 timestamp>", "roundKey": "<round-or-issue-key>", "roundRetryCount": <number> }`.
      3. Continue overall processing (move to Phase 5) without further automatic retries for that key until human intervention.
 
