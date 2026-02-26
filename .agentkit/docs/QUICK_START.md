@@ -115,7 +115,7 @@ The `sync` command generated several directories and files in your repository ro
 
 | Path         | Purpose                                                                                                                                                                                                |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `.claude/`   | **Claude Code configs** -- Slash commands, lifecycle hooks, specialized agents, coding rules, and orchestrator state. This is where the 29 commands like `/discover` and `/orchestrate` live.          |
+| `.claude/`   | **Claude Code configs** -- Slash commands, lifecycle hooks, specialized agents, coding rules, and orchestrator state. This is where the 24 commands like `/discover` and `/orchestrate` live.          |
 | `.cursor/`   | **Cursor AI rules** -- Rules files in `.mdc` format that Cursor uses for context-aware code generation.                                                                                                |
 | `.windsurf/` | **Windsurf AI rules and workflows** -- Rules and workflow definitions for Windsurf's AI assistant.                                                                                                     |
 | `.ai/`       | **Portable rules** -- A tool-agnostic rules format compatible with Continue and other AI tools that support the `.ai/` convention.                                                                     |
@@ -245,8 +245,7 @@ Open Claude Code in your project directory and walk through this sequence. Each 
 
 ## Command Quick Reference
 
-AgentKit Forge provides 29 slash commands, organized into three categories.
-TODO: auto-generate this count from `.agentkit/spec/commands.yaml`.
+AgentKit Forge provides 24 slash commands, organized into three categories.
 
 ### Workflow Commands
 

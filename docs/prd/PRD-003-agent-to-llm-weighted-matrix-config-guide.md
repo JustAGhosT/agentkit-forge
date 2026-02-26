@@ -83,31 +83,31 @@ and overlay configuration examples.
 ## Metric Weights by Team / Agent (out of 100)
 
 | Team / Agent | Code Quality | Reasoning | Cost | Context | Speed | Compatibility |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Backend | 30 | 25 | 10 | 25 | 5 | 5 |
-| Frontend | 15 | 15 | 20 | 15 | 25 | 10 |
-| Data | 15 | 30 | 10 | 35 | 5 | 5 |
-| Infra | 10 | 20 | 25 | 20 | 15 | 10 |
-| DevOps | 10 | 20 | 30 | 10 | 20 | 10 |
-| Testing | 25 | 20 | 15 | 20 | 10 | 10 |
-| Security | 20 | 30 | 10 | 10 | 10 | 20 |
-| Docs | 5 | 20 | 10 | 45 | 5 | 15 |
-| Product | 10 | 30 | 10 | 25 | 5 | 20 |
-| Quality | 30 | 25 | 10 | 15 | 10 | 10 |
+| ------------ | -----------: | --------: | ---: | ------: | ----: | ------------: |
+| Backend      |           30 |        25 |   10 |      25 |     5 |             5 |
+| Frontend     |           15 |        15 |   20 |      15 |    25 |            10 |
+| Data         |           15 |        30 |   10 |      35 |     5 |             5 |
+| Infra        |           10 |        20 |   25 |      20 |    15 |            10 |
+| DevOps       |           10 |        20 |   30 |      10 |    20 |            10 |
+| Testing      |           25 |        20 |   15 |      20 |    10 |            10 |
+| Security     |           20 |        30 |   10 |      10 |    10 |            20 |
+| Docs         |            5 |        20 |   10 |      45 |     5 |            15 |
+| Product      |           10 |        30 |   10 |      25 |     5 |            20 |
+| Quality      |           30 |        25 |   10 |      15 |    10 |            10 |
 
 ## LLM Scorecards by Team / Agent (Example Baseline)
 
-| Model | Code | Reasoning | Cost | Context | Speed | Compatibility | Notes |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| Claude 3 Opus | 9 | 10 | 5 | 10 | 10 | 8 | Top context, strong code |
-| GPT-5.x | 10 | 9 | 7 | 9 | 9 | 9 | Strong NL to code, expensive |
-| Gemini Ultra | 8 | 8 | 8 | 8 | 9 | 9 | Good cloud/dev support |
-| Kimi | 7 | 7 | 9 | 6 | 7 | 8 | Budget option |
-| Minimax | 7 | 7 | 9 | 7 | 8 | 8 | Reliable in selected regions |
-| GLM-4 | 7 | 8 | 8 | 8 | 7 | 9 | Multi-language friendly |
-| xAI Grok | 6 | 6 | 7 | 7 | 8 | 7 | Infra-oriented experimentation |
-| SWE-Llama | 9 | 8 | 8 | 8 | 8 | 8 | Code/test specialist |
-| o3 | 7 | 7 | 9 | 7 | 7 | 8 | Low cost, fast deploy |
+| Model         | Code | Reasoning | Cost | Context | Speed | Compatibility | Notes                          |
+| ------------- | ---: | --------: | ---: | ------: | ----: | ------------: | ------------------------------ |
+| Claude 3 Opus |    9 |        10 |    5 |      10 |    10 |             8 | Top context, strong code       |
+| GPT-5.x       |   10 |         9 |    7 |       9 |     9 |             9 | Strong NL to code, expensive   |
+| Gemini Ultra  |    8 |         8 |    8 |       8 |     9 |             9 | Good cloud/dev support         |
+| Kimi          |    7 |         7 |    9 |       6 |     7 |             8 | Budget option                  |
+| Minimax       |    7 |         7 |    9 |       7 |     8 |             8 | Reliable in selected regions   |
+| GLM-4         |    7 |         8 |    8 |       8 |     7 |             9 | Multi-language friendly        |
+| xAI Grok      |    6 |         6 |    7 |       7 |     8 |             7 | Infra-oriented experimentation |
+| SWE-Llama     |    9 |         8 |    8 |       8 |     8 |             8 | Code/test specialist           |
+| o3            |    7 |         7 |    9 |       7 |     7 |             8 | Low cost, fast deploy          |
 
 ## Full Weighted Decision Matrix (All Teams)
 
@@ -117,23 +117,22 @@ Weighted Score = sum(metricWeight x modelScore) / 100
 
 Sample backend calculation (Claude 3 Opus):
 
-(30 x 9 + 25 x 10 + 10 x 5 + 25 x 10 + 5 x 10 + 5 x 8) / 100 = 8.85
+(30 x 9 + 25 x 10 + 10 x 5 + 25 x 10 + 5 x 10 + 5 x 8) / 100 = 9.10
 
-| Team | Claude 3 Opus | GPT-5.x | Gemini | Kimi | Minimax | GLM-4 | xAI Grok | SWE-Llama | o3 | Top Choices | Cost-Aware Alt |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Backend | 8.85 | 8.85 | 8.05 | 7.15 | 7.25 | 7.55 | 6.60 | 8.35 | 7.20 | Claude, GPT-5.x, SWE-Llama | Kimi, o3 |
-| Frontend | 7.75 | 8.10 | 8.45 | 8.05 | 8.20 | 8.35 | 7.40 | 8.30 | 8.05 | Gemini, SWE-Llama, Minimax | o3, Kimi |
-| Data | 8.65 | 8.60 | 8.20 | 7.25 | 7.35 | 8.20 | 7.10 | 8.30 | 7.25 | Claude, SWE-Llama, GPT-5.x | o3, Kimi |
-| Infra | 8.55 | 8.35 | 8.20 | 8.05 | 8.05 | 8.15 | 8.00 | 8.20 | 8.05 | Claude, Gemini, GPT-5.x | o3, Kimi |
-| DevOps | 8.50 | 8.30 | 8.15 | 8.10 | 8.05 | 8.10 | 8.05 | 8.10 | 8.05 | Claude, Gemini, xAI Grok | o3, Kimi |
-| Testing | 8.80 | 8.75 | 8.20 | 7.90 | 7.95 | 8.35 | 7.30 | 8.65 | 7.65 | Claude, SWE-Llama, GPT-5.x | o3, Kimi |
-| Security | 9.10 | 9.15 | 8.55 | 7.60 | 7.65 | 8.30 | 7.75 | 8.60 | 7.45 | GPT-5.x, Claude, SWE-Llama | o3, Kimi |
-| Docs | 8.45 | 8.40 | 8.15 | 7.45 | 7.55 | 8.15 | 7.40 | 8.25 | 7.75 | Claude, GPT-5.x, SWE-Llama | o3, Minimax |
-| Product | 8.85 | 9.05 | 8.25 | 7.35 | 7.40 | 8.10 | 7.45 | 8.60 | 7.45 | GPT-5.x, Claude, SWE-Llama | o3, Kimi |
-| Quality | 8.80 | 8.80 | 8.40 | 7.55 | 7.65 | 8.20 | 7.40 | 8.60 | 7.45 | Claude, SWE-Llama, GPT-5.x | o3, Kimi |
+| Team     | Claude 3 Opus | GPT-5.x | Gemini | Kimi | Minimax | GLM-4 | xAI Grok | SWE-Llama |   o3 | Top Choices                | Cost-Aware Alt     |
+| -------- | ------------: | ------: | -----: | ---: | ------: | ----: | -------: | --------: | ---: | -------------------------- | ------------------ |
+| Backend  |          9.10 |    9.10 |   8.05 | 7.15 |    7.25 |  7.55 |     6.60 |      8.35 | 7.20 | Claude, GPT-5.x, SWE-Llama | Kimi, o3           |
+| Frontend |          7.75 |    8.10 |   8.45 | 8.05 |    8.20 |  8.35 |     7.40 |      8.30 | 8.05 | Gemini, SWE-Llama, Minimax | o3, Kimi           |
+| Data     |          8.65 |    8.60 |   8.20 | 7.25 |    7.35 |  8.20 |     7.10 |      8.30 | 7.25 | Claude, SWE-Llama, GPT-5.x | o3, Kimi           |
+| Infra    |          8.55 |    8.35 |   8.20 | 8.05 |    8.05 |  8.15 |     8.00 |      8.20 | 8.05 | Claude, Gemini, GPT-5.x    | o3, Kimi           |
+| DevOps   |          8.50 |    8.30 |   8.15 | 8.10 |    8.05 |  8.10 |     8.05 |      8.10 | 8.05 | Claude, Gemini, xAI Grok   | o3, Kimi           |
+| Testing  |          8.80 |    8.75 |   8.20 | 7.90 |    7.95 |  8.35 |     7.30 |      8.65 | 7.65 | Claude, SWE-Llama, GPT-5.x | o3, Kimi           |
+| Security |          9.10 |    9.15 |   8.55 | 7.60 |    7.65 |  8.30 |     7.75 |      8.60 | 7.45 | GPT-5.x, Claude, SWE-Llama | o3, Kimi           |
+| Docs     |          8.45 |    8.40 |   8.15 | 7.45 |    7.55 |  8.15 |     7.40 |      8.25 | 7.75 | Claude, GPT-5.x, SWE-Llama | o3, Minimax (APAC) |
+| Product  |          8.85 |    9.05 |   8.25 | 7.35 |    7.40 |  8.10 |     7.45 |      8.60 | 7.45 | GPT-5.x, Claude, SWE-Llama | o3, Kimi           |
+| Quality  |          8.80 |    8.80 |   8.40 | 7.55 |    7.65 |  8.20 |     7.40 |      8.60 | 7.45 | Claude, SWE-Llama, GPT-5.x | o3, Kimi           |
 
-Note: For teams with cost weight above 25, Kimi and o3 are shown as preferred
-low-cost alternates.
+Note: Cost-Aware Alt shown for teams with cost weight >= 25 (e.g., DevOps, Infra) — other teams may omit alternates.
 
 ## Edge Cases and Commentary
 

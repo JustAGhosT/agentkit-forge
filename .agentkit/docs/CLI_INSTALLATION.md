@@ -154,6 +154,8 @@ DEBUG=1 node .agentkit/engines/node/src/cli.mjs sync
 
 ### Slash-command-only
 
+Slash commands are single-line commands invoked in chat or IDE chat inputs (e.g., `/project-review` in Claude Code, Cursor, or Windsurf). They work in chat assistants and supported IDE extensions, and require an authenticated session with an open workspace.
+
 | Command          | Purpose                                         |
 | ---------------- | ----------------------------------------------- |
 | `project-review` | Comprehensive project audit (slash workflow)    |

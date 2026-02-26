@@ -112,11 +112,11 @@ competitive advantage for team productivity, governance, and cost control.
 
 ## Measurable Objectives
 
-| Objective | Baseline | Target | Timeline |
-| --- | --- | --- | --- |
-| Model-agent optimality | Manual | 90% mapped in 1 week | 1-2 sprints post-GA |
-| Config update frequency | Low | +25% in v1 | 1 month |
-| Code quality (lint/tests) | TBA | +10% | 1 quarter |
+| Objective                 | Baseline                    | Target                      | Timeline            |
+| ------------------------- | --------------------------- | --------------------------- | ------------------- |
+| Model-agent optimality    | Manual                      | 90% mapped in 1 week        | 1-2 sprints post-GA |
+| Config update frequency   | 2 updates/month             | +25% in v1                  | 1 month             |
+| Code quality (lint/tests) | 75% pass rate, 40% coverage | 85% pass rate, 50% coverage | 1 quarter           |
 
 ## Stakeholders
 
@@ -171,11 +171,11 @@ Acceptance criteria:
 
 ### Core Flow
 
-1. User runs -agentkit init-.
+1. User runs `agentkit init`.
 2. Forge detects stack, agents, and available models.
 3. Forge proposes mappings with rationale and warnings.
 4. User accepts or edits metric weights.
-5. Mapping is committed in -.agentkit/spec-.
+5. Mapping is committed in `.agentkit/spec`.
 6. Runtime hooks route tasks by mapping.
 7. Changes are auditable via overlay and git diff.
 
@@ -215,11 +215,11 @@ Acceptance criteria:
 
 ## Mesh Layer Mapping
 
-| Forge Layer | Role |
-| --- | --- |
-| Config Mapping Layer | Stores and loads agent-model specs |
-| Orchestration Layer | Routes tasks by mapping at runtime |
-| Docs and Overlay Layer | Surfaces scorecards and warnings |
+| Forge Layer            | Role                               |
+| ---------------------- | ---------------------------------- |
+| Config Mapping Layer   | Stores and loads agent-model specs |
+| Orchestration Layer    | Routes tasks by mapping at runtime |
+| Docs and Overlay Layer | Surfaces scorecards and warnings   |
 
 ## APIs and Integrations
 
@@ -240,24 +240,27 @@ Acceptance criteria:
 ```yaml
 agents:
   - name: codebot
-    llm: claude-3
+    llm: claude-3-opus  # Replace with current recommended Anthropic model at deployment time
     rationale: Best for code generation and large context tasks.
     weights:
       quality: 5
       cost: 3
       speed: 2
       context: 3
+      lock_in: 1
       quirks: 1
     audit_trail:
       - version: v1.2
-        changed_by: jurie
+        changed_by: <username>
         date: 2024-06-12
 ```
 
+> **Note:** The `llm` value is illustrative. Configure the current recommended model from your provider at deployment/configuration time.
+
 ## UX and Entry Points
 
-- CLI: -agentkit init-, -agentkit llm map-, -agentkit llm scorecard-
-- Documentation: -docs/LLMs.md- and PRD references
+- CLI: `agentkit init`, `agentkit llm map`, `agentkit llm scorecard`
+- Documentation: `docs/LLMs.md` and PRD references
 - Overlay and UI support planned in v2+
 
 ## Accessibility
@@ -288,13 +291,21 @@ agents:
 - Dashboards for adoption, drift, and issue trends
 - Review cadence: biweekly and quarterly
 
+### Telemetry Privacy
+
+Telemetry privacy requirements are documented in the Non-Functional Requirements section above. See GDPR/CCPA compliance requirements for details.
+
+See also: Open Questions table — telemetry privacy question has been migrated there for tracking.
+
 ## Timeline and Milestones
 
-| Phase | Scope | Target |
-| --- | --- | --- |
-| v1 | Scorecards, static config, docs | +4 weeks |
-| v2 | Dynamic mapping, feedback loop, optional UI | +8 weeks |
-| v3+ | Marketplace and expanded benchmarks | Q4+ |
+> **Note:** Targets are relative to project start date.
+
+| Phase | Scope                                       | Target         |
+| ----- | ------------------------------------------- | -------------- |
+| v1    | Scorecards, static config, docs             | +4 weeks       |
+| v2    | Dynamic mapping, feedback loop, optional UI | +8 weeks       |
+| v3+   | Marketplace and expanded benchmarks         | Q4 2025 (CY+1) |
 
 ## Constraints and Dependencies
 
@@ -313,39 +324,44 @@ agents:
 
 ## Risks and Mitigations
 
-| Risk | Impact | Likelihood | Mitigation |
-| --- | --- | --- | --- |
-| LLM churn and instability | Medium | High | Automated scorecard refresh loops |
-| Stale metrics | High | Medium | Scheduled review and manual override |
-| Team weight misalignment | Medium | Medium | Editable weights and rationale docs |
-| Vendor lock-in | High | Low | Polyglot support and fallback routing |
+| Risk                      | Impact | Likelihood | Mitigation                            |
+| ------------------------- | ------ | ---------- | ------------------------------------- |
+| LLM churn and instability | Medium | High       | Automated scorecard refresh loops     |
+| Stale metrics             | High   | Medium     | Scheduled review and manual override  |
+| Team weight misalignment  | Medium | Medium     | Editable weights and rationale docs   |
+| Vendor lock-in            | High   | Low        | Polyglot support and fallback routing |
 
 ## Open Questions
 
-| Question | Owner | Target Resolution | Impact if Unresolved |
-| --- | --- | --- | --- |
-| How should scorecards auto-refresh? | Product Lead | v1-v2 planning | Lower trust in recommendations |
-| Are stack-specific biases material? | Engineering Lead | v2 | Suboptimal model choices |
+| Question                                                                                       | Owner            | Target Resolution | Impact if Unresolved           |
+| ---------------------------------------------------------------------------------------------- | ---------------- | ----------------- | ------------------------------ |
+| How should scorecards auto-refresh?                                                            | Product Lead     | v1-v2 planning    | Lower trust in recommendations |
+| Are stack-specific biases material?                                                            | Engineering Lead | v2                | Suboptimal model choices       |
+| How will telemetry handle consent, anonymisation, retention, and legal compliance (GDPR/CCPA)? | Product Lead     | v1 planning       | Legal risk, user trust issues  |
 
 ## Appendix
 
 ### Competitive Positioning
 
-| Product | Centralized Mapping | Coding Scorecards | Drift Detection | Gotcha Docs |
-| --- | --- | --- | --- | --- |
-| AgentKit Forge | Yes | Yes | Planned | Yes |
-| LangChain | No | Partial | No | No |
-| OSS Agent Bundles | No | No | No | No |
-| Enterprise RAG Platforms | Yes | Partial | Yes | Partial |
+| Product                  | Centralized Mapping | Coding Scorecards | Drift Detection | Gotcha Docs |
+| ------------------------ | ------------------- | ----------------- | --------------- | ----------- |
+| AgentKit Forge           | Yes                 | Yes               | Planned         | Yes         |
+| LangChain                | No                  | Partial           | No              | No          |
+| OSS Agent Bundles        | No                  | No                | No              | No          |
+| Enterprise RAG Platforms | Yes                 | Partial           | Yes             | Partial     |
 
 ### Example Coding Scorecard Snapshot
 
-| Model | Code Quality | Reasoning | Context | Cost | Speed | Compatibility | Quirks |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| GPT-4o | 9.5 | 9.3 | 128K | $$ | 9.2 | High | Rate-limit spikes |
-| Claude 3 Opus | 9.7 | 9.0 | 200K | $$$ | 8.5 | High | Very verbose near high context |
-| Gemini Ultra | 8.7 | 8.6 | 32K | $$ | 8.9 | Medium | API quota constraints |
-| OSS Code LLaMA | 8.0 | 7.8 | 16K | Free | 8.5 | Medium | Endpoint and hallucination tuning |
+> **Last Updated:** February 2025 — verify current model capabilities before deployment
+
+| Model                     | Code Quality | Reasoning | Context | Cost | Speed | Compatibility | Lock-in | Quirks                                 |
+| ------------------------- | ------------ | --------- | ------- | ---- | ----- | ------------- | ------- | -------------------------------------- |
+| GPT-4o                    | 9.5          | 9.3       | 128K    | $$   | 9.2   | High          | Low     | Rate-limit spikes                      |
+| Claude 3.5 Sonnet         | 9.6          | 9.2       | 200K    | $$   | 9.0   | High          | Low     | Strong coding, cost-effective          |
+| Claude 3 Opus             | 9.7          | 9.0       | 200K    | $$$  | 8.5   | High          | Medium  | Very verbose near high context         |
+| Gemini 2.5 Pro            | 8.9          | 8.8       | 1M      | $$   | 9.0   | High          | Low     | Upgradeable context, strong reasoning  |
+| Gemini Ultra (deprecated) | 8.7          | 8.6       | 128K    | $$   | 8.9   | Medium        | Medium  | Historical only, API quota constraints |
+| OSS Code LLaMA            | 8.0          | 7.8       | 16K     | Free | 8.5   | Medium        | None    | Endpoint and hallucination tuning      |
 
 ### Recommendations
 

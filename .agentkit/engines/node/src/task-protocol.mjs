@@ -481,12 +481,11 @@ export function checkDependencies(projectRoot) {
   const { tasks } = listTasks(projectRoot);
   const unblocked = [];
   const errors = [];
-  const cycleErrors = detectDependencyCycles(tasks);
-  if (cycleErrors.length > 0) {
-    return { unblocked, errors: cycleErrors };
-  }
+  const { errors: cycleErrors, cycleTaskIds } = detectDependencyCycles(tasks);
 
-  for (const task of tasks) {
+  const tasksToProcess = tasks.filter((task) => !cycleTaskIds.has(task.id));
+
+  for (const task of tasksToProcess) {
     if (TERMINAL_STATES.includes(task.status)) continue;
     if (!Array.isArray(task.dependsOn) || task.dependsOn.length === 0) continue;
 
@@ -523,7 +522,7 @@ export function checkDependencies(projectRoot) {
     }
   }
 
-  return { unblocked, errors };
+  return { unblocked, errors: [...errors, ...cycleErrors] };
 }
 
 function detectDependencyCycles(tasks) {
@@ -536,12 +535,16 @@ function detectDependencyCycles(tasks) {
   const visited = new Set();
   const path = [];
   const errors = [];
+  const cycleTaskIds = new Set();
 
   function walk(taskId) {
     if (visiting.has(taskId)) {
       const start = path.indexOf(taskId);
       const cycle = [...path.slice(start), taskId];
       errors.push(`Dependency cycle detected: ${cycle.join(' -> ')}`);
+      for (const id of cycle) {
+        cycleTaskIds.add(id);
+      }
       return;
     }
     if (visited.has(taskId)) return;
@@ -565,7 +568,7 @@ function detectDependencyCycles(tasks) {
     walk(taskId);
   }
 
-  return errors;
+  return { errors, cycleTaskIds };
 }
 
 // ---------------------------------------------------------------------------

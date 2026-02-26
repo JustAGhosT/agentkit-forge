@@ -75,6 +75,19 @@ Append structured log lines in the format:
 [<ISO-8601 timestamp>] [<PHASE>] [<TEAM|ORCHESTRATOR>] <message>
 ```
 
+For machine-identifiable events, use JSON lines format:
+
+```json
+{"eventType": "DESCOPED", "taskId": "<task-id>", "reason": "<descoping rationale>", "actor": "<user or orchestrator>", "timestamp": "<ISO-8601>"}
+{"eventType": "CANCELED", "taskId": "<task-id>", "reason": "dependency-cycle", "cycleId": "<cycle-id>", "cycleMembers": ["<task-id-1>"], "actor": "orchestrator", "timestamp": "<ISO-8601>"}
+```
+
+**eventType enum values:** `DESCOPED`, `CANCELED`, `COMPLETED`, `FAILED`, `REJECTED`, `STARTED`, `BLOCKED`, `UNBLOCKED`, `DELEGATED`, `ACCEPTED`, `RETRY_ESCALATED`
+
+**cycleId format:** Use a deterministic identifier per detected cycle. Generate once per cycle using a sorted-hash of member task IDs (e.g., SHA-256 of `task-id-1,task-id-2,...` truncated to 12 chars) or a UUID generated at detection time and reused for all events from that cycle.
+
+Required fields for DESCOPED events: `eventType` (must be "DESCOPED"), `taskId`, `reason`. Optional: `actor`, `timestamp`.
+
 Create this file if it does not exist.
 
 ### Lock Management
@@ -128,6 +141,8 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
      "dependsOn": ["<task-id if sequenced>"],
      "handoffTo": ["<downstream team if applicable>"],
      "handoffContext": "",
+     "supersedes": "<task-id of failed/rejected/canceled task this replaces>",
+     "backlogItemId": "<reference to original backlog item>",
      "messages": [{"role":"delegator","from":"orchestrator","timestamp":"<ISO>","content":"<instructions>"}],
      "artifacts": []
    }
@@ -137,7 +152,14 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 4. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
    - `blockedBy` is runtime-derived state from `dependsOn`; do not author it manually.
 5. Immediately after task creation, run the dependency derivation pass once to populate `blockedBy` from `dependsOn` before the first execution round.
-   - Detect cycles in the `dependsOn` graph (for example via DFS/Kahn). If a cycle is found, stop dependency propagation for the affected tasks and surface a clear validation error instead of continuing the round.
+   - Detect cycles in the `dependsOn` graph (for example via DFS/Kahn). Run detection to exhaustion — repeat until no more cycles remain — since the dependency graph may contain multiple disjoint cycles. Assign each detected cycle a unique cycleId (see cycleId format above).
+     1. Transition every task that is part of the cycle to `canceled` status so they are not left in `submitted` and re-scanned by blockedBy logic.
+     2. Using the set of cycle-member task IDs as already-visited nodes, traverse the dependency graph forward (following tasks whose `dependsOn` includes a visited node) to identify all tasks that transitively depend on any cyclic task; mark each as `canceled`, clear its `blockedBy` array to avoid stale references, and add it to the visited set to prevent re-traversal.
+     3. Emit a structured `events.log` entry for each affected task (cycle members and transitively blocked tasks) with the cycle id, involved task IDs, and action taken. Example entry:
+        ```json
+        {"eventType": "CANCELED", "taskId": "<task-id>", "reason": "dependency-cycle", "cycleId": "<cycle-id>", "cycleMembers": ["<task-id-1>", "<task-id-2>"], "actor": "orchestrator", "timestamp": "<ISO-8601>"}
+        ```
+     - Follow the existing events.log conventions and the "Log everything" rule.
 6. Each team should:
    - Accept or reject the task (update `status` and add a message).
    - Make minimal, backwards-compatible changes.
@@ -157,6 +179,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
        - `submitted -> rejected`
 7. Between delegation rounds, run dependency checks:
    - Scan tasks where `blockedBy` is non-empty and check if blocking tasks are now complete.
+   - Skip any task already in a terminal state (`completed`, `failed`, `rejected`, `canceled`) — these should have been excluded from the scan.
    - Update `blockedBy` arrays and unblock tasks whose dependencies are satisfied.
 8. Process handoffs: for completed tasks with `handoffTo`, create follow-up tasks for the downstream team with the `handoffContext` carried forward.
 9. Monitor progress via task status and log team outputs to `events.log`.

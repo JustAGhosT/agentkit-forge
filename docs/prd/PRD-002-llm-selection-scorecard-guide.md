@@ -2,7 +2,7 @@
 
 ## Status
 
-Released
+Draft
 
 ## Module / Feature Name
 
@@ -207,9 +207,9 @@ overrides via YAML and JSON.
 
 ### Required APIs
 
-- -/api/forge/models/list-
-- -/api/forge/agents/assign-
-- -/api/forge/scorecards/get-
+- `/api/forge/models/list`
+- `/api/forge/agents/assign`
+- `/api/forge/scorecards/get`
 
 ### External Dependencies
 
@@ -267,12 +267,12 @@ overrides via YAML and JSON.
 
 ## Timeline and Milestones
 
-| Phase             | Dates    | Scope                               | Dependencies                |
-| ----------------- | -------- | ----------------------------------- | --------------------------- |
-| Scorecard launch  | Apr 2024 | Model families, dashboard, config   | Model and telemetry data    |
-| Mapping API       | May 2024 | Read and write APIs, fallback logic | Backend and security review |
-| Analytics rollout | Jun 2024 | KPI tracking and alerting           | BI integration              |
-| Ongoing updates   | Monthly  | Continuous scorecard refresh        | Vendor feeds                |
+| Phase             | Status      | Dates    | Scope                               | Dependencies                |
+| ----------------- | ----------- | -------- | ----------------------------------- | --------------------------- |
+| Scorecard launch  | Complete    | Apr 2024 | Model families, dashboard, config   | Model and telemetry data    |
+| Mapping API       | Complete    | May 2024 | Read and write APIs, fallback logic | Backend and security review |
+| Analytics rollout | Complete    | Jun 2024 | KPI tracking and alerting           | BI integration              |
+| Ongoing updates   | In Progress | Monthly  | Continuous scorecard refresh        | Vendor feeds                |
 
 ## Constraints and Dependencies
 
@@ -299,11 +299,11 @@ overrides via YAML and JSON.
 
 ## Open Questions
 
-| Question                                        | Owner           | Target Date | Impact if Unresolved       |
-| ----------------------------------------------- | --------------- | ----------- | -------------------------- |
-| Can custom fine-tuned models be plug-and-play?  | Product Manager | Jul 2024    | Lower extensibility        |
-| Will vendors provide early deprecation signals? | ML Engineer     | Jun 2024    | Unexpected fallback events |
-| What telemetry granularity is sufficient?       | BI Analyst      | May 2024    | Lower metric confidence    |
+| Question                                        | Owner           | Target Date | Resolution | Impact if Unresolved       |
+| ----------------------------------------------- | --------------- | ----------- | ---------- | -------------------------- |
+| Can custom fine-tuned models be plug-and-play?  | Product Manager | Jul 2024    | Deferred   | Lower extensibility        |
+| Will vendors provide early deprecation signals? | ML Engineer     | Jun 2024    | Resolved   | Unexpected fallback events |
+| What telemetry granularity is sufficient?       | BI Analyst      | May 2024    | Resolved   | Lower metric confidence    |
 
 ## Appendix
 
@@ -360,13 +360,15 @@ cost and latency for selected agents.
 
 ## Example Scorecard (Coding Context)
 
-| Model          | Code | Reasoning | Context | Speed  | Cost | Compatibility | Notes                            |
-| -------------- | ---- | --------- | ------- | ------ | ---- | ------------- | -------------------------------- |
-| Claude Opus v3 | 5.0  | 4.5       | 200K    | Medium | $$$  | Native        | Conservative in speculative code |
-| GPT-4o         | 5.0  | 5.0       | 128K    | High   | $$$  | Full          | Occasional rate limiting         |
-| Gemini 1.5 Pro | 4.7  | 4.7       | 128K    | High   | $$   | Beta          | Structured output edge cases     |
-| Kimi-Plus      | 4.1  | 4.3       | 128K    | High   | $    | Partial       | Regional latency variance        |
-| Grok-1.5       | 3.9  | 4.1       | 128K    | Medium | $    | Experimental  | Rapid iteration behavior         |
+> **Note:** This scorecard provides a baseline reference. Detailed weighted scores for each team are in PRD-003.
+
+| Model           | Code | Reasoning | Context        | Speed  | Cost | Compatibility | Notes                                             |
+| --------------- | ---- | --------- | -------------- | ------ | ---- | ------------- | ------------------------------------------------- |
+| Claude Opus 4.6 | 5.0  | 4.5       | 200K (1M beta) | Medium | $$$  | Native        | Conservative in speculative code                  |
+| GPT-4o          | 5.0  | 5.0       | 128K           | High   | $$$  | Full          | Stable baseline snapshot                          |
+| Gemini 1.5 Pro  | 4.7  | 4.7       | 1M             | High   | $$   | Beta          | Upgradeable context, structured output edge cases |
+| Kimi-Plus       | 4.1  | 4.3       | 128K           | High   | $    | Partial       | Regional latency variance                         |
+| Grok-3          | 3.9  | 4.1       | 128K           | Medium | $    | Experimental  | Rapid iteration behavior                          |
 
 ## Agent Mapping Example
 
@@ -387,9 +389,9 @@ agents:
       cost: 0.1
       speed: 0.1
 team_defaults:
-  backend: claude-opus-v3
-  frontend: gpt-3.5-turbo
-fallback_model: gpt-3.5-turbo
+  backend: claude-opus-4-6
+  frontend: gpt-4o-mini
+fallback_model: gpt-4o-mini
 ```
 
 ## Decision Matrix Mechanics
@@ -436,7 +438,7 @@ Use scorecards as guidance, then tune by team outcome data.
 
 | Model                             | Reasoning | Cost Tier | Cost Multiplier | Context Window | Max Output | Tool Use | Vision | Latency  | Reliability |
 | --------------------------------- | --------- | --------- | --------------- | -------------- | ---------- | -------- | ------ | -------- | ----------- |
-| Opus 4.6                          | Y         | Paid      | TBD             | 200K (1M beta) | 128K       | Yes      | Yes    | Standard | High        |
+| Claude Opus 4.6                   | Y         | Paid      | 6               | 200K (1M beta) | 128K       | Yes      | Yes    | Standard | High        |
 | Claude Sonnet 4.6 (No thinking)   | N         | Paid      | 2               | 200K (1M beta) | 128K       | Yes      | Yes    | Standard | High        |
 | Claude Sonnet 4.6 (With thinking) | Y         | Paid      | 3               | 200K (1M beta) | 128K       | Yes      | Yes    | Standard | High        |
 | GPT-5-Codex                       | N/?       | Paid      | 0.5             | 200K           | ~100K      | Yes      | Yes    | Standard | High        |
@@ -482,9 +484,20 @@ Use scorecards as guidance, then tune by team outcome data.
 | GPT-5.3-Codex XHigh Fast          | N/?       | Paid      | 6               | 200K           | ~100K      | Yes      | Yes    | Fast     | High        |
 | o3                                | Y/?       | Paid      | 1               | 200K           | ~100K      | Yes      | Yes    | Standard | High        |
 | o3 High Reasoning                 | Y         | Paid      | 1               | 200K           | ~100K      | Yes      | Yes    | Standard | High        |
+| Gemini 3 Flash High               | Y/?       | Paid      | 1.75            | TBD            | TBD        | Yes      | Yes    | Fast     | Medium      |
+| Gemini 3 Pro High Thinking        | Y         | Paid      | 2               | TBD            | TBD        | Yes      | Yes    | Standard | Medium      |
+| Gemini 3.1 Pro High Thinking      | Y         | Paid      | 1               | TBD            | TBD        | Yes      | Yes    | Standard | Medium      |
 | SWE-1.5                           | ?         | Free      | 0               | TBD            | TBD        | Yes      | Yes    | Fast     | Medium      |
 | SWE-1.5 Fast                      | ?         | Paid      | 0.5             | TBD            | TBD        | Yes      | Yes    | Fast     | High        |
-| GLM-5                             | ?         | Paid      | 0.75            | TBD            | TBD        | TBD      | TBD    | TBD      | Medium      |
+| GLM 4.7 (Beta)                    | ?         | Paid      | 0.25            | TBD            | TBD        | TBD      | TBD    | TBD      | Low         |
+| GLM-5 (New)                       | ?         | Paid      | 1.5             | TBD            | TBD        | TBD      | TBD    | TBD      | Medium      |
+| DeepSeek Chat (V3.2 non-thinking) | N         | Paid      | TBD             | 128K           | TBD        | Yes      | TBD    | TBD      | TBD         |
+| DeepSeek Reasoner (V3.2 thinking) | Y         | Paid      | TBD             | 128K           | TBD        | Yes      | TBD    | TBD      | TBD         |
+| Codestral 25.08                   | ?         | Paid      | TBD             | TBD            | TBD        | Yes      | TBD    | TBD      | TBD         |
+| Llama 4 Scout                     | ?         | ?         | TBD             | TBD            | TBD        | TBD      | Yes    | TBD      | TBD         |
+| Cohere Command A                  | ?         | Paid      | TBD             | TBD            | TBD        | Yes      | TBD    | TBD      | TBD         |
+| Amazon Nova Pro                   | ?         | Paid      | TBD             | TBD            | TBD        | TBD      | Yes    | TBD      | TBD         |
+| IBM Granite 4.0 (Instruct)        | ?         | ?         | TBD             | TBD            | TBD        | Yes      | TBD    | TBD      | TBD         |
 | Minimax M2.1 (Beta)               | ?         | Paid      | 0.5             | TBD            | TBD        | TBD      | TBD    | TBD      | Low         |
 | Minimax M2.5 (New)                | ?         | Paid      | 0.25            | TBD            | TBD        | TBD      | TBD    | TBD      | Medium      |
 | Grok-3                            | ?         | Paid      | 1               | 131K           | 32K        | Yes      | Yes    | Standard | Medium      |
@@ -498,6 +511,10 @@ Use scorecards as guidance, then tune by team outcome data.
 - **Cost multiplier normalization:** Free is stored as 0 in the multiplier column for arithmetic convenience.
 - **Claude Sonnet 4.6 promo:** Represented as two rows to make the multiplier unambiguous (No thinking vs With thinking).
 - **Minimax M2.5 promo:** Set to 0.25x as per banner (overrides earlier 1x).
+- **Gemini 3 / GLM intake (2026-02-26):** Added from current IDE model-picker snapshot. Capability columns remain TBD until validated against provider docs and internal benchmarks.
+- **GLM-5 update:** `GLM-5 (New)` now uses 1.5x multiplier in this matrix.
+- **DeepSeek intake (2026-02-26):** Added `DeepSeek Chat (V3.2 non-thinking)` and `DeepSeek Reasoner (V3.2 thinking)` from DeepSeek API docs. Source quality: Fetched, vendor claim. Cost multiplier, latency, reliability, and max output remain TBD pending independent benchmark replication.
+- **Mistral/Llama/Cohere/Nova/Granite intake (2026-02-26):** Added representative intake rows (`Codestral 25.08`, `Llama 4 Scout`, `Cohere Command A`, `Amazon Nova Pro`, `IBM Granite 4.0 (Instruct)`) from provider/model-card documentation. Source quality: Fetched, vendor claim. Weighted scoring remains blocked pending independent benchmark replication and normalized pricing.
 - **Context Window:** Claude 4.6 models support 1M token context in beta (200K standard). GPT-5.x models typically support 200K.
 - **Max Output:** Claude 4.6 = 128K tokens. GPT-5.x = ~100K tokens (varies by tier).
 - **Tool Use:** Codex models are optimized for coding + tool use. Standard GPT models have tool use capability.

@@ -7,11 +7,15 @@ This folder contains PRDs and related guidance artifacts.
 
 ## Index
 
-| ID | Document | Status | Notes |
-| --- | --- | --- | --- |
-| PRD-001 | [AgentKit Forge LLM Decision Engine](./PRD-001-llm-decision-engine.md) | Draft | Multi-LLM routing and optimization PRD |
-| PRD-002 | [LLM Selection and Scorecard Guide](./PRD-002-llm-selection-scorecard-guide.md) | Released | Selection principles and scorecard patterns |
-| PRD-003 | [Agent-to-LLM Weighted Matrix and Config Guide (Polyglot Example)](./PRD-003-agent-to-llm-weighted-matrix-config-guide.md) | In Review | Explicitly illustrative example |
+| ID      | Document                                                                                                                   | Status    | Notes                                       |
+| ------- | -------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------- |
+| PRD-001 | [AgentKit Forge LLM Decision Engine](./PRD-001-llm-decision-engine.md)                                                     | Draft     | Multi-LLM routing and optimization PRD      |
+| PRD-002 | [LLM Selection and Scorecard Guide](./PRD-002-llm-selection-scorecard-guide.md)                                            | Released  | Selection principles and scorecard patterns |
+| PRD-003 | [Agent-to-LLM Weighted Matrix and Config Guide (Polyglot Example)](./PRD-003-agent-to-llm-weighted-matrix-config-guide.md) | In Review | Explicitly illustrative example             |
+
+## Supporting Dossiers
+
+- [Model Family Benchmark Dossiers](./model-families/README.md)
 
 ## Naming Convention
 
