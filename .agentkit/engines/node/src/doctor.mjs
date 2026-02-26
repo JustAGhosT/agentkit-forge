@@ -118,7 +118,7 @@ function projectCompleteness(project) {
 export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
   const findings = [];
   const specRoot = resolveSpecRoot(agentkitRoot, projectRoot);
-  const templateSpecRoot = specRoot === agentkitRoot ? specRoot : agentkitRoot;
+  const templateSpecRoot = agentkitRoot;
 
   // 1) Spec validation
   let spec;

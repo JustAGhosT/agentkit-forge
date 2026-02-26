@@ -46,6 +46,8 @@
 | GLM-5      | Windsurf/Intake | GLM-5 (base)             | Paid      |                   1.5 |                   Not evaluated | Not evaluated        | Not evaluated | Best-in-class among open-source on reasoning/coding/agentic (HF card) | Not evaluated | Scales to 744B parameters (40B active) with DSA; strong agentic performance | Medium             | Cost-aware open-weight SOTA for complex systems and agentic tasks | PRD-002 + HuggingFace card        | 2026-02-26    |
 | GLM-4.7    | Windsurf        | GLM-4.7 (Beta)           | Paid      |                  0.25 |                   Not evaluated | Not evaluated        | Not evaluated | Family-level carryover from GLM leaderboard notes                     | Not evaluated | Lower-cost GLM intake row pending full benchmark coverage                   | Low                | Intake evaluation where very low multiplier is desired            | PRD-002 matrix + family signals   | 2026-02-26    |
 
+**Maintenance:** Review cadence: monthly. Owner: Platform/QA Leads. Action: update benchmarks and Last verified. See Pending Benchmark Annex for automated reminder/issue template reference.
+
 ## Operational notes
 
 - GLM appears strong on efficiency-oriented coding benchmarks in independent

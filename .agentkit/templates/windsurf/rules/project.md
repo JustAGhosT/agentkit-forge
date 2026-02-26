@@ -16,12 +16,12 @@ This repository uses the AgentKit Forge unified agent team framework.
 4. /check — Run quality gates (lint, test, build)
 5. /review — Code review against team standards
 
-{{#if infraNamingConvention}}
+{{#if hasAnyInfraConfig}}
 
 ## Infrastructure Conventions
 
-- Naming convention: `{{infraNamingConvention}}`
-{{#if infraDefaultRegion}}- Default region: {{infraDefaultRegion}}{{/if}}
+{{#if infraNamingConvention}}- Naming convention: `{{infraNamingConvention}}`
+{{/if}}{{#if infraDefaultRegion}}- Default region: {{infraDefaultRegion}}{{/if}}
 {{#if infraOrg}}- Organisation prefix: {{infraOrg}}{{/if}}
 {{#if infraIacToolchain}}- Preferred IaC toolchain: {{infraIacToolchain}}{{/if}}
 {{#if infraStateBackend}}- State backend: {{infraStateBackend}}{{/if}}

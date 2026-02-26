@@ -27,7 +27,7 @@
 | Gemini 2.0 Flash | `google/gemini-2.0-flash-exp` | Experimental Flash variant |
 | Gemini 2.0 Flash | `google/gemini-2.0-flash`     | Production Flash           |
 
-> **Note:** Google publishes most Gemini models via Google AI Studio and Vertex AI, not Hugging Face. The above are available experimental/public variants. Gemini 3/3.1 references are preview/announcement-only and not yet available on Hugging Face.
+> **Note:** Google publishes most Gemini models via Google AI Studio and Vertex AI, not Hugging Face. The table above lists Gemini 1.5/2.0 as the latest publicly available production models on Hugging Face. Gemini 3/3.1 are preview/announcement-only and not yet available on Hugging Face.
 
 ## Latest benchmark signals
 
@@ -43,7 +43,7 @@
 | -------------- | --------------- | ---------------------------- | --------- | --------------------: | -------------: | -------------------- | ------------- | --------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------ | ------------------ | ------------------------------------------------------------ | ----------------------------- | ------------- |
 | Gemini 3 Flash | Windsurf        | Gemini 3 Flash High          | Paid      |                  1.75 |  Not evaluated | Not evaluated        | Not evaluated | 57.6% (Flash preview)                                                       | Not evaluated | Strong speed-oriented coding/agent profile in family signals | Medium             | Fast coding loops where turnaround time is priority          | Independent + vendor snippet  | 2026-02-26    |
 | Gemini 3 Pro   | Windsurf        | Gemini 3 Pro High Thinking   | Paid      |                   2.0 |  Not evaluated | Not evaluated        | Not evaluated | 56.5% (Pro preview)                                                         | Not evaluated | Higher-reasoning Gemini branch with strong context potential | Medium             | High-context coding and reasoning-heavy multi-file workflows | Independent + vendor snippet  | 2026-02-26    |
-| Gemini 3.1 Pro | Windsurf/Intake | Gemini 3.1 Pro High Thinking | Paid      |                   2.0 |  Not evaluated | Not evaluated        | Not evaluated | Significantly outperforms Gemini 3 Pro on reasoning benchmarks (model card) | Not evaluated | Enhanced reasoning and multimodal capabilities over 3 Pro    | Medium             | Complex reasoning tasks requiring enhanced capabilities      | PRD-002 + DeepMind model card | 2026-02-26    |
+| Gemini 3.1 Pro | Windsurf/Intake | Gemini 3.1 Pro High Thinking | Paid      |                   2.0 |  Not evaluated | Not evaluated        | Not evaluated | Improved performance on reasoning benchmarks (model card); independent verification pending | Not evaluated | Enhanced reasoning and multimodal capabilities over 3 Pro    | Medium             | Complex reasoning tasks requiring enhanced capabilities      | PRD-002 + DeepMind model card | 2026-02-26    |
 
 ## Operational notes
 

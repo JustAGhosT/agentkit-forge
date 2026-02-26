@@ -37,28 +37,28 @@ Scan the codebase within your focus area before making changes. Read `AGENT_BACK
 
 {{agentToolsList}}
 
-{{#if hasAgentDomainRules}}
+{{#if agentDomainRules}}
 
 ## Domain Rules
 
 {{agentDomainRules}}
 {{/if}}
 
-{{#if hasAgentConventions}}
+{{#if agentConventions}}
 
 ## Agent Conventions
 
 {{agentConventions}}
 {{/if}}
 
-{{#if hasAgentExamples}}
+{{#if agentExamples}}
 
 ## Examples
 
 {{agentExamples}}
 {{/if}}
 
-{{#if hasAgentAntiPatterns}}
+{{#if agentAntiPatterns}}
 
 ## Anti-Patterns
 

@@ -164,6 +164,8 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ## Scoring Implications
 
+**Scoring scale:** 0–1 (quirk deltas are typically ±0.05 to ±0.3). **Composition:** Quirk values are additive; sum positive, negative, and operational contributions to get a net quirk score per model. **Integration:** The quirk subtotal is combined with PRD-001 scoring dimensions (e.g., added to weighted score or applied as a penalty/bonus with configurable weights). **Rationale:** Native MCP Support = +0.3 (differentiating capability); Token Efficiency = +0.2 (cost impact); Rate Limit Spikes = -0.3 (workflow disruption). Caps and normalization rules apply to the quirk subtotal before integration.
+
 ### Positive Quirk Scoring (0.1-0.5 bonus)
 - **Native MCP Support** (Claude): +0.3
 - **Token Efficiency** (DeepSeek, GLM): +0.2

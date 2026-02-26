@@ -1,7 +1,7 @@
 # Quirks Scoring Implementation Guide
 
-**Last Updated:** 2026-02-26  
-**Purpose:** Implement numerical scoring for model quirks in the AgentKit decision engine  
+**Last Updated:** 2026-02-26
+**Purpose:** Implement numerical scoring for model quirks in the AgentKit decision engine
 **Scope:** Integration with PRD-001 weighted decision matrix
 
 ## Overview
@@ -13,122 +13,131 @@ This document provides a concrete implementation plan for adding numerical quirk
 ### Base Quirk Score Calculation
 
 ```
-Base Quirk Score = (Positive Quirks × 0.1) - (Negative Quirks × 0.1) - (Operational Quirks × 0.05)
+Base Quirk Score = sum(Positive Quirks × +0.1) + sum(Negative Quirks × -0.1) + sum(Operational Quirks × -0.05)
 ```
+
+Or equivalently:
+```
+Base Quirk Score = (Positive_Quirks_Sum × 0.1) - (Negative_Quirks_Sum × 0.1) - (Operational_Quirks_Sum × 0.05)
+```
+
+> **Note:** Negative and operational quirks contribute negative values to the base score (they are subtracted, not added with negative signs).
 
 ### Final Score Integration
 
 ```
-Final Score = Weighted Score - lock_in_penalty - quirks_penalty
+Final Score = Weighted Score - lock_in_penalty - quirks_penalty + quirks_bonus
 ```
 
 Where:
-- `quirks_penalty = max(0, -Base Quirk Score)` (only negative scores become penalties)
-- Positive quirk scores are added as bonuses
+- `quirks_penalty = max(0, -Base Quirk Score)` (only negative base scores become penalties)
+- `quirks_bonus = max(0, Base Quirk Score)` (positive base scores become bonuses)
+
+> **Note:** The original formula `Final Score = Weighted Score - lock_in_penalty - quirks_penalty` is incomplete — it omits the bonus component. Positive quirk scores must be added back as bonuses to reward models with net-positive quirks.
 
 ## Model-Specific Quirk Scores
 
 ### Anthropic Claude
 
-| Quirk Category | Specific Quirks | Score | Rationale |
-| -------------- | ---------------- | ----- | --------- |
-| Positive | Native MCP Support | +0.3 | Unique competitive advantage |
-| Positive | Consistent Output Quality | +0.2 | Reduces need for retries/validation |
-| Positive | Strong Agentic Performance | +0.2 | Better for multi-step workflows |
-| Negative | Verbose Near High Context | -0.2 | Increases token costs |
-| Negative | Premium Pricing | -0.1 | Budget impact |
-| Negative | Rate Limiting | -0.2 | Can block workflows |
-| Operational | Context Window Inconsistency | -0.05 | Beta vs production confusion |
-| **Net Score** | | **+0.15** | Slight positive overall |
+| Quirk Category | Specific Quirks              | Score     | Rationale                           |
+| -------------- | ---------------------------- | --------- | ----------------------------------- |
+| Positive       | Native MCP Support           | +0.3      | Unique competitive advantage        |
+| Positive       | Consistent Output Quality    | +0.2      | Reduces need for retries/validation |
+| Positive       | Strong Agentic Performance   | +0.2      | Better for multi-step workflows     |
+| Negative       | Verbose Near High Context    | -0.2      | Increases token costs               |
+| Negative       | Premium Pricing              | -0.1      | Budget impact                       |
+| Negative       | Rate Limiting                | -0.2      | Can block workflows                 |
+| Operational    | Context Window Inconsistency | -0.05     | Beta vs production confusion        |
+| **Net Score**  |                              | **+0.15** | Slight positive overall             |
 
 ### OpenAI GPT/Codex
 
-| Quirk Category | Specific Quirks | Score | Rationale |
-| -------------- | ---------------- | ----- | --------- |
-| Positive | Token Efficiency (Codex) | +0.2 | Cost savings |
-| Positive | Strong Tool Integration | +0.2 | Mature ecosystem |
-| Positive | Extensive Profile Variants | +0.1 | Flexibility |
-| Negative | Rate Limit Spikes | -0.3 | Major workflow disruption |
-| Negative | Profile Complexity | -0.1 | Decision paralysis |
-| Negative | Cost Volatility | -0.2 | Budget unpredictability |
-| Operational | API Inconsistencies | -0.1 | Integration complexity |
-| **Net Score** | | **-0.2** | Moderate negative overall |
+| Quirk Category | Specific Quirks            | Score    | Rationale                 |
+| -------------- | -------------------------- | -------- | ------------------------- |
+| Positive       | Token Efficiency (Codex)   | +0.2     | Cost savings              |
+| Positive       | Strong Tool Integration    | +0.2     | Mature ecosystem          |
+| Positive       | Extensive Profile Variants | +0.1     | Flexibility               |
+| Negative       | Rate Limit Spikes          | -0.3     | Major workflow disruption |
+| Negative       | Profile Complexity         | -0.1     | Decision paralysis        |
+| Negative       | Cost Volatility            | -0.2     | Budget unpredictability   |
+| Operational    | API Inconsistencies        | -0.1     | Integration complexity    |
+| **Net Score**  |                            | **-0.2** | Moderate negative overall |
 
 ### Google Gemini
 
-| Quirk Category | Specific Quirks | Score | Rationale |
-| -------------- | ---------------- | ----- | --------- |
-| Positive | Massive Context (1M+) | +0.3 | Unique capability |
-| Positive | Native Multimodal | +0.2 | Future-proofing |
-| Positive | Speed Advantage (Flash) | +0.2 | Performance |
-| Negative | Performance Inversion | -0.2 | Counterintuitive behavior |
-| Negative | Preview Model Availability | -0.1 | Reliability concerns |
-| Negative | Regional Variability | -0.1 | Inconsistent performance |
-| Operational | API Evolution | -0.1 | Integration maintenance |
-| **Net Score** | | **+0.1** | Slight positive overall |
+| Quirk Category | Specific Quirks            | Score    | Rationale                 |
+| -------------- | -------------------------- | -------- | ------------------------- |
+| Positive       | Massive Context (1M+)      | +0.3     | Unique capability         |
+| Positive       | Native Multimodal          | +0.2     | Future-proofing           |
+| Positive       | Speed Advantage (Flash)    | +0.2     | Performance               |
+| Negative       | Performance Inversion      | -0.2     | Counterintuitive behavior |
+| Negative       | Preview Model Availability | -0.1     | Reliability concerns      |
+| Negative       | Regional Variability       | -0.1     | Inconsistent performance  |
+| Operational    | API Evolution              | -0.1     | Integration maintenance   |
+| **Net Score**  |                            | **+0.2** | Slight positive overall   |
 
 ### DeepSeek
 
-| Quirk Category | Specific Quirks | Score | Rationale |
-| -------------- | ---------------- | ----- | --------- |
-| Positive | Open-Weight Breakthrough | +0.2 | No vendor lock-in |
-| Positive | Cost-Effective Training | +0.1 | Efficient architecture |
-| Positive | High Token Efficiency | +0.3 | Significant cost savings |
-| Positive | Dual Mode Operation | +0.1 | Flexibility |
-| Negative | Limited Transformers Support | -0.2 | Integration overhead |
-| Negative | Vendor Documentation Only | -0.2 | Validation needed |
-| Operational | API Model Mapping | -0.1 | Confusing endpoints |
-| **Net Score** | | **+0.1** | Slight positive overall |
+| Quirk Category | Specific Quirks              | Score    | Rationale                |
+| -------------- | ---------------------------- | -------- | ------------------------ |
+| Positive       | Open-Weight Breakthrough     | +0.2     | No vendor lock-in        |
+| Positive       | Cost-Effective Training      | +0.1     | Efficient architecture   |
+| Positive       | High Token Efficiency        | +0.3     | Significant cost savings |
+| Positive       | Dual Mode Operation          | +0.1     | Flexibility              |
+| Negative       | Limited Transformers Support | -0.2     | Integration overhead     |
+| Negative       | Vendor Documentation Only    | -0.2     | Validation needed        |
+| Operational    | API Model Mapping            | -0.1     | Confusing endpoints      |
+| **Net Score**  |                              | **+0.2** | Slight positive overall  |
 
 ### xAI Grok
 
-| Quirk Category | Specific Quirks | Score | Rationale |
-| -------------- | ---------------- | ----- | --------- |
-| Positive | "Max Fun" Mode | +0.1 | Unique personality |
-| Positive | Open Weights Available | +0.2 | No vendor lock-in |
-| Positive | Tool-Use Training | +0.2 | Workflow optimization |
-| Negative | Vendor-Reported Only | -0.3 | Validation needed |
-| Negative | Limited Model Range | -0.1 | Fewer options |
-| Operational | API Maturity | -0.1 | Stability concerns |
-| **Net Score** | | **-0.1** | Slight negative overall |
+| Quirk Category | Specific Quirks        | Score   | Rationale                               |
+| -------------- | ---------------------- | ------- | --------------------------------------- |
+| Positive       | "Max Fun" Mode         | +0.1    | Unique personality                      |
+| Positive       | Open Weights Available | +0.2    | No vendor lock-in                       |
+| Positive       | Tool-Use Training      | +0.2    | Workflow optimization                   |
+| Negative       | Vendor-Reported Only   | -0.3    | Validation needed                       |
+| Negative       | Limited Model Range    | -0.1    | Fewer options                           |
+| Operational    | API Maturity           | -0.1    | Stability concerns                      |
+| **Net Score**  |                        | **0.0** | Neutral overall (0.5 - 0.4 - 0.1 = 0.0) |
 
 ### Zhipu AI GLM
 
-| Quirk Category | Specific Quirks | Score | Rationale |
-| -------------- | ---------------- | ----- | --------- |
-| Positive | Token Efficiency Leader | +0.3 | Best in class |
-| Positive | Cheapest API Pricing | +0.3 | Significant cost savings |
-| Positive | Strong Multilingual | +0.2 | APAC advantage |
-| Positive | Massive Scale | +0.1 | Capability |
-| Negative | Limited Western Documentation | -0.1 | Integration barrier |
-| Negative | APAC Region Focus | -0.1 | Latency elsewhere |
-| Operational | Multiple Cost Tiers | -0.05 | Confusing pricing |
-| **Net Score** | | **+0.65** | Strong positive overall |
+| Quirk Category | Specific Quirks               | Score     | Rationale                |
+| -------------- | ----------------------------- | --------- | ------------------------ |
+| Positive       | Token Efficiency Leader       | +0.3      | Best in class            |
+| Positive       | Cheapest API Pricing          | +0.3      | Significant cost savings |
+| Positive       | Strong Multilingual           | +0.2      | APAC advantage           |
+| Positive       | Massive Scale                 | +0.1      | Capability               |
+| Negative       | Limited Western Documentation | -0.1      | Integration barrier      |
+| Negative       | APAC Region Focus             | -0.1      | Latency elsewhere        |
+| Operational    | Multiple Cost Tiers           | -0.05     | Confusing pricing        |
+| **Net Score**  |                               | **+0.65** | Strong positive overall  |
 
 ### Mistral (Codestral)
 
-| Quirk Category | Specific Quirks | Score | Rationale |
-| -------------- | ---------------- | ----- | --------- |
-| Positive | European AI Champion | +0.1 | GDPR compliance |
-| Positive | Strong FIM Support | +0.3 | Code completion excellence |
-| Positive | Low-Latency Focus | +0.2 | Performance |
-| Positive | Open Weights Available | +0.1 | No vendor lock-in |
-| Negative | Limited Independent Data | -0.2 | Validation needed |
-| Operational | Mamba Architecture | -0.05 | Integration complexity |
-| **Net Score** | | **+0.35** | Moderate positive overall |
+| Quirk Category | Specific Quirks          | Score     | Rationale                  |
+| -------------- | ------------------------ | --------- | -------------------------- |
+| Positive       | European AI Champion     | +0.1      | GDPR compliance            |
+| Positive       | Strong FIM Support       | +0.3      | Code completion excellence |
+| Positive       | Low-Latency Focus        | +0.2      | Performance                |
+| Positive       | Open Weights Available   | +0.1      | No vendor lock-in          |
+| Negative       | Limited Independent Data | -0.2      | Validation needed          |
+| Operational    | Mamba Architecture       | -0.05     | Integration complexity     |
+| **Net Score**  |                          | **+0.45** | Moderate positive overall  |
 
 ### Cohere Command
 
-| Quirk Category | Specific Quirks | Score | Rationale |
-| -------------- | ---------------- | ----- | --------- |
-| Positive | Enterprise RAG Specialist | +0.3 | Domain excellence |
-| Positive | Platform Coverage | +0.2 | Deployment flexibility |
-| Positive | Strong Embeddings | +0.2 | Ecosystem strength |
-| Positive | Tool-Using Agents | +0.1 | Workflow optimization |
-| Negative | Limited Coding Data | -0.2 | Unknown performance |
-| Negative | Enterprise Focus | -0.1 | Over-engineering risk |
-| Operational | Platform Dependencies | -0.05 | Vendor lock-in |
-| **Net Score** | | **+0.25** | Moderate positive overall |
+| Quirk Category | Specific Quirks           | Score     | Rationale                 |
+| -------------- | ------------------------- | --------- | ------------------------- |
+| Positive       | Enterprise RAG Specialist | +0.3      | Domain excellence         |
+| Positive       | Platform Coverage         | +0.2      | Deployment flexibility    |
+| Positive       | Strong Embeddings         | +0.2      | Ecosystem strength        |
+| Positive       | Tool-Using Agents         | +0.1      | Workflow optimization     |
+| Negative       | Limited Coding Data       | -0.2      | Unknown performance       |
+| Negative       | Enterprise Focus          | -0.1      | Over-engineering risk     |
+| Operational    | Platform Dependencies     | -0.05     | Vendor lock-in            |
+| **Net Score**  |                           | **+0.45** | Moderate positive overall |
 
 ## Implementation Steps
 
@@ -155,25 +164,74 @@ agents:
 Modify scoring logic in `llm-decision-engine`:
 
 ```javascript
+// Quirk score lookup table (values match model-family tables)
+const QUIRK_SCORES = {
+  // Positive quirks
+  native_mcp: 0.3,
+  consistent_quality: 0.1,
+  strong_agentic: 0.1,
+  token_efficiency: 0.2,
+  massive_context: 0.3,
+  open_weight_breakthrough: 0.2,
+  cost_effective_training: 0.1,
+  high_token_efficiency: 0.3,
+  dual_mode_operation: 0.1,
+  max_fun_mode: 0.1,
+  open_weights_available: 0.2,
+  tool_use_training: 0.2,
+  european_ai_champion: 0.1,
+  strong_fim_support: 0.3,
+  low_latency_focus: 0.2,
+  enterprise_rag_specialist: 0.3,
+  platform_coverage: 0.2,
+  strong_embeddings: 0.2,
+  tool_using_agents: 0.1,
+
+  // Negative quirks (-0.1 each)
+  verbose_high_context: -0.1,
+  premium_pricing: -0.1,
+  rate_limiting: -0.1,
+  rate_limit_spikes: -0.3,
+  profile_complexity: -0.1,
+  cost_volatility: -0.2,
+  limited_transformers_support: -0.2,
+  vendor_documentation_only: -0.2,
+  vendor_reported_only: -0.3,
+  limited_model_range: -0.1,
+  limited_independent_data: -0.2,
+  limited_coding_data: -0.2,
+  enterprise_focus: -0.1,
+
+  // Operational quirks (-0.05 each)
+  context_inconsistency: -0.05,
+  api_inconsistencies: -0.1,
+  api_evolution: -0.1,
+  api_maturity: -0.1,
+  api_model_mapping: -0.1,
+  multiple_cost_tiers: -0.05,
+  mamba_architecture: -0.05,
+  platform_dependencies: -0.05,
+};
+
 function calculateQuirksScore(agentConfig) {
   const { quirks } = agentConfig;
   let baseScore = 0;
-  
+
   // Calculate positive contributions
   quirks.positive.forEach(quirk => {
     baseScore += QUIRK_SCORES[quirk] || 0;
   });
-  
+
   // Calculate negative contributions
   quirks.negative.forEach(quirk => {
     baseScore += QUIRK_SCORES[quirk] || 0;
   });
-  
+
   // Calculate operational contributions
   quirks.operational.forEach(quirk => {
     baseScore += QUIRK_SCORES[quirk] || 0;
   });
-  
+
   return {
     base: baseScore,
     penalty: Math.max(0, -baseScore),
@@ -189,11 +247,11 @@ Add quirks section to each `model-guide-*.md`:
 ```markdown
 ### Quirks Assessment
 
-| Model | Base Score | Penalty | Bonus | Net Impact |
-|-------|-------------|----------|--------|------------|
-| Claude 3.5 Sonnet | +0.15 | 0.0 | +0.15 | Positive |
-| GPT-4o | -0.20 | 0.20 | 0.0 | Negative |
-| GLM-5 | +0.65 | 0.0 | +0.65 | Strong Positive |
+| Model             | Base Score | Penalty | Bonus | Net Impact      |
+| ----------------- | ---------- | ------- | ----- | --------------- |
+| Claude 3.5 Sonnet | +0.15      | 0.0     | +0.15 | Positive        |
+| GPT-4o            | -0.20      | 0.20    | 0.0   | Negative        |
+| GLM-5             | +0.65      | 0.0     | +0.65 | Strong Positive |
 ```
 
 ### Step 4: Validation Process
@@ -213,10 +271,14 @@ backend:
     primary: claude-3-5-sonnet
     fallback: deepseek-v3.2
   quirks_weighting:
-    native_mcp: 0.4      # High value for backend
-    token_efficiency: 0.3 # Cost sensitivity
-    rate_limiting: -0.4   # Low tolerance
+    # Override default quirk weights for team-specific priorities
+    # Keys reference QUIRK_SCORES entries; values are multipliers (default: 1.0)
+    native_mcp: 0.4      # Multiply MCP impact by 0.4 (reduces from +0.1 to +0.04)
+    token_efficiency: 0.3 # Multiply token efficiency impact by 0.3
+    rate_limiting: 0.4    # Scale penalty: 0.4 means 40% of original (-0.1 × 0.4 = -0.04)
 ```
+
+> **Note:** The `quirks_weighting` config multiplies the base QUIRK_SCORES values as plain scalars. Negative base × positive multiplier remains negative. A value of 1.0 keeps the default weight. Use positive magnitude (e.g., 0.4 for 40% of original) to scale penalties. This allows teams to tune quirk importance without redefining the base scores.
 
 ### Frontend Team Configuration
 
@@ -257,6 +319,6 @@ frontend:
 
 ---
 
-**Owner**: Product Lead  
-**Review Date**: 2026-03-31  
+**Owner**: Product Lead
+**Review Date**: 2026-03-31
 **Next Review**: 2026-06-30

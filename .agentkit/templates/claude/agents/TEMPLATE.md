@@ -36,15 +36,15 @@ Shared files are accessed by multiple agents. To prevent race conditions:
 4. **Lock ownership**: orchestrator.lock remains solely owned by the orchestrator
 
 **Lock Acquisition Protocol:**
-- Attempt atomic creation of `.lock` file with 30s timeout
-- Retry every 1s up to 3 attempts with exponential backoff
-- Treat locks older than 5 minutes as stale (log and remove before retry)
+- Attempt atomic creation of `.lock` file with a 30s total timeout
+- If creation fails, retry up to 3 times with exponential backoff (initial delay 1s, then 2s, then 4s)
+- Stale-lock takeover: (A) **flock+conditional-unlink**: hold exclusive flock for the entire sequence (open + flock(EXLOCK) → read lock file → check expiresAt → unlink/write new lock → release flock). (B) **rename-based replacement** (use when flock unavailable): read lock file → if expiresAt < now, atomically rename stale lock to temp → re-check staleness from temp → write new lock to canonical path only if temp still represents the stale lock. Decision: prefer (A) on POSIX; use (B) on platforms without flock.
 - Always release locks in a finally block
 - On repeated failure, escalate to orchestrator via `/orchestrate` endpoint
 
 **Special Cases:**
 - `orchestrator.lock` remains exclusively owned by orchestrator
-- Append-only `events.log` writes should still acquire lock before appending
+- Append-only `events.log` writes: atomic append semantics (O_APPEND, line-based newline-terminated) are only guaranteed on local POSIX filesystems; write-size limits apply (e.g. PIPE_BUF ≈ 4KB). NFS, SMB, and distributed stores may not guarantee atomic appends. When filesystem type is uncertain or `.claude/state/` may be network-mounted, acquire `orchestrator.lock` (or `events.log.lock`) before writing to avoid interleaved writes.
 
 Protocol: Acquire lock → modify → release lock in finally. Never write directly without coordination.
 

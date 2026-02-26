@@ -595,15 +595,27 @@ export async function delegateTask(projectRoot, state, taskData) {
     }
     newState.active_tasks[assignee].push(task.id);
 
-    // Also update team_progress if the team exists
-    if (newState.team_progress && newState.team_progress[assignee]) {
+    // Initialize or merge team_progress with uniform structure
+    if (!newState.team_progress[assignee]) {
       newState.team_progress[assignee] = {
-        ...newState.team_progress[assignee],
         status: 'in_progress',
-        notes: `Task ${task.id}: ${task.title}`,
+        tasks: {},
         last_updated: new Date().toISOString(),
       };
     }
+    // Ensure tasks object exists
+    if (!newState.team_progress[assignee].tasks) {
+      newState.team_progress[assignee].tasks = {};
+    }
+    // Set task as present in tasks object
+    newState.team_progress[assignee].tasks[task.id] = { status: 'in_progress', present: true };
+    // Preserve existing fields and update timestamp
+    newState.team_progress[assignee] = {
+      ...newState.team_progress[assignee],
+      status: 'in_progress',
+      notes: `Task ${task.id}: ${task.title}`,
+      last_updated: new Date().toISOString(),
+    };
   }
 
   return { state: newState, task };
@@ -677,6 +689,13 @@ export async function orchestratorProcessHandoffs(projectRoot, state) {
           last_updated: new Date().toISOString(),
         };
       } else {
+        if (!newState.team_progress[assignee].tasks) {
+          newState.team_progress[assignee].tasks = {};
+        }
+        newState.team_progress[assignee].tasks[task.id] = {
+          status: 'in_progress',
+          present: true,
+        };
         newState.team_progress[assignee].status = 'in_progress';
         newState.team_progress[assignee].last_updated = new Date().toISOString();
       }

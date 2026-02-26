@@ -145,17 +145,7 @@ Write the complete plan as a structured markdown document. Do NOT create a file 
 - **Acquire and release:** `.claude/state/events.log.lock` around every append.
 - **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
 
-Append to `.claude/state/events.log`:
-
-1. Acquire `.claude/state/events.log.lock` with specific parameters:
-   - Initial timeout: 5 seconds
-   - Maximum retry attempts: 3
-   - Exponential backoff: 2x multiplier between retries
-   - Stale-lock cleanup: use atomic lock-acquisition pattern (create-and-link with unique temp file, OS file-lock primitive like flock/fcntl, or CAS-style retry loop) instead of blind removal; if stale lock observed, perform re-check/claim step before proceeding
-   - On complete failure: require each appended event to carry monotonic sequence number/checkpoint and periodic validator that scans for gaps; emit metric/alert (events_append_failures counter and events_audit_gap_gauge) when append fails with retry/backoff; provide fallback persistence path (write to durable store like DB or S3 via failover function) and mark plan execution state as "degraded_audit" rather than fully successful so callers can surface issue in observability dashboards
-2. Open `.claude/state/events.log` in append mode and write one complete line.
-3. Flush and `fsync` before releasing the lock. If `fsync` fails, retry once after 100ms delay; if second attempt also fails, release lock and mark operation as append failure (consistent with line 155 behavior).
-4. Release `.claude/state/events.log.lock`.
+Safely append a single-line, timestamped log entry to `.claude/state/events.log` using file locking to avoid concurrent writes. Log format: `[<timestamp>] [PLAN] [ORCHESTRATOR] <brief summary>. Steps: <count>. Files: <count>.` Use an appropriate atomic lock/acquire pattern for your environment; include retry/backoff and stale-lock handling as needed; surface failures to observability. Provide a fallback persistence path and degraded state on append failure. Require graceful error handling and logging on append failures rather than prescribing low-level algorithms, timeouts, or metric names.
 
 ```
 [<timestamp>] [PLAN] [ORCHESTRATOR] Plan created for: "<goal summary>". Steps: <count>. Files: <count>.

@@ -10,6 +10,8 @@
 
 ## Weighting Profile
 
+Weights in the formula and YAML use whole-number units (e.g., Code 10 = 10%). The table below shows percentages for readability.
+
 | Metric        | Weight | Rationale                                |
 | ------------- | ------ | ---------------------------------------- |
 | Code Quality  | 10%    | Pipeline correctness and maintainability |

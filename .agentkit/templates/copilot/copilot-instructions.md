@@ -57,7 +57,7 @@ assumptions about project structure or conventions.
   {{#if infraMandatoryTags}}- Mandatory tags: {{infraMandatoryTags}}{{/if}}
   {{/if}}
 
-{{#if hasMonitoring}}
+{{#if hasAnyMonitoringConfig}}
 
 ## Observability
 
@@ -66,10 +66,9 @@ assumptions about project structure or conventions.
 {{#if tracingProvider}}- Tracing provider: {{tracingProvider}}{{/if}}
 {{#if tracingSamplingRate}}- Trace sampling rate: {{tracingSamplingRate}}{{/if}}
 {{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
-{{#unless hasAnyMonitoringConfig}}- No monitoring configured{{/unless}}
 {{/if}}
 
-{{#if hasCompliance}}
+{{#if hasAnyComplianceConfig}}
 
 ## Compliance and DR
 
@@ -78,7 +77,6 @@ assumptions about project structure or conventions.
 {{#if drRtoHours}}- DR RTO (hours): {{drRtoHours}}{{/if}}
 {{#if drTestSchedule}}- DR test schedule: {{drTestSchedule}}{{/if}}
 {{#if auditEventBus}}- Audit event bus: {{auditEventBus}}{{/if}}
-{{#unless hasAnyComplianceConfig}}- No compliance/DR configuration{{/unless}}
 {{/if}}
 
 ## Working with Issues

@@ -46,8 +46,15 @@
 
 `cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
 
+- **Baseline definitions:**
+  - `baseline_tokens_per_problem`: 3,500,000 (derived from median tokens/problem across Tier 1 models as of 2026-02)
+  - `baseline_effective_cost`: 1.0 (normalized to cost_multiplier=1.0 at baseline_tokens_per_problem)
 - Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
   scores unchanged and mark cost evidence as `Not evaluated`.
+- **Edge case handling:**
+  - If `baseline_tokens_per_problem == 0`: use `cost_multiplier` alone for cost_score (set to 10 * (1 / cost_multiplier), clamped to 0-10).
+  - If `model_effective_cost == 0`: cost_score = 10 (best possible).
+  - If `normalized_tokens_per_problem == 0`: cost_score = 10 (best possible, zero token usage).
 
 ## Cost Evidence Status and Recalculation
 

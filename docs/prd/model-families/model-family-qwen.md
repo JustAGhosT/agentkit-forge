@@ -32,7 +32,7 @@
 
 > **Note:** Qwen (Alibaba) provides extensive open-weight models on Hugging Face. Qwen2.5-Coder is specifically optimized for code tasks.
 
-## Latest benchmark signals
+## Latest benchmark signals (data date: 2025-05-08 — ~9 months old)
 
 | Signal                                              | Value                                                             | Source                                                             | Quality                        |
 | --------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------ |
@@ -45,7 +45,7 @@
 ## Operational notes
 
 - Qwen results vary heavily by serving path and thinking mode.
-- Recommended -/no_think- settings often outperform default thinking routes in
+- Recommended no_think settings often outperform default thinking routes in
   the published Aider runs.
 - Cost and latency can still be attractive even when pass@2 is lower.
 

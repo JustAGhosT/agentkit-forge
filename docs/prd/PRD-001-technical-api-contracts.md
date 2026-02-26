@@ -79,8 +79,8 @@ Request:
 Validation rules:
 
 - `agentId`, `team`, `modelId` required
-- all weights required, integer range `0-100`
-- sum of weights must equal `100`
+- weights: all keys required (`code`, `reasoning`, `cost`, `context`, `speed`, `compatibility`), integer range `0-100`, sum must equal `100`
+- Custom keys beyond the standard six are allowed if documented in team config; they follow same validation rules (0-100 range, sum to 100 including standard keys).
 - `reason` required for updates to existing agent mapping (when agentId already exists). Optional for initial creation.
 - API determines create vs update by checking existence of agentId in datastore.
 
@@ -93,33 +93,28 @@ Create (no reason required):
   "modelId": "claude-opus-4-6",
   "team": "backend",
   "weights": {
-    "quality": 5,
-    "reasoning": 4,
-    "cost": 3,
-    "context": 3,
-    "speed": 2,
-    "compatibility": 1,
-    "lock_in": 1,
-    "quirks": 1
+    "code": 30,
+    "reasoning": 25,
+    "cost": 10,
+    "context": 25,
+    "speed": 5,
+    "compatibility": 5
   }
 }
 ```
 
-Update (reason required):
+Update (reason required; agentId in path, not body):
 ```json
 {
-  "agentId": "backend.api-refactor",
   "modelId": "claude-opus-4-6",
   "team": "backend",
   "weights": {
-    "quality": 5,
-    "reasoning": 4,
-    "cost": 3,
-    "context": 3,
-    "speed": 2,
-    "compatibility": 1,
-    "lock_in": 1,
-    "quirks": 1
+    "code": 30,
+    "reasoning": 25,
+    "cost": 10,
+    "context": 25,
+    "speed": 5,
+    "compatibility": 5
   },
   "reason": "Updated to improve code generation quality"
 }
@@ -180,7 +175,7 @@ Response - 200:
 - `400` invalid schema/weights
 - `401` unauthenticated
 - `403` insufficient RBAC scope
-- `404` unknown agent/model/team
+- `404` unknown model or team reference (for PUT upsert: returned when modelId or team references a non-existent resource; unknown agentId returns 200 OK for update or 201 Created for new)
 - `409` optimistic concurrency conflict
 - `422` policy validation failed
 - `429` rate limited
@@ -242,7 +237,7 @@ Required keys (always present, value may be null):
   "aiderPassAt2": { "value": null, "status": "not-evaluated" },
   "costPerSuccess": { "value": 0.85, "status": "current" },
   "p95LatencyMs": { "value": 1250, "status": "current" },
-  "lastEvaluatedAt": { "value": "2026-02-15T10:30:00Z", "status": "current" }
+  "lastEvaluatedAt": { "value": 1739619000, "status": "current" }
 }
 ```
 

@@ -156,6 +156,8 @@ Note: Cost-Aware Alt is provided for all teams to keep fallback policy explicit 
 
 ## Overlay Config Example
 
+The scorecard tables list model families (e.g., Claude 3 Opus, GPT-5.x, Kimi); the config uses concrete variant IDs (e.g., `claude-3-5-sonnet`, `gpt-4o`, `kimi-k2`). Map family recommendations to the specific variant available in your environment.
+
 ```yaml
 # .agentkit.yaml
 agents:
@@ -168,7 +170,7 @@ agents:
     default_model: gpt-4o
     alternate_model: claude-3-5-sonnet
     weights: [15, 15, 20, 15, 25, 10]
-    rationale: GPT-4o for TypeScript nuance, Claude 3.5 Sonnet for cost
+    rationale: GPT-4o for TypeScript nuance, Claude 3.5 Sonnet for fallback when OpenAI unavailable
   testing:
     default_model: claude-3-5-sonnet
     alternate_model: gpt-4o

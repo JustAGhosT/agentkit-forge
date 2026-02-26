@@ -347,8 +347,7 @@ Privacy and compliance controls:
 
 - **Consent:** explicit opt-in text in setup flow; consent event logged with
   timestamp and policy version.
-- **Anonymization/pseudonymization:** user identity stored as one-way hashed
-  reference or indirect ID; direct identifiers excluded from telemetry payloads.
+- **Anonymization/pseudonymization:** user identity stored as one-way hashed reference. Compute `actor_ref` using a keyed hash or KDF (e.g., HMAC-SHA256 with a stored global salt/pepper, or preferably per-user salt + HMAC/PBKDF2/Argon2) rather than raw SHA256(username). Per-user salt prevents dictionary/rainbow attacks. Salts/pepper and HMAC keys: store in KMS or secure secrets store with rotation policy. **Deletion workflow:** hash incoming username with the same salt/key to find `actor_ref`, then tombstone matching records. No reversible lookup table is needed.
 - **Retention/deletion:** apply retention policy from Non-Functional
   requirements; support GDPR/CCPA deletion request workflow via actor-key
   unlinking + tombstone record.
@@ -364,11 +363,12 @@ Project start date: **2026-03-03**
 
 > **Note:** All milestone dates below are absolute and derived from the project start date.
 
-| Phase | Scope                                       | Target                |
-| ----- | ------------------------------------------- | --------------------- |
-| v1    | Scorecards, static config, docs             | 2026-03-31            |
-| v2    | Dynamic mapping, feedback loop, optional UI | 2026-04-28            |
-| v3+   | Marketplace and expanded benchmarks         | Target month: 2026-11 |
+| Phase               | Scope                                                                                                               | Target                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| v1 feature-complete | Scorecards, static config, docs                                                                                     | 2026-03-31            |
+| v1 GA               | Scorecards, static config, docs, audit trails, RBAC, compliance controls, GDPR/CCPA workflows, scorecard automation | 2026-05-01            |
+| v2                  | Dynamic mapping, feedback loop, optional UI                                                                         | 2026-05-05            |
+| v3+                 | Marketplace and expanded benchmarks                                                                                 | Target month: 2026-11 |
 
 ## Constraints and Dependencies
 
@@ -396,11 +396,11 @@ Project start date: **2026-03-03**
 
 ## Open Questions
 
-| Question                                                                                       | Status                              | Owner(s)                    | Target Resolution                            | Acceptance Criteria                                                                | Impact if Unresolved           |
-| ---------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------ |
-| How should scorecards auto-refresh?                                                            | Blocked pending question resolution | Product Lead, Platform Lead | 2026-03-14 (before v1 architecture freeze)   | ADR approved with refresh cadence, automation owner, manual override path          | Lower trust in recommendations |
-| Are stack-specific biases material?                                                            | Blocked pending question resolution | Engineering Lead, QA Lead   | 2026-03-21 (v1 assessment gate)              | v1 stack-bias assessment completed with mitigations and published assumptions      | Suboptimal model choices       |
-| How will telemetry handle consent, anonymisation, retention, and legal compliance (GDPR/CCPA)? | Blocked pending legal sign-off      | Product Lead, Legal Counsel | Before v1 release (no later than 2026-03-28) | Legal sign-off recorded for Telemetry Privacy policy and deletion-request workflow | Legal risk, user trust issues  |
+| Question                                                                                       | Status                              | Owner(s)                    | Target Resolution                            | Acceptance Criteria                                                                                       | Impact if Unresolved           |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| How should scorecards auto-refresh?                                                            | Resolved (v1)                       | Platform Lead               | 2026-03-14 (before v1 architecture freeze)   | CI scheduled job + manual override command; automation owner: Platform Lead; manual override path via CLI | Lower trust in recommendations |
+| Are stack-specific biases material?                                                            | Blocked pending question resolution | Engineering Lead, QA Lead   | 2026-03-21 (v1 assessment gate)              | v1 stack-bias assessment completed with mitigations and published assumptions                             | Suboptimal model choices       |
+| How will telemetry handle consent, anonymisation, retention, and legal compliance (GDPR/CCPA)? | Blocked pending legal sign-off      | Product Lead, Legal Counsel | Before v1 release (no later than 2026-03-28) | Legal sign-off recorded for Telemetry Privacy policy and deletion-request workflow                        | Legal risk, user trust issues  |
 
 ## Appendix
 
@@ -455,6 +455,12 @@ Project start date: **2026-03-03**
 | Command A                 | TBD          | TBD       | 128K    | $$   | TBD   | High          | Medium  | Enterprise RAG specialist, platform dependencies, embedding strength        |
 
 *Note: Model names reflect current API conventions as of Feb 2026. "Gemini Ultra" is deprecated; current Gemini family includes Gemini 1.5/2.0/3.x variants. Authoritative data maintained in model family dossiers.*
+
+**Data population plan (v1):**
+- **Ownership:** Platform Lead owns benchmark data collection; Engineering Lead owns integration with scorecard API.
+- **Minimum viable metrics:** Code Quality (SWE-bench verified), Reasoning (Aider), Speed (tokens/sec), Cost (effective cost), Context (window size), Compatibility (tool coverage).
+- **Data sources:** Public benchmarks (SWE-bench, Aider), vendor API documentation, internal throughput measurements.
+- **Timeline:** Initial population by 2026-03-15; quarterly refresh cycles after v1 GA.
 
 ### Recommendations
 

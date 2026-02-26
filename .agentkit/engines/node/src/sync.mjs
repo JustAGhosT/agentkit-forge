@@ -253,6 +253,12 @@ function flattenProjectYaml(project) {
   if (infra.modulesRepo) vars.infraModulesRepo = infra.modulesRepo;
   if (infra.lockProvider && infra.lockProvider !== 'none')
     vars.infraLockProvider = infra.lockProvider;
+  vars.hasAnyInfraConfig =
+    !!vars.infraNamingConvention ||
+    !!vars.infraDefaultRegion ||
+    !!vars.infraOrg ||
+    !!vars.infraIacToolchain ||
+    !!vars.infraStateBackend;
   const tagging = infra.tagging || {};
   if (Array.isArray(tagging.mandatory) && tagging.mandatory.length > 0) {
     vars.infraMandatoryTags = tagging.mandatory.join(', ');
@@ -287,6 +293,11 @@ function flattenProjectYaml(project) {
   if (obsLogging.retentionDays !== undefined && obsLogging.retentionDays !== null) {
     vars.logRetentionDays = String(obsLogging.retentionDays);
   }
+  vars.hasAnyMonitoring =
+    !!vars.monitoringProvider ||
+    !!vars.alertingProvider ||
+    !!vars.tracingProvider ||
+    !!vars.hasCentralisedLogging;
 
   // Compliance
   const comp = project.compliance || {};
@@ -297,7 +308,10 @@ function flattenProjectYaml(project) {
   const dr = comp.disasterRecovery || {};
   if (dr.rpoHours !== undefined && dr.rpoHours !== null) vars.drRpoHours = String(dr.rpoHours);
   if (dr.rtoHours !== undefined && dr.rtoHours !== null) vars.drRtoHours = String(dr.rtoHours);
-  if (dr.backupSchedule && dr.backupSchedule !== 'none') vars.drBackupSchedule = dr.backupSchedule;
+  if (dr.backupSchedule && dr.backupSchedule !== 'none') {
+    vars.drBackupSchedule = dr.backupSchedule;
+    vars.drTestSchedule = dr.backupSchedule;
+  }
   vars.hasGeoRedundancy = !!dr.geoRedundancy;
   vars.hasDr =
     (dr.rpoHours !== undefined && dr.rpoHours !== null) ||
@@ -308,6 +322,13 @@ function flattenProjectYaml(project) {
   vars.hasAudit = !!audit.enabled;
   vars.hasAppendOnlyAudit = !!audit.appendOnly;
   if (audit.eventBus && audit.eventBus !== 'none') vars.auditEventBus = audit.eventBus;
+  vars.hasAnyComplianceConfig =
+    !!vars.complianceFramework ||
+    !!vars.drRpoHours ||
+    !!vars.drRtoHours ||
+    !!vars.drBackupSchedule ||
+    !!vars.drTestSchedule ||
+    !!vars.auditEventBus;
 
   // Process
   const proc = project.process || {};

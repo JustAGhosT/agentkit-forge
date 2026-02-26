@@ -39,7 +39,7 @@
 
 | Base model      | Environment     | Profile variants covered | Cost tier | Cost multiplier range | Tokens/problem | SWE-bench / Verified                                                   | HLE           | SWE-rebench   | Aider         | Coding ability summary                        | Decision Readiness | When to use                                          | Source quality         | Last verified |
 | --------------- | --------------- | ------------------------ | --------- | --------------------: | -------------: | ---------------------------------------------------------------------- | ------------- | ------------- | ------------- | --------------------------------------------- | ------------------ | ---------------------------------------------------- | ---------------------- | ------------- |
-| Codestral 25.08 | Windsurf/Intake | Codestral 25.08          | Paid      |                   1.0 |  Not evaluated | Devstral Small 1.1: 53.6%; Devstral Medium: 61.6% (SWE-bench Verified) | Not evaluated | Not evaluated | Not evaluated | Top open-model SWE-bench Verified performance | Medium             | Enterprise coding where open-weight SOTA is required | PRD-002 + Mistral blog | 2026-02-26    |
+| Codestral 25.08 | Windsurf/Intake | Codestral 25.08          | Paid      |                   1.0 |  Not evaluated | Devstral Small 1.1: 53.6%; Devstral Medium: 61.6% (SWE-bench Verified; Codestral/Devstral are related Mistral coding variants) | Not evaluated | Not evaluated | Not evaluated | Top open-model SWE-bench Verified performance | Medium             | Enterprise coding where open-weight SOTA is required | PRD-002 + Mistral blog | 2026-02-26    |
 
 ## Operational notes
 

@@ -37,7 +37,11 @@ The orchestrator, `/plan`, and `/project-review` all use the same state files. T
 `/project-review`) must either use atomic append semantics (open with
 `O_APPEND` or equivalent) or acquire `orchestrator.lock` before appending to
 prevent interleaved writes. The Orchestrator always holds the lock when
-writing. Example atomic append (Node.js):
+writing. O_APPEND atomic-append semantics are only guaranteed on local POSIX
+filesystems and may not be reliable on NFS, SMB, or distributed storage. When
+filesystem type is uncertain or `.claude/state/` may be network-mounted,
+callers should acquire `orchestrator.lock` (or `events.log.lock`) before
+writing to avoid interleaved writes. Example atomic append (Node.js):
 
 ```js
 const fs = require('fs');
@@ -194,15 +198,9 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 3. For **parallel work**, create independent tasks for each team.
 4. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
    - `blockedBy` is runtime-derived state from `dependsOn`; do not author it manually.
+   - **Derivation algorithm:** For each task at the start of each delegation round, compute `blockedBy` from its `dependsOn` array by: (1) taking the task IDs in `dependsOn`, (2) removing any IDs that refer to tasks whose status is in terminal states (`completed`, `failed`, `rejected`, `canceled`), (3) using the remaining IDs as `blockedBy` (empty array means unblocked). Treat missing or nonexistent `dependsOn` IDs as non-blocking (exclude them).
 5. Immediately after task creation, run the dependency derivation pass once to populate `blockedBy` from `dependsOn` before the first execution round.
-   - Detect cycles in the `dependsOn` graph (for example via DFS/Kahn). Run detection to exhaustion — repeat until no more cycles remain — since the dependency graph may contain multiple disjoint cycles. Assign each detected cycle a unique cycleId (see cycleId format above).
-     1. Transition every task that is part of the cycle to `canceled` status so they are not left in `submitted` and re-scanned by blockedBy logic.
-     2. Using the set of cycle-member task IDs as already-visited nodes, traverse the dependency graph forward (following tasks whose `dependsOn` includes a visited node) to identify all tasks that transitively depend on any cyclic task; mark each as `canceled` and add it to the visited set to prevent re-traversal. Canceled tasks will be filtered out during the next blockedBy re-computation.
-     3. Emit a structured `events.log` entry for each affected task (cycle members and transitively blocked tasks) with the cycle id, involved task IDs, and action taken. Example entry:
-        ```json
-        {"eventType": "CANCELED", "taskId": "<task-id>", "reason": "dependency-cycle", "cycleId": "<cycle-id>", "cycleMembers": ["<task-id-1>", "<task-id-2>"], "actor": "orchestrator", "timestamp": "<ISO-8601>"}
-        ```
-     - Follow the existing events.log conventions and the "Log everything" rule.
+   - **Cycle detection (fail-fast):** Perform DFS from every unvisited task following `dependsOn` edges; detect back edges to extract each cycle's member path (including self-loops, multi-node cycles, and disjoint cycles). For each detected cycle: assign a unique `cycleId` (e.g., SHA-256 of sorted member IDs truncated to 12 characters); emit an `events.log` entry per cycle member with `eventType:"CANCELED"`, `taskId`, `reason:"dependency-cycle"`, `cycleId`, `cycleMembers`, `actor:"orchestrator"`, `timestamp` (ISO-8601); set cycle members to `canceled`. Do NOT perform transitive cancellation of dependent tasks yet. Add defensive logging at cycle detection and when computing `cycleId`/`cycleMembers`. Unit tests must cover self-loops, single cycles, and multiple disjoint cycles.
 6. Each team should:
    - Accept or reject the task (update `status` and add a message).
    - Make minimal, backwards-compatible changes.
@@ -237,9 +235,10 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 5. Enforce a bounded retry policy for replacement-task loops using persisted `orchestrator.json.retryPolicy` fields (`maxRetryCount`, default 2; per-round `roundRetries`; optional reset metadata).
 
    **Retry key convention:**
-- Use `"round-<n>"` format (e.g., `"round-4"`) for whole-round retries.
-- Use `"validation:<issue-id>"` format only for per-issue retries.
-- Both formats are allowed but context-specific; they must not be mixed within the same scope (e.g., within a single retry series or key namespace).
+   - `"round-<n>"` format (e.g., `"round-4"`) tracks retries of an entire validation round.
+   - `"validation:<issue-id>"` format tracks retries of a specific validation issue.
+   - Both formats may coexist in `retryPolicy.roundRetries` but represent independent counters.
+   - **Rule:** Do not create multiple keys for the same logical target (e.g., do not use both formats for the same round or same issue).
 
    **Retry flow:**
    - Track retries per round or issue key in `retryPolicy.roundRetries[roundKey]`.
@@ -254,10 +253,9 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
      3. Continue overall processing (move to Phase 5) without further automatic retries for that key until human intervention.
 
    **Reset behavior:**
-   - A human or controller must explicitly set `retryPolicy.allowReset = true` AND update `retryPolicy.lastResetAt` to an ISO-8601 timestamp.
+   - A human or controller must explicitly set `retryPolicy.allowReset = true` AND update `retryPolicy.lastResetAt` to an ISO-8601 timestamp (RFC3339 UTC with millisecond precision, trailing 'Z').
    - If `retryEscalated === null`, allow reset when `retryPolicy.allowReset === true` (no timestamp comparison needed).
-   - If `retryEscalated` is non-null, require both `retryPolicy.allowReset === true` AND `new Date(retryPolicy.lastResetAt) > new Date(retryEscalated.at)` to clear `retryPolicy.roundRetries` for the given keys.
-   - Code must enforce that resets only occur when the appropriate conditions are met and the reset timestamp is newer than the escalation timestamp (when applicable).
+   - If `retryEscalated` is non-null, require ALL of: (1) `retryPolicy.allowReset === true`, (2) `retryPolicy.lastResetAt !== null`, (3) validate `lastResetAt` as ISO-8601, (4) call `isTimestampNewer(retryPolicy.lastResetAt, retryEscalated.at)` returning true before clearing `retryPolicy.roundRetries`. The helper `isTimestampNewer(newTs, oldTs)` must: validate non-null ISO-8601 strings; normalize both to UTC; return false for invalid inputs (null, undefined, malformed). Unit tests: same timestamps, timezone differences, null/undefined, invalid ISO strings.
 6. Record validation results in `orchestrator.json` and in task artifacts, including resolution metadata for failed/rejected tasks.
 
 ### Phase 5 — Ship

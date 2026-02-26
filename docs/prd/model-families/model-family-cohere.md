@@ -25,7 +25,7 @@
 | Command R    | `CohereLabs/c4ai-command-r`           | 35B parameter model        |
 | Command R+   | `CohereLabs/c4ai-command-r-plus`      | Enhanced reasoning variant |
 | Command R7B  | `CohereLabs/c4ai-command-r7b-12-2024` | December 2024 release      |
-| Embed models | `CohereLabs/embed-english-v3.0`       | Text embedding models      |
+| Embed models | `CohereLabs/embed-english-v3`         | Text embedding models      |
 
 > **Note:** Cohere provides both API access and select open-weight models on Hugging Face. Enterprise features require API access.
 

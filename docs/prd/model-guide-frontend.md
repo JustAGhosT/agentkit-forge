@@ -58,7 +58,7 @@
 
 ## Model Rankings (Final Scores)
 
-### Tier 1: Recommended (Score >= 8.35)
+### Tier 1: Recommended (Score >= 8.35, inclusive)
 
 | Model                        | Score | Key Strengths                     | Notes                              |
 | ---------------------------- | ----- | --------------------------------- | ---------------------------------- |
@@ -67,7 +67,7 @@
 | GPT-5.2 Medium Thinking Fast | 8.35  | Good speed and reasoning          | Balanced feature delivery          |
 | GLM-5                        | 8.35  | Multilingual and fast             | Good for i18n frontends            |
 
-### Tier 2: Strong Alternatives (Score 8.10-8.34)
+### Tier 2: Strong Alternatives (Score >= 8.10 and < 8.35)
 
 | Model             | Score | Key Strengths                      | Notes                     |
 | ----------------- | ----- | ---------------------------------- | ------------------------- |
@@ -76,7 +76,7 @@
 | Minimax M2.5      | 8.20  | APAC availability and cost profile | Regional option           |
 | GPT-5.1 Fast      | 8.10  | Fast iteration                     | Rapid prototyping         |
 
-### Tier 3: Cost-Aware (Score 8.00-8.09)
+### Tier 3: Cost-Aware (Score >= 8.00 and < 8.10)
 
 | Model                        | Score | Key Strengths               | Notes                   |
 | ---------------------------- | ----- | --------------------------- | ----------------------- |
@@ -84,7 +84,7 @@
 | Kimi K2.5                    | 8.05  | Budget option               | Simple UI tasks         |
 | o3                           | 8.05  | Low cost and stable output  | Budget default          |
 
-### Tier 4: Specialized or Experimental (Score < 8.00)
+### Tier 4: Specialized or Experimental (Score < 8.00, exclusive)
 
 | Model              | Score | Key Strengths         | Notes                                |
 | ------------------ | ----- | --------------------- | ------------------------------------ |

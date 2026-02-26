@@ -14,7 +14,7 @@
 | **Founded**        | 2023                                                    |
 | **Architecture**   | MoE (314B params for Grok-1)                            |
 | **Latest model**   | Grok-3, Grok Code Fast 1                                |
-| **Context window** | 128K tokens                                             |
+| **Context window** | Grok-3: 128K tokens; Grok Code Fast 1: 256K tokens     |
 | **License**        | Proprietary (API) + open weights                        |
 | **Notable**        | Elon Musk's AI company, "max fun" mode, 70.8% SWE-bench |
 
@@ -23,7 +23,7 @@
 | Resource      | Model ID                     | Notes                        |
 | ------------- | ---------------------------- | ---------------------------- |
 | Grok-1        | `xai-org/grok-1`             | 314B MoE model, open weights |
-| Grok-1 Vision | `xai-org/grok-1-vision-beta` | Vision capabilities          |
+| Grok-1 Vision | `xai-org/grok-1-vision-beta` (API-only; verify HF availability) | Vision capabilities; may be API-only, not public HF weights |
 | Grok-2        | `xai-org/grok-2`             | Latest Grok-2 release        |
 
 > **Note:** xAI publishes Grok models via API (x.ai API) and has released open-weight versions on Hugging Face. The open-weight Grok-1 is notable as a 314B parameter MoE model.

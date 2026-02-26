@@ -14,12 +14,12 @@ These are the operational backend weights used by the decision engine.
 
 | Metric        | Weight | Rationale                                  |
 | ------------- | ------ | ------------------------------------------ |
-| Code Quality  | 30%    | Backend correctness and maintainability    |
-| Reasoning     | 25%    | Business logic and architecture trade-offs |
-| Cost          | 10%    | Cost matters but is not primary            |
-| Context       | 25%    | Large services require broad context       |
-| Speed         | 5%     | Throughput is secondary to correctness     |
-| Compatibility | 5%     | Standard tooling and provider fit          |
+| code_quality  | 30%    | Backend correctness and maintainability    |
+| reasoning     | 25%    | Business logic and architecture trade-offs |
+| cost          | 10%    | Cost matters but is not primary            |
+| context       | 25%    | Large services require broad context       |
+| speed         | 5%     | Throughput is secondary to correctness     |
+| compatibility | 5%     | Standard tooling and provider fit          |
 
 ## Scoring Contract
 
@@ -27,7 +27,7 @@ These are the operational backend weights used by the decision engine.
 - Weight sum must equal `100`.
 - Formula:
 
-`Weighted Score = (Code*30 + Reasoning*25 + Cost*10 + Context*25 + Speed*5 + Compatibility*5) / 100`
+`Weighted Score = (code_quality*30 + reasoning*25 + cost*10 + context*25 + speed*5 + compatibility*5) / 100`
 
 - Optional policy penalties:
   - `lock_in_penalty`: `0.00-0.20`
@@ -46,8 +46,11 @@ These are the operational backend weights used by the decision engine.
 
 `normalized_tokens_per_problem = model_tokens_per_problem / baseline_tokens_per_problem`
 
-`cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
+`cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)` — require `model_effective_cost > 0`; if zero or missing, mark cost_score as "unavailable" or use the same fallback policy used elsewhere for missing data.
 
+- **Baseline definitions:**
+  - `baseline_tokens_per_problem`: 3,500,000 (derived from median tokens/problem across Tier 1 models as of 2026-02)
+  - `baseline_effective_cost`: 1.0 (normalized to cost_multiplier=1.0 at baseline_tokens_per_problem)
 - Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
   scores unchanged and mark cost evidence as `Not evaluated`.
 

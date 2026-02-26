@@ -53,6 +53,8 @@
 
 - Current status: tokens/problem evidence remains `Not evaluated` for the ranked
   set in this guide.
+- **Timeline:** Cost evidence evaluation scheduled for Q2 2026 (target: 2026-04-15).
+- **Confidence indicator:** Current Cost scores marked as `Provisional — pending tokens/problem validation` until evidence is available.
 - Recalculation result: per approved fallback policy, Cost scores and final
   weighted scores remain unchanged in this revision.
 

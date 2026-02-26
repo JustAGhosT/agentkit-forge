@@ -10,5 +10,6 @@
     ".cursor/": true,
     ".windsurf/": true,
     ".ai/": true
-  }
+  },
+  "cSpell.words": ["agentic", "agentkit", "CCPA"]
 }

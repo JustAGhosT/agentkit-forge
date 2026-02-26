@@ -106,11 +106,12 @@ function readBacklog(projectRoot) {
       const cells = parts.slice(1, parts.length - 1);
       if (cells.length >= 2) {
         const idIdx = headerCols && headerCols.indexOf('id') >= 0 ? headerCols.indexOf('id') : 0;
-        const titleIdx = headerCols
+        const candidateIdx = headerCols
           ? ['task', 'title', 'description', 'what']
               .map((name) => headerCols.indexOf(name))
               .find((idx) => idx >= 0)
           : 1;
+        const titleIdx = typeof candidateIdx === 'number' && candidateIdx >= 0 ? candidateIdx : 1;
         const statusIdx =
           headerCols && headerCols.indexOf('status') >= 0 ? headerCols.indexOf('status') : 2;
         const teamIdx =

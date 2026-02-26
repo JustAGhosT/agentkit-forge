@@ -424,6 +424,8 @@ Use scorecards as guidance, then tune by team outcome data.
 
 ## Appendix: IDE Model/Capability Matrix
 
+> **Warning — Preliminary planning data:** The table below is not production-ready. Many capability fields (context window, max output, tool use, vision, reliability, determinism, JSON support) remain TBD until the benchmark annex validation completes. See the Pending Benchmark Annex and timeline for when capability fields will be populated. Do not use for production routing decisions without independent verification.
+
 ### Cursor + Windsurf — Model/Capability Matrix
 
 #### Sources

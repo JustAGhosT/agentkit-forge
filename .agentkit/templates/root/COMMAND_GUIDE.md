@@ -17,7 +17,7 @@ This guide helps you choose the right command for your situation. Most workflow 
 
 **Flags:** `--assess-only`, `--phase N`, `--team <name>`, `--dry-run`, `--status`, `--force-unlock`
 
-**Shared assets:** Reads/writes `orchestrator.json`, `events.log`, `AGENT_BACKLOG.md`. Acquires `orchestrator.lock`.
+**Shared assets:** Reads/writes `orchestrator.json`, `events.log`, `AGENT_BACKLOG.md`, `.claude/state/tasks/*.json`, `AGENT_TEAMS.md`. Acquires `orchestrator.lock`.
 
 ---
 

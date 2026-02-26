@@ -36,14 +36,13 @@ Follow these steps in order for every work session:
 1. List files in `.claude/state/tasks/` and read any with status `submitted`
    where `assignees` includes `{{teamId}}`.
 2. For each matching task:
-   - **Acquire a lock lease** on `.claude/state/tasks/{task-id}.lock` using filesystem-based atomic creation:
-     attempt atomic create of lock file with O_CREAT|O_EXCL flags; if successful, write lock content.
-     If create fails (contended), apply timeout + retry with bounded attempts and jittered backoff.
-     Lock metadata: `{"owner":"{{teamId}}","acquiredAt":"<ISO>","expiresAt":"<ISO>","ttlMs":30000}`.
-   - **Lock acquisition policy:** use timeout + retry with bounded attempts
-     (for example max 5 attempts) and jittered backoff (for example 100-500ms).
-     If acquisition fails after max attempts, skip this task.
-   - **Stale-lock takeover:** perform atomic conditional takeover using filesystem primitives. Use exclusive flock + stat+unlink guarded operation that only removes the lock if its `expiresAt` is still < now (or still equals the value you read). Do not check expiresAt and then separately remove the lock.
+   - **Acquire a lock lease** on `.claude/state/tasks/{task-id}.lock` using a Bash-safe approach:
+     - Option A: Use `mkdir` (atomic on POSIX): `mkdir "$lockfile" 2>/dev/null || exit 1`
+     - Option B: Use `set -o noclobber` with atomic redirection: `set -o noclobber; echo "$$" > "$lockfile"`
+     - If create fails (contended), apply timeout + retry with bounded attempts and jittered backoff.
+     - Lock metadata: `{"owner":"{{teamId}}","acquiredAt":"<ISO>","expiresAt":"<ISO>","ttlMs":30000}`.
+   - **Lock acquisition policy:** use timeout + retry with bounded attempts (for example max 5 attempts) and jittered backoff (for example 100-500ms). If acquisition fails after max attempts, skip this task.
+   - **Stale-lock takeover:** Primary: hold exclusive flock for the entire sequence (open + flock(EXLOCK) → read lock file → check expiresAt → unlink/write new lock → release flock). Fallback (platforms without flock): (1) read lock file to get owner/expiresAt, (2) if expiresAt < now, atomically rename stale lock to temp, (3) re-check staleness from temp (verify owner/expiresAt), (4) write new lock to canonical path only if tmp still represents the stale lock you observed. Never rely on a separated "check expiresAt then unlink" sequence.
    - **Deadlock mitigation:** attempt lock acquisition in lexicographic task-id order and, if acquisition fails, apply randomized backoff before retrying the same lock. **Global coordination requirement:** the lexicographic ordering only prevents deadlocks if every agent follows the exact same ordering when acquiring locks - this is a strong system-wide constraint. All agents must use the same ordering. Alternative approaches include timeout-based deadlock detection + retry, lock leasing with expiration, or deadlock detection using wait-for graphs.
    - **Renew lock lease** for long operations: if work under lock exceeds 50% of
      TTL, refresh `expiresAt` before continuing. If refreshing the lock fails or returns a conflict (another agent claimed the lock), the agent must abort the current operation, roll back any partial changes, release/clear local lock state, and surface an explicit error. Retry/backoff is only allowed for transient errors, not for lease conflicts.
@@ -177,7 +176,7 @@ After completing your work, produce a summary:
 If you were working on a delegated task from `.claude/state/tasks/`:
 
 1. Add a `files-changed` artifact listing all modified files.
-2. Add a `test-results` artifact with pass/fail counts and both `added` and `modified` numeric fields (e.g., `{"passed": 42, "failed": 0, "added": 5, "modified": 12}`).
+2. Add a `test-results` artifact with pass/fail counts and both `testsAdded` and `testsModified` numeric fields (e.g., `{"passed": 42, "failed": 0, "testsAdded": 5, "testsModified": 12}`).
 3. Update `status` to `completed` (or `failed` if quality gate failed).
 4. Add a final message summarising what was done.
 5. If the task has a `handoffTo` array, check handoff history to prevent cycles:
