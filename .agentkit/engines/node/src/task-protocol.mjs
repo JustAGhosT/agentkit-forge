@@ -4,6 +4,7 @@
  * Tasks are JSON files in .claude/state/tasks/ with lifecycle states,
  * messages, artifacts, dependency tracking, and chained handoffs.
  */
+import { randomBytes } from 'crypto';
 import {
   existsSync,
   mkdirSync,
@@ -87,6 +88,15 @@ function ensureTasksDir(projectRoot) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Generate a fixed 6-character random suffix (hex) for collision resistance.
+ * Uses crypto.randomBytes for reliable length; Math.random().toString(36) can produce fewer than 6 chars.
+ * @returns {string}
+ */
+function generateRandomSuffix() {
+  return randomBytes(3).toString('hex');
+}
+
+/**
  * Generate a task ID in the format: task-YYYYMMDD-NNN-XXXXXX
  * NNN is a zero-padded sequence number based on existing tasks for that day.
  * XXXXXX is a short collision-resistant suffix.
@@ -114,10 +124,10 @@ export function generateTaskId(projectRoot) {
     }
   }
 
-  let candidate = `${prefix}${String(seq).padStart(3, '0')}-${Math.random().toString(36).slice(2, 8)}`;
+  let candidate = `${prefix}${String(seq).padStart(3, '0')}-${generateRandomSuffix()}`;
   while (existsSync(taskPath(projectRoot, candidate))) {
     seq += 1;
-    candidate = `${prefix}${String(seq).padStart(3, '0')}-${Math.random().toString(36).slice(2, 8)}`;
+    candidate = `${prefix}${String(seq).padStart(3, '0')}-${generateRandomSuffix()}`;
   }
   return candidate;
 }
@@ -129,7 +139,7 @@ export function generateTaskId(projectRoot) {
 async function writeTaskFile(projectRoot, taskId, data) {
   ensureTasksDir(projectRoot);
   const path = taskPath(projectRoot, taskId);
-  const tmpPath = `${path}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
+  const tmpPath = `${path}.${process.pid}.${Date.now()}.${generateRandomSuffix()}.tmp`;
   writeFileSync(tmpPath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
   try {
     renameSync(tmpPath, path);

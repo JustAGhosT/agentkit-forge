@@ -52,7 +52,7 @@
 - Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
   scores unchanged and mark cost evidence as `Not evaluated`.
 - **Edge case handling:**
-  - If `baseline_tokens_per_problem == 0`: use `cost_multiplier` alone for cost_score (set to 10 * (1 / cost_multiplier), clamped to 0-10).
+  - If `baseline_tokens_per_problem == 0`: if `cost_multiplier == 0`, set cost_score = 10; else use cost_multiplier alone (set to 10 * (1 / cost_multiplier), clamped to 0-10).
   - If `model_effective_cost == 0`: cost_score = 10 (best possible).
   - If `normalized_tokens_per_problem == 0`: cost_score = 10 (best possible, zero token usage).
 

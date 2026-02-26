@@ -457,6 +457,7 @@ Project start date: **2026-03-03**
 *Note: Model names reflect current API conventions as of Feb 2026. "Gemini Ultra" is deprecated; current Gemini family includes Gemini 1.5/2.0/3.x variants. Authoritative data maintained in model family dossiers.*
 
 **Data population plan (v1):**
+
 - **Ownership:** Platform Lead owns benchmark data collection; Engineering Lead owns integration with scorecard API.
 - **Minimum viable metrics:** Code Quality (SWE-bench verified), Reasoning (Aider), Speed (tokens/sec), Cost (effective cost), Context (window size), Compatibility (tool coverage).
 - **Data sources:** Public benchmarks (SWE-bench, Aider), vendor API documentation, internal throughput measurements.

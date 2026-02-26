@@ -46,6 +46,7 @@
 
 `cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
 
+- **model_effective_cost == 0:** Set cost_score = 10 (capped maximum) to avoid divide-by-zero. Alternative: use small epsilon floor for model_effective_cost or skip the model.
 - Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
   scores unchanged and mark cost evidence as `Not evaluated`.
 

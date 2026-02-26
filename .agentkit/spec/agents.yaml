@@ -451,6 +451,8 @@ agents:
         - Grep
         - Bash
 
+    # Orchestration must handle cycle detection/idempotency; security-auditor and
+    # environment-manager coordinate via devops, not mutual notify.
     - id: environment-manager
       category: operations
       name: Environment Manager
@@ -465,7 +467,6 @@ agents:
         - infra
       notifies:
         - devops
-        - security-auditor
       focus:
         - '.env.example'
         - 'docker-compose*.yml'

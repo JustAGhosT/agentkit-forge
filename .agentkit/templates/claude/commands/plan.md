@@ -143,21 +143,19 @@ Write the complete plan as a structured markdown document. Do NOT create a file 
 ### Writing State (after planning)
 
 - **Append to:** `.claude/state/events.log` (see format below)
-- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
+- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock. Use `events.log.lock` (separate lock per orchestrator.lock pattern) before appending to `events.log`.
 
 Requirements:
 
 - Log format: `[<timestamp>] [PLAN] [PLANNER] <brief summary>. Steps: <count>. Files: <count>.`
-- Append single-line timestamped entries with file locking to avoid concurrent writes.
-- Use an appropriate atomic lock/acquire pattern for the environment.
-- Include retry/backoff and stale-lock handling where needed.
-- Surface failures to observability systems.
-- Provide a fallback persistence path and degraded state on append failure.
-- Require graceful error handling and logging on append failures.
+- Atomic append with file lock: acquire `events.log.lock` (or POSIX flock on the target file) before appending.
+- Graceful error handling and logging on append failures.
 
 ```
 [<timestamp>] [PLAN] [PLANNER] Plan created for: "<goal summary>". Steps: <count>. Files: <count>.
 ```
+
+**Optional (mission-critical scenarios):** Retry/backoff, stale-lock handling, observability integration, fallback persistence, and degraded-state behavior may be required when append reliability is critical. Enable these safeguards when the plan log is used for audit trails or compliance.
 
 ## Rules
 

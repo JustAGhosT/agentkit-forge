@@ -16,7 +16,7 @@
 | **Latest model**   | DeepSeek V3.2                                                       |
 | **Context window** | 64K-128K tokens                                                     |
 | **License**        | Open weights (MIT/Apache) + API                                     |
-| **Notable**        | Open-source breakthrough, ~$6M training cost, strong reasoning line |
+| **Notable**        | Open-source breakthrough, ~$6M training cost, strong reasoning capabilities |
 
 R1 is a DeepSeek reasoning-family model (not a separate external project) and
 is tracked as part of the broader DeepSeek model line.
@@ -41,7 +41,7 @@ is tracked as part of the broader DeepSeek model line.
 | API model mapping | `deepseek-chat` = non-thinking mode of DeepSeek-V3.2           | [DeepSeek API quick start](https://api-docs.deepseek.com/)             | Fetched, vendor claim |
 | API model mapping | `deepseek-reasoner` = thinking mode of DeepSeek-V3.2           | [DeepSeek API quick start](https://api-docs.deepseek.com/)             | Fetched, vendor claim |
 | Context limit     | DeepSeek-V3.2 API modes listed with 128K context limit         | [DeepSeek API quick start](https://api-docs.deepseek.com/)             | Fetched, vendor claim |
-| Tool-use behavior | V3.2 supports tool use in both thinking and non-thinking modes | [DeepSeek V3.2 release](https://api-docs.deepseek.com/news/news251201) | Fetched, vendor claim |
+| Tool-use behavior | Standard V3.2: supports tool use in thinking and non-thinking modes; DeepSeek-V3.2-Speciale: does not support tool-calling | [DeepSeek V3.2 release](https://api-docs.deepseek.com/news/news251201) | Fetched, vendor claim |
 | Release coverage  | V3.2 and V3.2-Speciale documented as current release line      | [DeepSeek V3.2 release](https://api-docs.deepseek.com/news/news251201) | Fetched, vendor claim |
 
 ## Models tracked from PRD-002 (base + profiles)

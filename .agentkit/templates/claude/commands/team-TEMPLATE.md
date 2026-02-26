@@ -37,29 +37,29 @@ Follow these steps in order for every work session:
    where `assignees` includes `{{teamId}}`.
 2. For each matching task:
    - **Acquire a lock lease** on `.claude/state/tasks/{task-id}.lock` using a Bash-safe approach:
-     - Option A: Use `mkdir` (atomic on POSIX): `mkdir "$lockfile" 2>/dev/null || exit 1`
-     - Option B: Use `set -o noclobber` with atomic redirection: `set -o noclobber; echo "$$" > "$lockfile"`
+     - **Preferred (Option A):** Use `mkdir` (atomic on POSIX): `mkdir "$lockfile" 2>/dev/null || exit 1`. Cross-shell safe and correct for directory-based locks. Use the existing retry + jittered backoff logic.
+     - **Fallback (Option B):** Use `set -o noclobber; echo "$$" > "$lockfile"` only when mkdir cannot be used (e.g., non-POSIX shells). Caveat: not atomic across some shells; potential race conditions.
      - If create fails (contended), apply timeout + retry with bounded attempts and jittered backoff.
      - Lock metadata: `{"owner":"{{teamId}}","acquiredAt":"<ISO>","expiresAt":"<ISO>","ttlMs":30000}`.
    - **Lock acquisition policy:** use timeout + retry with bounded attempts (for example max 5 attempts) and jittered backoff (for example 100-500ms). If acquisition fails after max attempts, skip this task.
-   - **Stale-lock takeover:** Primary: hold exclusive flock for the entire sequence (open + flock(EXLOCK) → read lock file → check expiresAt → unlink/write new lock → release flock). Fallback (platforms without flock): use per-agent temp filenames (e.g., PID, UUID, or `{{teamId}}+timestamp`). Only the agent that successfully atomically renames the canonical lock to its own temp proceeds. On rename failure, treat as lost race and abort/retry. Re-verify staleness from the temp file before writing the new canonical lock. Clean up abandoned per-agent temps.
+   - **Stale-lock takeover:** Use a single atomic claim: write per-agent temp (owner id, expiry) → atomic rename temp to canonical → treat rename success as ownership; abort on failure. Cleanup: only remove canonical via atomic rename to tombstone, verify owner/expiry match. Prefer TTL/lease single-path; avoid mixed flock+temp fallback to eliminate TOCTOU.
    - **Deadlock mitigation:** Rely primarily on timeout-based detection (fail fast when lock acquisition exceeds a threshold), TTL-based automatic release (lock leasing with expiration), and randomized backoff and retries. Remove or de-emphasize global coordination requirements.
    - **Renew lock lease** for long operations: if work under lock exceeds 50% of
      TTL, refresh `expiresAt` before continuing. If refreshing the lock fails or returns a conflict (another agent claimed the lock), the agent must abort the current operation, roll back any partial changes, release/clear local lock state, and surface an explicit error. Retry/backoff is only allowed for transient errors, not for lease conflicts.
 
 **Rollback Strategy for Lock Renewal Failures:**
-- **Transaction logging:** Record per-task transaction log (operations and temp paths) when obtaining lock
-- **Work against temps:** Perform all file-modifying work against temp files, only atomically rename/move temps to final paths on success
-- **Cleanup routine:** On lease-refresh failure or lease conflict, run cleanup routine that reads transaction log to revert committed steps and remove abandoned temp files
-- **Error reporting:** Surface explicit error including transaction log reference and affected "expiresAt"/lock id for recovery
-- **Log retention:** Maintain retention/rotation policy for stale logs and temp files (configurable TTL, default 24h)
+- **Transaction log schema:** `{taskId, lockId, operations: [{action, path, tempPath}], timestamps}`. Canonical directory: `.claude/state/tasks/tx/` or configurable. Temp-file naming: `{taskId}.{lockId}.{opIndex}.tmp` correlating to tx entries.
+- **Work against temps:** Perform all file-modifying work against temp files, only atomically rename/move temps to final paths on success.
+- **Cleanup routine:** `runCleanupOnLeaseFailure(txLogPath)` reads the tx log to revert actions and remove temp files. Invoke on lease-refresh failure or lease conflict.
+- **Error reporting:** Include tx log identifier, lock id, and expiresAt in error output.
+- **Retention/TTL:** Default 24h; configurable via env or config.
    - **Re-check status under lock:** read task file again and verify
      `status === "submitted"`. If changed, release lock and skip.
    - If still `submitted` and task is within scope and accepted type, perform a single atomic transition from "submitted"→"working":
-     write updated JSON to temp file in same directory with deterministic naming (taskID + .tmp + pid/timestamp),
+     write updated JSON to temp file in same directory with unique per-attempt naming (e.g., `{taskID}.tmp.{pid}.{timestamp}`),
      set `status` to "working", append executor message, fsync temp, then `rename` over original.
      If rename fails, attempt immediate unlink of temp file and log full context; retry unlink with backoff if needed.
-     On agent startup, scan for temp files matching `taskID + .tmp + pid/timestamp` and remove or reconcile stale temps before proceeding. Emit metrics/logs (temp file count, max age) when touching the directory. Document a configurable TTL for stale temps. Example periodic cleanup (cron): `find .claude/state/tasks -name "*.tmp" -mmin +60 -delete` (adjust TTL as needed).
+     On agent startup, scan for temp files matching `{taskID}.tmp.*` and remove or reconcile stale temps before proceeding. Emit metrics/logs (temp file count, max age) when touching the directory. Document a configurable TTL for stale temps. Example periodic cleanup (cron): `find .claude/state/tasks -name "*.tmp" -mmin +60 -delete` (adjust TTL as needed).
    - If outside scope/type, **reject** with the same atomic update mechanism:
      set `status` to "rejected", append reason + suggested team.
    - **Always release lock** in `finally` after accept/reject/skip paths.
@@ -179,9 +179,7 @@ If you were working on a delegated task from `.claude/state/tasks/`:
 2. Add a `test-results` artifact with pass/fail counts and both `testsAdded` and `testsModified` numeric fields (e.g., `{"passed": 42, "failed": 0, "testsAdded": 5, "testsModified": 12}`).
 3. Update `status` to `completed` (or `failed` if quality gate failed).
 4. Add a final message summarising what was done.
-5. If the task has a `handoffTo` array, check handoff history to prevent cycles:
-   - Verify no team in `handoffTo` is already present in the complete task.handoffHistory ∪ {currentTeam}
-   - Verify resulting handoff depth would not exceed maximum (recommended: max 3 handoffs)
+5. If the task has a `handoffTo` array, validate handoff: (1) reject if `handoffTo` contains `currentTeam` (self-handoff); (2) reject if `handoffTo` contains duplicate team IDs; (3) verify no team in `handoffTo` is in task.handoffHistory ∪ {currentTeam}; (4) verify handoff depth does not exceed maximum (recommended: max 3 handoffs)
    - If either condition fails, implement concrete fallback:
      1. Set task.status to "blocked" (or "needs-review")
      2. Append clear explanatory message to task.handoffContext describing the cycle or depth violation
@@ -191,9 +189,10 @@ If you were working on a delegated task from `.claude/state/tasks/`:
 **Notification Hook Interface:**
 - **Hook name:** `notifyOnCall(handoffEvent)`
 - **Parameters:** `{taskId, violatingTeams, depth, timestamp, message}`
+- **Validation:** `validateNotifyOnCall` invoked from orchestrator startup and task/deploy flows (e.g., AgentOrchestrator.start, createTask, deployTask). Fail early with clear error if config/env lacks notifyOnCall when `REQUIRE_NOTIFY_ON_CALL` is enabled (default: true for production).
 - **Implementation options:** HTTP endpoint, event bus, or local file sink (`.claude/state/alerts.json`)
 - **Failure handling:** Log notify error, mark as "attempted" in events.log, continue with task.status = "blocked"
-- **Production:** `notifyOnCall` is mandatory for production; fail task creation or deployment if missing. Implement a guaranteed fallback writer that always appends a record to `.claude/state/alerts.json` and writes an "attempted" entry to events.log when notifyOnCall fails. When task.status is set to "blocked", trigger the fallback and emit an escalated alert (e.g., increment max block duration counter, call fallback/alternate channel) so blocked tasks cannot remain unnoticed.
+- **Fallback:** Implement guaranteed fallback writer (e.g., `emitFallbackAlert`) that appends to `.claude/state/alerts.json` and writes "attempted" to events.log when notifyOnCall fails. When task.status is "blocked", populate `handoffContext` with a one-paragraph summary of what was done and why the fallback was triggered.
    Then populate `handoffContext` with a one-paragraph summary of what was done and what the next team needs.
    The orchestrator will auto-create follow-up tasks.
 6. If no `handoffTo` is set but you identified downstream work, set

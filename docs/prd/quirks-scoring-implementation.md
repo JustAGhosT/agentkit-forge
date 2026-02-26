@@ -12,7 +12,7 @@ This document provides a concrete implementation plan for adding numerical quirk
 
 ### Base Quirk Score Calculation
 
-```
+```text
 Base Quirk Score = sum(all quirk scores)
 ```
 
@@ -20,11 +20,12 @@ Individual quirk values are defined per-model in the tables below (e.g., Claude:
 
 ### Final Score Integration
 
-```
+```text
 Final Score = Weighted Score - lock_in_penalty - quirks_penalty + quirks_bonus
 ```
 
 Where:
+
 - `quirks_penalty = max(0, -Base Quirk Score)` (only negative base scores become penalties)
 - `quirks_bonus = max(0, Base Quirk Score)` (positive base scores become bonuses)
 
@@ -148,11 +149,9 @@ agents:
       positive: ["native_mcp", "consistent_quality", "strong_agentic"]
       negative: ["verbose_high_context", "premium_pricing", "rate_limiting"]
       operational: ["context_inconsistency"]
-      scores:
-        base: 0.15
-        penalty: 0.0
-        bonus: 0.15
 ```
+
+Scores are computed at runtime by `calculateQuirksScore`; do not store `scores.base`, `scores.penalty`, `scores.bonus` in config. Optionally add `validateQuirksScores` to warn when stored scores drift from computed values.
 
 ### Step 2: Update Decision Engine
 
@@ -206,24 +205,36 @@ const QUIRK_SCORES = {
   multiple_cost_tiers: -0.05,
   mamba_architecture: -0.05,
   platform_dependencies: -0.05,
+
+  strong_tool_integration: 0.2,
+  extensive_profile_variants: 0.1,
+  native_multimodal: 0.2,
+  speed_advantage: 0.2,
+  performance_inversion: -0.2,
+  preview_model_availability: -0.1,
+  regional_variability: -0.1,
+  token_efficiency_leader: 0.3,
+  cheapest_api_pricing: 0.3,
+  strong_multilingual: 0.2,
+  massive_scale: 0.1,
+  limited_western_documentation: -0.1,
+  apac_region_focus: -0.1,
 };
 
 function calculateQuirksScore(agentConfig) {
-  const { quirks } = agentConfig;
+  const quirks = agentConfig?.quirks ?? {};
+  const positive = Array.isArray(quirks.positive) ? quirks.positive : [];
+  const negative = Array.isArray(quirks.negative) ? quirks.negative : [];
+  const operational = Array.isArray(quirks.operational) ? quirks.operational : [];
   let baseScore = 0;
 
-  // Calculate positive contributions
-  quirks.positive.forEach(quirk => {
+  positive.forEach(quirk => {
     baseScore += QUIRK_SCORES[quirk] || 0;
   });
-
-  // Calculate negative contributions
-  quirks.negative.forEach(quirk => {
+  negative.forEach(quirk => {
     baseScore += QUIRK_SCORES[quirk] || 0;
   });
-
-  // Calculate operational contributions
-  quirks.operational.forEach(quirk => {
+  operational.forEach(quirk => {
     baseScore += QUIRK_SCORES[quirk] || 0;
   });
 
@@ -283,9 +294,9 @@ frontend:
     primary: gemini-3-flash
     fallback: gpt-4o
   quirks_weighting:
-    multimodal: 0.3      # UI/UX advantage
-    speed_advantage: 0.4 # Fast iteration
-    api_evolution: 0.2   # Scale down penalty (positive multiplier reduces negative base)
+    native_multimodal: 0.3   # UI/UX advantage (maps to QUIRK_SCORES.native_multimodal)
+    speed_advantage: 0.4     # Fast iteration (maps to QUIRK_SCORES.speed_advantage)
+    api_evolution: 0.2      # Scale down penalty (positive multiplier reduces negative base)
 ```
 
 ## Monitoring Metrics

@@ -40,6 +40,7 @@ Weights in the formula and YAML use whole-number units (e.g., Code 10 = 10%). Th
 
 - Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
   inputs are available.
+- **Baseline definition:** Baseline model and configuration (e.g., GPT-4 or config-specified reference). `baseline_tokens_per_problem` and `baseline_effective_cost` are computed or configured; see scorecard or config. Baseline may be fixed or updated over time (update cadence and recording location documented in scorecard).
 - Cost normalization formulas:
 
 `effective_cost = cost_multiplier * normalized_tokens_per_problem`

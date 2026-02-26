@@ -3,7 +3,7 @@
 ## Snapshot
 
 - Last updated: 2026-02-26
-- Scope: benchmark signals for GLM 4.7 and GLM-5 in coding contexts
+- Scope: benchmark signals for GLM-4.7 and GLM-5 in coding contexts
 - Intended use: source data for team model guides
 
 ## At a Glance

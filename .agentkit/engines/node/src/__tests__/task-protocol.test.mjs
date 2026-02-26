@@ -35,12 +35,11 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('generateTaskId', () => {
-  it('generates sequential IDs for the same day', () => {
+  it('generates sequential IDs for the same day', async () => {
     const id1 = generateTaskId(tmpRoot);
     expect(id1).toMatch(/^task-\d{8}-001-[a-z0-9]{6}$/);
 
-    // Create a task so next ID increments
-    createTask(tmpRoot, {
+    await createTask(tmpRoot, {
       title: 'First',
       delegator: 'test',
       assignees: ['team-backend'],
@@ -55,8 +54,8 @@ describe('generateTaskId', () => {
 // ---------------------------------------------------------------------------
 
 describe('createTask', () => {
-  it('creates a task with valid data', () => {
-    const result = createTask(tmpRoot, {
+  it('creates a task with valid data', async () => {
+    const result = await createTask(tmpRoot, {
       type: 'implement',
       delegator: 'orchestrator',
       assignees: ['team-backend'],
@@ -79,8 +78,8 @@ describe('createTask', () => {
     expect(result.task.messages[0].role).toBe('delegator');
   });
 
-  it('returns error for missing title', () => {
-    const result = createTask(tmpRoot, {
+  it('returns error for missing title', async () => {
+    const result = await createTask(tmpRoot, {
       delegator: 'test',
       assignees: ['team-backend'],
     });
@@ -88,8 +87,8 @@ describe('createTask', () => {
     expect(result.task).toBeNull();
   });
 
-  it('returns error for missing delegator', () => {
-    const result = createTask(tmpRoot, {
+  it('returns error for missing delegator', async () => {
+    const result = await createTask(tmpRoot, {
       title: 'Test',
       assignees: ['team-backend'],
     });
@@ -97,8 +96,8 @@ describe('createTask', () => {
     expect(result.task).toBeNull();
   });
 
-  it('returns error for empty assignees', () => {
-    const result = createTask(tmpRoot, {
+  it('returns error for empty assignees', async () => {
+    const result = await createTask(tmpRoot, {
       title: 'Test',
       delegator: 'test',
       assignees: [],
@@ -107,8 +106,8 @@ describe('createTask', () => {
     expect(result.task).toBeNull();
   });
 
-  it('returns error for invalid task type', () => {
-    const result = createTask(tmpRoot, {
+  it('returns error for invalid task type', async () => {
+    const result = await createTask(tmpRoot, {
       title: 'Test',
       delegator: 'test',
       assignees: ['x'],
@@ -118,8 +117,8 @@ describe('createTask', () => {
     expect(result.task).toBeNull();
   });
 
-  it('returns error for invalid priority', () => {
-    const result = createTask(tmpRoot, {
+  it('returns error for invalid priority', async () => {
+    const result = await createTask(tmpRoot, {
       title: 'Test',
       delegator: 'test',
       assignees: ['x'],
@@ -129,8 +128,8 @@ describe('createTask', () => {
     expect(result.task).toBeNull();
   });
 
-  it('defaults type to implement and priority to P2', () => {
-    const result = createTask(tmpRoot, {
+  it('defaults type to implement and priority to P2', async () => {
+    const result = await createTask(tmpRoot, {
       title: 'Test',
       delegator: 'test',
       assignees: ['x'],
@@ -139,8 +138,8 @@ describe('createTask', () => {
     expect(result.task.priority).toBe('P2');
   });
 
-  it('returns error for non-existent dependency', () => {
-    const result = createTask(tmpRoot, {
+  it('returns error for non-existent dependency', async () => {
+    const result = await createTask(tmpRoot, {
       title: 'Test',
       delegator: 'test',
       assignees: ['x'],
@@ -150,8 +149,8 @@ describe('createTask', () => {
     expect(result.task).toBeNull();
   });
 
-  it('returns error for invalid dependency task ID', () => {
-    const result = createTask(tmpRoot, {
+  it('returns error for invalid dependency task ID', async () => {
+    const result = await createTask(tmpRoot, {
       title: 'Test',
       delegator: 'test',
       assignees: ['x'],
@@ -161,13 +160,13 @@ describe('createTask', () => {
     expect(result.task).toBeNull();
   });
 
-  it('sets blockedBy when dependency is not yet complete', () => {
-    const dep = createTask(tmpRoot, {
+  it('sets blockedBy when dependency is not yet complete', async () => {
+    const dep = await createTask(tmpRoot, {
       title: 'Dep',
       delegator: 'test',
       assignees: ['x'],
     });
-    const result = createTask(tmpRoot, {
+    const result = await createTask(tmpRoot, {
       title: 'Blocked',
       delegator: 'test',
       assignees: ['y'],
@@ -182,8 +181,8 @@ describe('createTask', () => {
 // ---------------------------------------------------------------------------
 
 describe('getTask', () => {
-  it('retrieves an existing task', () => {
-    const created = createTask(tmpRoot, {
+  it('retrieves an existing task', async () => {
+    const created = await createTask(tmpRoot, {
       title: 'Test',
       delegator: 'test',
       assignees: ['x'],
@@ -215,27 +214,27 @@ describe('listTasks', () => {
     expect(listTasks(tmpRoot).tasks).toEqual([]);
   });
 
-  it('lists all tasks', () => {
-    createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'] });
-    createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['y'] });
+  it('lists all tasks', async () => {
+    await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'] });
+    await createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['y'] });
     expect(listTasks(tmpRoot).tasks).toHaveLength(2);
   });
 
-  it('filters by status', () => {
-    createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'] });
+  it('filters by status', async () => {
+    await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'] });
     expect(listTasks(tmpRoot, { status: 'submitted' }).tasks).toHaveLength(1);
     expect(listTasks(tmpRoot, { status: 'completed' }).tasks).toHaveLength(0);
   });
 
-  it('filters by assignee', () => {
-    createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['team-backend'] });
-    createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['team-frontend'] });
+  it('filters by assignee', async () => {
+    await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['team-backend'] });
+    await createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['team-frontend'] });
     expect(listTasks(tmpRoot, { assignee: 'team-backend' }).tasks).toHaveLength(1);
   });
 
-  it('sorts by priority then date', () => {
-    createTask(tmpRoot, { title: 'Low', delegator: 'test', assignees: ['x'], priority: 'P3' });
-    createTask(tmpRoot, { title: 'High', delegator: 'test', assignees: ['x'], priority: 'P0' });
+  it('sorts by priority then date', async () => {
+    await createTask(tmpRoot, { title: 'Low', delegator: 'test', assignees: ['x'], priority: 'P3' });
+    await createTask(tmpRoot, { title: 'High', delegator: 'test', assignees: ['x'], priority: 'P0' });
     const { tasks } = listTasks(tmpRoot);
     expect(tasks[0].title).toBe('High');
     expect(tasks[1].title).toBe('Low');
@@ -247,9 +246,9 @@ describe('listTasks', () => {
 // ---------------------------------------------------------------------------
 
 describe('updateTaskStatus', () => {
-  it('transitions submitted → accepted', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    const result = updateTaskStatus(tmpRoot, created.task.id, 'accepted', {
+  it('transitions submitted → accepted', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = await updateTaskStatus(tmpRoot, created.task.id, 'accepted', {
       from: 'team-backend',
       content: 'Accepted.',
     });
@@ -257,68 +256,68 @@ describe('updateTaskStatus', () => {
     expect(result.task.messages).toHaveLength(2);
   });
 
-  it('transitions accepted → working', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
-    const result = updateTaskStatus(tmpRoot, created.task.id, 'working', { from: 'x' });
+  it('transitions accepted → working', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    await updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
+    const result = await updateTaskStatus(tmpRoot, created.task.id, 'working', { from: 'x' });
     expect(result.task.status).toBe('working');
   });
 
-  it('transitions working → completed', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
-    updateTaskStatus(tmpRoot, created.task.id, 'working', { from: 'x' });
-    const result = updateTaskStatus(tmpRoot, created.task.id, 'completed', { from: 'x' });
+  it('transitions working → completed', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    await updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
+    await updateTaskStatus(tmpRoot, created.task.id, 'working', { from: 'x' });
+    const result = await updateTaskStatus(tmpRoot, created.task.id, 'completed', { from: 'x' });
     expect(result.task.status).toBe('completed');
   });
 
-  it('rejects invalid transition submitted → completed', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    const result = updateTaskStatus(tmpRoot, created.task.id, 'completed', { from: 'x' });
+  it('rejects invalid transition submitted → completed', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = await updateTaskStatus(tmpRoot, created.task.id, 'completed', { from: 'x' });
     expect(result.error).toContain('Invalid transition');
   });
 
-  it('rejects transition from terminal state', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    updateTaskStatus(tmpRoot, created.task.id, 'rejected', { from: 'x' });
-    const result = updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
+  it('rejects transition from terminal state', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    await updateTaskStatus(tmpRoot, created.task.id, 'rejected', { from: 'x' });
+    const result = await updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
     expect(result.error).toContain('none (terminal state)');
   });
 
-  it('supports submitted → rejected', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    const result = updateTaskStatus(tmpRoot, created.task.id, 'rejected', {
+  it('supports submitted → rejected', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = await updateTaskStatus(tmpRoot, created.task.id, 'rejected', {
       from: 'team-backend',
       content: 'Not in my scope.',
     });
     expect(result.task.status).toBe('rejected');
   });
 
-  it('supports submitted → canceled', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    const result = updateTaskStatus(tmpRoot, created.task.id, 'canceled', {
+  it('supports submitted → canceled', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = await updateTaskStatus(tmpRoot, created.task.id, 'canceled', {
       from: 'orchestrator',
       content: 'Descoped by orchestrator.',
     });
     expect(result.task.status).toBe('canceled');
   });
 
-  it('supports accepted → canceled', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
-    const result = updateTaskStatus(tmpRoot, created.task.id, 'canceled', {
+  it('supports accepted → canceled', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    await updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
+    const result = await updateTaskStatus(tmpRoot, created.task.id, 'canceled', {
       from: 'orchestrator',
       content: 'Canceled before execution.',
     });
     expect(result.task.status).toBe('canceled');
   });
 
-  it('supports working → input-required → working', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
-    updateTaskStatus(tmpRoot, created.task.id, 'working', { from: 'x' });
-    updateTaskStatus(tmpRoot, created.task.id, 'input-required', { from: 'x' });
-    const result = updateTaskStatus(tmpRoot, created.task.id, 'working', { from: 'x' });
+  it('supports working → input-required → working', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    await updateTaskStatus(tmpRoot, created.task.id, 'accepted', { from: 'x' });
+    await updateTaskStatus(tmpRoot, created.task.id, 'working', { from: 'x' });
+    await updateTaskStatus(tmpRoot, created.task.id, 'input-required', { from: 'x' });
+    const result = await updateTaskStatus(tmpRoot, created.task.id, 'working', { from: 'x' });
     expect(result.task.status).toBe('working');
   });
 });
@@ -328,9 +327,9 @@ describe('updateTaskStatus', () => {
 // ---------------------------------------------------------------------------
 
 describe('addTaskMessage', () => {
-  it('adds a message to a task', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    const result = addTaskMessage(tmpRoot, created.task.id, {
+  it('adds a message to a task', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = await addTaskMessage(tmpRoot, created.task.id, {
       role: 'executor',
       from: 'team-backend',
       content: 'Working on it.',
@@ -339,10 +338,10 @@ describe('addTaskMessage', () => {
     expect(result.task.messages[1].content).toBe('Working on it.');
   });
 
-  it('rejects message on terminal task', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    updateTaskStatus(tmpRoot, created.task.id, 'rejected', { from: 'x' });
-    const result = addTaskMessage(tmpRoot, created.task.id, {
+  it('rejects message on terminal task', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    await updateTaskStatus(tmpRoot, created.task.id, 'rejected', { from: 'x' });
+    const result = await addTaskMessage(tmpRoot, created.task.id, {
       role: 'delegator',
       from: 'test',
       content: 'Please reconsider.',
@@ -350,9 +349,9 @@ describe('addTaskMessage', () => {
     expect(result.error).toContain('terminal state');
   });
 
-  it('rejects invalid message role', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    const result = addTaskMessage(tmpRoot, created.task.id, {
+  it('rejects invalid message role', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = await addTaskMessage(tmpRoot, created.task.id, {
       role: 'observer',
       from: 'test',
       content: 'Hi.',
@@ -366,9 +365,9 @@ describe('addTaskMessage', () => {
 // ---------------------------------------------------------------------------
 
 describe('addTaskArtifact', () => {
-  it('adds a files-changed artifact', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    const result = addTaskArtifact(tmpRoot, created.task.id, {
+  it('adds a files-changed artifact', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = await addTaskArtifact(tmpRoot, created.task.id, {
       type: 'files-changed',
       paths: ['src/api/users.ts'],
       summary: 'Added pagination',
@@ -378,9 +377,9 @@ describe('addTaskArtifact', () => {
     expect(result.task.artifacts[0].addedAt).toBeDefined();
   });
 
-  it('adds a test-results artifact', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    const result = addTaskArtifact(tmpRoot, created.task.id, {
+  it('adds a test-results artifact', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = await addTaskArtifact(tmpRoot, created.task.id, {
       type: 'test-results',
       passed: 10,
       failed: 0,
@@ -389,9 +388,9 @@ describe('addTaskArtifact', () => {
     expect(result.task.artifacts[0].passed).toBe(10);
   });
 
-  it('rejects invalid artifact type', () => {
-    const created = createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
-    const result = addTaskArtifact(tmpRoot, created.task.id, { type: 'banana' });
+  it('rejects invalid artifact type', async () => {
+    const created = await createTask(tmpRoot, { title: 'T', delegator: 'test', assignees: ['x'] });
+    const result = await addTaskArtifact(tmpRoot, created.task.id, { type: 'banana' });
     expect(result.error).toContain('Invalid artifact type');
   });
 });
@@ -401,9 +400,9 @@ describe('addTaskArtifact', () => {
 // ---------------------------------------------------------------------------
 
 describe('checkDependencies', () => {
-  it('unblocks task when dependency completes', () => {
-    const dep = createTask(tmpRoot, { title: 'Dep', delegator: 'test', assignees: ['a'] });
-    const blocked = createTask(tmpRoot, {
+  it('unblocks task when dependency completes', async () => {
+    const dep = await createTask(tmpRoot, { title: 'Dep', delegator: 'test', assignees: ['a'] });
+    const blocked = await createTask(tmpRoot, {
       title: 'Blocked',
       delegator: 'test',
       assignees: ['b'],
@@ -411,12 +410,11 @@ describe('checkDependencies', () => {
     });
     expect(blocked.task.blockedBy).toContain(dep.task.id);
 
-    // Complete the dependency
-    updateTaskStatus(tmpRoot, dep.task.id, 'accepted', { from: 'a' });
-    updateTaskStatus(tmpRoot, dep.task.id, 'working', { from: 'a' });
-    updateTaskStatus(tmpRoot, dep.task.id, 'completed', { from: 'a' });
+    await updateTaskStatus(tmpRoot, dep.task.id, 'accepted', { from: 'a' });
+    await updateTaskStatus(tmpRoot, dep.task.id, 'working', { from: 'a' });
+    await updateTaskStatus(tmpRoot, dep.task.id, 'completed', { from: 'a' });
 
-    const { unblocked } = checkDependencies(tmpRoot);
+    const { unblocked } = await checkDependencies(tmpRoot);
     expect(unblocked).toContain(blocked.task.id);
 
     // Verify blockedBy is now empty
@@ -424,22 +422,22 @@ describe('checkDependencies', () => {
     expect(updated.task.blockedBy).toEqual([]);
   });
 
-  it('keeps task blocked when dependency is still in progress', () => {
-    const dep = createTask(tmpRoot, { title: 'Dep', delegator: 'test', assignees: ['a'] });
-    createTask(tmpRoot, {
+  it('keeps task blocked when dependency is still in progress', async () => {
+    const dep = await createTask(tmpRoot, { title: 'Dep', delegator: 'test', assignees: ['a'] });
+    await createTask(tmpRoot, {
       title: 'Blocked',
       delegator: 'test',
       assignees: ['b'],
       dependsOn: [dep.task.id],
     });
 
-    const { unblocked } = checkDependencies(tmpRoot);
+    const { unblocked } = await checkDependencies(tmpRoot);
     expect(unblocked).toEqual([]);
   });
 
-  it('surfaces dependency cycle errors and skips propagation', () => {
-    const taskA = createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['a'] });
-    const taskB = createTask(tmpRoot, {
+  it('surfaces dependency cycle errors and skips propagation', async () => {
+    const taskA = await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['a'] });
+    const taskB = await createTask(tmpRoot, {
       title: 'B',
       delegator: 'test',
       assignees: ['b'],
@@ -451,7 +449,7 @@ describe('checkDependencies', () => {
     taskAData.dependsOn = [taskB.task.id];
     writeFileSync(taskAPath, JSON.stringify(taskAData, null, 2) + '\n', 'utf-8');
 
-    const result = checkDependencies(tmpRoot);
+    const result = await checkDependencies(tmpRoot);
     expect(result.errors.some((e) => e.includes('Dependency cycle detected'))).toBe(true);
     expect(result.unblocked).toEqual([]);
   });
@@ -462,8 +460,8 @@ describe('checkDependencies', () => {
 // ---------------------------------------------------------------------------
 
 describe('processHandoffs', () => {
-  it('creates follow-up tasks for completed tasks with handoffTo', () => {
-    const task = createTask(tmpRoot, {
+  it('creates follow-up tasks for completed tasks with handoffTo', async () => {
+    const task = await createTask(tmpRoot, {
       title: 'Schema migration',
       delegator: 'orchestrator',
       assignees: ['data'],
@@ -471,12 +469,11 @@ describe('processHandoffs', () => {
       handoffContext: 'Migration applied. Update API to use new cursor field.',
     });
 
-    // Complete the task
-    updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'data' });
-    updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'data' });
-    updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'data' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'data' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'data' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'data' });
 
-    const { created, errors } = processHandoffs(tmpRoot);
+    const { created, errors } = await processHandoffs(tmpRoot);
     expect(errors).toEqual([]);
     expect(created).toHaveLength(1);
     expect(created[0].title).toContain('[Handoff]');
@@ -485,70 +482,70 @@ describe('processHandoffs', () => {
     expect(created[0].context.handoffFrom).toBe(task.task.id);
   });
 
-  it('does not re-process already processed handoffs', () => {
-    const task = createTask(tmpRoot, {
+  it('does not re-process already processed handoffs', async () => {
+    const task = await createTask(tmpRoot, {
       title: 'Test',
       delegator: 'orchestrator',
       assignees: ['a'],
       handoffTo: ['b'],
     });
-    updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'a' });
-    updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'a' });
-    updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'a' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'a' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'a' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'a' });
 
-    processHandoffs(tmpRoot);
-    const { created } = processHandoffs(tmpRoot);
+    await processHandoffs(tmpRoot);
+    const { created } = await processHandoffs(tmpRoot);
     expect(created).toHaveLength(0);
   });
 
-  it('creates tasks for multiple handoff targets', () => {
-    const task = createTask(tmpRoot, {
+  it('creates tasks for multiple handoff targets', async () => {
+    const task = await createTask(tmpRoot, {
       title: 'Shared lib update',
       delegator: 'orchestrator',
       assignees: ['platform'],
       handoffTo: ['backend', 'frontend'],
       handoffContext: 'Shared types updated.',
     });
-    updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'platform' });
-    updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'platform' });
-    updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'platform' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'platform' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'platform' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'platform' });
 
-    const { created } = processHandoffs(tmpRoot);
+    const { created } = await processHandoffs(tmpRoot);
     expect(created).toHaveLength(2);
     expect(created.map((t) => t.assignees[0]).sort()).toEqual(['backend', 'frontend']);
   });
 
-  it('skips tasks with no handoffTo', () => {
-    const task = createTask(tmpRoot, {
+  it('skips tasks with no handoffTo', async () => {
+    const task = await createTask(tmpRoot, {
       title: 'Solo',
       delegator: 'test',
       assignees: ['x'],
     });
-    updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'x' });
-    updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'x' });
-    updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'x' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'x' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'x' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'x' });
 
-    const { created } = processHandoffs(tmpRoot);
+    const { created } = await processHandoffs(tmpRoot);
     expect(created).toHaveLength(0);
   });
 
-  it('does not mark handoff as processed when any downstream task creation fails', () => {
-    const task = createTask(tmpRoot, {
+  it('does not mark handoff as processed when any downstream task creation fails', async () => {
+    const task = await createTask(tmpRoot, {
       title: 'Partial handoff',
       delegator: 'orchestrator',
       assignees: ['data'],
       handoffTo: ['backend', 'frontend'],
     });
-    updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'data' });
-    updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'data' });
-    updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'data' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'accepted', { from: 'data' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'working', { from: 'data' });
+    await updateTaskStatus(tmpRoot, task.task.id, 'completed', { from: 'data' });
 
     const taskPath = resolve(tmpRoot, '.claude', 'state', 'tasks', `${task.task.id}.json`);
     const taskData = JSON.parse(readFileSync(taskPath, 'utf-8'));
     taskData.priority = 'P9';
     writeFileSync(taskPath, JSON.stringify(taskData, null, 2) + '\n', 'utf-8');
 
-    const firstRun = processHandoffs(tmpRoot);
+    const firstRun = await processHandoffs(tmpRoot);
     expect(firstRun.errors.length).toBeGreaterThan(0);
     expect(firstRun.created).toHaveLength(0);
     const after = getTask(tmpRoot, task.task.id);
@@ -561,8 +558,8 @@ describe('processHandoffs', () => {
 // ---------------------------------------------------------------------------
 
 describe('formatTaskSummary', () => {
-  it('produces a readable summary', () => {
-    const { task } = createTask(tmpRoot, {
+  it('produces a readable summary', async () => {
+    const { task } = await createTask(tmpRoot, {
       title: 'Test task',
       delegator: 'orchestrator',
       assignees: ['team-backend'],
@@ -582,9 +579,9 @@ describe('formatTaskList', () => {
     expect(formatTaskList([])).toBe('No tasks found.');
   });
 
-  it('produces a markdown table', () => {
-    createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'], priority: 'P0' });
-    createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['y'], priority: 'P2' });
+  it('produces a markdown table', async () => {
+    await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'], priority: 'P0' });
+    await createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['y'], priority: 'P2' });
     const { tasks } = listTasks(tmpRoot);
     const table = formatTaskList(tasks);
     expect(table).toContain('| ID |');

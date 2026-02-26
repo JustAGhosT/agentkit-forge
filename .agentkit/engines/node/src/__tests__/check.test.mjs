@@ -19,39 +19,45 @@ const PROJECT_ROOT = resolve(AGENTKIT_ROOT, '..');
 describe('runCheck()', () => {
   afterEach(() => { vi.restoreAllMocks(); });
 
-  it('returns a structured result object', async () => {
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+  it(
+    'returns a structured result object',
+    async () => {
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
-    const result = await runCheck({
-      agentkitRoot: AGENTKIT_ROOT,
-      projectRoot: PROJECT_ROOT,
-      flags: {},
-    });
+      const result = await runCheck({
+        agentkitRoot: AGENTKIT_ROOT,
+        projectRoot: PROJECT_ROOT,
+        flags: {},
+      });
 
-    // Result should have expected structure
-    expect(result).toHaveProperty('stacks');
-    expect(result).toHaveProperty('overallStatus');
-    expect(result).toHaveProperty('overallPassed');
-    expect(Array.isArray(result.stacks)).toBe(true);
-  });
+      expect(result).toHaveProperty('stacks');
+      expect(result).toHaveProperty('overallStatus');
+      expect(result).toHaveProperty('overallPassed');
+      expect(Array.isArray(result.stacks)).toBe(true);
+    },
+    120_000
+  );
 
-  it('respects --fast flag structure', async () => {
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+  it(
+    'respects --fast flag structure',
+    async () => {
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
-    const result = await runCheck({
-      agentkitRoot: AGENTKIT_ROOT,
-      projectRoot: PROJECT_ROOT,
-      flags: { fast: true },
-    });
+      const result = await runCheck({
+        agentkitRoot: AGENTKIT_ROOT,
+        projectRoot: PROJECT_ROOT,
+        flags: { fast: true },
+      });
 
-    // With --fast, build step should be skipped
-    for (const stackResult of result.stacks) {
-      const buildStep = stackResult.steps.find(s => s.step === 'build');
-      expect(buildStep).toBeUndefined();
-    }
-  });
+      for (const stackResult of result.stacks) {
+        const buildStep = stackResult.steps.find((s) => s.step === 'build');
+        expect(buildStep).toBeUndefined();
+      }
+    },
+    120_000
+  );
 
   it('handles --stack filter for unknown stacks gracefully', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {});

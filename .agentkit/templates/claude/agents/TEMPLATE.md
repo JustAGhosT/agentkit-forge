@@ -23,8 +23,9 @@ Always scan the codebase within your focus area (the repo folders and modules yo
 - **`.claude/state/events.log`** — Append findings and significant work updates.
 - **`.claude/state/orchestrator.json`** — Read for project context; update your
   team status entry after meaningful progress.
-- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns
-  the lock.
+- **Do NOT** acquire `.claude/state/orchestrator.lock` — use the orchestrator
+  API (e.g., `/orchestrate` endpoint or orchestrator-owned helper) to perform
+  writes or request a lock. The orchestrator owns the lock exclusively.
 
 ### Concurrency Controls
 
@@ -36,11 +37,13 @@ Shared files are accessed by multiple agents. To prevent race conditions:
 4. **Lock ownership**: orchestrator.lock remains solely owned by the orchestrator
 
 **Lock Acquisition Protocol:**
-- Attempt atomic creation of `.lock` file with a 30s total timeout
-- If creation fails, retry up to 3 times with exponential backoff (initial delay 1s, then 2s, then 4s)
+- Attempt atomic creation of `.lock` file with a 30s total timeout. The 30s is
+  a hard ceiling that includes all retries, exponential backoff delays (initial
+  1s, then 2s, then 4s), and the time spent in each creation attempt. Up to 3
+  retries within that 30s window. If creation fails, retry with that backoff.
 - **Stale-lock takeover:**
   - **(A) flock+conditional-unlink:** open + flock(EXLOCK) → read lock file → check expiresAt → unlink/write new lock → release flock.
-  - **(B) rename-based replacement:** read lock file → if expiresAt < now, atomically rename stale lock to temp → re-check staleness from temp → write new lock to canonical path only if temp still represents the stale lock.
+  - **(B) rename-based replacement:** Create uniquely-named temp. Atomically rename canonical stale lock to that temp. Re-check the canonical path and temp contents (expiresAt, file identity/inode or hash) to ensure the temp actually represents the original stale lock. If the canonical path has changed or the temp no longer matches, abort/backoff and retry. Only write the new lock to the canonical path when the temp is verified.
   - Prefer (A) on POSIX; use (B) on platforms without flock.
 - Always release locks in a finally block
 - On repeated failure, escalate to orchestrator via `/orchestrate` endpoint
@@ -49,9 +52,9 @@ Shared files are accessed by multiple agents. To prevent race conditions:
 - `orchestrator.lock` remains exclusively owned by orchestrator
 - Append-only `events.log` writes:
   - Guarantee applies only to local POSIX filesystems; relies on O_APPEND and newline-terminated line-based writes.
-  - Write-size limits (e.g., PIPE_BUF ≈ 4KB) can cause non-atomic writes.
+  - PIPE_BUF is a pipe/FIFO atomicity guarantee and does not apply to regular files. O_APPEND atomicity for regular files is different and may depend on the filesystem and kernel. Platform- and filesystem-dependent atomicity limits apply to write size.
   - NFS/SMB/distributed stores may not guarantee atomic appends.
-  - When filesystem type is uncertain or `.claude/state/` may be network-mounted, acquire `orchestrator.lock` before writing to avoid interleaved writes.
+  - When filesystem type is uncertain or `.claude/state/` may be network-mounted, use the orchestrator API to append (do NOT acquire `orchestrator.lock` directly — route through `/orchestrate` or orchestrator-owned helper) to avoid interleaved writes.
 
 - **Append-only vs lock pattern:** Append-only operations to `events.log` are coordinated and do not require the Acquire lock → modify → release lock in finally pattern. Non-append writes or modifications to shared mutable state must use that pattern.
 

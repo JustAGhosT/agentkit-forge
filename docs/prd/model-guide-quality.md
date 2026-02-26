@@ -38,6 +38,7 @@
 
 - Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
   inputs are available.
+- **Definitions:** `model_effective_cost` = cost_multiplier × normalized_tokens_per_problem; `baseline_effective_cost` = baseline_cost_multiplier × baseline_normalized_tokens_per_problem (baseline_normalized_tokens_per_problem = 1 for the baseline model, so baseline_effective_cost = baseline_cost_multiplier).
 - **Edge case handling (evaluate before computing normalized_tokens_per_problem):**
   - If `baseline_tokens_per_problem == 0`: if `cost_multiplier == 0`, set `cost_score = 10`; else set `cost_score = clamp(10 * (1 / cost_multiplier), 0, 10)`. Do not compute `normalized_tokens_per_problem` when baseline is zero.
   - If `model_effective_cost == 0`: cost_score = 10 (best possible).
@@ -76,7 +77,7 @@
 | --------------------- | ----- | ------------------------- | ---------------------------------------- |
 | Claude Sonnet 4.6     | 8.45  | Lower-cost Claude profile | Routine review workflows                 |
 | Gemini 2.5 Pro        | 8.40  | Large context support     | Good for wide monorepo audits            |
-| GLM-5 (prior version) | 8.20  | Multilingual support      | Deprecated; replaced by GLM-5 (New) eval |
+| GLM-5 (prior version) | 8.20  | Multilingual support      | Deprecated; use prior until GLM-5 (New) completes scoring. Fallback: GLM-5 (prior) remains active during interim. |
 
 ### Tier 3: Cost-Aware (Score 7.00-7.99)
 

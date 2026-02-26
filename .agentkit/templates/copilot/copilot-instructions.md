@@ -50,12 +50,12 @@ assumptions about project structure or conventions.
 ## Infrastructure Conventions
 
 - Naming convention: `{{infraNamingConvention}}`
-  {{#if infraDefaultRegion}}- Default region: {{infraDefaultRegion}}{{/if}}
-  {{#if infraOrg}}- Organisation prefix: {{infraOrg}}{{/if}}
-  {{#if infraIacToolchain}}- Preferred IaC toolchain: {{infraIacToolchain}}{{/if}}
-  {{#if infraStateBackend}}- State backend: {{infraStateBackend}}{{/if}}
-  {{#if infraMandatoryTags}}- Mandatory tags: {{infraMandatoryTags}}{{/if}}
-  {{/if}}
+{{#if infraDefaultRegion}}- Default region: {{infraDefaultRegion}}{{/if}}
+{{#if infraOrg}}- Organisation prefix: {{infraOrg}}{{/if}}
+{{#if infraIacToolchain}}- Preferred IaC toolchain: {{infraIacToolchain}}{{/if}}
+{{#if infraStateBackend}}- State backend: {{infraStateBackend}}{{/if}}
+{{#if infraMandatoryTags}}- Mandatory tags: {{infraMandatoryTags}}{{/if}}
+{{/if}}
 
 {{#if hasAnyMonitoringConfig}}
 

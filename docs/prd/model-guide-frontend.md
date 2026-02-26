@@ -113,15 +113,26 @@ Fallback triggers:
 | Gemini 2.5 Pro | gemini-2-5-pro |
 | GPT-5.2 Medium Thinking Fast | gpt-5.2-medium-thinking-fast |
 | SWE-Llama | swe-llama |
+| Claude Sonnet 4.6 | claude-sonnet-4-6 |
+| Claude Opus 4.6 | claude-opus-4-6 |
+| Minimax M2.5 | minimax-m2-5 |
+| GPT-5.1 Fast | gpt-5-1-fast |
+| GPT-5.1 Medium Thinking Fast | gpt-5-1-medium-thinking-fast |
+| Kimi K2.5 | kimi-k2-5 |
+| o3 | o3 |
+| xAI Grok-3 | xai-grok-3 |
+| GPT-5.1-Codex-Mini | gpt-5-1-codex-mini |
+| GPT-5.3 Codex High | gpt-5-3-codex-high |
+| GLM-5 | glm-5 |
 
-YAML fields `team_defaults.frontend.default_model`, `team_defaults.frontend.fallback_model`, and `agents.<agent>.model_override` must use **Config ID** values.
+YAML fields `team_defaults.frontend.default_model`, `team_defaults.frontend.fallback_model`, and `agents.<agent>.model_override` must use **Config ID** values. Models referenced by Decision Policy must have a corresponding Config ID entry; documentation-only models may be omitted.
 
 ## Override and Audit Example
 
 ```yaml
 team_defaults:
   frontend:
-    default_model: gemini-2.5-pro
+    default_model: gemini-2-5-pro
     fallback_model: gpt-5.2-medium-thinking-fast
     weights:
       code_quality: 15

@@ -2,7 +2,9 @@
 
 ## Status
 
-Active
+Active — PRD process active; appendix data incomplete.
+
+This document is a living draft. The appendix contains TBD markers and data that is not yet production-ready. See the appendix for intended authority and completion status.
 
 ## Module / Feature Name
 
@@ -373,6 +375,7 @@ cost and latency for selected agents.
 **Model naming convention:** In configuration files, model names use lowercase with hyphens (e.g., "Claude Opus 4.6" → "claude-opus-4-6").
 
 **Cost notation:**
+
 - $ = Low cost (e.g., < $0.50 per 1M tokens)
 - $$ = Medium cost (e.g., $0.50–$5 per 1M tokens)
 - $$$ = High cost (e.g., > $5 per 1M tokens)

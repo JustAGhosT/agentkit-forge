@@ -16,7 +16,7 @@
 | **Latest model**   | Nova Premier, Pro, Lite, Micro                         |
 | **Context window** | 1M tokens (Nova Premier); 300K tokens (Nova Lite, Pro) |
 | **License**        | Proprietary (AWS Bedrock only)                         |
-| **Notable**        | AWS-native, GovCloud support, cheapest bedrock pricing |
+| **Notable**        | AWS-native, GovCloud support, cheapest Bedrock pricing |
 
 ## Hugging Face Resources
 

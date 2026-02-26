@@ -87,6 +87,7 @@ Validation rules:
 Examples:
 
 Create (no reason required; agentId supplied in URL path):
+
 ```json
 {
   "modelId": "claude-opus-4-6",
@@ -103,6 +104,7 @@ Create (no reason required; agentId supplied in URL path):
 ```
 
 Update (reason required; agentId in path, not body):
+
 ```json
 {
   "modelId": "claude-opus-4-6",
@@ -229,7 +231,7 @@ Returns benchmark and telemetry rollup.
 
 The response must always include these metric keys. Each metric is an object with:
 
-- `value` (number or null): The metric value, null indicates not available
+- `value` (number or null, except `lastEvaluatedAt`): The metric value; null indicates not available. `lastEvaluatedAt` is a special-case metric whose `value` is an ISO-8601 string (e.g., `"2025-03-17T12:00:00Z"`).
 - `status` ("current" | "stale" | "not-evaluated"): Data availability indicator
 
 Required keys (always present, value may be null):
@@ -239,7 +241,7 @@ Required keys (always present, value may be null):
 - `aiderPassAt2`
 - `costPerSuccess`
 - `p95LatencyMs`
-- `lastEvaluatedAt`
+- `lastEvaluatedAt` (value: ISO-8601 string or null)
 
 ```json
 {
@@ -254,7 +256,7 @@ Required keys (always present, value may be null):
 
 Each metric object contains:
 
-- `value`: numeric value or null if unavailable
+- `value`: numeric value or null if unavailable (ISO-8601 string for `lastEvaluatedAt`)
 - `status`: "current", "stale", or "not-evaluated"
 
 ### 2.3 Polling and Cache Policy

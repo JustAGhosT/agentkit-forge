@@ -38,8 +38,11 @@ The orchestrator, `/plan`, and `/project-review` all use the same state files. T
 `O_APPEND` or equivalent) or acquire `orchestrator.lock` before appending to
 prevent interleaved writes. The Orchestrator always holds the lock when
 writing. O_APPEND atomic-append semantics are only guaranteed on local POSIX
-filesystems and may not be reliable on NFS, SMB, or distributed storage. When
-filesystem type is uncertain or `.claude/state/` may be network-mounted,
+filesystems and may not be reliable on NFS, SMB, or distributed storage.
+
+**Filesystem detection:** Use a simple heuristic to decide when to acquire the lock: on Unix, inspect mount type for NFS/SMB/CIFS; on Windows, treat UNC paths (e.g., `\\server\share`) as network mounts. If the mount type indicates network storage or detection is unavailable, acquire `orchestrator.lock` before writing to `events.log`. Otherwise, O_APPEND may be used on local POSIX filesystems. **Conservative default:** When in doubt, use the lock. All non-orchestrator writers may acquire `orchestrator.lock` to eliminate ambiguity.
+
+When filesystem type is uncertain or `.claude/state/` may be network-mounted,
 callers must acquire `orchestrator.lock` before writing to avoid interleaved
 writes. **Contention handling:** Wait with exponential backoff and retry; use
 a configurable timeout and abort after timeout. Callers must respect the lock
@@ -200,7 +203,7 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 3. For **parallel work**, create independent tasks for each team.
 4. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
    - `blockedBy` is runtime-derived state from `dependsOn`; do not author it manually.
-   - **Derivation algorithm:** For each task at the start of each delegation round, compute `blockedBy` from its `dependsOn` array by: (1) taking the task IDs in `dependsOn`, (2) removing any IDs that refer to tasks whose status is in terminal states (`completed`, `failed`, `rejected`, `canceled`), (3) using the remaining IDs as `blockedBy` (empty array means unblocked). Treat missing or nonexistent `dependsOn` IDs as non-blocking (exclude them). **Validation pass:** For each `dependsOn` ID that does not match any known task ID, emit a warning (or configurable error) with the depending task ID and the missing reference. Include task id, missing dependsOn id, and location. Continue treating missing IDs as non-blocking.
+   - **Derivation algorithm:** For each task at the start of each delegation round, compute `blockedBy` from its `dependsOn` array by: (1) taking the task IDs in `dependsOn` (excluding any listed in the task's `optionalDependsOn`), (2) removing any IDs that refer to tasks whose status is in terminal states (`completed`, `failed`, `rejected`, `canceled`), (3) using the remaining IDs as `blockedBy` (empty array means unblocked). **Validation pass:** For each `dependsOn` ID that does not match any known task ID: if `strictDependsOnValidation` is true (default), treat missing IDs as **fatal** — halt delegation and surface an error with task id, missing dependsOn id, and location; if false, emit a warning and treat as non-blocking (exclude them). IDs in `optionalDependsOn` may be missing without fatal error; still log missing references for traceability.
 5. Immediately after task creation, run the dependency derivation pass once to populate `blockedBy` from `dependsOn` before the first execution round.
    - **Cycle detection (fail-fast):** Perform DFS from every unvisited task following `dependsOn` edges; detect back edges to extract each cycle's member path (including self-loops, multi-node cycles, and disjoint cycles). For each detected cycle: assign a unique `cycleId` (e.g., SHA-256 of sorted member IDs truncated to 12 characters); emit an `events.log` entry per cycle member with `eventType:"CANCELED"`, `taskId`, `reason:"dependency-cycle"`, `cycleId`, `cycleMembers`, `actor:"orchestrator"`, `timestamp` (ISO-8601); set cycle members to `canceled`. **Cycle-canceled task handling (Option 2):** Downstream tasks that depend on cycle-canceled tasks remain explicitly blocked. When re-deriving `blockedBy`, treat canceled dependencies as terminal (remove them from `blockedBy`). Do NOT perform transitive cancellation. Add defensive logging at cycle detection and when computing `cycleId`/`cycleMembers`. Unit tests must cover self-loops, single cycles, multiple disjoint cycles, and downstream tasks blocked by canceled dependencies.
 6. Each team should:
@@ -254,10 +257,13 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
      2. Persist `retryPolicy.retryEscalated = { "reason": "retry-limit-reached", "at": "<ISO-8601 timestamp>", "roundKey": "<round-or-issue-key>", "roundRetryCount": <number> }`.
      3. Continue overall processing (move to Phase 5) without further automatic retries for that key until human intervention.
 
-   **Reset behavior:**
-   - A human or controller must explicitly set `retryPolicy.allowReset = true` AND update `retryPolicy.lastResetAt` to an ISO-8601 timestamp (RFC3339 UTC with millisecond precision, trailing 'Z').
-   - If `retryEscalated === null`, allow reset when `retryPolicy.allowReset === true` (no timestamp comparison needed).
-   - If `retryEscalated` is non-null, require ALL of: (1) `retryPolicy.allowReset === true`, (2) `retryPolicy.lastResetAt !== null`, (3) validate `lastResetAt` as ISO-8601, (4) call `isTimestampNewer(retryPolicy.lastResetAt, retryEscalated.at)` returning true before clearing `retryPolicy.roundRetries`. **When `isTimestampNewer` returns false:** Do NOT clear `roundRetries`; leave it unchanged; surface or log "reset prevented: lastResetAt not newer than retryEscalated.at"; return or propagate a failure status so callers know the reset did not occur. The helper `isTimestampNewer(newTs, oldTs)` must: validate non-null ISO-8601 strings; normalize both to UTC; return false for invalid inputs (null, undefined, malformed). Unit tests: same timestamps, timezone differences, null/undefined, invalid ISO strings, and the case where isTimestampNewer returns false (roundRetries remains intact).
+   **Reset behavior:** Use the helper `shouldResetRetryState(retryPolicy, retryEscalated)` to enforce the exact rules:
+   - Require `retryPolicy.allowReset === true`.
+   - If `retryEscalated === null`, allow reset when `allowReset === true` (no timestamp comparison needed).
+   - If `retryEscalated` is non-null, require `retryPolicy.lastResetAt` to be non-null and a valid ISO-8601 timestamp; call `isTimestampNewer(retryPolicy.lastResetAt, retryEscalated.at)` and only allow clearing `retryPolicy.roundRetries` when it returns true.
+   - When `isTimestampNewer` returns false: do NOT clear `roundRetries`; log/surface "reset prevented: lastResetAt not newer than retryEscalated.at"; return a failure status.
+   - `isTimestampNewer(newTs, oldTs)` must: validate non-null ISO-8601 strings; normalize both to UTC; return false for null, undefined, malformed inputs.
+   - Unit tests: same timestamps, timezone differences, null/undefined, invalid ISO strings, and the negative case where isTimestampNewer returns false (roundRetries remains unchanged).
 6. Record validation results in `orchestrator.json` and in task artifacts, including resolution metadata for failed/rejected tasks.
 
 ### Phase 5 — Ship

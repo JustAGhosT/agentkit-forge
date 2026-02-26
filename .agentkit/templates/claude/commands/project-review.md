@@ -122,10 +122,9 @@ Propose updates to:
 - **Append to:** `.claude/state/events.log` — **ALLOWED EXCEPTION**: Appending newline-terminated, atomic entries to `.claude/state/events.log` is explicitly permitted as the only direct-write exception to the "do NOT mutate state directly" rule.
   - **Checklist:**
     - Each append must be a single-line JSON object (newline-terminated) with minimum schema: `{"timestamp":"<RFC3339>","event_type":"string","data":{}}`. Timestamp must be RFC3339/ISO8601 in UTC with millisecond precision and trailing 'Z' (e.g. `2023-01-01T12:34:56.789Z`). Parsers must accept only this format.
-    - Use file locking (flock/fcntl) consistent with the orchestrator.lock pattern; acquire `events.log.lock` before appending to events.log. Do not use message queue/database unless file locking is unavailable.
+    - Use `events.log.lock` per orchestrator.lock pattern; acquire it before appending to events.log. Do not rely on message queues/databases. Optional OS-level locks (flock/fcntl) may be used as an extra safety layer but are not required; add them for fallback or defense-in-depth when needed.
     - For large payloads: split into multiple atomic entries, or store payload in a per-event file and write small metadata entry. Per-event files: use naming `event-<UUID>.json` or `<timestamp>-<eventId>.payload`; default directory `./event_payloads` or `PAYLOAD_DIR` env; configurable retention (TTL in days, max total size, or periodic pruning of files older than X days). Generate event ID: UUID v4 or timestamp+counter. Surface path/filename in metadata entry.
     - Use `/sync-backlog` and AGENT_BACKLOG.md for backlog changes instead of direct writes.
-    - Do NOT acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock.
 - **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock. Commands must not mutate other state files directly unless explicitly documented.
 - **Backlog changes:** Must use `/sync-backlog` command instead of direct `AGENT_BACKLOG.md` edits to avoid race conditions with the orchestrator.
 
