@@ -27,6 +27,9 @@ documentation category maintained by this repository.
 - [API Overview](./03_api/overview.md)
 - [Getting Started](./04_development/getting-started.md)
 - [Changelog](./08_reference/faq.md)
+{{#if hasPrd}}
+- [PRD Library](./prd/README.md)
+{{/if}}
 
 ## Conventions
 

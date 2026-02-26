@@ -47,7 +47,7 @@
 
 `cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
 
-- **model_effective_cost == 0:** Treat as infinite cost — set cost_score = 10 (capped maximum). Include this mapping in the scoring rules so downstream code applies it consistently.
+- **model_effective_cost == 0:** Treat as zero/free cost — set cost_score = 10 (capped maximum). This mapping ensures downstream scoring treats free models as highest-scoring for cost. Include this mapping in the scoring rules so downstream code applies it consistently. Any implementation (e.g., computeCostScore) must treat cost == 0 as free and return cost_score = 10.
 - Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
   scores unchanged and mark cost evidence as `Not evaluated`.
 

@@ -36,7 +36,7 @@
 
 ## Cost Evidence Method
 
-- **Baseline definition:** `baseline_tokens_per_problem` and `baseline_effective_cost` come from the reference (baseline) model; `baseline_effective_cost` = baseline cost_multiplier × normalized baseline tokens. These values are maintained in the scorecard or config.
+- **Baseline definition:** `baseline_tokens_per_problem` and `baseline_effective_cost` come from the reference (baseline) model; `baseline_effective_cost` = baseline cost_multiplier × normalized baseline tokens. **Baseline model:** GPT-4 Turbo (or the model named in the scorecard/config). These values are maintained in the scorecard or config.
 - Cost scores use evidence from `cost multiplier` and `tokens/problem` when both
   inputs are available.
 - Cost normalization formulas:

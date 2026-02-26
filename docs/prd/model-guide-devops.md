@@ -49,6 +49,7 @@ Weights in the formula and YAML use whole-number units (e.g., Code 10 = 10%). Th
 
 `cost_score = min(10, 10 * baseline_effective_cost / model_effective_cost)`
 
+- **Division-by-zero guard:** If `model_effective_cost <= 0`, treat as zero/free cost and set `cost_score = 10` before computing the ratio.
 - Fallback policy (approved): if `tokens/problem` is missing, keep current Cost
   scores unchanged and mark cost evidence as `Not evaluated`.
 
@@ -67,7 +68,7 @@ Weights in the formula and YAML use whole-number units (e.g., Code 10 = 10%). Th
 | --------------- | ----- | ---------------------------- | -------------------------- |
 | Claude Opus 4.6 | 8.50  | Strong reasoning and quality | Best for complex pipelines |
 
-### Tier 2: Strong Alternatives (Score 8.10-8.39)
+### Tier 2: Strong Alternatives (Score >= 8.10 and < 8.40)
 
 | Model             | Score | Key Strengths             | Notes                        |
 | ----------------- | ----- | ------------------------- | ---------------------------- |
@@ -76,7 +77,7 @@ Weights in the formula and YAML use whole-number units (e.g., Code 10 = 10%). Th
 | GLM-5             | 8.10  | Multilingual support      | Regional and mixed-stack use |
 | Kimi K2.5         | 8.10  | Budget-friendly           | Good non-critical automation |
 
-### Tier 3: Cost-Aware (Score 8.00-8.09)
+### Tier 3: Cost-Aware (Score >= 8.00 and < 8.10)
 
 | Model      | Score | Key Strengths              | Notes                        |
 | ---------- | ----- | -------------------------- | ---------------------------- |
@@ -97,6 +98,8 @@ Fallback triggers:
 - Deprecation notice: migrate during next release window with audit note.
 
 ## Override and Audit Example
+
+Config fields use hyphenated lowercase model IDs; UI/ranking tables display human-readable names. Example mappings: `claude-opus-4-6` → "Claude Opus 4.6", `gemini-2-5-pro` → "Gemini 2.5 Pro". Use the hyphenated form in `team_defaults` and `agents.model_override`.
 
 ```yaml
 team_defaults:

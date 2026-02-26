@@ -153,6 +153,26 @@ agents:
 
 Scores are computed at runtime by `calculateQuirksScore`; do not store `scores.base`, `scores.penalty`, `scores.bonus` in config. Optionally add `validateQuirksScores` to warn when stored scores drift from computed values.
 
+**Quirk Key Reference:** Human-readable names map to snake_case config keys used in `.agentkit.yaml` and by `calculateQuirksScore`/`validateQuirksScores`:
+
+| Human-readable name      | Config key              |
+| ------------------------ | ----------------------- |
+| Native MCP Support        | `native_mcp`            |
+| Consistent Quality       | `consistent_quality`    |
+| Strong Agentic           | `strong_agentic`        |
+| Token Efficiency         | `token_efficiency`      |
+| Massive Context          | `massive_context`       |
+| Open Weights Available   | `open_weights_available`|
+| Platform Coverage        | `platform_coverage`      |
+| Strong Embeddings        | `strong_embeddings`     |
+| Tool-Using Agents        | `tool_using_agents`     |
+| Tool-Use Training       | `tool_use_training`     |
+| Limited Coding Data      | `limited_coding_data`   |
+| Enterprise Focus        | `enterprise_focus`      |
+| Platform Dependencies   | `platform_dependencies` |
+
+This table is a partial example. See the canonical `QUIRK_SCORES` object for the full key list.
+
 ### Step 2: Update Decision Engine
 
 Modify scoring logic in `llm-decision-engine`:

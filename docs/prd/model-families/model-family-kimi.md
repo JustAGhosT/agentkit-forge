@@ -16,7 +16,7 @@
 | **Latest model**   | Kimi K2.5                                                             |
 | **Context window** | 256K tokens                                                           |
 | **License**        | Proprietary (API) + open weights on HF                                |
-| **Notable**        | Kimi K2 Thinking mode — #1 on SWE-rebench pass@1 (43.8%); K2.5: 37.9% |
+| **Notable**        | Kimi K2 (Thinking mode) mode — #1 on SWE-rebench pass@1 (43.8%); K2.5: 37.9% |
 
 ## Hugging Face Resources
 
@@ -31,11 +31,11 @@
 
 | Signal                             | Value                                                        | Source                                  | Quality                        |
 | ---------------------------------- | ------------------------------------------------------------ | --------------------------------------- | ------------------------------ |
-| Open-source pass@1 leadership note | Kimi K2 Thinking reported as best pass@1 this month          | [SWE-rebench](https://swe-rebench.com/) | Fetched, independent benchmark |
+| Open-source pass@1 leadership note | Kimi K2 (Thinking mode) reported as best pass@1 this month          | [SWE-rebench](https://swe-rebench.com/) | Fetched, independent benchmark |
 | K2 Thinking vs K2.5                | 43.8% vs 37.9% on SWE-rebench metric                         | [SWE-rebench](https://swe-rebench.com/) | Fetched, independent benchmark |
 | Deployment tradeoff note           | Better quality may come with different token/latency profile | [SWE-rebench](https://swe-rebench.com/) | Fetched, independent benchmark |
 
-**SWE-bench columns:** "SWE-bench / Verified" refers to the original official SWE-Bench evaluation with verified runs and protocol. "SWE-rebench" are family-level or re-evaluation runs (possibly different prompt sets, metrics, or incomplete verification) that may yield different scores. Kimi K2 65.8% is SWE-Bench Verified; Kimi K2 Thinking 43.8% and Kimi K2.5 37.9% are SWE-rebench results.
+**SWE-bench columns:** "SWE-bench / Verified" refers to the original official SWE-Bench evaluation with verified runs and protocol. "SWE-rebench" are family-level or re-evaluation runs (possibly different prompt sets, metrics, or incomplete verification) that may yield different scores. Kimi K2 (Thinking mode) 65.8% is SWE-Bench Verified; Kimi K2 (Thinking mode) 43.8% and Kimi K2.5 37.9% are SWE-rebench results.
 
 ## Models tracked from PRD-002 (base + profiles)
 

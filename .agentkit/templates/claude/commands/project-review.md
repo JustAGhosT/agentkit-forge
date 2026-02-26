@@ -120,36 +120,28 @@ Propose updates to:
 
 - **Read:** `AGENT_BACKLOG.md` (for existing items), `.claude/state/orchestrator.json` (for project context)
 - **Append to:** `.claude/state/events.log` — **ALLOWED EXCEPTION**: Appending newline-terminated, atomic entries to `.claude/state/events.log` is explicitly permitted as the only direct-write exception to the "do NOT mutate state directly" rule.
-  - **Checklist:**
-    - Each append must be a single-line JSON object (newline-terminated) with minimum schema: `{"timestamp":"<RFC3339>","event_type":"string","data":{}}`. Timestamp must be RFC3339/ISO8601 in UTC with millisecond precision and trailing 'Z' (e.g. `2023-01-01T12:34:56.789Z`). Parsers must accept only this format.
-    - Use `events.log.lock` per orchestrator.lock pattern; acquire it before appending to events.log. Do not rely on message queues/databases. Optional OS-level locks (flock/fcntl) may be used as an extra safety layer but are not required; add them for fallback or defense-in-depth when needed.
-    - For large payloads: split into multiple atomic entries, or store payload in a per-event file and write small metadata entry. Per-event files: use naming `event-<UUID>.json` or `<timestamp>-<eventId>.payload`; default directory `./event_payloads` or `PAYLOAD_DIR` env; configurable retention (TTL in days, max total size, or periodic pruning of files older than X days). Generate event ID: UUID v4 or timestamp+counter. Surface path/filename in metadata entry.
-    - Use `/sync-backlog` and AGENT_BACKLOG.md for backlog changes instead of direct writes.
-- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock. Commands must not mutate other state files directly unless explicitly documented.
+  - **Lock protocol:** Before acquiring `orchestrator.lock`, check if `.claude/state/orchestrator.lock` exists and, if present, read its owner (PID or owner identifier) or `.claude/state/orchestrator.json` for `{"active": true}`. If either indicates the orchestrator owns the lock, do not acquire `orchestrator.lock`; use `events.log.lock` only. Otherwise, acquire `events.log.lock` (or `orchestrator.lock` when orchestrator is not active) before appending. Timeout: 5s; use exponential backoff retries. Locks are advisory but must be respected by all agents. `events.log.lock` is the primary lock; OS-level flock/fcntl are optional fallback layers for defense-in-depth (not both required).
+  - **Schema:** Each append must be a single-line JSON object (newline-terminated) with minimum schema: `{"timestamp":"<RFC3339>","event_type":"string","data":{}}`. Timestamp must be RFC3339/ISO8601 in UTC with millisecond precision and trailing 'Z' (e.g. `2023-01-01T12:34:56.789Z`).
+  - **Large payloads:** If payload exceeds 10KB (10,240 bytes) or 10,000 characters, split into multiple atomic entries or store in a per-event file. Per-event files: naming `event-<UUID>.json`; default directory `./event_payloads` or `PAYLOAD_DIR` env. Surface path/filename in metadata entry.
+  - **Retention:** Default TTL 30 days, max total size 100MB. Periodic pruning daily performed by the orchestrator's RetentionManager scheduled task (configurable in orchestrator settings).
+  - **`/sync-backlog`:** Single-authority command for AGENT_BACKLOG.md updates. Best-effort optimistic locking with retries on conflict. On concurrent modification: retry/backoff and emit a synchronized event to events.log.
+- **Do NOT** acquire `.claude/state/orchestrator.lock` when the orchestrator owns it. Commands must not mutate other state files directly unless explicitly documented.
 - **Backlog changes:** Must use `/sync-backlog` command instead of direct `AGENT_BACKLOG.md` edits to avoid race conditions with the orchestrator.
 
 ## Output Format
 
-Emit the following orchestrator-state update payload after completing the review. Per the Shared State atomicity checklist: emit/append as an event (append-only to events.log and emit to stdout) rather than performing in-place state mutation.
+Emit two required outputs:
 
-- **Output to stdout:** Canonical "orchestrator_state" object (no timestamps, minimal fields for runner capture), single-line JSON.
-- **Append to events.log:** Full, timestamped JSON envelope (metadata, timestamp, audit fields) for persistent audit. The events.log entry is the complete audit record; stdout is the minimal capture for the runner.
+1. **stdout (minimal):** Single-line JSON containing the canonical "orchestrator_state" (action, phase, findings). The **runner** is the process that reads stdout to capture orchestrator state for upstream coordination.
+2. **events.log (envelope):** Append a full JSON envelope with metadata. Required metadata fields: `timestamp`, `event_type`, `command_id`, `user`, `execution_time` (integer, milliseconds), `data`. The minimal stdout payload maps into the `data` field.
 
+**Example 1 — stdout (one-line minimal):**
 ```json
-{
-  "action": "project_review_completed",
-  "phase": "review",
-  "findings": {
-    "bugs": 0,
-    "ux": 0,
-    "performance": 0,
-    "refactoring": 0,
-    "incomplete_features": 0,
-    "new_features": 0,
-    "documentation": 0,
-    "tasks": 0
-  }
-}
+{"action":"project_review_completed","phase":"review","findings":{"bugs":0,"ux":0,"performance":0,"refactoring":0,"incomplete_features":0,"new_features":0,"documentation":0,"tasks":0}}
 ```
 
-Write findings to `.claude/state/events.log` for tracking.
+**Example 2 — events.log envelope:**
+```json
+{"timestamp":"2026-02-26T15:04:05.123Z","event_type":"project_review_completed","command_id":"review-abc123","user":"project-review","execution_time":45000,"data":{"action":"project_review_completed","phase":"review","findings":{"bugs":0,"ux":0,"performance":0,"refactoring":0,"incomplete_features":0,"new_features":0,"documentation":0,"tasks":0}}}
+```
+(Note: `execution_time` is in milliseconds; 45000 = 45 seconds.)

@@ -42,8 +42,8 @@ Shared files are accessed by multiple agents. To prevent race conditions:
   1s, then 2s, then 4s), and the time spent in each creation attempt. Up to 3
   retries within that 30s window. If creation fails, retry with that backoff.
 - **Stale-lock takeover:**
-  - **(A) flock+conditional-unlink:** open + flock(EXLOCK) → read lock file → check expiresAt → unlink/write new lock → release flock.
-  - **(B) rename-based replacement:** Create uniquely-named temp. Atomically rename canonical stale lock to that temp. Re-check the canonical path and temp contents (expiresAt, file identity/inode or hash) to ensure the temp actually represents the original stale lock. If the canonical path has changed or the temp no longer matches, abort/backoff and retry. Only write the new lock to the canonical path when the temp is verified.
+  - **(A) flock+conditional-unlink:** Open the canonical lock path to get `fd`, immediately acquire `flock(fd)`, then perform `stat(path)` and `fstat(fd)` and compare device/inode to ensure the fd still refers to the canonical path (if mismatch, abort/backoff). Only after identity matches, check `expiresAt` on the file contents to determine staleness. If stale: truncate+write new lock contents to the same fd (preferred) or, if you must unlink, perform the unlink only after the identity check and with the flock still held, then write the new lock and release flock. Reference `flock`, `stat`, `fstat`, `fd`, `path`, `unlink`, and `expiresAt` in that order.
+  - **(B) rename-based replacement:** First read and verify the canonical lock is stale (use existing read/flock logic if present). Create a uniquely-named temp (e.g., `temp.*`), write the new lock data to that temp, and finally atomically rename the temp to `canonical.lock` to replace it. Do not rename the canonical stale lock to temp first — use atomic rename temp → canonical for the actual replacement to avoid overwriting another agent's freshly-created lock.
   - Prefer (A) on POSIX; use (B) on platforms without flock.
 - Always release locks in a finally block
 - On repeated failure, escalate to orchestrator via `/orchestrate` endpoint

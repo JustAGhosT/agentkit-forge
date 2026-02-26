@@ -1,4 +1,4 @@
-# Model Guide: QUALITY Team
+# Model Guide: QUALITY Team (PRD-003)
 
 ## Team Profile
 
@@ -139,8 +139,7 @@ audit:
 | Confidence                 | Medium                                              |
 | Owner                      | Quality + Platform leads                            |
 
-Note: PRD-003 is an illustrative matrix. Runtime config and scorecard data
-remain the source of truth.
+Note: PRD-003 refers to the Product Requirements Document for the Agent-to-LLM Weighted Matrix and Config Guide. The matrix is illustrative; runtime config and scorecard data remain the source of truth.
 
 ## Newly Tracked Models (Pending Full Benchmark Scoring)
 

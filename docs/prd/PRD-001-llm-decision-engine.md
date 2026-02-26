@@ -366,9 +366,11 @@ Project start date: **2026-03-03**
 | Phase               | Scope                                                                                                               | Target                |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------- |
 | v1 feature-complete | Scorecards, static config, docs                                                                                     | 2026-03-31            |
-| v1 GA               | Scorecards, static config, docs, audit trails, RBAC, compliance controls, GDPR/CCPA workflows, scorecard automation | 2026-05-01            |
+| v1 GA               | Scorecards, static config, docs (audit trails, RBAC, compliance controls, GDPR/CCPA workflows deferred to post-v1) | 2026-05-01            |
 | v2                  | Dynamic mapping, feedback loop, optional UI                                                                         | 2026-06-15            |
 | v3+                 | Marketplace and expanded benchmarks                                                                                 | Target month: 2026-11 |
+
+> **Note:** Scorecard automation and non-blocking compliance integrations (e.g., third-party audit feeds) remain backlog items for post-v1 GA.
 
 ## Constraints and Dependencies
 

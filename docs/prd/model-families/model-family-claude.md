@@ -33,11 +33,13 @@
 
 | Signal                 | Value                                                                        | Source                                                               | Quality                        |
 | ---------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------ |
-| MRCR v2 (8-needle, 1M) | Opus 4.6: 76%; Sonnet 4.5: 18.5%                                             | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
+| MRCR v2 (8-needle, 1M) | Opus 4.6: 76%; Claude Sonnet v4.5: 18.5%                                    | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
 | SWE-bench Verified     | Averaged over 25 trials; 81.42% with prompt modification                     | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
 | MCP Atlas              | 62.7% at high effort                                                         | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
 | BrowseComp             | 86.8% with multi-agent harness                                               | [Anthropic Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6) | Fetched, vendor claim          |
-| SWE-rebench status     | Claude Opus 4.6 reported at #1; Claude Sonnet (code-specialized) best pass@5 | [SWE-rebench](https://swe-rebench.com/)                              | Fetched, independent benchmark |
+| SWE-rebench status     | Claude Opus 4.6 reported at #1; Claude Sonnet v4.5 (code-specialized) best pass@5 | [SWE-rebench](https://swe-rebench.com/)                              | Fetched, independent benchmark |
+
+> **Note:** Anthropic uses "Claude Sonnet v4.5" / "Sonnet 4.5" for the same model; internal naming may differ from vendor marketing.
 
 ## Models tracked from PRD-002 (base + profiles)
 

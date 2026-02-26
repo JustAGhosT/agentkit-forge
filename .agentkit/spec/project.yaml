@@ -13,7 +13,7 @@
 # =============================================================================
 
 # Project identity
-name: null # e.g. "chaufher", "phoenix", "my-api"
+name: agentkit-forge # e.g. "chaufher", "phoenix", "my-api"
 description: null # Short project description
 phase: null # greenfield | active | maintenance | legacy
 

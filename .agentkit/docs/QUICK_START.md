@@ -131,6 +131,8 @@ The `sync` command generated several directories and files in your repository ro
 | `UNIFIED_AGENT_TEAMS.md` | **Team specifications** -- Defines the 10 agent teams (Backend, Frontend, Data, Infrastructure, Auth, Integration, Documentation, DevEx, Platform, Quality), their responsibilities, scope patterns, and the 5-phase lifecycle model that governs all work. |
 | `AGENT_BACKLOG.md`       | **Work tracking** -- A prioritized backlog of tasks for AI agents to pick up, organized by team and priority.                                                                                                                                               |
 | `QUALITY_GATES.md`       | **Definition of done** -- Quality gates for each of the 5 lifecycle phases, ensuring work meets standards before advancing.                                                                                                                                 |
+| `.gitignore`             | **Excludes build artifacts** — Lists common ignore patterns such as `node_modules/`, `.tmp/`, `*.log`, `.env`, `dist/` and other sensitive or temporary build artifacts.                                                                         |
+| `.gitattributes`         | **EOL and diff** -- Configures EOL (e.g., `* text=auto`) and diff/merge handling for repo files. Typical rules: `*.md text`, `*.sh text eol=lf`, `*.bat text eol=crlf`.                                                                                    |
 
 ### Documentation Structure
 

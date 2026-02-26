@@ -207,18 +207,26 @@ This guide helps you choose the right command for your situation. Most workflow 
 ## Team Commands (`/team-*`)
 
 Team commands execute focused implementation sessions using team-specific scope
-and handoff rules from `AGENT_TEAMS.md`.
+and handoff rules from `AGENT_TEAMS.md` and `AGENT_BACKLOG.md`.
 
-- `/team-backend`
-- `/team-frontend`
-- `/team-data`
-- `/team-infra`
-- `/team-devops`
-- `/team-testing`
-- `/team-security`
-- `/team-docs`
-- `/team-product`
-- `/team-quality`
+**Use when:** You need to implement, fix, or extend work within a single team's scope (API changes, UI components, DB migrations, infra config, CI/CD, tests, docs, product features, quality gates). Each command activates that team's context and handoff chain.
+
+**Shared assets:** Each team command reads `AGENT_BACKLOG.md` (for item context), `AGENT_TEAMS.md` (for scope and handoff rules), and `.claude/state/tasks/*.json` (for delegated tasks). Writes: task artifacts, status updates, and appends to `events.log`.
+
+**vs `/orchestrate --team <name>`:** `/orchestrate --team` coordinates assessment, planning, and delegation across teams; it updates orchestrator state and creates tasks. Team commands (`/team-backend`, etc.) do focused implementation work within an already-scoped context; they consume tasks and backlog items, produce code and artifacts. Scope: team commands are narrower; intent: execution vs coordination; output: code changes and artifacts vs task creation and phase updates.
+
+- `/team-backend` — API, services, core logic. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to testing, frontend.
+- `/team-frontend` — UI, components, PWA. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to testing, docs.
+- `/team-data` — DB, models, migrations. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to backend, testing.
+- `/team-infra` — IaC, cloud resources. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to devops.
+- `/team-devops` — CI/CD, containers. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to infra, testing.
+- `/team-testing` — Quality, coverage. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to docs, quality.
+- `/team-security` — Auth, compliance. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to devops.
+- `/team-docs` — Docs, guides. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to quality.
+- `/team-product` — Features, PRDs. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to backend, frontend.
+- `/team-quality` — Review, refactor. Read: `AGENT_BACKLOG.md`, `AGENT_TEAMS.md`. Handoff: typically to docs.
+
+See `AGENT_BACKLOG.md` and `AGENT_TEAMS.md` for full rules and handoff chains.
 
 ---
 

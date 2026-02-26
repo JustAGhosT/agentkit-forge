@@ -108,13 +108,13 @@ Fallback triggers:
 
 ## Override and Audit Example
 
-> **Note:** This example uses `fallback_model: gpt-5.3-codex-high` for illustration; per Decision Policy, cost-aware alternate is `o3` and APAC alternate is `Minimax M2.5`.
-
 ```yaml
 team_defaults:
   docs:
     default_model: claude-opus-4-6
     fallback_model: gpt-5.3-codex-high
+    cost_aware_model: o3
+    # fallback_model: quality during provider outages; cost_aware_model: cost-optimization alternate
     weights:
       code_quality: 5
       reasoning: 20

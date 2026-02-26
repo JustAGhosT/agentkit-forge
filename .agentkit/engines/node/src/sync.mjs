@@ -170,7 +170,7 @@ function evalTruthy(value) {
  * Nested keys become camelCase: project.stack.languages → stackLanguages = "TypeScript, C#"
  * Boolean fields get has* prefixes: crosscutting.logging.correlationId → hasCorrelationId
  */
-function flattenProjectYaml(project) {
+function flattenProjectYaml(project, docsSpec = null) {
   if (!project || typeof project !== 'object') return {};
   const vars = {};
 
@@ -221,6 +221,11 @@ function flattenProjectYaml(project) {
   const docs = project.documentation || {};
   vars.hasPrd = !!docs.hasPrd;
   if (docs.prdPath) vars.prdPath = docs.prdPath;
+  const prdSpec = docsSpec?.specialDirectories?.find((d) => d.id === 'prd');
+  if (prdSpec) {
+    vars.hasPrd = true;
+    if (!vars.prdPath) vars.prdPath = prdSpec.path;
+  }
   vars.hasAdr = !!docs.hasAdr;
   if (docs.adrPath) vars.adrPath = docs.adrPath;
   vars.hasApiSpec = !!docs.hasApiSpec;
@@ -656,11 +661,11 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   );
 
   // Template variables — start with project.yaml flat vars, then overlay with core vars
-  const projectVars = projectSpec ? flattenProjectYaml(projectSpec) : {};
+  const projectVars = projectSpec ? flattenProjectYaml(projectSpec, docsSpec) : {};
   const vars = {
     ...projectVars,
     version,
-    repoName: overlaySettings.repoName || repoName,
+    repoName: (overlaySettings.repoName === '__TEMPLATE__' && projectSpec?.name) || overlaySettings.repoName || repoName,
     defaultBranch: overlaySettings.defaultBranch || 'main',
     primaryStack: overlaySettings.primaryStack || 'auto',
   };
@@ -1289,7 +1294,7 @@ function syncClaudeCommands(
 
     const baseName = file.replace(/\.md$/, '');
     const cmdSpec = commandsByName.get(baseName);
-    const cmdVars = { ...vars, repoName };
+    const cmdVars = { ...vars };
     if (cmdSpec) {
       cmdVars.commandDescription =
         typeof cmdSpec.description === 'string'

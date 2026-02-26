@@ -32,7 +32,7 @@
 
 > **Note:** Qwen (Alibaba) provides extensive open-weight models on Hugging Face. Qwen2.5-Coder is specifically optimized for code tasks.
 
-## Latest benchmark signals (data date: 2025-05-08 — ~9 months old)
+## Latest benchmark signals (data date: 2025-05-08 — ~9–10 months old)
 
 > **Note:** Newer benchmark data may not be available due to Aider/SWE-rebench publication cycles and access constraints. Updates are expected as new evaluations are published.
 

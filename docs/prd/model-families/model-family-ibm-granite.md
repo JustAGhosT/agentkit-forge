@@ -44,6 +44,7 @@
 
 ## Operational notes
 
+- Granite Code is a code-specialized variant of Granite 4.0; model IDs: `ibm-granite/granite-code-*` in Hugging Face. See IBM Granite model cards for HF IDs.
 - Granite is a relevant family for regulated and on-prem enterprise scenarios.
 - This pass collected feature evidence, but not independent benchmark values.
 

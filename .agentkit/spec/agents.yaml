@@ -502,7 +502,6 @@ agents:
       depends-on: []
       notifies:
         - devops
-        - environment-manager
       focus:
         - 'auth/**'
         - 'security/**'

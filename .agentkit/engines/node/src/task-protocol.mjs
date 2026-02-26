@@ -14,6 +14,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'fs';
+import { open } from 'fs/promises';
 import { resolve } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
 
@@ -75,12 +76,60 @@ function taskPath(projectRoot, taskId) {
   return resolve(tasksDir(projectRoot), `${normalizeTaskId(taskId)}.json`);
 }
 
+function handoffLockPath(projectRoot, taskId) {
+  return resolve(tasksDir(projectRoot), `${normalizeTaskId(taskId)}.handoff.lock`);
+}
+
 function ensureTasksDir(projectRoot) {
   const dir = tasksDir(projectRoot);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
   return dir;
+}
+
+/**
+ * Acquire a per-task handoff lock, run callback, release in finally.
+ * Uses O_EXCL file creation for atomicity. Returns null if lock could not be acquired.
+ * @param {string} projectRoot
+ * @param {string} taskId
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T|null>}
+ */
+async function withHandoffLock(projectRoot, taskId, fn) {
+  ensureTasksDir(projectRoot);
+  const lockPath = handoffLockPath(projectRoot, taskId);
+  let fd;
+  let acquiredLock = false;
+  try {
+    fd = await open(lockPath, 'wx');
+    acquiredLock = true;
+    await fd.close();
+    fd = null;
+    return await fn();
+  } catch (err) {
+    if (err?.code === 'EEXIST') {
+      return null;
+    }
+    throw err;
+  } finally {
+    if (fd != null) {
+      try {
+        await fd.close();
+      } catch {
+        /* ignore */
+      }
+    }
+    if (acquiredLock) {
+      try {
+        if (existsSync(lockPath)) {
+          unlinkSync(lockPath);
+        }
+      } catch {
+        /* ignore cleanup */
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -533,6 +582,9 @@ export async function addTaskArtifact(projectRoot, taskId, artifact) {
   }
 
   const task = result.task;
+  if (TERMINAL_STATES.includes(task.status)) {
+    return { task: null, error: `Cannot add artifacts to task in terminal state: ${task.status}` };
+  }
   if (!Array.isArray(task.artifacts)) task.artifacts = [];
   const now = new Date().toISOString();
   task.artifacts.push({
@@ -662,57 +714,78 @@ export async function processHandoffs(projectRoot, delegator = 'orchestrator') {
   const { tasks } = listTasks(projectRoot, { status: 'completed' });
   const created = [];
   const errors = [];
+  const allTasks = listTasks(projectRoot).tasks;
 
   for (const task of tasks) {
     if (!Array.isArray(task.handoffTo) || task.handoffTo.length === 0) continue;
 
-    // Initialize handoff tracking if not present
-    if (!task._handoffProcessedTargets) {
-      task._handoffProcessedTargets = [];
-    }
-
-    let hadFailures = false;
-
-    for (const targetTeam of task.handoffTo) {
-      // Skip if this target was already processed
-      if (task._handoffProcessedTargets.includes(targetTeam)) {
-        continue;
+    const result = await withHandoffLock(projectRoot, task.id, async () => {
+      const fresh = getTask(projectRoot, task.id);
+      if (!fresh.task) return { created: [], errors: [] };
+      const t = fresh.task;
+      if (!Array.isArray(t._handoffProcessedTargets)) {
+        t._handoffProcessedTargets = [];
       }
 
-      const result = await createTask(projectRoot, {
-        type: task.type || 'implement',
-        delegator,
-        assignees: [targetTeam],
-        title: `[Handoff] ${task.title}`,
-        description: task.handoffContext || `Continuation of ${task.id}: ${task.title}`,
-        priority: task.priority,
-        dependsOn: [],
-        scope: task.scope,
-        context: {
-          ...task.context,
-          handoffFrom: task.id,
-          handoffFromTeam: task.assignees.join(', '),
-          previousArtifacts: task.artifacts,
-        },
-      });
+      const localCreated = [];
+      const localErrors = [];
 
-      if (result.error) {
-        hadFailures = true;
-        errors.push(`Failed to create handoff task for ${targetTeam}: ${result.error}`);
-      } else {
-        created.push(result.task);
-        // Mark this target as processed
-        task._handoffProcessedTargets.push(targetTeam);
-        task.updatedAt = new Date().toISOString();
-        await writeTaskFile(projectRoot, task.id, task);
+      for (const targetTeam of t.handoffTo) {
+        if (t._handoffProcessedTargets.includes(targetTeam)) continue;
+
+        const existingHandoff = allTasks.find(
+          (ot) =>
+            ot.id !== t.id &&
+            ot.context?.handoffFrom === t.id &&
+            Array.isArray(ot.assignees) &&
+            ot.assignees.includes(targetTeam)
+        );
+        if (existingHandoff) {
+          t._handoffProcessedTargets.push(targetTeam);
+          t.updatedAt = new Date().toISOString();
+          await writeTaskFile(projectRoot, t.id, t);
+          continue;
+        }
+
+        const createResult = await createTask(projectRoot, {
+          type: t.type || 'implement',
+          delegator,
+          assignees: [targetTeam],
+          title: `[Handoff] ${t.title}`,
+          description: t.handoffContext || `Continuation of ${t.id}: ${t.title}`,
+          priority: t.priority,
+          dependsOn: [],
+          scope: t.scope,
+          context: {
+            ...t.context,
+            handoffFrom: t.id,
+            handoffFromTeam: t.assignees.join(', '),
+            previousArtifacts: t.artifacts,
+          },
+        });
+
+        if (createResult.error) {
+          localErrors.push(`Failed to create handoff task for ${targetTeam}: ${createResult.error}`);
+        } else {
+          localCreated.push(createResult.task);
+          t._handoffProcessedTargets.push(targetTeam);
+          t.updatedAt = new Date().toISOString();
+          await writeTaskFile(projectRoot, t.id, t);
+        }
       }
-    }
 
-    // Mark handoff as fully processed when all targets are done
-    if (task._handoffProcessedTargets.length === task.handoffTo.length) {
-      task._handoffProcessed = true;
-      task.updatedAt = new Date().toISOString();
-      await writeTaskFile(projectRoot, task.id, task);
+      if (t._handoffProcessedTargets.length === t.handoffTo.length) {
+        t._handoffProcessed = true;
+        t.updatedAt = new Date().toISOString();
+        await writeTaskFile(projectRoot, t.id, t);
+      }
+
+      return { created: localCreated, errors: localErrors };
+    });
+
+    if (result) {
+      created.push(...result.created);
+      errors.push(...result.errors);
     }
   }
 

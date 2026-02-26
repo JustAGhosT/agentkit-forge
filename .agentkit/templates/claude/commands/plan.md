@@ -142,25 +142,20 @@ Write the complete plan as a structured markdown document. Do NOT create a file 
 
 ### Writing State (after planning)
 
-- **Append to:** `.claude/state/events.log` (see format below)
-- **Do NOT** acquire `.claude/state/orchestrator.lock` — the orchestrator owns the lock. Use `events.log.lock` (separate lock per orchestrator.lock pattern) before appending to `events.log`.
+- **None.** The orchestrator logs plan creation. The planner outputs to stdout only; the orchestrator owns `.claude/state/events.log` handling.
 
-Requirements:
-
-- Log format: `[<timestamp>] [PLAN] [PLANNER] <brief summary>. Steps: <count>. Files: <count>.`
-- Atomic append with file lock: acquire `events.log.lock` (or POSIX flock on the target file) before appending.
-- Graceful error handling and logging on append failures.
+- **Orchestrator-only example** (when the orchestrator captures the plan):
 
 ```
-[<timestamp>] [PLAN] [PLANNER] Plan created for: "<goal summary>". Steps: <count>. Files: <count>.
+[<timestamp ISO8601 UTC>] [PLAN] [ORCHESTRATOR] Plan created for: "<goal summary>". Steps: <count>. Files: <count>.
 ```
 
-**Optional (mission-critical scenarios):** Retry/backoff, stale-lock handling, observability integration, fallback persistence, and degraded-state behavior may be required when append reliability is critical. Enable these safeguards when the plan log is used for audit trails or compliance.
+- Timestamp must be ISO 8601 (UTC, e.g., `2026-02-26T15:04:05Z`).
 
 ## Rules
 
 1. **Do NOT write any code.** Plans only. Not even "example" code in the steps — describe what to write, do not write it.
-2. **Do NOT modify any files** (except events.log).
+2. **Do NOT modify any files.**
 3. **Be concrete.** Vague plans are worse than no plan.
 4. **List all files.** Missing a file from the touch list means a surprise during implementation.
 5. **Validation must be runnable.** Every validation command must actually work when copy-pasted.

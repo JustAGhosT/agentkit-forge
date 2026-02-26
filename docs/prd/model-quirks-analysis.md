@@ -188,7 +188,7 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ## Scoring Implications
 
-**Scoring scale:** 0–1; quirk deltas are typically ±0.05 to ±0.3, with occasional extremes up to ±0.5.
+**Scoring scale:** 0–1; quirk deltas are typically ±0.05 to ±0.5. Positive and negative quirks use 0.1–0.5; operational quirks use 0.05–0.2.
 
 **Composition:** Quirk values are additive; sum positive, negative, and operational contributions to get a net quirk score per model.
 
