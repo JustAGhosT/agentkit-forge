@@ -453,6 +453,71 @@ describe('checkDependencies', () => {
     expect(result.errors.some((e) => e.includes('Dependency cycle detected'))).toBe(true);
     expect(result.unblocked).toEqual([]);
   });
+
+  it('detects self-loop cycle', async () => {
+    const taskA = await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['a'] });
+    const taskAPath = resolve(tmpRoot, '.claude', 'state', 'tasks', `${taskA.task.id}.json`);
+    const taskAData = JSON.parse(readFileSync(taskAPath, 'utf-8'));
+    taskAData.dependsOn = [taskA.task.id];
+    writeFileSync(taskAPath, JSON.stringify(taskAData, null, 2) + '\n', 'utf-8');
+
+    const result = await checkDependencies(tmpRoot);
+    expect(result.errors.some((e) => e.includes('Dependency cycle detected'))).toBe(true);
+    expect(result.unblocked).toEqual([]);
+  });
+
+  it('detects multiple disjoint cycles', async () => {
+    const taskA = await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['a'] });
+    const taskB = await createTask(tmpRoot, {
+      title: 'B',
+      delegator: 'test',
+      assignees: ['b'],
+      dependsOn: [taskA.task.id],
+    });
+    const taskC = await createTask(tmpRoot, { title: 'C', delegator: 'test', assignees: ['c'] });
+    const taskD = await createTask(tmpRoot, {
+      title: 'D',
+      delegator: 'test',
+      assignees: ['d'],
+      dependsOn: [taskC.task.id],
+    });
+
+    const taskAPath = resolve(tmpRoot, '.claude', 'state', 'tasks', `${taskA.task.id}.json`);
+    const taskCPath = resolve(tmpRoot, '.claude', 'state', 'tasks', `${taskC.task.id}.json`);
+    const taskAData = JSON.parse(readFileSync(taskAPath, 'utf-8'));
+    const taskCData = JSON.parse(readFileSync(taskCPath, 'utf-8'));
+    taskAData.dependsOn = [taskB.task.id];
+    taskCData.dependsOn = [taskD.task.id];
+    writeFileSync(taskAPath, JSON.stringify(taskAData, null, 2) + '\n', 'utf-8');
+    writeFileSync(taskCPath, JSON.stringify(taskCData, null, 2) + '\n', 'utf-8');
+
+    const result = await checkDependencies(tmpRoot);
+    expect(result.errors.filter((e) => e.includes('Dependency cycle detected'))).toHaveLength(2);
+    expect(result.unblocked).toEqual([]);
+  });
+
+  it('sets BLOCKED_ON_CANCELED and keeps canceled deps in blockedBy', async () => {
+    const dep = await createTask(tmpRoot, { title: 'Dep', delegator: 'test', assignees: ['a'] });
+    const blocked = await createTask(tmpRoot, {
+      title: 'Blocked',
+      delegator: 'test',
+      assignees: ['b'],
+      dependsOn: [dep.task.id],
+    });
+
+    await updateTaskStatus(tmpRoot, dep.task.id, 'canceled', {
+      from: 'orchestrator',
+      content: 'Canceled.',
+    });
+
+    const { unblocked } = await checkDependencies(tmpRoot);
+    expect(unblocked).toEqual([]);
+
+    const updated = getTask(tmpRoot, blocked.task.id);
+    expect(updated.task.blockedBy).toContain(dep.task.id);
+    expect(updated.task.status).toBe('BLOCKED_ON_CANCELED');
+    expect(updated.task.blockedReason).toBe('canceled');
+  });
 });
 
 // ---------------------------------------------------------------------------

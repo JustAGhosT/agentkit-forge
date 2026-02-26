@@ -27,7 +27,6 @@ function parseCsvFlag(value) {
 function appendTaskAuditEvent(projectRoot, payload) {
   const timestamp = new Date().toISOString();
   const event = {
-    timestamp,
     ...payload,
     timestamp: payload.timestamp || timestamp,
   };

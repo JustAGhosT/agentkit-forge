@@ -198,7 +198,7 @@ export async function runDoctor({ agentkitRoot, projectRoot, flags = {} }) {
       findings.push({ severity: 'error', message: `Failed to parse project.yaml: ${err.message}` });
     }
   } else {
-    findings.push({ severity: 'error', message: `project.yaml not found at ${projectPath}` });
+    findings.push({ severity: 'warning', message: `project.yaml not found at ${projectPath}` });
   }
 
   // Output

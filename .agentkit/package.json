@@ -6,7 +6,7 @@
   "description": "AgentKit Forge — unified AI agent team framework sync engine",
   "packageManager": "pnpm@9.15.4",
   "engines": {
-    "node": ">=20.11.0"
+    "node": ">=22.0.0"
   },
   "dependencies": {
     "@clack/prompts": "^1.0.1",

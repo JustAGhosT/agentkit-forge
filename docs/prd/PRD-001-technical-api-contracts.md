@@ -82,7 +82,7 @@ Validation rules:
 - weights: all keys required (`code`, `reasoning`, `cost`, `context`, `speed`, `compatibility`), integer range `0-100`, sum must equal `100`
 - Custom keys beyond the standard six are allowed if documented in team config; they follow same validation rules (0-100 range, sum to 100 including standard keys).
 - `reason` required for updates to existing agent mapping (when agentId already exists). Optional for initial creation.
-- API determines create vs update by checking existence of agentId in datastore.
+- API determines create vs update by checking existence of agentId in datastore. When PUT upsert detects an unknown agentId, treat as create and return **201 Created** (include agentId, modelId, updatedAt, auditEventId in the body). When agentId exists, treat as update and return **200 OK**.
 
 Examples:
 

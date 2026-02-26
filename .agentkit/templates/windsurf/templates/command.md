@@ -14,12 +14,12 @@ Invoke this command when the user requests or implies the
 This command participates in the shared workflow state. Read and update:
 
 - **AGENT_BACKLOG.md** — Prioritized work items; read before starting, update when adding/completing tasks
-- **.claude/state/orchestrator.json** — Phase, team status, metrics; read for context
-- **.claude/state/events.log** — Append a log line when completing significant actions
+- **.windsurf/state/orchestrator.json** — Phase, team status, metrics; read for context
+- **.windsurf/state/events.log** — Append a log line when completing significant actions
 
 ## Implementation
 
-Execute the steps defined in the corresponding Claude command (`.claude/commands/{{commandName}}.md`). The full specification and allowed tools are in that file.
+Execute the steps defined in the corresponding command (`.windsurf/commands/{{commandName}}.md`). The full specification and allowed tools are in that file.
 
 ## Related Commands
 

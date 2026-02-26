@@ -129,6 +129,7 @@ Required fields for DESCOPED events: `eventType` (must be "DESCOPED"), `taskId`,
 | `DESCOPED`                    | `taskId`, `reason`, `timestamp`                                               | `actor`, `metadata` |
 | `STARTED`                     | `taskId`, `timestamp`                                                         | `actor`, `metadata` |
 | `BLOCKED`                     | `taskId`, `blockedBy`, `timestamp`                                            | `actor`, `metadata` |
+| `BLOCKED` (blocked-on-canceled) | `taskId`, `blockedBy`, `blockedReason`="canceled", `timestamp`                 | `actor`, `metadata` |
 | `UNBLOCKED`                   | `taskId`, `timestamp`                                                         | `actor`, `metadata` |
 | `DELEGATED`                   | `taskId`, `assignees`, `timestamp`                                            | `actor`, `metadata` |
 | `ACCEPTED`                    | `taskId`, `timestamp`                                                         | `actor`, `metadata` |
@@ -203,18 +204,19 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
 3. For **parallel work**, create independent tasks for each team.
 4. For **sequential work**, set `dependsOn` so downstream tasks are blocked until upstream completes.
    - `blockedBy` is runtime-derived state from `dependsOn`; do not author it manually.
-   - **Derivation algorithm:** For each task at the start of each delegation round, compute `blockedBy` from its `dependsOn` array by: (1) taking the task IDs in `dependsOn` (excluding any listed in the task's `optionalDependsOn`), (2) removing any IDs that refer to tasks whose status is in terminal states (`completed`, `failed`, `rejected`, `canceled`), (3) using the remaining IDs as `blockedBy` (empty array means unblocked). **Validation pass:** For each `dependsOn` ID that does not match any known task ID: if `strictDependsOnValidation` is true (default), treat missing IDs as **fatal** — halt delegation and surface an error with task id, missing dependsOn id, and location; if false, emit a warning and treat as non-blocking (exclude them). IDs in `optionalDependsOn` may be missing without fatal error; still log missing references for traceability.
-5. Immediately after task creation, run the dependency derivation pass once to populate `blockedBy` from `dependsOn` before the first execution round.
-   - **Cycle detection (fail-fast):** Perform DFS from every unvisited task following `dependsOn` edges; detect back edges to extract each cycle's member path (including self-loops, multi-node cycles, and disjoint cycles). For each detected cycle: assign a unique `cycleId` (e.g., SHA-256 of sorted member IDs truncated to 12 characters); emit an `events.log` entry per cycle member with `eventType:"CANCELED"`, `taskId`, `reason:"dependency-cycle"`, `cycleId`, `cycleMembers`, `actor:"orchestrator"`, `timestamp` (ISO-8601); set cycle members to `canceled`. **Cycle-canceled task handling:** Option 1 would transitively cancel downstream tasks; Option 2 keeps them explicitly blocked. This document uses Option 2. Downstream tasks that depend on cycle-canceled tasks remain explicitly blocked. When re-deriving `blockedBy`, treat canceled dependencies as terminal (remove them from `blockedBy`). Do NOT perform transitive cancellation. Add defensive logging at cycle detection and when computing `cycleId`/`cycleMembers`. Unit tests must cover self-loops, single cycles, multiple disjoint cycles, and downstream tasks blocked by canceled dependencies.
+   - **Cycle detection (run once at start):** Before deriving `blockedBy`, run a single DFS-based detection pass over the graph formed by `task.dependsOn`. Perform DFS from every unvisited task following `dependsOn` edges; detect back edges to extract each cycle's member path (including self-loops, multi-node cycles, and disjoint cycles). If any cycle is found: (1) assign a unique `cycleId` (e.g., SHA-256 of sorted member IDs truncated to 12 characters); (2) emit an `events.log` entry per cycle member with `eventType:"CANCELED"`, `taskId`, `reason:"dependency-cycle"`, `cycleId`, `cycleMembers`, `actor:"orchestrator"`, `timestamp` (ISO-8601); (3) set cycle members' status to `canceled`; (4) abort the derivation pass and surface a clear error. Do not proceed with `blockedBy` derivation until cycles are resolved. References: `dependsOn`, `optionalDependsOn`, `blockedBy`, `strictDependsOnValidation`.
+   - **Derivation algorithm:** For each task at the start of each delegation round, compute `blockedBy` from its `dependsOn` array by: (1) taking the task IDs in `dependsOn` (excluding any listed in the task's `optionalDependsOn`), (2) for IDs that refer to tasks in terminal states: if status is `completed`, remove from `blockedBy`; if status is `failed`, `rejected`, or `canceled`, **do NOT remove** — keep the ID in `blockedBy` and record `blockedReason: "canceled"` (or set downstream status to `BLOCKED_ON_CANCELED` when all blockers are canceled), (3) for IDs that refer to in-progress tasks, keep in `blockedBy`. Empty `blockedBy` means unblocked. **Option 2 (no transitive cancellation):** This document uses Option 2. Downstream tasks that depend on cycle-canceled tasks remain explicitly blocked until manual descoping or retry. Do NOT perform transitive cancellation. **Validation pass:** For each `dependsOn` ID that does not match any known task ID: if `strictDependsOnValidation` is true (default), treat missing IDs as **fatal** — halt delegation and surface an error; if false, emit a warning and treat as non-blocking. IDs in `optionalDependsOn` may be missing without fatal error; still log missing references. Unit tests must cover: self-loops, single cycles, multiple disjoint cycles, and downstream tasks (verify `blockedBy` contains canceled IDs and downstream status is `BLOCKED_ON_CANCELED`).
+5. Immediately after task creation, run cycle detection once, then the dependency derivation pass once to populate `blockedBy` from `dependsOn` before the first execution round.
 6. Each team should:
    - Accept or reject the task (update `status` and add a message).
    - Make minimal, backwards-compatible changes.
    - Add or adjust tests for any changed behavior.
    - Update `status` to `completed` and add artifacts when done.
-   - Use canonical status values only: `submitted`, `accepted`, `working` (in-progress), `rejected`, `completed`, `failed`, `canceled`.
+   - Use canonical status values only: `submitted`, `accepted`, `working` (in-progress), `rejected`, `completed`, `failed`, `canceled`, `BLOCKED_ON_CANCELED`.
      - Initial: `submitted`.
      - Transient: `accepted`, `working`.
-     - Terminal: `completed`, `failed`, `rejected`, `canceled`.
+     - Terminal: `completed`, `failed`, `rejected`, `canceled`, `BLOCKED_ON_CANCELED`.
+     - `BLOCKED_ON_CANCELED`: Set when a task's `blockedBy` contains only canceled (or failed/rejected) dependencies; remains until manual descoping or retry.
      - Valid transitions:
        - `submitted -> accepted`
        - `submitted -> canceled`
@@ -224,10 +226,10 @@ Delegate work using the **task protocol** (`.claude/state/tasks/`):
        - `working -> completed|failed|canceled|rejected`
        - `submitted -> rejected`
 7. Between delegation rounds, run dependency checks:
-   - **Re-derive blockedBy** from each task's `dependsOn` field at the start of each delegation round (do not manually mutate blockedBy; recompute it fresh each round).
+   - **Re-derive blockedBy** from each task's `dependsOn` field at the start of each delegation round (do not manually mutate blockedBy; recompute it fresh each round). Do NOT remove canceled dependencies from `blockedBy`; keep their IDs and set `blockedReason: "canceled"` or status `BLOCKED_ON_CANCELED` when all blockers are canceled.
    - Consider tasks with non-empty derived `blockedBy` as blocked.
-   - Ignore tasks whose state is one of: `completed`, `failed`, `rejected`, `canceled` (terminal states).
-   - Update `blockedBy` arrays and unblock tasks whose dependencies are satisfied.
+   - Ignore tasks whose state is one of: `completed`, `failed`, `rejected`, `canceled`, `BLOCKED_ON_CANCELED` (terminal states).
+   - Update `blockedBy` arrays and unblock tasks whose dependencies are satisfied (completed only; never unblock when blocked only by canceled deps).
 8. Process handoffs: for completed tasks with `handoffTo`, create follow-up tasks for the downstream team with the `handoffContext` carried forward.
 9. Monitor progress via task status and log team outputs to `events.log`.
 

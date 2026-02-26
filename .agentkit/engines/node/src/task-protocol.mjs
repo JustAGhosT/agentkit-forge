@@ -32,10 +32,11 @@ export const TASK_STATES = [
   'failed', // task finished with errors
   'rejected', // assignee declined the task
   'canceled', // delegator canceled the task
+  'BLOCKED_ON_CANCELED', // blocked only by canceled/failed/rejected deps; until manual descoping or retry
 ];
 
 /** Terminal states — no further transitions allowed. */
-export const TERMINAL_STATES = ['completed', 'failed', 'rejected', 'canceled'];
+export const TERMINAL_STATES = ['completed', 'failed', 'rejected', 'canceled', 'BLOCKED_ON_CANCELED'];
 
 /** Valid task types. */
 export const TASK_TYPES = VALID_TASK_TYPES;
@@ -619,7 +620,8 @@ export async function checkDependencies(projectRoot) {
     if (!Array.isArray(task.dependsOn) || task.dependsOn.length === 0) continue;
 
     const newBlockers = [];
-    let hasFailedDep = false;
+    let hasInProgressDep = false;
+    let hasCanceledDep = false;
 
     for (const depId of task.dependsOn) {
       const dep = getTask(projectRoot, depId);
@@ -630,23 +632,33 @@ export async function checkDependencies(projectRoot) {
       if (dep.task.status === 'completed') {
         // Dependency satisfied — don't add to blockers
       } else if (['failed', 'rejected', 'canceled'].includes(dep.task.status)) {
-        hasFailedDep = true;
+        hasCanceledDep = true;
         newBlockers.push(depId);
       } else {
+        hasInProgressDep = true;
         newBlockers.push(depId);
       }
     }
 
     const priorBlockers = Array.isArray(task.blockedBy) ? task.blockedBy : [];
+    const priorStatus = task.status;
     const wasBlocked = priorBlockers.length > 0;
     task.blockedBy = newBlockers;
+    if (newBlockers.length > 0 && !hasInProgressDep && hasCanceledDep) {
+      task.blockedReason = 'canceled';
+      task.status = 'BLOCKED_ON_CANCELED';
+    } else if (task.status === 'BLOCKED_ON_CANCELED' && (newBlockers.length === 0 || hasInProgressDep)) {
+      delete task.blockedReason;
+      task.status = 'submitted';
+    }
     const blockersChanged = JSON.stringify(priorBlockers) !== JSON.stringify(newBlockers);
-    if (blockersChanged) {
+    const statusChanged = task.status !== priorStatus;
+    if (blockersChanged || statusChanged) {
       task.updatedAt = new Date().toISOString();
       await writeTaskFile(projectRoot, task.id, task);
     }
 
-    if (wasBlocked && newBlockers.length === 0 && !hasFailedDep) {
+    if (wasBlocked && newBlockers.length === 0 && !hasCanceledDep) {
       unblocked.push(task.id);
     }
   }

@@ -31,7 +31,7 @@ describe('runHealthcheck()', () => {
       (cmd) => cmd === 'node' || cmd === 'git',
     );
     vi.spyOn(runner, 'execCommand').mockReturnValue({
-      exitCode: 0, stdout: 'v20.0.0\n', stderr: '', durationMs: 5,
+      exitCode: 0, stdout: 'v22.0.0\n', stderr: '', durationMs: 5,
     });
 
     // Prevent orchestrator from writing state files into TEST_ROOT.
@@ -66,7 +66,7 @@ describe('runHealthcheck()', () => {
       (cmd) => cmd === 'node' || cmd === 'git',
     );
     vi.spyOn(runner, 'execCommand').mockImplementation((cmd) => {
-      if (cmd.startsWith('node')) return { exitCode: 0, stdout: 'v20.0.0\n', stderr: '', durationMs: 5 };
+      if (cmd.startsWith('node')) return { exitCode: 0, stdout: 'v22.0.0\n', stderr: '', durationMs: 5 };
       if (cmd.startsWith('git')) return { exitCode: 0, stdout: 'git version 2.40.0\n', stderr: '', durationMs: 5 };
       return { exitCode: 1, stdout: '', stderr: 'not found', durationMs: 0 };
     });

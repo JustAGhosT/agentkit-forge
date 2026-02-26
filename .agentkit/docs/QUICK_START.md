@@ -22,9 +22,11 @@ Before you begin, make sure you have the following installed:
 
 | Requirement | Minimum Version | Check Command    |
 | ----------- | --------------- | ---------------- |
-| **Node.js** | 20.11.0+        | `node --version` |
+| **Node.js** | 22.x LTS (>=22.0.0) | `node --version` |
 | **Git**     | 2.30+           | `git --version`  |
 | **AI Tool** | Latest          | See below        |
+
+> **Azure:** Azure Functions 4.x and Static Web Apps support Node 22. See [Azure Functions versions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-versions).
 
 You need at least one of these AI coding assistants:
 

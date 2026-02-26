@@ -12,21 +12,21 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ### Anthropic Claude
 
-#### Strengths / Positive Quirks
+#### Strengths — Anthropic Claude
 
 - **Native MCP Support**: First model family with built-in Model Context Protocol support
 - **1M Context Leadership**: Opus 4.6 beta supports 1M context (vs 200K standard)
 - **Consistent Output Quality**: Less variability in code generation quality compared to some competitors
 - **Strong Agentic Performance**: Excels in multi-step reasoning and tool coordination
 
-#### Known Issues / Negative Quirks
+#### Known Issues — Anthropic Claude
 
 - **Verbose Near High Context**: Becomes unusually verbose when approaching context limits
 - **Cost Sensitivity**: Premium pricing makes it expensive for high-volume tasks
 - **Rate Limiting**: Can hit API rate limits during intensive coding sessions
 - **Context Window Inconsistency**: 1M context is beta-only, production deployments often limited to 200K
 
-#### Operational Quirks
+#### Operational Quirks — Anthropic Claude
 
 - **Effort Mode Sensitivity**: Performance varies significantly between "high" vs "max" effort settings
 - **Context Compaction**: Behavior changes when context compaction is enabled in long sessions
@@ -34,21 +34,21 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ### OpenAI GPT/Codex
 
-#### Strengths / Positive Quirks
+#### Strengths — OpenAI GPT/Codex
 
 - **Extensive Profile Variants**: Wide range of thinking/fast/low/medium/high configurations
 - **Token Efficiency**: GPT-5.2 Codex specifically called out as token-efficient on SWE-rebench
 - **Strong Tool Integration**: Mature ecosystem for function calling and tool use
 - **Codex Legacy**: Benefits from years of GitHub Copilot training data and optimizations
 
-#### Known Issues / Negative Quirks
+#### Known Issues — OpenAI GPT/Codex
 
 - **Rate Limit Spikes**: Prone to sudden rate limiting during intensive usage
 - **Profile Complexity**: So many variants make it difficult to choose optimal configuration
 - **Cost Volatility**: High-effort variants can become very expensive quickly
 - **Documentation Access**: Some official benchmark pages blocked/restricted in certain environments
 
-#### Operational Quirks
+#### Operational Quirks — OpenAI GPT/Codex
 
 - **Family-Level Carryover**: Performance characteristics often carry over across GPT-5.x variants
 - **Codex vs GPT Split**: Separate coding-optimized vs general-purpose models can cause confusion
@@ -56,21 +56,21 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ### Google Gemini
 
-#### Strengths / Positive Quirks
+#### Strengths — Google Gemini
 
 - **Massive Context**: Up to 2M experimental context (1M production)
 - **Native Multimodal**: Built from ground up with multimodal capabilities
 - **Speed Advantage**: Flash variants often outperform Pro on coding-agent metrics despite smaller size
 - **Upgradeable Context**: Context window capabilities continue to expand
 
-#### Known Issues / Negative Quirks
+#### Known Issues — Google Gemini
 
 - **Performance Inversion**: Sometimes Flash outperforms Pro on coding tasks (counterintuitive)
 - **Page Timeouts**: Official documentation pages can timeout in certain network environments
 - **Preview Model Availability**: Gemini 3/3.1 references often preview-only with limited availability
 - **Regional Variability**: Performance can vary significantly by region
 
-#### Operational Quirks
+#### Operational Quirks — Google Gemini
 
 - **Reasoning Mode Variants**: Multiple "High Thinking" variants with unclear differentiation
 - **API Evolution**: Rapid model releases can break existing integrations
@@ -78,21 +78,21 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ### DeepSeek
 
-#### Strengths / Positive Quirks
+#### Strengths — DeepSeek
 
 - **Open-Weight Breakthrough**: Strong performance with open weights (MIT/Apache licensing)
 - **Cost-Effective Training**: Notable ~$6M training cost suggests efficient architecture
 - **Dual Mode Operation**: Separate chat (non-thinking) and reasoner modes for different use cases
 - **High Token Efficiency**: Ranked highest in tokens/problem on SWE-rebench
 
-#### Known Issues / Negative Quirks
+#### Known Issues — DeepSeek
 
 - **Limited Transformers Support**: Custom inference requirements, limited direct Transformers integration
 - **Vendor Documentation Only**: Currently limited to vendor documentation without independent verification
 - **API Model Mapping**: Confusing mapping between model names and API endpoints
 - **Regional Availability**: May have limited availability outside certain regions
 
-#### Operational Quirks
+#### Operational Quirks — DeepSeek
 
 - **Thinking Mode Behavior**: Significant behavior differences between chat and reasoner modes
 - **Tool Use in Both Modes**: Supports tool use in both thinking and non-thinking modes (unusual)
@@ -100,21 +100,21 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ### xAI Grok
 
-#### Strengths / Positive Quirks
+#### Strengths — xAI Grok
 
 - **"Max Fun" Mode**: Unique personality/behavior mode not found in other models
 - **Strong SWE-bench Performance**: 70.8% on full subset (vendor-reported)
 - **Open Weights Available**: Grok-1 available as 314B MoE open weights
 - **Tool-Use Training**: Specifically trained for grep/terminal/file editing workflows
 
-#### Known Issues / Negative Quirks
+#### Known Issues — xAI Grok
 
 - **Vendor-Reported Only**: Strongest benchmarks are vendor-reported, not independently verified
 - **Limited Model Range**: Smaller family compared to established providers
 - **Elon Musk Association**: Brand association may affect enterprise adoption decisions
 - **API Maturity**: Newer API may have stability/reliability concerns
 
-#### Operational Quirks
+#### Operational Quirks — xAI Grok
 
 - **Speed vs Quality Trade-off**: "Code Fast 1" variant specifically optimized for speed
 - **Test-Time Compute**: Emphasizes test-time compute for complex reasoning tasks
@@ -122,21 +122,21 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ### Zhipu AI GLM
 
-#### Strengths / Positive Quirks
+#### Strengths — Zhipu AI GLM
 
 - **Token Efficiency Leader**: #1 on tokens/problem in SWE-rebench
 - **Cheapest API Pricing**: Most cost-effective option among tracked models
 - **Strong Multilingual**: Chinese origin gives advantages for APAC/multilingual workloads
 - **Massive Scale**: GLM-5 scales to 744B parameters (40B active) with DSA
 
-#### Known Issues / Negative Quirks
+#### Known Issues — Zhipu AI GLM
 
 - **Limited Western Documentation**: Most documentation in Chinese, limited English coverage
 - **APAC Region Focus**: May have performance advantages in APAC but potential latency elsewhere
 - **Search-Only Data**: Some performance data only available via search snippets
 - **Beta Model Status**: GLM-4.7 marked as beta with limited stability guarantees
 
-#### Operational Quirks
+#### Operational Quirks — Zhipu AI GLM
 
 - **Multiple Cost Tiers**: Same model available at different cost multipliers (0.75x vs 1.5x)
 - **Open/Proprietary Mix**: Combination of open weights and proprietary API access
@@ -144,21 +144,21 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ### Mistral (Codestral)
 
-#### Strengths / Positive Quirks
+#### Strengths — Mistral (Codestral)
 
 - **European AI Champion**: GDPR-friendly, European-based provider
 - **Strong FIM Support**: Excellent Fill-in-the-Middle code completion
 - **Low-Latency Focus**: Optimized for high-frequency, low-latency coding tasks
 - **Open Weights Available**: Apache 2.0 licensing for some models
 
-#### Known Issues / Negative Quirks
+#### Known Issues — Mistral (Codestral)
 
 - **Limited Independent Data**: Most current data from vendor documentation only
 - **Mamba Architecture Complexity**: Mamba variant may have integration challenges
 - **Documentation Gaps**: Less comprehensive documentation compared to major providers
 - **Community Reliance**: Heavy reliance on community checkpoints for some variants
 
-#### Operational Quirks
+#### Operational Quirks — Mistral (Codestral)
 
 - **Code Completion Focus**: Specifically optimized for code completion vs general coding
 - **European Data Residency**: Advantage for GDPR compliance but potential latency for global users
@@ -166,21 +166,21 @@ The current "quirks" scoring dimension in PRD-001 uses generic descriptions like
 
 ### Cohere Command
 
-#### Strengths / Positive Quirks
+#### Strengths — Cohere Command
 
 - **Enterprise RAG Specialist**: Strong positioning for RAG-heavy workloads
 - **Platform Coverage**: Good support for Bedrock/SageMaker deployments
 - **Strong Embeddings**: Excellent embedding models (embed-english-v3)
 - **Tool-Using Agents**: Specifically positioned for tool-using agent workflows
 
-#### Known Issues / Negative Quirks
+#### Known Issues — Cohere Command
 
 - **Limited Coding Data**: Less independent coding benchmark data available
 - **Enterprise Focus**: May be over-engineered for simple coding tasks
 - **Platform Dependencies**: Some features require specific platform deployments
 - **Documentation Access**: Vendor documentation may require authentication for full access
 
-#### Operational Quirks
+#### Operational Quirks — Cohere Command
 
 - **Multiple Deployment Options**: API, Bedrock, SageMaker with different behaviors
 - **RAG Optimization**: May be over-optimized for RAG at expense of general coding

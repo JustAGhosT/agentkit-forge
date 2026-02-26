@@ -21,13 +21,15 @@ Before setting up AgentKit Forge, ensure the following requirements are met:
 
 ### System Requirements
 
-- **Node.js** v20.11.0 or later installed and available on your PATH
+- **Node.js** v22.x LTS (>=22.0.0) installed and available on your PATH  
+  Azure Functions 4.x and Azure Static Web Apps support Node 22. See [Azure Functions supported versions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-versions) and [Static Web Apps runtimes](https://learn.microsoft.com/en-us/azure/static-web-apps/languages-runtimes).
 - **Git** v2.30 or later
 - **PowerShell** v7+ (for Windows-first workflows) or a POSIX-compatible shell (bash/zsh)
 
 ### Repository Requirements
 
 - A Git repository (initialized with `git init` or cloned from a remote)
+- **When targeting Azure:** Ensure `package.json` `engines` and workflow `node-version` use Node 22 to align with Azure Functions 4.x and Static Web Apps.
 - A `package.json` at the repository root (or willingness to create one)
 - Write access to the repository for adding configuration files
 
@@ -238,7 +240,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Validate AgentKit configuration
         run: node agentkit-forge/.agentkit/engines/node/src/cli.mjs validate

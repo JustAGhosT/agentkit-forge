@@ -8,9 +8,11 @@
 
 | Requirement | Minimum Version | Check Command    |
 | ----------- | --------------- | ---------------- |
-| Node.js     | 20.11.0+        | `node --version` |
+| Node.js     | 22.x LTS (>=22.0.0) | `node --version` |
 | pnpm        | 9+              | `pnpm --version` |
 | Git         | 2.30+           | `git --version`  |
+
+> **Azure compatibility:** Azure Functions 4.x and Azure Static Web Apps support Node 22. See [Node.js release schedule](https://nodejs.org/en/about/releases/) and [Azure Functions supported versions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-versions).
 
 If you do not have pnpm installed, install it globally:
 
@@ -241,7 +243,7 @@ Make sure you installed dependencies first:
 pnpm -C .agentkit install
 ```
 
-If the error persists, verify your Node.js version is 20.11.0 or higher:
+If the error persists, verify your Node.js version is 22.0.0 or higher:
 
 ```bash
 node --version
