@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, rmSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 import {
   generateSessionId, initSession, endSession, logEvent,
   getSessions, generateReport,
@@ -20,6 +21,19 @@ describe('cost-tracker', () => {
     // Create .agentkit-repo marker
     mkdirSync(TEST_PROJECT, { recursive: true });
     writeFileSync(resolve(TEST_PROJECT, '.agentkit-repo'), 'test-cost', 'utf-8');
+
+    // Initialize a git repo for testing git integrations
+    try {
+      execSync('git init', { cwd: TEST_PROJECT, stdio: 'ignore' });
+      execSync('git config user.email "test@example.com"', { cwd: TEST_PROJECT, stdio: 'ignore' });
+      execSync('git config user.name "Test User"', { cwd: TEST_PROJECT, stdio: 'ignore' });
+      // Create an initial commit so HEAD exists
+      writeFileSync(resolve(TEST_PROJECT, 'README.md'), '# Test', 'utf-8');
+      execSync('git add .', { cwd: TEST_PROJECT, stdio: 'ignore' });
+      execSync('git commit -m "Initial commit"', { cwd: TEST_PROJECT, stdio: 'ignore' });
+    } catch (e) {
+      console.warn('Git setup failed in beforeEach:', e.message);
+    }
   });
 
   afterEach(() => {
@@ -40,10 +54,9 @@ describe('cost-tracker', () => {
     it('generates unique IDs', () => {
       const id1 = generateSessionId();
       const id2 = generateSessionId();
-      // Very likely to be different (different random hex)
-      // In rare cases they could match due to same ms + same random, but extremely unlikely
       expect(id1.length).toBeGreaterThan(0);
       expect(id2.length).toBeGreaterThan(0);
+      expect(id1).not.toBe(id2);
     });
   });
 
@@ -95,6 +108,13 @@ describe('cost-tracker', () => {
       expect(files.length).toBeGreaterThan(0);
       expect(files[0]).toContain(session.sessionId);
     });
+
+    it('captures git metadata', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      expect(session.user).toBe('test@example.com');
+      // Branch should be main or master
+      expect(session.branch).toMatch(/^(main|master)$/);
+    });
   });
 
   describe('endSession()', () => {
@@ -119,6 +139,29 @@ describe('cost-tracker', () => {
         sessionId: 'nonexistent',
       });
       expect(result).toBeNull();
+    });
+
+    it('counts modified files correctly', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+
+      // Modify a file
+      writeFileSync(resolve(TEST_PROJECT, 'newfile.txt'), 'content', 'utf-8');
+      // Must add to index for `git diff HEAD` to see it if it's new,
+      // or `git diff HEAD` also shows untracked? usually need -u or add.
+      // `git diff --name-only HEAD` compares working tree to HEAD.
+      // Untracked files are NOT shown by `git diff HEAD`. They are shown by `git status`.
+      // Modified tracked files ARE shown.
+
+      // Let's modify the README which is tracked
+      writeFileSync(resolve(TEST_PROJECT, 'README.md'), '# Test Modified', 'utf-8');
+
+      const ended = endSession({
+        agentkitRoot: TEST_AGENTKIT,
+        projectRoot: TEST_PROJECT,
+        sessionId: session.sessionId,
+      });
+
+      expect(ended.filesModified).toBe(1);
     });
   });
 
