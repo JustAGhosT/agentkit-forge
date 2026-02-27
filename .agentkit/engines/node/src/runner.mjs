@@ -70,20 +70,26 @@ export function resolveWindowsExecutable(command, cwd) {
     return null;
   };
 
-  // 1. Handle absolute paths or explicit relative paths
-  // Matches regex for paths starting with ./, .\, ../, ..\
-  if (path.isAbsolute(command) || /^(\.|\.\.)[\\/]/.test(command)) {
+  // 1. Handle absolute paths
+  if (path.isAbsolute(command)) {
     return checkExtensions(command) || command;
   }
 
-  // 2. Check CWD if provided
+  // 2. Handle explicit relative paths (./, ../, .\, ..\)
+  if (/^(\.|\.\.)[\\/]/.test(command)) {
+    // If cwd is provided, resolve relative to it; otherwise relative to process.cwd() (default behavior of path.resolve)
+    const resolved = cwd ? path.resolve(cwd, command) : path.resolve(command);
+    return checkExtensions(resolved) || command;
+  }
+
+  // 3. Check CWD if provided (for non-relative, non-absolute commands)
   if (cwd) {
     const localPath = path.join(cwd, command);
     const resolved = checkExtensions(localPath);
     if (resolved) return resolved;
   }
 
-  // 3. Check PATH
+  // 4. Check PATH
   const pathEnv = process.env.PATH || process.env.Path || process.env.path || '';
   const pathDirs = pathEnv.split(path.delimiter);
 

@@ -60,7 +60,19 @@ describe('resolveWindowsExecutable()', () => {
     expect(resolveWindowsExecutable(inputPath)).toBe(resolvedPath);
   });
 
-  it('resolves command in CWD', () => {
+  it('resolves explicit relative path against cwd', () => {
+    const cwd = path.resolve('/project');
+    const relativeCmd = './script';
+    // When resolved against cwd, it becomes absolute: /project/script.BAT
+    const resolvedPath = path.resolve(cwd, 'script.BAT');
+
+    // The implementation should verify: resolve(cwd, './script') + .BAT exists
+    vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === resolvedPath }));
+
+    expect(resolveWindowsExecutable(relativeCmd, cwd)).toBe(resolvedPath);
+  });
+
+  it('resolves command in CWD (implicit relative)', () => {
     const cwd = path.resolve('/project');
     const cmd = 'script';
     const resolvedPath = path.join(cwd, 'script.BAT');
@@ -97,27 +109,5 @@ describe('resolveWindowsExecutable()', () => {
     vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === cwdPath || p === pathPath }));
 
     expect(resolveWindowsExecutable(cmd, cwd)).toBe(cwdPath);
-  });
-
-  it('resolves relative path with extension', () => {
-    const cwd = path.resolve('/project');
-    const cmd = path.join('.', 'tool.BAT');
-    const resolvedPath = path.join(cwd, cmd);
-
-    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === resolvedPath);
-    vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === resolvedPath }));
-
-    expect(resolveWindowsExecutable(cmd, cwd)).toBe(resolvedPath);
-  });
-
-  it('resolves relative path by appending extension', () => {
-    const cwd = path.resolve('/project');
-    const cmd = path.join('.', 'tool');
-    const resolvedPath = path.join(cwd, `${cmd}.CMD`);
-
-    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === resolvedPath);
-    vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === resolvedPath }));
-
-    expect(resolveWindowsExecutable(cmd, cwd)).toBe(resolvedPath);
   });
 });
