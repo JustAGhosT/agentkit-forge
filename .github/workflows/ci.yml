@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [22]
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
           cache-dependency-path: .agentkit/pnpm-lock.yaml
 
@@ -89,7 +89,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
           cache-dependency-path: .agentkit/pnpm-lock.yaml
 
@@ -104,3 +104,26 @@ jobs:
             echo "Checking $f..."
             SPEC_FILE="$f" node --input-type=module -e "import yaml from 'js-yaml'; import fs from 'fs'; yaml.load(fs.readFileSync(process.env.SPEC_FILE,'utf8'));"
           done
+
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: .agentkit/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          cache-dependency-path: .agentkit/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .agentkit
+
+      - name: Lint Markdown files
+        run: pnpm lint:md
+        working-directory: .agentkit

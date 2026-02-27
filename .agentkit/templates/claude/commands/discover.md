@@ -1,9 +1,27 @@
 ---
-description: "Scan the repository and produce a full codebase inventory"
-allowed-tools: Bash(git *), Bash(find *), Bash(ls *), Bash(cat *), Bash(head *), Bash(wc *)
+{{#if commandDescription}}
+description: {{escapeYamlString commandDescription}}
+{{/if}}
+# allowed-tools: Read-only (git, find, ls, cat, head, wc) + write-capable (mkdir, echo, printf, tee).
+# Write-capable tools are permitted ONLY for designated output artifacts: AGENT_TEAMS.md, .claude/state/, .claude/state/events.log.
+# Enforced path restrictions: mkdir only for .claude/state/; echo/printf/tee only for AGENT_TEAMS.md or appending to .claude/state/events.log.
+allowed-tools: Bash(git *), Bash(find *), Bash(ls *), Bash(cat *), Bash(head *), Bash(wc *), Bash(mkdir *), Bash(echo *), Bash(printf *), Bash(tee *)
 ---
 
 # Codebase Discovery
+
+{{#if commandDescription}}
+
+## Context
+
+{{commandDescription}}
+{{#if commandFlags}}
+
+### Flags (from spec)
+
+{{commandFlags}}
+{{/if}}
+{{/if}}
 
 You are the **Discovery Agent**. Your job is to scan this repository thoroughly and produce a complete inventory of the codebase. You gather intelligence — you do **NOT** change any functional code.
 
@@ -105,7 +123,7 @@ Create `.claude/state/` directory if it does not exist.
 
 ## Rules
 
-1. **Do NOT modify any source code, tests, or configuration files.** You are read-only.
+1. **Do NOT modify any source code, tests, or configuration files.** You are read-only for source code analysis, but may write designated output files (AGENT_TEAMS.md, .claude/state/events.log). Write-capable commands (mkdir, echo, printf, tee) must only produce these artifacts — never modify arbitrary repository files.
 2. **Do NOT install dependencies.** Only inspect what is already present.
 3. **Be thorough but fast.** Scan broadly, then drill into areas that matter.
 4. **When uncertain, note it.** Mark items as "unconfirmed" rather than guessing.

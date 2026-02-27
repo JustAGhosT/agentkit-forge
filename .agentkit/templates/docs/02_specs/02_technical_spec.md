@@ -20,7 +20,7 @@
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
 | Language | <!-- e.g. TypeScript --> | <!-- Why --> |
-| Runtime | <!-- e.g. Node.js 20 --> | <!-- Why --> |
+| Runtime | <!-- e.g. Node.js 22 --> | <!-- Why --> |
 | Framework | <!-- e.g. Express --> | <!-- Why --> |
 | Database | <!-- e.g. PostgreSQL 16 --> | <!-- Why --> |
 | Cache | <!-- e.g. Redis --> | <!-- Why --> |

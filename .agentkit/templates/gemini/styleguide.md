@@ -15,25 +15,25 @@ See `AGENTS.md` for universal project conventions.
 {{#if hasLogging}}
 ## Logging
 
-Use **{{loggingFramework}}** for all logging.{{#if hasStructuredLogging}} Use structured logging.{{/if}}{{#if hasCorrelationId}} Include correlation IDs.{{/if}}
+Use {{loggingFramework}} for all logging.{{#if hasStructuredLogging}} Use structured logging.{{/if}}{{#if hasCorrelationId}} Include correlation IDs.{{/if}}
 {{/if}}
 
 {{#if hasErrorHandling}}
 ## Error Handling
 
-Strategy: **{{errorStrategy}}**.{{#if hasCustomExceptions}} Use custom exception types.{{/if}}
+Strategy: {{errorStrategy}}.{{#if hasCustomExceptions}} Use custom exception types.{{/if}}
 {{/if}}
 
 {{#if hasAuth}}
 ## Authentication
 
-Provider: **{{authProvider}}**{{#if authStrategy}} ({{authStrategy}}){{/if}}.{{#if hasRbac}} RBAC enforced.{{/if}}
+Provider: {{authProvider}}{{#if authStrategy}} ({{authStrategy}}){{/if}}.{{#if hasRbac}} RBAC enforced.{{/if}}
 {{/if}}
 
 {{#if commitConvention}}
 ## Commit Convention
 
-Follow **{{commitConvention}}** commits.
+Follow {{commitConvention}} commits.
 {{/if}}
 
 ## Quality Gates

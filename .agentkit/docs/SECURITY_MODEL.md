@@ -165,14 +165,19 @@ all string values before they are interpolated into templates:
 
 ```js
 function sanitizeTemplateValue(value) {
-  return value.replace(/[`$\\;|&<>!{}()]/g, '');
+  let s = value;
+  s = s.replace(/\$\([^)]*\)/g, (m) => m.slice(2, -1));  // unwrap $(...) to inner content
+  s = s.replace(/[`$\\;|&<>!{}]/g, '');
+  return s;
 }
 ```
 
 This prevents injection when rendered output is later executed in a shell context
-(for example, hook scripts or CI workflows). The function removes backticks, dollar
-signs, semicolons, pipes, ampersands, angle brackets, exclamation marks, braces, and
-parentheses.
+(for example, hook scripts or CI workflows). Shell substitution `$(...)` is unwrapped
+to its inner content; other metacharacters (backticks, dollar signs, semicolons,
+pipes, ampersands, angle brackets, exclamation marks, braces) are stripped.
+Parentheses in non-injection context (e.g. "IO operations (file system, network, database)")
+are preserved.
 
 Template keys are sorted longest-first during rendering to prevent partial placeholder
 collisions (for example, `{{versionInfo}}` being partially matched by `{{version}}`).

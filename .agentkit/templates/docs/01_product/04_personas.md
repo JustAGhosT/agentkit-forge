@@ -6,7 +6,7 @@
 
 ## Overview
 
-Personas represent the primary user archetypes for **{{repoName}}**. Use these
+Personas represent the primary user archetypes for {{repoName}}. Use these
 profiles to guide feature prioritisation and UX decisions.
 
 ---

@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document catalogues the external APIs that **{{repoName}}** integrates with.
+This document catalogues the external APIs that {{repoName}} integrates with.
 
 ## Integration Inventory
 

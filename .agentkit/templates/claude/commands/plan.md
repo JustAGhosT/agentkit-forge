@@ -88,13 +88,13 @@ Example:
 List every file that will be created or modified, with the type of change:
 
 ```
-| File | Action | Description |
-|------|--------|-------------|
-| `src/middleware/rateLimit.ts` | CREATE | Rate limiting middleware |
-| `src/lib/redis.ts` | MODIFY | Add Redis client export |
-| `src/routes/auth.ts` | MODIFY | Attach rate limit middleware |
-| `src/middleware/__tests__/rateLimit.test.ts` | CREATE | Rate limit tests |
-| `package.json` | MODIFY | Add ioredis dependency |
+| File                                         | Action | Description                  |
+| -------------------------------------------- | ------ | ---------------------------- |
+| `src/middleware/rateLimit.ts`                | CREATE | Rate limiting middleware     |
+| `src/lib/redis.ts`                           | MODIFY | Add Redis client export      |
+| `src/routes/auth.ts`                         | MODIFY | Attach rate limit middleware |
+| `src/middleware/__tests__/rateLimit.test.ts` | CREATE | Rate limit tests             |
+| `package.json`                               | MODIFY | Add ioredis dependency       |
 ```
 
 ### 5. Validation Plan
@@ -135,18 +135,27 @@ List anything that could go wrong or needs human attention:
 
 Write the complete plan as a structured markdown document. Do NOT create a file — output the plan directly so the orchestrator or user can review it before implementation begins.
 
-## State Updates
+## State Management
 
-Append to `.claude/state/events.log`:
+### Reading State (before planning)
+- **Read:** `AGENT_BACKLOG.md` (for item context), `.claude/state/orchestrator.json` (for phase/team status)
+
+### Writing State (after planning)
+
+- **None.** The orchestrator logs plan creation. The planner outputs to stdout only; the orchestrator owns `.claude/state/events.log` handling.
+
+- **Orchestrator-only example** (when the orchestrator captures the plan):
 
 ```
-[<timestamp>] [PLAN] [ORCHESTRATOR] Plan created for: "<goal summary>". Steps: <count>. Files: <count>.
+[<timestamp ISO8601 UTC>] [PLAN] [ORCHESTRATOR] Plan created for: "<goal summary>". Steps: <count>. Files: <count>.
 ```
+
+- Timestamp must be ISO 8601 (UTC, e.g., `2026-02-26T15:04:05Z`).
 
 ## Rules
 
 1. **Do NOT write any code.** Plans only. Not even "example" code in the steps — describe what to write, do not write it.
-2. **Do NOT modify any files** (except events.log).
+2. **Do NOT modify any files.**
 3. **Be concrete.** Vague plans are worse than no plan.
 4. **List all files.** Missing a file from the touch list means a surprise during implementation.
 5. **Validation must be runnable.** Every validation command must actually work when copy-pasted.

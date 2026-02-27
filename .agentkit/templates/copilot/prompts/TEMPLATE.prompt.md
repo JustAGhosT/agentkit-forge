@@ -34,5 +34,3 @@ When invoked, follow the AgentKit Forge orchestration lifecycle:
 ## References
 
 - See `AGENTS.md` for universal project instructions
-- See `QUALITY_GATES.md` for definition of done
-- See `.github/copilot-instructions.md` for full Copilot conventions

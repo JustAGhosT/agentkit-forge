@@ -3,10 +3,10 @@
  * AgentKit Forge CLI Router
  * Routes subcommands to their handlers.
  */
-import { fileURLToPath } from 'url';
-import { readFileSync, existsSync } from 'fs';
-import { dirname, resolve } from 'path';
 import { spawnSync } from 'child_process';
+import { existsSync, readFileSync } from 'fs';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,31 +18,88 @@ let VERSION = '0.0.0';
 try {
   const pkg = JSON.parse(readFileSync(resolve(AGENTKIT_ROOT, 'package.json'), 'utf-8'));
   VERSION = pkg.version || VERSION;
-} catch { /* fallback to 0.0.0 */ }
+} catch {
+  /* fallback to 0.0.0 */
+}
 
-const VALID_COMMANDS = ['init', 'sync', 'validate', 'discover', 'spec-validate',
-  'orchestrate', 'plan', 'check', 'review', 'handoff', 'healthcheck', 'cost',
-  'project-review', 'add', 'remove', 'list'];
+const VALID_COMMANDS = [
+  'init',
+  'sync',
+  'validate',
+  'discover',
+  'spec-validate',
+  'orchestrate',
+  'plan',
+  'check',
+  'review',
+  'handoff',
+  'healthcheck',
+  'cost',
+  'project-review',
+  'add',
+  'remove',
+  'list',
+  'tasks',
+  'delegate',
+  'doctor',
+  'scaffold',
+  'preflight',
+];
 
 // Workflow commands with runtime handlers
 const WORKFLOW_COMMANDS = ['orchestrate', 'plan', 'check', 'review', 'handoff', 'healthcheck'];
 
 // Commands that are slash-command-only (no CLI handler)
-const SLASH_ONLY_COMMANDS = ['project-review'];
+const SLASH_ONLY_COMMANDS = ['project-review', 'scaffold', 'preflight'];
 
 const VALID_FLAGS = {
   init: ['repoName', 'force', 'non-interactive', 'ci', 'preset', 'help'],
-  sync: ['overlay', 'only', 'dry-run', 'overwrite', 'force', 'quiet', 'verbose', 'no-clean', 'diff', 'help'],
+  sync: [
+    'overlay',
+    'only',
+    'dry-run',
+    'overwrite',
+    'force',
+    'quiet',
+    'verbose',
+    'no-clean',
+    'diff',
+    'help',
+  ],
   validate: ['help'],
   discover: ['output', 'depth', 'include-deps', 'help'],
   'spec-validate': ['help'],
-  orchestrate: ['assess-only', 'scope', 'dry-run', 'team', 'phase', 'status', 'force-unlock', 'help'],
+  orchestrate: [
+    'assess-only',
+    'scope',
+    'dry-run',
+    'team',
+    'phase',
+    'status',
+    'force-unlock',
+    'help',
+  ],
   plan: ['issue', 'output', 'depth', 'help'],
   check: ['fix', 'fast', 'stack', 'bail', 'help'],
   review: ['pr', 'range', 'file', 'focus', 'severity', 'help'],
   handoff: ['format', 'include-diff', 'tag', 'save', 'help'],
   healthcheck: ['stack', 'fix', 'verbose', 'help'],
   cost: ['summary', 'sessions', 'report', 'month', 'format', 'last', 'help'],
+  tasks: ['status', 'assignee', 'type', 'priority', 'id', 'process-handoffs', 'help'],
+  delegate: [
+    'to',
+    'title',
+    'description',
+    'type',
+    'priority',
+    'depends-on',
+    'handoff-to',
+    'scope',
+    'help',
+  ],
+  doctor: ['verbose', 'help'],
+  scaffold: ['type', 'name', 'stack', 'path', 'help'],
+  preflight: ['stack', 'range', 'base', 'strict', 'help'],
   'project-review': ['scope', 'focus', 'phase', 'help'],
   add: ['help'],
   remove: ['clean', 'help'],
@@ -108,7 +165,7 @@ Commands:
 
 Tool Management:
   add <tool...>   Add AI tool(s) to render targets and sync
-  remove <tool>   Remove AI tool from render targets
+  remove <tool...> Remove AI tool(s) from render targets
                   --clean             Also delete generated files
   list            Show enabled and available AI tools
 
@@ -120,11 +177,31 @@ Workflow Commands:
   handoff         Generate session handoff document
   healthcheck     Pre-flight validation of repo health
 
+Task Delegation:
+  tasks           List and inspect delegated tasks
+                  --status <s>      Filter by status (submitted, working, completed, etc.)
+                  --assignee <team>  Filter by assignee team
+                  --id <task-id>     Show details for a specific task
+                  --process-handoffs Process handoff chains before listing
+  delegate        Create a delegated task for a team
+                  --to <team>       Assignee team (required)
+                  --title <text>    Task title (required)
+                  --type <type>     Task type: implement, review, plan, investigate, test, document
+                  --priority <p>    Priority: P0, P1, P2, P3 (default P2)
+                  --depends-on <id> Depend on another task ID
+                  --handoff-to <t>  Auto-handoff to team on completion
+
+Diagnostics:
+  doctor          Run AgentKit diagnostics and setup checks
+                  --verbose         Include detailed diagnostics
+
 Utility Commands:
   cost            Session cost and usage tracking
 
 Slash-Command Only:
   project-review  Comprehensive project audit (use as /project-review in AI tool)
+  scaffold        Generate convention-aligned skeletons (use as /scaffold in AI tool)
+  preflight       Run enhanced release-readiness checks (use as /preflight in AI tool)
 
 Options:
   orchestrate:
@@ -170,17 +247,22 @@ function ensureDependencies(agentkitRoot) {
   if (!existsSync(pkgPath)) {
     return true;
   }
-  const hasPnpm = spawnSync('pnpm', ['--version'], { encoding: 'utf8', windowsHide: true }).status === 0;
+  const hasPnpm =
+    spawnSync('pnpm', ['--version'], { encoding: 'utf8', windowsHide: true }).status === 0;
   const installCmd = hasPnpm ? 'pnpm' : 'npm';
   const installArgs = hasPnpm ? ['install'] : ['install'];
-  console.warn(`[agentkit] Dependencies not installed. Running ${installCmd} install in .agentkit...`);
+  console.warn(
+    `[agentkit] Dependencies not installed. Running ${installCmd} install in .agentkit...`
+  );
   const r = spawnSync(installCmd, installArgs, {
     cwd: agentkitRoot,
     stdio: 'inherit',
     windowsHide: true,
   });
   if (r.status !== 0) {
-    console.error(`[agentkit] Failed to install dependencies. Run manually: ${installCmd} -C .agentkit install`);
+    console.error(
+      `[agentkit] Failed to install dependencies. Run manually: ${installCmd} -C .agentkit install`
+    );
     return false;
   }
   return true;
@@ -223,8 +305,10 @@ async function main() {
   // Record command invocation for cost tracking (best-effort)
   try {
     const { recordCommand } = await import('./cost-tracker.mjs');
-    recordCommand(AGENTKIT_ROOT, command);
-  } catch { /* cost tracking is optional */ }
+    recordCommand(AGENTKIT_ROOT, command).catch(() => {});
+  } catch {
+    /* cost tracking is optional */
+  }
 
   try {
     switch (command) {
@@ -261,13 +345,21 @@ async function main() {
       }
       case 'check': {
         const { runCheck } = await import('./check.mjs');
-        const result = await runCheck({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        const result = await runCheck({
+          agentkitRoot: AGENTKIT_ROOT,
+          projectRoot: PROJECT_ROOT,
+          flags,
+        });
         if (!result.overallPassed) process.exit(1);
         break;
       }
       case 'review': {
         const { runReview } = await import('./review-runner.mjs');
-        const result = await runReview({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        const result = await runReview({
+          agentkitRoot: AGENTKIT_ROOT,
+          projectRoot: PROJECT_ROOT,
+          flags,
+        });
         if (result.status === 'FAIL') process.exit(1);
         break;
       }
@@ -289,6 +381,26 @@ async function main() {
       case 'cost': {
         const { runCost } = await import('./cost-tracker.mjs');
         await runCost({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'doctor': {
+        const { runDoctor } = await import('./doctor.mjs');
+        const result = await runDoctor({
+          agentkitRoot: AGENTKIT_ROOT,
+          projectRoot: PROJECT_ROOT,
+          flags,
+        });
+        if (!result.ok) process.exit(1);
+        break;
+      }
+      case 'tasks': {
+        const { runTasks } = await import('./task-cli.mjs');
+        await runTasks({ projectRoot: PROJECT_ROOT, flags });
+        break;
+      }
+      case 'delegate': {
+        const { runDelegate } = await import('./task-cli.mjs');
+        await runDelegate({ projectRoot: PROJECT_ROOT, flags });
         break;
       }
       case 'add': {

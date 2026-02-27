@@ -6,7 +6,7 @@
 
 ## Overview
 
-Common issues and their resolutions for **{{repoName}}**.
+Common issues and their resolutions for {{repoName}}.
 
 ## Quick Diagnostics
 

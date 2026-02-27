@@ -13,7 +13,7 @@
 # =============================================================================
 
 # Project identity
-name: null # e.g. "chaufher", "phoenix", "my-api"
+name: agentkit-forge # e.g. "chaufher", "phoenix", "my-api"
 description: null # Short project description
 phase: null # greenfield | active | maintenance | legacy
 
@@ -35,6 +35,14 @@ architecture:
   apiStyle: null # rest | graphql | grpc | mixed
   monorepo: false
   monorepoTool: null # turborepo | nx | lerna | pnpm-workspaces
+
+# Explicit implementation patterns (helps agents avoid reinventing architecture)
+patterns:
+  repository: false
+  cqrs: false
+  eventSourcing: false
+  mediator: false
+  unitOfWork: false # domain/app UoW pattern, distinct from DB transaction strategy
 
 # Existing documentation & specs
 documentation:
