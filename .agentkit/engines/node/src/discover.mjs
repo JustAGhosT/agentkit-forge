@@ -4,6 +4,7 @@
  * and build a structured discovery report.
  */
 import { existsSync, readFileSync, readdirSync, promises as fsPromises } from 'fs';
+const { readdir, access, readFile } = fsPromises;
 import yaml from 'js-yaml';
 import { basename, extname, join, resolve } from 'node:path';
 
@@ -446,8 +447,6 @@ async function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
     } catch (err) {
       /* permission errors or ENOENT */
     }
-
-    await Promise.all(tasks);
   }
 
   await walk(dir, 0);
@@ -800,12 +799,13 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   }
 
   // --- Tech stack detection ---
-  for (const detector of STACK_DETECTORS) {
-    const markerFound = detector.markers.some((m) => fileExists(projectRoot, m));
+  const stackTasks = STACK_DETECTORS.map(async (detector) => {
+    const results = await Promise.all(detector.markers.map((m) => fileExists(projectRoot, m)));
+    const markerFound = results.some(Boolean);
     if (markerFound) {
       const fileCount = await countFilesByExt(projectRoot, detector.filePatterns);
       const configsFound = detector.configFiles.filter((c) => existsSync(resolve(projectRoot, c)));
-      report.techStacks.push({
+      return {
         name: detector.name,
         label: detector.label,
         fileCount,
