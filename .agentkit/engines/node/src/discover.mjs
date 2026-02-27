@@ -3,9 +3,10 @@
  * Scans the repository to detect tech stacks, project structure, team boundaries,
  * and build a structured discovery report.
  */
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { existsSync } from 'node:fs';
+import { readFile, readdir, access } from 'node:fs/promises';
 import yaml from 'js-yaml';
-import { basename, extname, join, resolve } from 'path';
+import { basename, extname, join, resolve } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Tech stack detection patterns
@@ -358,55 +359,119 @@ const CI_DETECTORS = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-function fileExists(projectRoot, pattern) {
+async function fileExists(projectRoot, pattern) {
   // Handle glob-like patterns simply
   if (pattern.endsWith('/')) {
-    return existsSync(resolve(projectRoot, pattern.slice(0, -1)));
+    try {
+      await access(resolve(projectRoot, pattern.slice(0, -1)));
+      return true;
+    } catch {
+      return false;
+    }
   }
   if (pattern.startsWith('*')) {
     // Check for any file matching the extension
     const ext = pattern.replace('*', '');
     try {
-      return readdirSync(projectRoot).some((f) => f.endsWith(ext));
+      const entries = await readdir(projectRoot);
+      return entries.some((f) => f.endsWith(ext));
     } catch {
       return false;
     }
   }
-  return existsSync(resolve(projectRoot, pattern));
+  try {
+    await access(resolve(projectRoot, pattern));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Directories to skip during discovery — framework internals and build artifacts
 // should not be counted as application source code in consuming repos.
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.nuxt']);
 
-function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
+async function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
   let count = 0;
-  function walk(currentDir, currentDepth) {
-    if (currentDepth > depth || count > maxFiles) return;
-    if (!existsSync(currentDir)) return;
+
+  // Simple concurrency limiter to avoid EMFILE
+  const CONCURRENCY_LIMIT = 20;
+  let activePromises = 0;
+  const queue = [];
+
+  const runTask = async (task) => {
+    activePromises++;
     try {
-      for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+      await task();
+    } finally {
+      activePromises--;
+      if (queue.length > 0) {
+        const next = queue.shift();
+        runTask(next);
+      }
+    }
+  };
+
+  const schedule = (task) => {
+    return new Promise((resolve, reject) => {
+      const wrappedTask = async () => {
+        try {
+          await task();
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      if (activePromises < CONCURRENCY_LIMIT) {
+        runTask(wrappedTask);
+      } else {
+        queue.push(wrappedTask);
+      }
+    });
+  };
+
+  // We need to wait for all tasks to complete, but since we are recursing dynamically,
+  // we can't easily use Promise.all on a static array.
+  // Instead, we'll use a slightly different approach for the recursive walk.
+  // Given strict depth limits, we can probably just use Promise.all at each level.
+
+  async function walk(currentDir, currentDepth) {
+    if (currentDepth > depth || count > maxFiles) return;
+
+    let entries;
+    try {
+      entries = await readdir(currentDir, { withFileTypes: true });
+    } catch {
+      return; // permission errors or not a dir
+    }
+
+    const tasks = [];
+
+    for (const entry of entries) {
         if (entry.name.startsWith('.') || SKIP_DIRS.has(entry.name)) continue;
         // Skip agentkit engine internals — framework code, not app code
         if (currentDepth === 0 && entry.name === '.agentkit') continue;
+
         const full = join(currentDir, entry.name);
         if (entry.isDirectory()) {
-          walk(full, currentDepth + 1);
+            tasks.push(walk(full, currentDepth + 1));
         } else if (extensions.includes(extname(entry.name))) {
-          count++;
+            count++;
         }
-      }
-    } catch {
-      /* permission errors */
     }
+
+    await Promise.all(tasks);
   }
-  walk(dir, 0);
+
+  await walk(dir, 0);
   return count;
 }
 
-function getTopLevelDirs(projectRoot) {
+async function getTopLevelDirs(projectRoot) {
   try {
-    return readdirSync(projectRoot, { withFileTypes: true })
+    const entries = await readdir(projectRoot, { withFileTypes: true });
+    return entries
       .filter(
         (e) =>
           e.isDirectory() &&
@@ -420,38 +485,38 @@ function getTopLevelDirs(projectRoot) {
   }
 }
 
-function detectMonorepo(projectRoot) {
+async function detectMonorepo(projectRoot) {
   const indicators = [];
 
   // pnpm workspaces
-  if (existsSync(resolve(projectRoot, 'pnpm-workspace.yaml'))) {
+  if (await fileExists(projectRoot, 'pnpm-workspace.yaml')) {
     indicators.push('pnpm-workspace');
   }
   // npm/yarn workspaces
-  if (existsSync(resolve(projectRoot, 'package.json'))) {
+  if (await fileExists(projectRoot, 'package.json')) {
     try {
-      const pkg = JSON.parse(readFileSync(resolve(projectRoot, 'package.json'), 'utf-8'));
+      const pkg = JSON.parse(await readFile(resolve(projectRoot, 'package.json'), 'utf-8'));
       if (pkg.workspaces) indicators.push('npm-workspaces');
     } catch {
       /* ignore */
     }
   }
   // Nx
-  if (existsSync(resolve(projectRoot, 'nx.json'))) {
+  if (await fileExists(projectRoot, 'nx.json')) {
     indicators.push('nx');
   }
   // Turbo
-  if (existsSync(resolve(projectRoot, 'turbo.json'))) {
+  if (await fileExists(projectRoot, 'turbo.json')) {
     indicators.push('turborepo');
   }
   // Lerna
-  if (existsSync(resolve(projectRoot, 'lerna.json'))) {
+  if (await fileExists(projectRoot, 'lerna.json')) {
     indicators.push('lerna');
   }
   // Cargo workspace
-  if (existsSync(resolve(projectRoot, 'Cargo.toml'))) {
+  if (await fileExists(projectRoot, 'Cargo.toml')) {
     try {
-      const cargo = readFileSync(resolve(projectRoot, 'Cargo.toml'), 'utf-8');
+      const cargo = await readFile(resolve(projectRoot, 'Cargo.toml'), 'utf-8');
       if (cargo.includes('[workspace]')) indicators.push('cargo-workspace');
     } catch {
       /* ignore */
@@ -469,10 +534,10 @@ function detectMonorepo(projectRoot) {
  * Reads package.json and returns a Set of all dependency names.
  * Merges dependencies, devDependencies, peerDependencies.
  */
-function getNodeDeps(projectRoot) {
+async function getNodeDeps(projectRoot) {
   const deps = new Set();
   try {
-    const pkg = JSON.parse(readFileSync(resolve(projectRoot, 'package.json'), 'utf-8'));
+    const pkg = JSON.parse(await readFile(resolve(projectRoot, 'package.json'), 'utf-8'));
     for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
       if (pkg[section]) {
         for (const dep of Object.keys(pkg[section])) deps.add(dep);
@@ -487,38 +552,44 @@ function getNodeDeps(projectRoot) {
 /**
  * Reads all .csproj files (top 3 levels) and returns concatenated content for ref matching.
  */
-function getCsprojContent(projectRoot) {
+async function getCsprojContent(projectRoot) {
   let content = '';
-  function walk(dir, depth) {
+  async function walk(dir, depth) {
     if (depth > 3) return;
     try {
-      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const entries = await readdir(dir, { withFileTypes: true });
+      const tasks = [];
+      for (const entry of entries) {
         if (entry.name.startsWith('.') || SKIP_DIRS.has(entry.name)) continue;
         const full = join(dir, entry.name);
         if (entry.isDirectory()) {
-          walk(full, depth + 1);
+          tasks.push(walk(full, depth + 1));
         } else if (entry.name.endsWith('.csproj')) {
-          try {
-            content += readFileSync(full, 'utf-8') + '\n';
-          } catch {
-            /* skip */
-          }
+          tasks.push((async () => {
+            try {
+              const fileContent = await readFile(full, 'utf-8');
+              content += fileContent + '\n';
+            } catch {
+              /* skip */
+            }
+          })());
         }
       }
+      await Promise.all(tasks);
     } catch {
       /* permission errors */
     }
   }
-  walk(projectRoot, 0);
+  await walk(projectRoot, 0);
   return content;
 }
 
 /**
  * Reads Cargo.toml and returns its content for dependency matching.
  */
-function getCargoContent(projectRoot) {
+async function getCargoContent(projectRoot) {
   try {
-    return readFileSync(resolve(projectRoot, 'Cargo.toml'), 'utf-8');
+    return await readFile(resolve(projectRoot, 'Cargo.toml'), 'utf-8');
   } catch {
     return '';
   }
@@ -527,9 +598,9 @@ function getCargoContent(projectRoot) {
 /**
  * Reads Gemfile and returns its content for gem matching.
  */
-function getGemfileContent(projectRoot) {
+async function getGemfileContent(projectRoot) {
   try {
-    return readFileSync(resolve(projectRoot, 'Gemfile'), 'utf-8');
+    return await readFile(resolve(projectRoot, 'Gemfile'), 'utf-8');
   } catch {
     return '';
   }
@@ -538,9 +609,9 @@ function getGemfileContent(projectRoot) {
 /**
  * Reads pom.xml and returns its content for dependency matching.
  */
-function getPomContent(projectRoot) {
+async function getPomContent(projectRoot) {
   try {
-    return readFileSync(resolve(projectRoot, 'pom.xml'), 'utf-8');
+    return await readFile(resolve(projectRoot, 'pom.xml'), 'utf-8');
   } catch {
     return '';
   }
@@ -549,11 +620,11 @@ function getPomContent(projectRoot) {
 /**
  * Reads pyproject.toml/requirements.txt and returns a Set of Python dependency names.
  */
-function getPythonDeps(projectRoot) {
+async function getPythonDeps(projectRoot) {
   const deps = new Set();
   // pyproject.toml — section-aware parsing to avoid false positives
   try {
-    const content = readFileSync(resolve(projectRoot, 'pyproject.toml'), 'utf-8');
+    const content = await readFile(resolve(projectRoot, 'pyproject.toml'), 'utf-8');
     const lines = content.split(/\r?\n/);
     let inPoetryDeps = false;
     let inProjectSection = false;
@@ -619,7 +690,7 @@ function getPythonDeps(projectRoot) {
   }
   // requirements.txt
   try {
-    const content = readFileSync(resolve(projectRoot, 'requirements.txt'), 'utf-8');
+    const content = await readFile(resolve(projectRoot, 'requirements.txt'), 'utf-8');
     for (const line of content.split('\n')) {
       const pkg = line
         .trim()
@@ -636,12 +707,16 @@ function getPythonDeps(projectRoot) {
 /**
  * Detects frameworks from a detector list using cached dependency data.
  */
-function detectFromList(
+async function detectFromList(
   detectors,
   { nodeDeps, csprojContent, cargoContent, gemfileContent, pomContent, pythonDeps, projectRoot }
 ) {
   const found = [];
-  for (const d of detectors) {
+
+  // Parallelize detector checks where possible, but for simplicity and because many checks are in-memory (deps check),
+  // we can keep the loop. However, file existence checks (configs, markers) should be async.
+
+  const tasks = detectors.map(async (d) => {
     let matched = false;
     // Check Node.js deps
     if (d.deps?.length && nodeDeps.size > 0) {
@@ -649,11 +724,14 @@ function detectFromList(
     }
     // Check config files
     if (!matched && d.configs?.length) {
-      if (d.configs.some((c) => existsSync(resolve(projectRoot, c)))) matched = true;
+        // Run checks in parallel
+        const results = await Promise.all(d.configs.map(c => fileExists(projectRoot, c)));
+        if (results.some(Boolean)) matched = true;
     }
     // Check markers (plain files)
     if (!matched && d.markers?.length) {
-      if (d.markers.some((m) => existsSync(resolve(projectRoot, m)))) matched = true;
+        const results = await Promise.all(d.markers.map(m => fileExists(projectRoot, m)));
+        if (results.some(Boolean)) matched = true;
     }
     // Check .csproj references
     if (!matched && d.csprojRefs?.length && csprojContent) {
@@ -677,11 +755,15 @@ function detectFromList(
     }
     // Check file extensions (e.g. .scss files)
     if (!matched && d.fileExt) {
-      if (countFilesByExt(projectRoot, [d.fileExt], 2, 5) > 0) matched = true;
+      if ((await countFilesByExt(projectRoot, [d.fileExt], 2, 5)) > 0) matched = true;
     }
-    if (matched) found.push({ name: d.name, label: d.label });
-  }
-  return found;
+
+    if (matched) return { name: d.name, label: d.label };
+    return null;
+  });
+
+  const results = await Promise.all(tasks);
+  return results.filter(Boolean);
 }
 
 // ---------------------------------------------------------------------------
@@ -717,34 +799,48 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
 
   // --- Repository info ---
   report.repository.name = basename(projectRoot);
-  if (existsSync(resolve(projectRoot, '.git'))) {
+  if (await fileExists(projectRoot, '.git')) {
     report.repository.isGit = true;
   }
-  if (existsSync(resolve(projectRoot, '.agentkit-repo'))) {
+  if (await fileExists(projectRoot, '.agentkit-repo')) {
     try {
-      report.repository.agentkitOverlay = readFileSync(
+      report.repository.agentkitOverlay = (await readFile(
         resolve(projectRoot, '.agentkit-repo'),
         'utf-8'
-      ).trim();
+      )).trim();
     } catch {
       /* ignore read errors for .agentkit-repo */
     }
   }
 
   // --- Tech stack detection ---
-  for (const detector of STACK_DETECTORS) {
-    const markerFound = detector.markers.some((m) => fileExists(projectRoot, m));
-    if (markerFound) {
-      const fileCount = countFilesByExt(projectRoot, detector.filePatterns);
-      const configsFound = detector.configFiles.filter((c) => existsSync(resolve(projectRoot, c)));
-      report.techStacks.push({
+  // Run stack detectors in parallel
+  const stackTasks = STACK_DETECTORS.map(async (detector) => {
+    const markersFound = await Promise.all(detector.markers.map(m => fileExists(projectRoot, m)));
+    if (markersFound.some(Boolean)) {
+      const fileCount = await countFilesByExt(projectRoot, detector.filePatterns);
+      const configsFoundStatus = await Promise.all(detector.configFiles.map(async c => ({ c, exists: await existsSync(resolve(projectRoot, c)) }))); // keeping existsSync for simple files check or should I change?
+      // Oops, I should use the async fileExists or just access.
+      // Let's use fileExists for consistency, although existsSync might be faster for single file if we don't care about blocking.
+      // But let's be fully async.
+
+      const configsFound = [];
+      for(const c of detector.configFiles) {
+          if (await fileExists(projectRoot, c)) configsFound.push(c);
+      }
+
+      return {
         name: detector.name,
         label: detector.label,
         fileCount,
         configFiles: configsFound,
-      });
+      };
     }
-  }
+    return null;
+  });
+
+  const stackResults = await Promise.all(stackTasks);
+  report.techStacks = stackResults.filter(Boolean);
 
   // --- Determine primary stack ---
   if (report.techStacks.length > 0) {
@@ -753,12 +849,23 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   }
 
   // --- Cache dependency data for framework detection ---
-  const nodeDeps = getNodeDeps(projectRoot);
-  const csprojContent = getCsprojContent(projectRoot);
-  const cargoContent = getCargoContent(projectRoot);
-  const gemfileContent = getGemfileContent(projectRoot);
-  const pomContent = getPomContent(projectRoot);
-  const pythonDeps = getPythonDeps(projectRoot);
+  // Parallelize reading of deps
+  const [
+      nodeDeps,
+      csprojContent,
+      cargoContent,
+      gemfileContent,
+      pomContent,
+      pythonDeps
+  ] = await Promise.all([
+      getNodeDeps(projectRoot),
+      getCsprojContent(projectRoot),
+      getCargoContent(projectRoot),
+      getGemfileContent(projectRoot),
+      getPomContent(projectRoot),
+      getPythonDeps(projectRoot)
+  ]);
+
   const depContext = {
     nodeDeps,
     csprojContent,
@@ -770,24 +877,30 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   };
 
   // --- Framework detection (§11a) ---
-  for (const [category, detectors] of Object.entries(FRAMEWORK_DETECTORS)) {
-    const found = detectFromList(detectors, depContext);
-    if (found.length > 0) {
-      report.frameworks[category] = found.map((f) => f.name);
-    }
-  }
+  const frameworkTasks = Object.entries(FRAMEWORK_DETECTORS).map(async ([category, detectors]) => {
+      const found = await detectFromList(detectors, depContext);
+      if (found.length > 0) {
+          return { category, names: found.map(f => f.name) };
+      }
+      return null;
+  });
+
+  const frameworkResults = await Promise.all(frameworkTasks);
+  frameworkResults.filter(Boolean).forEach(res => {
+      report.frameworks[res.category] = res.names;
+  });
 
   // --- Testing tool detection (§11b) ---
-  const testingFound = detectFromList(TESTING_DETECTORS, depContext);
+  const testingFound = await detectFromList(TESTING_DETECTORS, depContext);
   report.testing = testingFound.map((t) => t.name);
 
   // --- Documentation artifact detection (§11c) ---
-  for (const detector of DOC_ARTIFACT_DETECTORS) {
+  const docTasks = DOC_ARTIFACT_DETECTORS.map(async (detector) => {
     let foundPath = null;
     // Check directories
     if (detector.dirs) {
       for (const dir of detector.dirs) {
-        if (existsSync(resolve(projectRoot, dir))) {
+        if (await fileExists(projectRoot, dir)) {
           foundPath = dir;
           break;
         }
@@ -796,80 +909,88 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
     // Check files
     if (!foundPath && detector.files) {
       for (const file of detector.files) {
-        if (existsSync(resolve(projectRoot, file))) {
+        if (await fileExists(projectRoot, file)) {
           foundPath = file;
           break;
         }
       }
     }
     if (foundPath) {
-      report.documentation.push({ name: detector.name, label: detector.label, path: foundPath });
+      return { name: detector.name, label: detector.label, path: foundPath };
     }
-  }
+    return null;
+  });
+
+  const docResults = await Promise.all(docTasks);
+  report.documentation = docResults.filter(Boolean);
 
   // --- Design system detection (§11d) ---
-  for (const detector of DESIGN_SYSTEM_DETECTORS) {
+  const designTasks = DESIGN_SYSTEM_DETECTORS.map(async (detector) => {
     let found = false;
     if (detector.dirs) {
-      for (const dir of detector.dirs) {
-        if (existsSync(resolve(projectRoot, dir))) {
-          found = true;
-          break;
-        }
-      }
+        const results = await Promise.all(detector.dirs.map(dir => fileExists(projectRoot, dir)));
+        if (results.some(Boolean)) found = true;
     }
     if (!found && detector.files) {
-      for (const file of detector.files) {
-        if (existsSync(resolve(projectRoot, file))) {
-          found = true;
-          break;
-        }
-      }
+         const results = await Promise.all(detector.files.map(file => fileExists(projectRoot, file)));
+         if (results.some(Boolean)) found = true;
     }
     if (found) {
-      report.designSystem.push(detector.name);
+      return detector.name;
     }
-  }
+    return null;
+  });
+
+  const designResults = await Promise.all(designTasks);
+  report.designSystem = designResults.filter(Boolean);
 
   // --- Cross-cutting concern detection (§11f) ---
-  for (const [concern, detectors] of Object.entries(CROSSCUTTING_DETECTORS)) {
-    const found = detectFromList(detectors, depContext);
-    if (found.length > 0) {
-      report.crosscutting[concern] = found.map((f) => f.name);
-    }
-  }
+  const ccTasks = Object.entries(CROSSCUTTING_DETECTORS).map(async ([concern, detectors]) => {
+      const found = await detectFromList(detectors, depContext);
+      if (found.length > 0) {
+          return { concern, names: found.map(f => f.name) };
+      }
+      return null;
+  });
+
+  const ccResults = await Promise.all(ccTasks);
+  ccResults.filter(Boolean).forEach(res => {
+      report.crosscutting[res.concern] = res.names;
+  });
 
   // --- Environment config detection ---
-  if (existsSync(resolve(projectRoot, '.env.example'))) {
+  if (await fileExists(projectRoot, '.env.example')) {
     report.crosscutting.envConfig = 'env-vars';
-  } else if (existsSync(resolve(projectRoot, 'appsettings.json'))) {
+  } else if (await fileExists(projectRoot, 'appsettings.json')) {
     report.crosscutting.envConfig = 'config-files';
   }
 
   // --- Infrastructure detection ---
-  for (const detector of INFRA_DETECTORS) {
-    const found = detector.markers.some((m) => fileExists(projectRoot, m));
-    if (found) {
-      report.infrastructure.push(detector.name);
-    }
-  }
+  const infraTasks = INFRA_DETECTORS.map(async (detector) => {
+      const results = await Promise.all(detector.markers.map(m => fileExists(projectRoot, m)));
+      if (results.some(Boolean)) return detector.name;
+      return null;
+  });
+  const infraResults = await Promise.all(infraTasks);
+  report.infrastructure = infraResults.filter(Boolean);
 
   // --- CI/CD detection ---
-  for (const detector of CI_DETECTORS) {
-    const found = detector.markers.some((m) => fileExists(projectRoot, m));
-    if (found) {
-      report.cicd.push(detector.name);
-    }
-  }
+  const cicdTasks = CI_DETECTORS.map(async (detector) => {
+      const results = await Promise.all(detector.markers.map(m => fileExists(projectRoot, m)));
+      if (results.some(Boolean)) return detector.name;
+      return null;
+  });
+  const cicdResults = await Promise.all(cicdTasks);
+  report.cicd = cicdResults.filter(Boolean);
 
   // --- Monorepo detection ---
-  const monorepoTools = detectMonorepo(projectRoot);
+  const monorepoTools = await detectMonorepo(projectRoot);
   if (monorepoTools.length > 0) {
     report.monorepo = { detected: true, tools: monorepoTools };
   }
 
   // --- Project structure ---
-  report.structure.topLevelDirs = getTopLevelDirs(projectRoot);
+  report.structure.topLevelDirs = await getTopLevelDirs(projectRoot);
   for (const stack of report.techStacks) {
     report.structure.estimatedFileCount[stack.name] = stack.fileCount;
   }
