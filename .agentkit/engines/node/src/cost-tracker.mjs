@@ -9,7 +9,7 @@
  */
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, renameSync } from 'fs';
 import { resolve, basename } from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { formatTimestamp } from './runner.mjs';
 
 // ---------------------------------------------------------------------------
@@ -33,6 +33,21 @@ function parsePeriodDays(period) {
   }
   const days = parseInt(match[1], 10);
   return days > 0 ? days : 7;
+}
+
+/**
+ * Run a git command safely using execFileSync (avoids shell injection).
+ * @param {string[]} args - Git arguments
+ * @param {string} cwd - Working directory
+ * @returns {string} - Command output (stdout)
+ * @throws {Error} if command fails
+ */
+function runGitCommand(args, cwd) {
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -85,14 +100,10 @@ export function initSession({ agentkitRoot, projectRoot }) {
   let branch = 'unknown';
   let user = 'unknown';
   try {
-    branch = execSync('git rev-parse --abbrev-ref HEAD', {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim();
+    branch = runGitCommand(['rev-parse', '--abbrev-ref', 'HEAD'], projectRoot).trim();
   } catch { /* git not available — using default branch */ }
   try {
-    user = execSync('git config user.email', {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim() || 'unknown';
+    user = runGitCommand(['config', 'user.email'], projectRoot).trim() || 'unknown';
   } catch { /* git not available — using default user */ }
 
   let repoName = basename(projectRoot);
@@ -160,9 +171,7 @@ export function endSession({ agentkitRoot, projectRoot, sessionId }) {
   // Count files modified via git
   let filesModified = 0;
   try {
-    const result = execSync('git diff --name-only HEAD', {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const result = runGitCommand(['diff', '--name-only', 'HEAD'], projectRoot);
     filesModified = result.trim().split('\n').filter(Boolean).length;
   } catch { /* git not available — filesModified stays 0 */ }
 

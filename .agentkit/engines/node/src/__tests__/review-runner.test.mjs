@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { runReview } from '../review-runner.mjs';
 import * as runner from '../runner.mjs';
 import * as orchestrator from '../orchestrator.mjs';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, rmSync, existsSync, symlinkSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -202,6 +202,33 @@ describe('review-runner', () => {
           flags: { file: '../../etc/passwd' },
         })
       ).rejects.toThrow('must be within the project root');
+    });
+
+    it('rejects symlinks traversing outside project root', async () => {
+      setupTestRepo();
+      const secretFile = resolve(TEST_ROOT, '..', 'secret.txt');
+      // Create file outside project root
+      writeFileSync(secretFile, 'secret-data', 'utf-8');
+
+      try {
+        // Create symlink inside project root pointing outside
+        const symlinkPath = resolve(TEST_ROOT, 'symlink.txt');
+        if (existsSync(symlinkPath)) rmSync(symlinkPath);
+        symlinkSync(secretFile, symlinkPath);
+
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+
+        await expect(
+          runReview({
+            agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+            projectRoot: TEST_ROOT,
+            flags: { file: 'symlink.txt' },
+          })
+        ).rejects.toThrow('File must be within the project root (symlinks traversing outside are not allowed)');
+      } finally {
+        // Clean up the external file
+        if (existsSync(secretFile)) rmSync(secretFile);
+      }
     });
   });
 
