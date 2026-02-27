@@ -102,10 +102,6 @@ describe('runDoctor', () => {
 
     const result = await runDoctor({ agentkitRoot: mockAgentkitRoot, projectRoot: mockProjectRoot });
 
-    // loadOverlayRenderTargets returns { targets: [], error: null } when file missing?
-    // Wait, code says: if (!existsSync) return { targets: [], error: null };
-    // Then checks targets.length === 0 -> warning.
-
     expect(result.findings).toEqual(
         expect.arrayContaining([
              expect.objectContaining({ severity: 'warning', message: expect.stringContaining('No renderTargets defined') })
@@ -166,11 +162,9 @@ describe('runDoctor', () => {
     });
 
     vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
-      if (typeof p === 'string') {
-          if (p.includes('templates/claude')) return true;
-          if (p.includes('templates/cursor')) return false; // Missing
-          return true; // default
-      }
+      const pStr = String(p);
+      // More robust check: check for template directory in path
+      if (pStr.includes('templates/cursor') || pStr.includes('templates\\cursor')) return false;
       return true;
     });
 
