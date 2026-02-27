@@ -63,6 +63,8 @@ function validate(value, schema, path = '') {
     }
   }
 
+  // Empty string is treated as "unset" for optional enum fields and intentionally
+  // skips enum validation. Required/empty semantics are enforced separately via `schema.required`.
   if (schema.enum && value !== '' && !schema.enum.includes(value)) {
     errors.push(`${path}: must be one of [${schema.enum.join(', ')}], got "${value}"`);
   }
