@@ -15,9 +15,21 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'fs';
+import {
+  chmod,
+  cp,
+  mkdir,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  unlink,
+  writeFile,
+} from 'fs/promises';
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
+import { PROJECT_MAPPING, get, transform, check } from './sync.refactor.mjs';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -31,6 +43,16 @@ function readYaml(filePath) {
 function readText(filePath) {
   if (!existsSync(filePath)) return null;
   return readFileSync(filePath, 'utf-8');
+}
+
+async function runConcurrent(items, fn, concurrency = 50) {
+  const chunks = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    chunks.push(items.slice(i, i + concurrency));
+  }
+  for (const chunk of chunks) {
+    await Promise.all(chunk.map(fn));
+  }
 }
 
 const RAW_TEMPLATE_VARS = new Set(['commandFlags']);
@@ -167,49 +189,26 @@ function evalTruthy(value) {
 
 /**
  * Flattens a project.yaml object into a flat key→value map suitable for template rendering.
- * Nested keys become camelCase: project.stack.languages → stackLanguages = "TypeScript, C#"
- * Boolean fields get has* prefixes: crosscutting.logging.correlationId → hasCorrelationId
+ * Uses a declarative mapping configuration for cleaner code.
  */
 function flattenProjectYaml(project, docsSpec = null) {
   if (!project || typeof project !== 'object') return {};
   const vars = {};
 
-  // Top-level scalars
-  if (project.name) vars.projectName = project.name;
-  if (project.description) vars.projectDescription = project.description;
-  if (project.phase) vars.projectPhase = project.phase;
-
-  // Stack
-  const stack = project.stack || {};
-  if (Array.isArray(stack.languages)) vars.stackLanguages = stack.languages.join(', ');
-  if (stack.frameworks) {
-    const fw = stack.frameworks;
-    if (Array.isArray(fw.frontend)) vars.stackFrontendFrameworks = fw.frontend.join(', ');
-    if (Array.isArray(fw.backend)) vars.stackBackendFrameworks = fw.backend.join(', ');
-    if (Array.isArray(fw.css)) vars.stackCssFrameworks = fw.css.join(', ');
+  // Apply declarative mappings
+  for (const mapping of PROJECT_MAPPING) {
+    const value = get(project, mapping.src);
+    if (check(value, mapping.check)) {
+      const transformed = transform(value, mapping.type);
+      if (transformed !== undefined) {
+        vars[mapping.dest] = transformed;
+      }
+    }
   }
-  if (stack.orm) vars.stackOrm = String(stack.orm);
-  if (Array.isArray(stack.database)) vars.stackDatabase = stack.database.join(', ');
-  else if (stack.database) vars.stackDatabase = String(stack.database);
-  if (stack.search) vars.stackSearch = String(stack.search);
-  if (Array.isArray(stack.messaging)) vars.stackMessaging = stack.messaging.join(', ');
-  else if (stack.messaging) vars.stackMessaging = String(stack.messaging);
 
-  // Architecture
-  const arch = project.architecture || {};
-  if (arch.pattern) vars.architecturePattern = arch.pattern;
-  if (arch.apiStyle) vars.architectureApiStyle = arch.apiStyle;
-  vars.monorepo = !!arch.monorepo;
-  vars.hasMonorepo = !!arch.monorepo;
-  if (arch.monorepoTool) vars.monorepoTool = arch.monorepoTool;
+  // --- Post-processing / Complex derivations ---
 
-  // Explicit implementation patterns
-  const patterns = project.patterns || {};
-  vars.hasPatternRepository = !!patterns.repository;
-  vars.hasPatternCqrs = !!patterns.cqrs;
-  vars.hasPatternEventSourcing = !!patterns.eventSourcing;
-  vars.hasPatternMediator = !!patterns.mediator;
-  vars.hasPatternUnitOfWork = !!patterns.unitOfWork;
+  // hasAnyPattern
   vars.hasAnyPattern =
     vars.hasPatternRepository ||
     vars.hasPatternCqrs ||
@@ -217,52 +216,14 @@ function flattenProjectYaml(project, docsSpec = null) {
     vars.hasPatternMediator ||
     vars.hasPatternUnitOfWork;
 
-  // Documentation
-  const docs = project.documentation || {};
-  vars.hasPrd = !!docs.hasPrd;
-  if (docs.prdPath) vars.prdPath = docs.prdPath;
+  // docsSpec overlay for PRD
   const prdSpec = docsSpec?.specialDirectories?.find((d) => d.id === 'prd');
   if (prdSpec) {
     vars.hasPrd = true;
     if (!vars.prdPath) vars.prdPath = prdSpec.path;
   }
-  vars.hasAdr = !!docs.hasAdr;
-  if (docs.adrPath) vars.adrPath = docs.adrPath;
-  vars.hasApiSpec = !!docs.hasApiSpec;
-  if (docs.apiSpecPath) vars.apiSpecPath = docs.apiSpecPath;
-  vars.hasTechnicalSpec = !!docs.hasTechnicalSpec;
-  if (docs.technicalSpecPath) vars.technicalSpecPath = docs.technicalSpecPath;
-  vars.hasDesignSystem = !!docs.hasDesignSystem;
-  if (docs.designSystemPath) vars.designSystemPath = docs.designSystemPath;
-  vars.hasStorybook = !!docs.storybook;
-  if (docs.designTokensPath) vars.designTokensPath = docs.designTokensPath;
 
-  // Deployment
-  const deploy = project.deployment || {};
-  if (deploy.cloudProvider) vars.cloudProvider = deploy.cloudProvider;
-  vars.containerized = !!deploy.containerized;
-  vars.hasContainerized = !!deploy.containerized;
-  if (Array.isArray(deploy.environments)) vars.environments = deploy.environments.join(', ');
-  if (deploy.iacTool) vars.iacTool = deploy.iacTool;
-
-  // Infrastructure
-  const infra = project.infrastructure || {};
-  if (infra.namingConvention) vars.infraNamingConvention = infra.namingConvention;
-  if (infra.defaultRegion) vars.infraDefaultRegion = infra.defaultRegion;
-  if (infra.org) vars.infraOrg = infra.org;
-  if (Array.isArray(infra.iacToolchain)) vars.infraIacToolchain = infra.iacToolchain.join(', ');
-  if (infra.stateBackend && infra.stateBackend !== 'none') {
-    vars.infraStateBackend = infra.stateBackend;
-    vars.hasStateBackend = true;
-  }
-  if (infra.modulesRepo) vars.infraModulesRepo = infra.modulesRepo;
-  if (infra.lockProvider && infra.lockProvider !== 'none')
-    vars.infraLockProvider = infra.lockProvider;
-  const tagging = infra.tagging || {};
-  if (Array.isArray(tagging.mandatory) && tagging.mandatory.length > 0) {
-    vars.infraMandatoryTags = tagging.mandatory.join(', ');
-    vars.hasInfraTags = true;
-  }
+  // hasAnyInfraConfig
   vars.hasAnyInfraConfig =
     !!vars.infraNamingConvention ||
     !!vars.infraDefaultRegion ||
@@ -270,64 +231,22 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.infraIacToolchain ||
     !!vars.infraStateBackend ||
     !!vars.infraMandatoryTags;
-  if (Array.isArray(tagging.optional)) vars.infraOptionalTags = tagging.optional.join(', ');
 
-  // Observability
-  const obs = project.observability || {};
-  const mon = obs.monitoring || {};
-  if (mon.provider && mon.provider !== 'none') {
-    vars.monitoringProvider = mon.provider;
-    vars.hasMonitoring = true;
-  }
-  vars.hasMonitoringDashboards = !!mon.dashboards;
-  const alerting = obs.alerting || {};
-  if (alerting.provider && alerting.provider !== 'none') {
-    vars.alertingProvider = alerting.provider;
-    vars.hasAlerting = true;
-  }
-  if (Array.isArray(alerting.channels)) vars.alertingChannels = alerting.channels.join(', ');
-  const tracing = obs.tracing || {};
-  if (tracing.provider && tracing.provider !== 'none') {
-    vars.tracingProvider = tracing.provider;
-    vars.hasTracing = true;
-  }
-  if (tracing.samplingRate !== undefined && tracing.samplingRate !== null) {
-    vars.tracingSamplingRate = String(tracing.samplingRate);
-  }
-  const obsLogging = obs.logging || {};
-  vars.hasCentralisedLogging = !!obsLogging.centralised;
-  if (obsLogging.retentionDays !== undefined && obsLogging.retentionDays !== null) {
-    vars.logRetentionDays = String(obsLogging.retentionDays);
-  }
+  // hasAnyMonitoring
   vars.hasAnyMonitoring =
     !!vars.monitoringProvider ||
     !!vars.alertingProvider ||
     !!vars.tracingProvider ||
     !!vars.hasCentralisedLogging;
 
-  // Compliance
-  const comp = project.compliance || {};
-  if (comp.framework && comp.framework !== 'none') {
-    vars.complianceFramework = comp.framework;
-    vars.hasCompliance = true;
-  }
-  const dr = comp.disasterRecovery || {};
-  if (dr.rpoHours !== undefined && dr.rpoHours !== null) vars.drRpoHours = String(dr.rpoHours);
-  if (dr.rtoHours !== undefined && dr.rtoHours !== null) vars.drRtoHours = String(dr.rtoHours);
-  if (dr.backupSchedule && dr.backupSchedule !== 'none') {
-    vars.drBackupSchedule = dr.backupSchedule;
-    vars.drTestSchedule = dr.backupSchedule;
-  }
-  vars.hasGeoRedundancy = !!dr.geoRedundancy;
+  // hasDr
   vars.hasDr =
-    (dr.rpoHours !== undefined && dr.rpoHours !== null) ||
-    (dr.rtoHours !== undefined && dr.rtoHours !== null) ||
-    (dr.backupSchedule && dr.backupSchedule !== 'none') ||
+    !!vars.drRpoHours ||
+    !!vars.drRtoHours ||
+    !!vars.drBackupSchedule ||
     vars.hasGeoRedundancy;
-  const audit = comp.audit || {};
-  vars.hasAudit = !!audit.enabled;
-  vars.hasAppendOnlyAudit = !!audit.appendOnly;
-  if (audit.eventBus && audit.eventBus !== 'none') vars.auditEventBus = audit.eventBus;
+
+  // hasAnyComplianceConfig
   vars.hasAnyComplianceConfig =
     !!vars.complianceFramework ||
     !!vars.drRpoHours ||
@@ -336,122 +255,37 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.drTestSchedule ||
     !!vars.auditEventBus;
 
-  // Process
-  const proc = project.process || {};
-  if (proc.branchStrategy) vars.branchStrategy = proc.branchStrategy;
-  if (proc.commitConvention) vars.commitConvention = proc.commitConvention;
-  if (proc.codeReview) vars.codeReview = proc.codeReview;
-  if (proc.teamSize) vars.teamSize = proc.teamSize;
-
-  // Testing
-  const testing = project.testing || {};
-  if (Array.isArray(testing.unit)) vars.testingUnit = testing.unit.join(', ');
-  if (Array.isArray(testing.integration)) vars.testingIntegration = testing.integration.join(', ');
-  if (Array.isArray(testing.e2e)) vars.testingE2e = testing.e2e.join(', ');
-  if (testing.coverage !== undefined && testing.coverage !== null)
-    vars.testingCoverage = String(testing.coverage);
-
   // Integrations (kept as array for {{#each}})
   if (Array.isArray(project.integrations)) {
     vars.integrations = project.integrations;
     vars.hasIntegrations = project.integrations.length > 0;
   }
 
-  // Cross-cutting concerns
-  const cc = project.crosscutting || {};
-  flattenCrosscutting(cc, vars);
-
   return vars;
 }
 
 /**
  * Flattens the crosscutting section of project.yaml into template vars.
+ * @deprecated - Merged into flattenProjectYaml via declarative mappings.
+ * Kept exported for test compatibility if any tests import it directly.
  */
 function flattenCrosscutting(cc, vars) {
-  // Logging
-  const logging = cc.logging || {};
-  if (logging.framework && logging.framework !== 'none') {
-    vars.loggingFramework = logging.framework;
-    vars.hasLogging = true;
-  }
-  vars.hasStructuredLogging = !!logging.structured;
-  vars.hasCorrelationId = !!logging.correlationId;
-  if (logging.level) vars.loggingLevel = logging.level;
-  if (Array.isArray(logging.sink)) vars.loggingSinks = logging.sink.join(', ');
+  // Delegate to main flatten function by wrapping cc in a project-like structure
+  // This is a backward compatibility shim.
+  const tempProject = { crosscutting: cc };
+  const mapped = flattenProjectYaml(tempProject);
 
-  // Error handling
-  const errors = cc.errorHandling || {};
-  if (errors.strategy && errors.strategy !== 'none') {
-    vars.errorStrategy = errors.strategy;
-    vars.hasErrorHandling = true;
+  // Copy mapped crosscutting vars into the target vars object
+  // Filter out keys that don't belong to crosscutting to avoid noise
+  for (const [key, val] of Object.entries(mapped)) {
+    if (key !== 'hasAnyPattern' &&
+        key !== 'hasAnyInfraConfig' &&
+        key !== 'hasAnyMonitoring' &&
+        key !== 'hasDr' &&
+        key !== 'hasAnyComplianceConfig') {
+      vars[key] = val;
+    }
   }
-  vars.hasGlobalHandler = !!errors.globalHandler;
-  vars.hasCustomExceptions = !!errors.customExceptions;
-
-  // Authentication
-  const auth = cc.authentication || {};
-  if (auth.provider && auth.provider !== 'none') {
-    vars.authProvider = auth.provider;
-    vars.hasAuth = true;
-  }
-  if (auth.strategy) vars.authStrategy = auth.strategy;
-  vars.hasRbac = !!auth.rbac;
-  vars.hasMultiTenant = !!auth.multiTenant;
-
-  // Caching
-  const cache = cc.caching || {};
-  if (cache.provider && cache.provider !== 'none') {
-    vars.cachingProvider = cache.provider;
-    vars.hasCaching = true;
-  }
-  if (Array.isArray(cache.patterns)) vars.cachingPatterns = cache.patterns.join(', ');
-  vars.hasDistributedCache = !!cache.distributedCache;
-
-  // API
-  const api = cc.api || {};
-  if (api.versioning && api.versioning !== 'none') {
-    vars.apiVersioning = api.versioning;
-    vars.hasApiVersioning = true;
-  }
-  if (api.pagination && api.pagination !== 'none') {
-    vars.apiPagination = api.pagination;
-    vars.hasApiPagination = true;
-  }
-  if (api.responseFormat) vars.apiResponseFormat = api.responseFormat;
-  vars.hasRateLimiting = !!api.rateLimiting;
-
-  // Database
-  const db = cc.database || {};
-  if (db.migrations && db.migrations !== 'none') {
-    vars.dbMigrations = db.migrations;
-    vars.hasDbMigrations = true;
-  }
-  vars.hasDbSeeding = !!db.seeding;
-  if (db.transactionStrategy && db.transactionStrategy !== 'none') {
-    vars.dbTransactionStrategy = db.transactionStrategy;
-  }
-  vars.hasConnectionPooling = !!db.connectionPooling;
-
-  // Performance
-  const perf = cc.performance || {};
-  vars.hasLazyLoading = !!perf.lazyLoading;
-  vars.hasImageOptimization = !!perf.imageOptimization;
-  if (perf.bundleBudget) vars.bundleBudget = String(perf.bundleBudget);
-
-  // Feature flags
-  const ff = cc.featureFlags || {};
-  if (ff.provider && ff.provider !== 'none') {
-    vars.featureFlagProvider = ff.provider;
-    vars.hasFeatureFlags = true;
-  }
-
-  // Environments
-  const envs = cc.environments || {};
-  if (Array.isArray(envs.naming)) vars.envNames = envs.naming.join(', ');
-  if (envs.configStrategy && envs.configStrategy !== 'none') {
-    vars.envConfigStrategy = envs.configStrategy;
-  }
-  if (envs.envFilePattern) vars.envFilePattern = envs.envFilePattern;
 }
 
 /**
@@ -510,8 +344,8 @@ function getCommentStyle(ext) {
   }
 }
 
-function ensureDir(dirPath) {
-  mkdirSync(dirPath, { recursive: true });
+async function ensureDir(dirPath) {
+  await mkdir(dirPath, { recursive: true });
 }
 
 // Project-owned files: generated once as scaffolds, then owned by the consuming repo.
@@ -555,16 +389,16 @@ function isScaffoldOnce(relPath) {
   return false;
 }
 
-function writeOutput(filePath, content) {
-  ensureDir(dirname(filePath));
-  writeFileSync(filePath, content, 'utf-8');
+async function writeOutput(filePath, content) {
+  await ensureDir(dirname(filePath));
+  await writeFile(filePath, content, 'utf-8');
 }
 
-function* walkDir(dir) {
+async function* walkDir(dir) {
   if (!existsSync(dir)) return;
   let entries = [];
   try {
-    entries = readdirSync(dir, { withFileTypes: true });
+    entries = await readdir(dir, { withFileTypes: true });
   } catch (err) {
     if (err?.code === 'ENOENT') return;
     throw err;
@@ -682,120 +516,147 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
 
   // 4. Render templates to temp directory
   const tmpDir = resolve(agentkitRoot, '.tmp');
-  rmSync(tmpDir, { recursive: true, force: true });
-  mkdirSync(tmpDir, { recursive: true });
+  await rm(tmpDir, { recursive: true, force: true });
+  await mkdir(tmpDir, { recursive: true });
 
   const templatesDir = resolve(agentkitRoot, 'templates');
 
   // --- Always-on outputs (not gated by renderTargets) ---
-  syncAgentsMd(templatesDir, tmpDir, vars, version, repoName);
-  syncRootDocs(templatesDir, tmpDir, vars, version, repoName);
-  syncGitHub(templatesDir, tmpDir, vars, version, repoName);
-  syncDirectCopy(templatesDir, 'docs', tmpDir, 'docs', vars, version, repoName);
-  syncDirectCopy(templatesDir, 'vscode', tmpDir, '.vscode', vars, version, repoName);
-  syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName);
+  await Promise.all([
+    syncAgentsMd(templatesDir, tmpDir, vars, version, repoName),
+    syncRootDocs(templatesDir, tmpDir, vars, version, repoName),
+    syncGitHub(templatesDir, tmpDir, vars, version, repoName),
+    syncDirectCopy(templatesDir, 'docs', tmpDir, 'docs', vars, version, repoName),
+    syncDirectCopy(templatesDir, 'vscode', tmpDir, '.vscode', vars, version, repoName),
+    syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName)
+  ]);
 
   // --- Gated by renderTargets ---
+  const gatedTasks = [];
+
   if (targets.has('claude')) {
-    syncDirectCopy(templatesDir, 'claude/hooks', tmpDir, '.claude/hooks', vars, version, repoName);
-    syncClaudeSettings(templatesDir, tmpDir, vars, version, mergedPermissions, settingsSpec);
-    syncClaudeCommands(templatesDir, tmpDir, vars, version, repoName, teamsSpec, commandsSpec);
-    syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec);
-    syncDirectCopy(templatesDir, 'claude/rules', tmpDir, '.claude/rules', vars, version, repoName);
-    syncDirectCopy(templatesDir, 'claude/state', tmpDir, '.claude/state', vars, version, repoName);
-    syncClaudeMd(templatesDir, tmpDir, vars, version, repoName);
-    syncClaudeSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
+    gatedTasks.push(
+      syncDirectCopy(templatesDir, 'claude/hooks', tmpDir, '.claude/hooks', vars, version, repoName),
+      syncClaudeSettings(templatesDir, tmpDir, vars, version, mergedPermissions, settingsSpec),
+      syncClaudeCommands(templatesDir, tmpDir, vars, version, repoName, teamsSpec, commandsSpec),
+      syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec),
+      syncDirectCopy(templatesDir, 'claude/rules', tmpDir, '.claude/rules', vars, version, repoName),
+      syncDirectCopy(templatesDir, 'claude/state', tmpDir, '.claude/state', vars, version, repoName),
+      syncClaudeMd(templatesDir, tmpDir, vars, version, repoName),
+      syncClaudeSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec)
+    );
   }
 
   if (targets.has('cursor')) {
-    syncDirectCopy(templatesDir, 'cursor/rules', tmpDir, '.cursor/rules', vars, version, repoName);
-    syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec);
-    syncCursorCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
+    gatedTasks.push(
+      syncDirectCopy(templatesDir, 'cursor/rules', tmpDir, '.cursor/rules', vars, version, repoName),
+      syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec),
+      syncCursorCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec)
+    );
   }
 
   if (targets.has('windsurf')) {
-    syncDirectCopy(
-      templatesDir,
-      'windsurf/rules',
-      tmpDir,
-      '.windsurf/rules',
-      vars,
-      version,
-      repoName
+    gatedTasks.push(
+      syncDirectCopy(
+        templatesDir,
+        'windsurf/rules',
+        tmpDir,
+        '.windsurf/rules',
+        vars,
+        version,
+        repoName
+      ),
+      syncWindsurfCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec),
+      syncDirectCopy(
+        templatesDir,
+        'windsurf/workflows',
+        tmpDir,
+        '.windsurf/workflows',
+        vars,
+        version,
+        repoName
+      ),
+      syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec)
     );
-    syncWindsurfCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
-    syncDirectCopy(
-      templatesDir,
-      'windsurf/workflows',
-      tmpDir,
-      '.windsurf/workflows',
-      vars,
-      version,
-      repoName
-    );
-    syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec);
   }
 
   if (targets.has('ai')) {
-    syncDirectCopy(templatesDir, 'ai', tmpDir, '.ai', vars, version, repoName);
+    gatedTasks.push(
+      syncDirectCopy(templatesDir, 'ai', tmpDir, '.ai', vars, version, repoName)
+    );
   }
 
   if (targets.has('copilot')) {
-    syncCopilot(templatesDir, tmpDir, vars, version, repoName);
-    syncCopilotPrompts(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
-    syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec);
-    syncCopilotChatModes(templatesDir, tmpDir, vars, version, repoName, teamsSpec);
+    gatedTasks.push(
+      syncCopilot(templatesDir, tmpDir, vars, version, repoName),
+      syncCopilotPrompts(templatesDir, tmpDir, vars, version, repoName, commandsSpec),
+      syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec),
+      syncCopilotChatModes(templatesDir, tmpDir, vars, version, repoName, teamsSpec)
+    );
   }
 
   if (targets.has('gemini')) {
-    syncGemini(templatesDir, tmpDir, vars, version, repoName);
+    gatedTasks.push(syncGemini(templatesDir, tmpDir, vars, version, repoName));
   }
 
   if (targets.has('codex')) {
-    syncCodexSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
+    gatedTasks.push(syncCodexSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec));
   }
 
   if (targets.has('warp')) {
-    syncWarp(templatesDir, tmpDir, vars, version, repoName);
+    gatedTasks.push(syncWarp(templatesDir, tmpDir, vars, version, repoName));
   }
 
   if (targets.has('cline')) {
-    syncClineRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec);
+    gatedTasks.push(syncClineRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec));
   }
 
   if (targets.has('roo')) {
-    syncRooRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec);
+    gatedTasks.push(syncRooRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec));
   }
 
   if (targets.has('mcp')) {
-    syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec);
+    gatedTasks.push(syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec));
   }
+
+  await Promise.all(gatedTasks);
 
   // 5. Build file list from temp and compute summary
   const newManifestFiles = {};
   const fileSummary = {}; // category → count
-  for (const srcFile of walkDir(tmpDir)) {
-    if (!existsSync(srcFile)) continue;
+  const allTmpFiles = [];
+
+  for await (const srcFile of walkDir(tmpDir)) {
+    allTmpFiles.push(srcFile);
+  }
+
+  // Process files concurrently
+  await runConcurrent(allTmpFiles, async (srcFile) => {
+    if (!existsSync(srcFile)) return; // Should exist, but safety check
     const relPath = relative(tmpDir, srcFile);
     const manifestKey = relPath.replace(/\\/g, '/');
     let fileContent;
     try {
-      fileContent = readFileSync(srcFile);
+      fileContent = await readFile(srcFile);
     } catch (err) {
-      if (err?.code === 'ENOENT') continue;
+      if (err?.code === 'ENOENT') return;
       throw err;
     }
     const hash = createHash('sha256').update(fileContent).digest('hex').slice(0, 12);
-    newManifestFiles[manifestKey] = { hash };
 
-    // Categorize for summary
-    const cat = categorizeFile(manifestKey);
-    fileSummary[cat] = (fileSummary[cat] || 0) + 1;
+    // JS object assignment is atomic enough for keys
+    newManifestFiles[manifestKey] = { hash };
+  });
+
+  // Re-compute summary sequentially to avoid race condition on counters
+  for (const manifestKey of Object.keys(newManifestFiles)) {
+     const cat = categorizeFile(manifestKey);
+     fileSummary[cat] = (fileSummary[cat] || 0) + 1;
   }
 
   // --- Dry-run: print summary and exit without writing ---
   if (dryRun) {
-    rmSync(tmpDir, { recursive: true, force: true });
+    await rm(tmpDir, { recursive: true, force: true });
     const total = Object.keys(newManifestFiles).length;
     log(`[agentkit:sync] Dry-run: would generate ${total} file(s):`);
     printSyncSummary(fileSummary, targets, { quiet });
@@ -809,7 +670,11 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     let createCount = 0;
     let updateCount = 0;
     let skipCount = 0;
-    for (const srcFile of walkDir(tmpDir)) {
+
+    // Concurrency for diff? Diff output to console might interleave.
+    // We should collect logs and print them or just run sequentially.
+    // Sequential is fine for diff as it's interactive-ish.
+    for (const srcFile of allTmpFiles) {
       if (!existsSync(srcFile)) continue;
       const relPath = relative(tmpDir, srcFile);
       const destFile = resolve(projectRoot, relPath);
@@ -824,7 +689,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       }
       let newContent;
       try {
-        newContent = readFileSync(srcFile, 'utf-8');
+        newContent = await readFile(srcFile, 'utf-8');
       } catch (err) {
         if (err?.code === 'ENOENT') continue;
         throw err;
@@ -833,7 +698,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
         createCount++;
         log(`  create ${normPath}`);
       } else {
-        const oldContent = readFileSync(destFile, 'utf-8');
+        const oldContent = await readFile(destFile, 'utf-8');
         if (oldContent !== newContent) {
           updateCount++;
           log(`  update ${normPath}`);
@@ -851,7 +716,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
         }
       }
     }
-    rmSync(tmpDir, { recursive: true, force: true });
+    await rm(tmpDir, { recursive: true, force: true });
     log(
       `[agentkit:sync] Diff: ${createCount} create, ${updateCount} update, ${skipCount} unchanged/skip`
     );
@@ -863,7 +728,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   let previousManifest = null;
   try {
     if (existsSync(manifestPath)) {
-      previousManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+      previousManifest = JSON.parse(await readFile(manifestPath, 'utf-8'));
     }
   } catch {
     /* ignore corrupt manifest */
@@ -872,11 +737,14 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   // 7. Atomic swap: move temp outputs to project root & build new manifest
   log('[agentkit:sync] Writing outputs...');
   const resolvedRoot = resolve(projectRoot) + sep;
+
+  // Use a shared counter and error list
   let count = 0;
   let skippedScaffold = 0;
   const failedFiles = [];
-  for (const srcFile of walkDir(tmpDir)) {
-    if (!existsSync(srcFile)) continue;
+
+  await runConcurrent(allTmpFiles, async (srcFile) => {
+    if (!existsSync(srcFile)) return;
     const relPath = relative(tmpDir, srcFile);
     const destFile = resolve(projectRoot, relPath);
 
@@ -884,24 +752,32 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot)) {
       console.error(`[agentkit:sync] BLOCKED: path traversal detected — ${relPath}`);
       failedFiles.push({ file: relPath, error: 'path traversal blocked' });
-      continue;
+      return;
     }
 
     // Scaffold-once: skip project-owned files that already exist (unless --overwrite)
     const overwrite = flags?.overwrite || flags?.force;
     if (!overwrite && isScaffoldOnce(relPath) && existsSync(destFile)) {
       skippedScaffold++;
-      continue;
+      return;
     }
 
     try {
-      ensureDir(dirname(destFile));
-      cpSync(srcFile, destFile, { force: true });
+      await ensureDir(dirname(destFile));
+      // Use fs/promises cp, but we want force: true behavior (overwrite).
+      // fs.promises.cp is recursive by default only for directories.
+      // But we are copying files here.
+      // copyFile is better for single files.
+      // But chmod handling? cp handles it if mode is preserved.
+      // Let's use copyFile.
+      // Wait, node 16.7.0+ has cp.
+      // We are on >=22.0.0.
+      await cp(srcFile, destFile, { force: true, recursive: false });
 
       // Make .sh files executable
       if (extname(srcFile) === '.sh') {
         try {
-          chmodSync(destFile, 0o755);
+          await chmod(destFile, 0o755);
         } catch {
           /* ignore on Windows */
         }
@@ -912,10 +788,10 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       failedFiles.push({ file: relPath, error: err.message });
       console.error(`[agentkit:sync] Failed to write: ${relPath} — ${err.message}`);
     }
-  }
+  });
 
   if (failedFiles.length > 0) {
-    rmSync(tmpDir, { recursive: true, force: true });
+    await rm(tmpDir, { recursive: true, force: true });
     console.error(`[agentkit:sync] Error: ${failedFiles.length} file(s) failed to write:`);
     for (const f of failedFiles) {
       console.error(`  - ${f.file}: ${f.error}`);
@@ -926,18 +802,24 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   // 8. Stale file cleanup: delete orphaned files from previous sync (unless --no-clean)
   let cleanedCount = 0;
   if (!noClean && previousManifest?.files) {
+    // Parallelize cleanup?
+    const staleFiles = [];
     for (const prevFile of Object.keys(previousManifest.files)) {
       if (!newManifestFiles[prevFile]) {
-        // File was in previous sync but not in this one — it's orphaned
+        staleFiles.push(prevFile);
+      }
+    }
+
+    await runConcurrent(staleFiles, async (prevFile) => {
         const orphanPath = resolve(projectRoot, prevFile);
         // Path traversal protection: ensure orphan path stays within project root
         if (!orphanPath.startsWith(resolvedRoot) && orphanPath !== resolve(projectRoot)) {
           console.warn(`[agentkit:sync] BLOCKED: path traversal in manifest — ${prevFile}`);
-          continue;
+          return;
         }
         if (existsSync(orphanPath)) {
           try {
-            unlinkSync(orphanPath);
+            await unlink(orphanPath);
             cleanedCount++;
             logVerbose(`[agentkit:sync] Cleaned stale file: ${prevFile}`);
           } catch (err) {
@@ -946,8 +828,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
             );
           }
         }
-      }
-    }
+    });
   }
 
   // 9. Write new manifest
@@ -958,13 +839,13 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     files: newManifestFiles,
   };
   try {
-    writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + '\n', 'utf-8');
+    await writeFile(manifestPath, JSON.stringify(newManifest, null, 2) + '\n', 'utf-8');
   } catch (err) {
     console.warn(`[agentkit:sync] Warning: could not write manifest — ${err.message}`);
   }
 
   // 10. Cleanup temp
-  rmSync(tmpDir, { recursive: true, force: true });
+  await rm(tmpDir, { recursive: true, force: true });
 
   if (skippedScaffold > 0) {
     log(`[agentkit:sync] Skipped ${skippedScaffold} project-owned file(s) (already exist).`);
@@ -996,1062 +877,3 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     }
   }
 }
-
-// ---------------------------------------------------------------------------
-// Sync helpers
-// ---------------------------------------------------------------------------
-
-/** All known render target names. */
-const ALL_RENDER_TARGETS = [
-  'claude',
-  'cursor',
-  'windsurf',
-  'copilot',
-  'gemini',
-  'codex',
-  'warp',
-  'cline',
-  'roo',
-  'ai',
-  'mcp',
-];
-
-/** Tool display names for summary output. */
-const TOOL_LABELS = {
-  claude: 'Claude Code',
-  cursor: 'Cursor',
-  windsurf: 'Windsurf',
-  copilot: 'GitHub Copilot',
-  gemini: 'Gemini',
-  codex: 'Codex',
-  warp: 'Warp',
-  cline: 'Cline',
-  roo: 'Roo Code',
-  ai: 'Continue/AI',
-  mcp: 'MCP',
-  docs: 'Docs',
-  github: 'GitHub',
-  universal: 'Universal',
-  editor: 'Editor configs',
-};
-
-/**
- * Categorizes a generated file path into a tool/category name for summary.
- */
-function categorizeFile(manifestKey) {
-  if (manifestKey === 'AGENTS.md') return 'universal';
-  if (manifestKey === 'CLAUDE.md' || manifestKey.startsWith('.claude/')) return 'claude';
-  if (manifestKey.startsWith('.cursor/')) return 'cursor';
-  if (manifestKey.startsWith('.windsurf/')) return 'windsurf';
-  if (manifestKey.startsWith('.ai/')) return 'ai';
-  if (manifestKey.startsWith('mcp/')) return 'mcp';
-  if (manifestKey === 'GEMINI.md' || manifestKey.startsWith('.gemini/')) return 'gemini';
-  if (manifestKey === 'WARP.md') return 'warp';
-  if (manifestKey.startsWith('.agents/')) return 'codex';
-  if (manifestKey.startsWith('.clinerules/')) return 'cline';
-  if (manifestKey.startsWith('.roo/')) return 'roo';
-  if (
-    manifestKey.startsWith('.github/copilot') ||
-    manifestKey.startsWith('.github/instructions') ||
-    manifestKey.startsWith('.github/prompts') ||
-    manifestKey.startsWith('.github/agents') ||
-    manifestKey.startsWith('.github/chatmodes')
-  )
-    return 'copilot';
-  if (manifestKey.startsWith('.github/')) return 'github';
-  if (manifestKey.startsWith('docs/')) return 'docs';
-  if (
-    manifestKey.startsWith('.vscode/') ||
-    manifestKey === '.editorconfig' ||
-    manifestKey === '.prettierrc' ||
-    manifestKey === '.markdownlint.json'
-  )
-    return 'editor';
-  return 'universal';
-}
-
-/**
- * Prints a grouped post-sync summary.
- */
-function printSyncSummary(fileSummary, targets, opts = {}) {
-  if (opts.quiet) return;
-  const toolEntries = [];
-  const otherEntries = [];
-  for (const [cat, count] of Object.entries(fileSummary)) {
-    const label = TOOL_LABELS[cat] || cat;
-    if (ALL_RENDER_TARGETS.includes(cat)) {
-      toolEntries.push(`  ${label}: ${count} file(s)`);
-    } else {
-      otherEntries.push(`  ${label}: ${count} file(s)`);
-    }
-  }
-  if (toolEntries.length > 0 || otherEntries.length > 0) {
-    const enabledNames = [...targets].map((t) => TOOL_LABELS[t] || t).join(', ');
-    console.log(`[agentkit:sync] Summary for: ${enabledNames}`);
-    for (const line of toolEntries) console.log(line);
-    for (const line of otherEntries) console.log(line);
-  }
-}
-
-/**
- * Resolves the active render targets from overlay settings + CLI flags.
- * - If --only flag is set, use only those targets (comma-separated)
- * - If renderTargets is defined and non-empty in overlay, use those
- * - If renderTargets is missing/empty, default to ALL (backward compat)
- */
-function resolveRenderTargets(overlayTargets, flags) {
-  // --only flag overrides everything
-  if (flags?.only) {
-    const onlyTargets = String(flags.only)
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-    const unknown = onlyTargets.filter((t) => !ALL_RENDER_TARGETS.includes(t));
-    if (unknown.length > 0) {
-      console.warn(
-        `[agentkit:sync] Warning: unknown render target(s): ${unknown.join(', ')}. Valid: ${ALL_RENDER_TARGETS.join(', ')}`
-      );
-    }
-    return new Set(onlyTargets);
-  }
-  // Overlay renderTargets
-  if (Array.isArray(overlayTargets) && overlayTargets.length > 0) {
-    return new Set(overlayTargets);
-  }
-  // Default: generate everything (backward compatibility)
-  return new Set(ALL_RENDER_TARGETS);
-}
-
-function mergePermissions(base, overlay) {
-  const allow = [...new Set([...(base.allow || []), ...(overlay.allow || [])])];
-  const deny = [...new Set([...(base.deny || []), ...(overlay.deny || [])])];
-  return { allow, deny };
-}
-
-function computeProjectCompleteness(project) {
-  if (!project || typeof project !== 'object') {
-    return { percent: 0, present: 0, total: 0, missing: [] };
-  }
-
-  const fields = [
-    'name',
-    'description',
-    'phase',
-    'stack.languages',
-    'stack.database',
-    'architecture.pattern',
-    'deployment.cloudProvider',
-    'deployment.iacTool',
-    'infrastructure.namingConvention',
-    'infrastructure.defaultRegion',
-    'infrastructure.org',
-    'observability.monitoring.provider',
-    'observability.alerting.provider',
-    'observability.tracing.provider',
-    'compliance.framework',
-    'compliance.disasterRecovery.rpoHours',
-    'compliance.disasterRecovery.rtoHours',
-    'compliance.audit.eventBus',
-    'patterns.repository',
-    'patterns.cqrs',
-    'patterns.eventSourcing',
-    'patterns.mediator',
-    'patterns.unitOfWork',
-  ];
-
-  const get = (obj, path) =>
-    path
-      .split('.')
-      .reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
-
-  const missing = [];
-  let present = 0;
-
-  for (const field of fields) {
-    const value = get(project, field);
-    if (
-      value === undefined ||
-      value === null ||
-      value === '' ||
-      (Array.isArray(value) && value.length === 0)
-    ) {
-      missing.push(field);
-    } else {
-      present += 1;
-    }
-  }
-
-  return {
-    percent: Math.round((present / fields.length) * 100),
-    present,
-    total: fields.length,
-    missing,
-  };
-}
-
-function syncDirectCopy(templatesDir, srcSubdir, tmpDir, destSubdir, vars, version, repoName) {
-  const srcDir = resolve(templatesDir, srcSubdir);
-  if (!existsSync(srcDir)) return;
-
-  for (const file of walkDir(srcDir)) {
-    const relPath = relative(srcDir, file);
-    const destPath = resolve(tmpDir, destSubdir, relPath);
-    const ext = extname(file);
-
-    let content = readFileSync(file, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName }, file);
-
-    // Add generated header for non-JSON, non-gitkeep files
-    if (ext !== '.json' && basename(file) !== '.gitkeep') {
-      content = insertHeader(content, ext, version, repoName);
-    }
-
-    writeOutput(destPath, content);
-  }
-}
-
-/**
- * Inserts the GENERATED header into content, respecting shebangs and frontmatter.
- * - .sh/.ps1 files with shebang: header goes after shebang line
- * - .md/.mdc files with YAML frontmatter: header goes after closing ---
- * - Skips if content already contains "GENERATED by AgentKit Forge"
- */
-function insertHeader(content, ext, version, repoName) {
-  if (content.includes('GENERATED by AgentKit Forge')) return content;
-  const header = getGeneratedHeader(version, repoName, ext);
-  if (!header) return content;
-
-  // Shell scripts: insert after shebang line
-  if ((ext === '.sh' || ext === '.ps1') && content.startsWith('#!')) {
-    const firstNewline = content.indexOf('\n');
-    if (firstNewline > -1) {
-      return content.substring(0, firstNewline + 1) + header + content.substring(firstNewline + 1);
-    }
-  }
-
-  // Markdown/mdc with YAML frontmatter: insert after closing ---
-  if ((ext === '.md' || ext === '.mdc') && content.startsWith('---')) {
-    const closingIdx = content.indexOf('\n---', 3);
-    if (closingIdx > -1) {
-      const endOfFrontmatter = content.indexOf('\n', closingIdx + 4);
-      if (endOfFrontmatter > -1) {
-        return (
-          content.substring(0, endOfFrontmatter + 1) +
-          '\n' +
-          header +
-          content.substring(endOfFrontmatter + 1)
-        );
-      }
-      // Frontmatter closing --- is at EOF — append header after it
-      return content + '\n' + header;
-    }
-  }
-
-  return header + content;
-}
-
-function syncClaudeSettings(templatesDir, tmpDir, vars, version, mergedPermissions, settingsSpec) {
-  const templatePath = resolve(templatesDir, 'claude', 'settings.json');
-  if (!existsSync(templatePath)) {
-    console.warn('[agentkit:sync] Warning: claude/settings.json template not found');
-    return;
-  }
-
-  let template = readFileSync(templatePath, 'utf-8');
-  // The settings.json template has placeholder arrays — replace with merged permissions
-  const settings = JSON.parse(renderTemplate(template, vars));
-
-  // Override permissions with merged values
-  if (settings.permissions) {
-    settings.permissions.allow = mergedPermissions.allow;
-    settings.permissions.deny = mergedPermissions.deny;
-  }
-
-  const destPath = resolve(tmpDir, '.claude', 'settings.json');
-  writeOutput(destPath, JSON.stringify(settings, null, 2) + '\n');
-}
-
-function syncClaudeCommands(
-  templatesDir,
-  tmpDir,
-  vars,
-  version,
-  repoName,
-  teamsSpec,
-  commandsSpec
-) {
-  const commandsDir = resolve(templatesDir, 'claude', 'commands');
-  if (!existsSync(commandsDir)) return;
-
-  const commandsByName = new Map();
-  for (const cmd of commandsSpec.commands || []) {
-    if (cmd.name) commandsByName.set(cmd.name, cmd);
-  }
-
-  const files = readdirSync(commandsDir);
-  for (const file of files) {
-    if (file === 'team-TEMPLATE.md') continue;
-    const srcPath = resolve(commandsDir, file);
-    if (statSync(srcPath).isDirectory()) continue;
-
-    const baseName = file.replace(/\.md$/, '');
-    const cmdSpec = commandsByName.get(baseName);
-    const cmdVars = { ...vars };
-    if (cmdSpec) {
-      cmdVars.commandDescription =
-        typeof cmdSpec.description === 'string'
-          ? cmdSpec.description.trim()
-          : cmdSpec.description || '';
-      cmdVars.commandFlags = formatCommandFlags(cmdSpec.flags);
-      cmdVars.commandType = cmdSpec.type || 'utility';
-    }
-
-    let content = readFileSync(srcPath, 'utf-8');
-    content = renderTemplate(content, cmdVars);
-    content = insertHeader(content, extname(file), version, repoName);
-    writeOutput(resolve(tmpDir, '.claude', 'commands', file), content);
-  }
-
-  // Generate team commands from template
-  const teamTemplatePath = resolve(commandsDir, 'team-TEMPLATE.md');
-  if (existsSync(teamTemplatePath) && teamsSpec.teams) {
-    const teamTemplate = readFileSync(teamTemplatePath, 'utf-8');
-
-    for (const team of teamsSpec.teams) {
-      const teamVars = {
-        ...vars,
-        teamId: team.id,
-        teamName: team.name,
-        teamFocus: team.focus,
-        teamScope: Array.isArray(team.scope) ? team.scope.join(', ') : team.scope || '**/*',
-        teamAccepts: Array.isArray(team.accepts) ? team.accepts.join(', ') : '',
-        teamHandoffChain: Array.isArray(team['handoff-chain'])
-          ? team['handoff-chain'].join(', ')
-          : '',
-      };
-
-      let content = renderTemplate(teamTemplate, teamVars);
-      content = insertHeader(content, '.md', version, repoName);
-      const fileName = `team-${team.id}.md`;
-      writeOutput(resolve(tmpDir, '.claude', 'commands', fileName), content);
-    }
-  }
-}
-
-function normalizeGlobStem(glob) {
-  if (typeof glob !== 'string' || !glob.trim()) return '';
-  const raw = glob.trim().replace(/\\/g, '/');
-  if (raw === '*' || raw === '**' || raw === '**/*' || raw === '*/**') return '__WILDCARD_ALL__';
-  return raw
-    .replace(/^\.\//, '')
-    .replace(/\*\*\/\*/g, '')
-    .replace(/\*\*/g, '')
-    .replace(/\*/g, '')
-    .replace(/\.(ts|tsx|js|jsx|mjs|mts|cs|py|rs|tf|md|json|yaml|yml)$/i, '')
-    .replace(/^\/+|\/+$/g, '');
-}
-
-function hasGlobOverlap(a, b) {
-  const aa = normalizeGlobStem(a);
-  const bb = normalizeGlobStem(b);
-  if (!aa || !bb) return false;
-  if (aa === '__WILDCARD_ALL__' || bb === '__WILDCARD_ALL__') return true;
-  if (aa === bb) return true;
-  const aSegments = aa.split('/').filter(Boolean);
-  const bSegments = bb.split('/').filter(Boolean);
-  const minLen = Math.min(aSegments.length, bSegments.length);
-  for (let i = 0; i < minLen; i += 1) {
-    if (aSegments[i] !== bSegments[i]) return false;
-  }
-  return true;
-}
-
-function buildAgentDomainRulesMarkdown(agent, rulesSpec) {
-  if (!rulesSpec?.rules || !Array.isArray(agent?.focus)) return '';
-  const matched = [];
-
-  for (const ruleSet of rulesSpec.rules) {
-    if (!Array.isArray(ruleSet['applies-to'])) continue;
-    const overlaps = ruleSet['applies-to'].some((ruleGlob) =>
-      agent.focus.some((focusGlob) => hasGlobOverlap(focusGlob, ruleGlob))
-    );
-    if (!overlaps) continue;
-
-    const conventions = Array.isArray(ruleSet.conventions)
-      ? ruleSet.conventions
-          .map((c) => {
-            const severity = c.severity ? ` [${c.severity}]` : '';
-            const ruleText =
-              typeof c.rule === 'string' ? c.rule.trim() : JSON.stringify(c.rule || null);
-            return `- **${c.id}**${severity}: ${ruleText}`;
-          })
-          .join('\n')
-      : '';
-
-    if (conventions) {
-      matched.push(`### ${ruleSet.domain}\n\n${conventions}`);
-    }
-  }
-
-  return matched.join('\n\n');
-}
-
-function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec) {
-  const agentTemplatePath = resolve(templatesDir, 'claude', 'agents', 'TEMPLATE.md');
-  if (!existsSync(agentTemplatePath) || !agentsSpec.agents) return;
-
-  const agentTemplate = readFileSync(agentTemplatePath, 'utf-8');
-
-  // agents.yaml has nested structure: agents.engineering: [...], agents.design: [...], etc.
-  // Flatten all agents from all categories
-  const allAgents = [];
-  for (const [category, agents] of Object.entries(agentsSpec.agents)) {
-    if (!Array.isArray(agents)) continue;
-    for (const agent of agents) {
-      allAgents.push({ ...agent, category: agent.category || category });
-    }
-  }
-
-  for (const agent of allAgents) {
-    const focusList = Array.isArray(agent.focus)
-      ? agent.focus.map((f) => `- \`${f}\``).join('\n')
-      : agent.focus || '';
-    const responsibilitiesList = Array.isArray(agent.responsibilities)
-      ? agent.responsibilities.map((r) => `- ${r}`).join('\n')
-      : agent.responsibilities || '';
-    const toolsList = Array.isArray(agent['preferred-tools'])
-      ? agent['preferred-tools'].map((t) => `- ${t}`).join('\n')
-      : Array.isArray(agent.tools)
-        ? agent.tools.map((t) => `- ${t}`).join('\n')
-        : '';
-    const domainRules = buildAgentDomainRulesMarkdown(agent, rulesSpec);
-    const conventionsList = Array.isArray(agent.conventions)
-      ? agent.conventions.map((c) => `- ${c}`).join('\n')
-      : '';
-    const antiPatternsList = Array.isArray(agent['anti-patterns'])
-      ? agent['anti-patterns'].map((a) => `- ${a}`).join('\n')
-      : '';
-    const examplesList = Array.isArray(agent.examples)
-      ? agent.examples
-          .map((ex) => {
-            const title = ex?.title || 'Example';
-            const code = ex?.code || '';
-            // Find the longest run of backticks in the code
-            const maxBackticks = (code.match(/`+/g) || []).reduce(
-              (max, match) => Math.max(max, match.length),
-              0
-            );
-            const fence = '`'.repeat(Math.max(maxBackticks + 1, 4));
-            return `### ${title}\n\n${fence}\n${code}\n${fence}`;
-          })
-          .join('\n\n')
-      : '';
-
-    const agentVars = {
-      ...vars,
-      agentId: agent.id,
-      agentCategory: agent.category,
-      agentName: agent.name,
-      agentRole: agent.role || '',
-      agentFocusList: focusList,
-      agentResponsibilitiesList: responsibilitiesList,
-      agentToolsList: toolsList,
-      hasAgentDomainRules: !!domainRules,
-      agentDomainRules: domainRules,
-      hasAgentExamples: !!examplesList,
-      agentExamples: examplesList,
-      hasAgentAntiPatterns: !!antiPatternsList,
-      agentAntiPatterns: antiPatternsList,
-      hasAgentConventions: !!conventionsList,
-      agentConventions: conventionsList,
-    };
-
-    let content = renderTemplate(agentTemplate, agentVars);
-    content = insertHeader(content, '.md', version, repoName);
-    const destPath = resolve(tmpDir, '.claude', 'agents', agent.category, `${agent.id}.md`);
-    writeOutput(destPath, content);
-  }
-}
-
-function syncCopilot(templatesDir, tmpDir, vars, version, repoName) {
-  // Main copilot instructions
-  const mainPath = resolve(templatesDir, 'copilot', 'copilot-instructions.md');
-  if (existsSync(mainPath)) {
-    let content = readFileSync(mainPath, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName });
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.github', 'copilot-instructions.md'), content);
-  }
-
-  // Path-specific instructions
-  const instrDir = resolve(templatesDir, 'copilot', 'instructions');
-  if (existsSync(instrDir)) {
-    syncDirectCopy(
-      templatesDir,
-      'copilot/instructions',
-      tmpDir,
-      '.github/instructions',
-      vars,
-      version,
-      repoName
-    );
-  }
-}
-
-function syncGitHub(templatesDir, tmpDir, vars, version, repoName) {
-  const githubDir = resolve(templatesDir, 'github');
-  if (!existsSync(githubDir)) return;
-
-  // CI workflow
-  const ciPath = resolve(githubDir, 'ai-framework-ci.yml');
-  if (existsSync(ciPath)) {
-    let content = readFileSync(ciPath, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName });
-    content = insertHeader(content, '.yml', version, repoName);
-    writeOutput(resolve(tmpDir, '.github', 'workflows', 'ai-framework-ci.yml'), content);
-  }
-
-  // Issue template
-  const issueDir = resolve(githubDir, 'ISSUE_TEMPLATE');
-  if (existsSync(issueDir)) {
-    syncDirectCopy(
-      templatesDir,
-      'github/ISSUE_TEMPLATE',
-      tmpDir,
-      '.github/ISSUE_TEMPLATE',
-      vars,
-      version,
-      repoName
-    );
-  }
-
-  // PR template
-  const prPath = resolve(githubDir, 'PULL_REQUEST_TEMPLATE.md');
-  if (existsSync(prPath)) {
-    let content = readFileSync(prPath, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName });
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.github', 'PULL_REQUEST_TEMPLATE.md'), content);
-  }
-}
-
-function syncRootDocs(templatesDir, tmpDir, vars, version, repoName) {
-  const rootDir = resolve(templatesDir, 'root');
-  if (!existsSync(rootDir)) return;
-
-  const files = readdirSync(rootDir);
-  for (const file of files) {
-    const srcPath = resolve(rootDir, file);
-    if (statSync(srcPath).isDirectory()) continue;
-
-    let content = readFileSync(srcPath, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName });
-    const ext = extname(file);
-    content = insertHeader(content, ext, version, repoName);
-    writeOutput(resolve(tmpDir, file), content);
-  }
-}
-
-function syncAgentsMd(templatesDir, tmpDir, vars, version, repoName) {
-  const agentsMdPath = resolve(templatesDir, 'root', 'AGENTS.md');
-  if (!existsSync(agentsMdPath)) return;
-
-  let content = readFileSync(agentsMdPath, 'utf-8');
-  content = renderTemplate(content, { ...vars, repoName });
-  // Clean up blank lines left by unresolved conditionals
-  content = content.replace(/(\r?\n){3,}/g, '\n\n');
-  content = insertHeader(content, '.md', version, repoName);
-  writeOutput(resolve(tmpDir, 'AGENTS.md'), content);
-}
-
-function syncClaudeMd(templatesDir, tmpDir, vars, version, repoName) {
-  const claudeMdPath = resolve(templatesDir, 'claude', 'CLAUDE.md');
-  if (!existsSync(claudeMdPath)) return;
-
-  let content = readFileSync(claudeMdPath, 'utf-8');
-  content = renderTemplate(content, { ...vars, repoName });
-  // Clean up blank lines left by unresolved conditionals
-  content = content.replace(/(\r?\n){3,}/g, '\n\n');
-  content = insertHeader(content, '.md', version, repoName);
-  writeOutput(resolve(tmpDir, 'CLAUDE.md'), content);
-}
-
-function syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName) {
-  // .editorconfig, .prettierrc, .markdownlint.json — look in templates/root or templates/ root-level
-  const configs = [
-    { src: 'root/.editorconfig', dest: '.editorconfig' },
-    { src: 'root/.prettierrc', dest: '.prettierrc' },
-    { src: 'root/.markdownlint.json', dest: '.markdownlint.json' },
-  ];
-
-  for (const cfg of configs) {
-    const srcPath = resolve(templatesDir, cfg.src);
-    if (!existsSync(srcPath)) continue;
-
-    let content = readFileSync(srcPath, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName });
-    const ext = extname(cfg.dest);
-
-    // JSON files don't get headers
-    if (ext !== '.json') {
-      const header = getGeneratedHeader(version, repoName, ext);
-      if (header) content = header + content;
-    }
-
-    writeOutput(resolve(tmpDir, cfg.dest), content);
-  }
-}
-
-function syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec) {
-  if (!teamsSpec.teams) return;
-
-  for (const team of teamsSpec.teams) {
-    const scope = Array.isArray(team.scope) ? team.scope.join(', ') : team.scope || '**/*';
-    const globs = Array.isArray(team.scope) ? team.scope.join(', ') : '';
-    let content = [
-      '---',
-      `description: "Team ${team.name} — ${team.focus}"`,
-      `globs: ${globs}`,
-      'alwaysApply: false',
-      '---',
-      `# Team: ${team.name}`,
-      '',
-      `**Focus**: ${team.focus}`,
-      `**Scope**: ${scope}`,
-      '',
-      '## Responsibilities',
-      `- Own all code within scope: ${scope}`,
-      '- Follow project conventions and quality gates',
-      '- Coordinate with other teams via /orchestrate for cross-cutting changes',
-      '',
-      '## Workflow',
-      '1. Review current backlog in AGENT_BACKLOG.md',
-      '2. Implement changes within team scope',
-      '3. Run /check before committing',
-      '4. Use /handoff when passing work to another team',
-      '',
-    ].join('\n');
-
-    content = renderTemplate(content, { ...vars, repoName });
-    content = insertHeader(content, '.mdc', version, repoName);
-    const fileName = `team-${team.id}.mdc`;
-    writeOutput(resolve(tmpDir, '.cursor', 'rules', fileName), content);
-  }
-}
-
-function syncCopilotPrompts(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
-  const templatePath = resolve(templatesDir, 'copilot', 'prompts', 'TEMPLATE.prompt.md');
-  if (!existsSync(templatePath) || !commandsSpec.commands) return;
-
-  const template = readFileSync(templatePath, 'utf-8');
-
-  for (const cmd of commandsSpec.commands) {
-    // Skip team commands — they map to chat modes instead
-    if (cmd.type === 'team') continue;
-
-    const desc =
-      typeof cmd.description === 'string' ? cmd.description.trim() : cmd.description || '';
-    const cmdVars = {
-      ...vars,
-      commandName: cmd.name,
-      commandDescription: desc,
-    };
-
-    let content = renderTemplate(template, cmdVars);
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.github', 'prompts', `${cmd.name}.prompt.md`), content);
-  }
-}
-
-function syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec) {
-  const templatePath = resolve(templatesDir, 'copilot', 'agents', 'TEMPLATE.agent.md');
-  if (!existsSync(templatePath) || !agentsSpec.agents) return;
-
-  const template = readFileSync(templatePath, 'utf-8');
-
-  // Flatten all agents from all categories
-  const allAgents = [];
-  for (const [category, agents] of Object.entries(agentsSpec.agents)) {
-    if (!Array.isArray(agents)) continue;
-    for (const agent of agents) {
-      allAgents.push({ ...agent, category: agent.category || category });
-    }
-  }
-
-  for (const agent of allAgents) {
-    const focusList = Array.isArray(agent.focus)
-      ? agent.focus.map((f) => `- \`${f}\``).join('\n')
-      : agent.focus || '';
-    const responsibilitiesList = Array.isArray(agent.responsibilities)
-      ? agent.responsibilities.map((r) => `- ${r}`).join('\n')
-      : agent.responsibilities || '';
-    const toolsList = Array.isArray(agent['preferred-tools'])
-      ? agent['preferred-tools'].map((t) => `- ${t}`).join('\n')
-      : Array.isArray(agent.tools)
-        ? agent.tools.map((t) => `- ${t}`).join('\n')
-        : '';
-    const domainRules = buildAgentDomainRulesMarkdown(agent, rulesSpec);
-    const conventionsList = Array.isArray(agent.conventions)
-      ? agent.conventions.map((c) => `- ${c}`).join('\n')
-      : '';
-
-    const agentVars = {
-      ...vars,
-      agentId: agent.id,
-      agentCategory: agent.category,
-      agentName: agent.name,
-      agentRole: typeof agent.role === 'string' ? agent.role.trim() : agent.role || '',
-      agentFocusList: focusList,
-      agentResponsibilitiesList: responsibilitiesList,
-      agentToolsList: toolsList,
-      hasAgentDomainRules: !!domainRules,
-      agentDomainRules: domainRules,
-      hasAgentConventions: !!conventionsList,
-      agentConventions: conventionsList,
-    };
-
-    let content = renderTemplate(template, agentVars);
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.github', 'agents', `${agent.id}.agent.md`), content);
-  }
-}
-
-function syncCopilotChatModes(templatesDir, tmpDir, vars, version, repoName, teamsSpec) {
-  const templatePath = resolve(templatesDir, 'copilot', 'chatmodes', 'TEMPLATE.chatmode.md');
-  if (!existsSync(templatePath) || !teamsSpec.teams) return;
-
-  const template = readFileSync(templatePath, 'utf-8');
-
-  for (const team of teamsSpec.teams) {
-    const scope = Array.isArray(team.scope) ? team.scope.join(', ') : team.scope || '**/*';
-    const teamVars = {
-      ...vars,
-      teamId: team.id,
-      teamName: team.name,
-      teamFocus: team.focus,
-      teamScope: scope,
-      teamAccepts: Array.isArray(team.accepts) ? team.accepts.join(', ') : '',
-      teamHandoffChain: Array.isArray(team['handoff-chain'])
-        ? team['handoff-chain'].join(', ')
-        : '',
-    };
-
-    let content = renderTemplate(template, teamVars);
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.github', 'chatmodes', `team-${team.id}.chatmode.md`), content);
-  }
-}
-
-function syncGemini(templatesDir, tmpDir, vars, version, repoName) {
-  // GEMINI.md
-  const geminiMdPath = resolve(templatesDir, 'gemini', 'GEMINI.md');
-  if (existsSync(geminiMdPath)) {
-    let content = readFileSync(geminiMdPath, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName });
-    content = content.replace(/(\r?\n){3,}/g, '\n\n');
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, 'GEMINI.md'), content);
-  }
-
-  // .gemini/styleguide.md
-  const stylePath = resolve(templatesDir, 'gemini', 'styleguide.md');
-  if (existsSync(stylePath)) {
-    let content = readFileSync(stylePath, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName });
-    content = content.replace(/(\r?\n){3,}/g, '\n\n');
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.gemini', 'styleguide.md'), content);
-  }
-
-  // .gemini/config.yaml
-  const configPath = resolve(templatesDir, 'gemini', 'config.yaml');
-  if (existsSync(configPath)) {
-    let content = readFileSync(configPath, 'utf-8');
-    content = renderTemplate(content, { ...vars, repoName });
-    content = insertHeader(content, '.yaml', version, repoName);
-    writeOutput(resolve(tmpDir, '.gemini', 'config.yaml'), content);
-  }
-}
-
-function syncWarp(templatesDir, tmpDir, vars, version, repoName) {
-  const warpMdPath = resolve(templatesDir, 'warp', 'WARP.md');
-  if (!existsSync(warpMdPath)) return;
-
-  let content = readFileSync(warpMdPath, 'utf-8');
-  content = renderTemplate(content, { ...vars, repoName });
-  content = content.replace(/(\r?\n){3,}/g, '\n\n');
-  content = insertHeader(content, '.md', version, repoName);
-  writeOutput(resolve(tmpDir, 'WARP.md'), content);
-}
-
-function syncCursorCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
-  const templatePath = resolve(templatesDir, 'cursor', 'commands', 'TEMPLATE.md');
-  if (!existsSync(templatePath) || !commandsSpec.commands) return;
-
-  const template = readFileSync(templatePath, 'utf-8');
-
-  for (const cmd of commandsSpec.commands) {
-    if (cmd.type === 'team') continue;
-
-    const desc =
-      typeof cmd.description === 'string' ? cmd.description.trim() : cmd.description || '';
-    const cmdVars = {
-      ...vars,
-      commandName: cmd.name,
-      commandDescription: desc,
-    };
-
-    let content = renderTemplate(template, cmdVars);
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.cursor', 'commands', `${cmd.name}.md`), content);
-  }
-}
-
-function syncSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec, outputPrefix) {
-  // Shared logic for Codex (.agents/skills/) and Claude (.claude/skills/)
-  // outputPrefix is either '.agents' or '.claude'
-  const templateDir =
-    outputPrefix === '.agents'
-      ? resolve(templatesDir, 'codex', 'skills', 'TEMPLATE', 'SKILL.md')
-      : resolve(templatesDir, 'claude', 'skills', 'TEMPLATE', 'SKILL.md');
-  if (!existsSync(templateDir) || !commandsSpec.commands) return;
-
-  const template = readFileSync(templateDir, 'utf-8');
-
-  for (const cmd of commandsSpec.commands) {
-    if (cmd.type === 'team') continue;
-
-    const desc =
-      typeof cmd.description === 'string' ? cmd.description.trim() : cmd.description || '';
-    const cmdVars = {
-      ...vars,
-      commandName: cmd.name,
-      commandDescription: desc,
-    };
-
-    let content = renderTemplate(template, cmdVars);
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, outputPrefix, 'skills', cmd.name, 'SKILL.md'), content);
-  }
-}
-
-function syncCodexSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
-  syncSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec, '.agents');
-}
-
-function syncClaudeSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
-  syncSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec, '.claude');
-}
-
-function syncClineRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec) {
-  const templatePath = resolve(templatesDir, 'cline', 'clinerules', 'TEMPLATE.md');
-  if (!existsSync(templatePath) || !rulesSpec.rules) return;
-
-  const template = readFileSync(templatePath, 'utf-8');
-
-  for (const ruleSet of rulesSpec.rules) {
-    const appliesTo = Array.isArray(ruleSet['applies-to'])
-      ? ruleSet['applies-to'].map((p) => `- \`${p}\``).join('\n')
-      : '';
-    const conventions = Array.isArray(ruleSet.conventions)
-      ? ruleSet.conventions
-          .map((c) => {
-            const severity = c.severity ? ` [${c.severity}]` : '';
-            return `- **${c.id}**${severity}: ${typeof c.rule === 'string' ? c.rule.trim() : c.rule}`;
-          })
-          .join('\n')
-      : '';
-
-    const ruleVars = {
-      ...vars,
-      ruleDomain: ruleSet.domain,
-      ruleDescription:
-        typeof ruleSet.description === 'string'
-          ? ruleSet.description.trim()
-          : ruleSet.description || '',
-      ruleAppliesTo: appliesTo,
-      ruleConventions: conventions,
-    };
-
-    let content = renderTemplate(template, ruleVars);
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.clinerules', `${ruleSet.domain}.md`), content);
-  }
-}
-
-function syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec) {
-  const agents = [
-    { id: 'orchestrator', role: 'coordinator', capabilities: ['delegate', 'aggregate', 'monitor'] },
-  ];
-
-  // Build agent entries from agents.yaml
-  if (agentsSpec?.agents) {
-    for (const [category, agentList] of Object.entries(agentsSpec.agents)) {
-      if (!Array.isArray(agentList)) continue;
-      for (const agent of agentList) {
-        agents.push({
-          id: agent.id,
-          role: 'executor',
-          category,
-          domain: Array.isArray(agent.focus)
-            ? agent.focus.join(', ')
-            : agent.focus
-              ? String(agent.focus)
-              : '',
-          capabilities: agent.accepts || ['implement', 'review'],
-          dependsOn: agent['depends-on'] || [],
-          notifies: agent.notifies || [],
-        });
-      }
-    }
-  }
-
-  // Build handoff chains from teams.yaml
-  const handoffChains = {};
-  if (teamsSpec?.teams) {
-    for (const team of teamsSpec.teams) {
-      const chain = team['handoff-chain'];
-      if (Array.isArray(chain) && chain.length > 0) {
-        handoffChains[team.id] = chain;
-      }
-    }
-  }
-
-  const config = {
-    a2a: {
-      enabled: true,
-      protocol_version: '1.0.0',
-      task_format: 'json',
-      task_location: '.claude/state/tasks/',
-      context_transfer: 'file',
-      result_aggregation: 'orchestrator',
-      agents,
-      handoffChains,
-      messageTypes: ['delegate', 'report', 'query', 'broadcast'],
-      taskStates: [
-        'submitted',
-        'accepted',
-        'working',
-        'input-required',
-        'completed',
-        'failed',
-        'rejected',
-        'canceled',
-      ],
-      taskTypes: VALID_TASK_TYPES,
-    },
-  };
-
-  const destPath = resolve(tmpDir, 'mcp', 'a2a-config.json');
-  writeOutput(destPath, JSON.stringify(config, null, 2) + '\n');
-}
-
-function syncRooRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec) {
-  const templatePath = resolve(templatesDir, 'roo', 'rules', 'TEMPLATE.md');
-  if (!existsSync(templatePath) || !rulesSpec.rules) return;
-
-  const template = readFileSync(templatePath, 'utf-8');
-
-  for (const ruleSet of rulesSpec.rules) {
-    const appliesTo = Array.isArray(ruleSet['applies-to'])
-      ? ruleSet['applies-to'].map((p) => `- \`${p}\``).join('\n')
-      : '';
-    const conventions = Array.isArray(ruleSet.conventions)
-      ? ruleSet.conventions
-          .map((c) => {
-            const severity = c.severity ? ` [${c.severity}]` : '';
-            return `- **${c.id}**${severity}: ${typeof c.rule === 'string' ? c.rule.trim() : c.rule}`;
-          })
-          .join('\n')
-      : '';
-
-    const ruleVars = {
-      ...vars,
-      ruleDomain: ruleSet.domain,
-      ruleDescription:
-        typeof ruleSet.description === 'string'
-          ? ruleSet.description.trim()
-          : ruleSet.description || '',
-      ruleAppliesTo: appliesTo,
-      ruleConventions: conventions,
-    };
-
-    let content = renderTemplate(template, ruleVars);
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.roo', 'rules', `${ruleSet.domain}.md`), content);
-  }
-}
-
-function syncWindsurfCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
-  const templatePath = resolve(templatesDir, 'windsurf', 'templates', 'command.md');
-  if (!existsSync(templatePath) || !commandsSpec.commands) return;
-
-  const template = readFileSync(templatePath, 'utf-8');
-
-  for (const cmd of commandsSpec.commands) {
-    if (cmd.type === 'team') continue;
-    const desc =
-      typeof cmd.description === 'string' ? cmd.description.trim() : cmd.description || '';
-    const cmdVars = {
-      ...vars,
-      repoName,
-      commandName: cmd.name,
-      commandDescription: desc,
-    };
-
-    let content = renderTemplate(template, cmdVars);
-    content = insertHeader(content, '.md', version, repoName);
-    writeOutput(resolve(tmpDir, '.windsurf', 'rules', `command-${cmd.name}.md`), content);
-  }
-}
-
-function syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec) {
-  if (!teamsSpec.teams) return;
-
-  for (const team of teamsSpec.teams) {
-    const scope = Array.isArray(team.scope) ? team.scope.join(', ') : team.scope || '**/*';
-    let content = [
-      `# Team: ${team.name}`,
-      '',
-      `**Focus**: ${team.focus}`,
-      `**Scope**: ${scope}`,
-      '',
-      '## Responsibilities',
-      `- Own all code within scope: ${scope}`,
-      '- Follow project conventions and quality gates',
-      '- Coordinate with other teams via /orchestrate for cross-cutting changes',
-      '',
-      '## Workflow',
-      '1. Review current backlog in AGENT_BACKLOG.md',
-      '2. Implement changes within team scope',
-      '3. Run /check before committing',
-      '4. Use /handoff when passing work to another team',
-      '',
-    ].join('\n');
-
-    content = renderTemplate(content, { ...vars, repoName });
-    content = insertHeader(content, '.md', version, repoName);
-    const fileName = `team-${team.id}.md`;
-    writeOutput(resolve(tmpDir, '.windsurf', 'rules', fileName), content);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Exports for testing
-// ---------------------------------------------------------------------------
-export {
-  ALL_RENDER_TARGETS,
-  evalTruthy,
-  flattenCrosscutting,
-  flattenProjectYaml,
-  getCommentStyle,
-  getGeneratedHeader,
-  insertHeader,
-  isScaffoldOnce,
-  mergePermissions,
-  renderTemplate,
-  resolveConditionals,
-  resolveEachBlocks,
-  resolveRenderTargets,
-  sanitizeTemplateValue,
-};
