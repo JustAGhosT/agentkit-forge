@@ -1559,7 +1559,7 @@ function syncAgentsMd(templatesDir, tmpDir, vars, version, repoName) {
   let content = readFileSync(agentsMdPath, 'utf-8');
   content = renderTemplate(content, { ...vars, repoName });
   // Clean up blank lines left by unresolved conditionals
-  content = content.replace(/\n{3,}/g, '\n\n');
+  content = content.replace(/(\r?\n){3,}/g, '\n\n');
   content = insertHeader(content, '.md', version, repoName);
   writeOutput(resolve(tmpDir, 'AGENTS.md'), content);
 }
@@ -1571,7 +1571,7 @@ function syncClaudeMd(templatesDir, tmpDir, vars, version, repoName) {
   let content = readFileSync(claudeMdPath, 'utf-8');
   content = renderTemplate(content, { ...vars, repoName });
   // Clean up blank lines left by unresolved conditionals
-  content = content.replace(/\n{3,}/g, '\n\n');
+  content = content.replace(/(\r?\n){3,}/g, '\n\n');
   content = insertHeader(content, '.md', version, repoName);
   writeOutput(resolve(tmpDir, 'CLAUDE.md'), content);
 }
@@ -1748,7 +1748,7 @@ function syncGemini(templatesDir, tmpDir, vars, version, repoName) {
   if (existsSync(geminiMdPath)) {
     let content = readFileSync(geminiMdPath, 'utf-8');
     content = renderTemplate(content, { ...vars, repoName });
-    content = content.replace(/\n{3,}/g, '\n\n');
+    content = content.replace(/(\r?\n){3,}/g, '\n\n');
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, 'GEMINI.md'), content);
   }
@@ -1758,7 +1758,7 @@ function syncGemini(templatesDir, tmpDir, vars, version, repoName) {
   if (existsSync(stylePath)) {
     let content = readFileSync(stylePath, 'utf-8');
     content = renderTemplate(content, { ...vars, repoName });
-    content = content.replace(/\n{3,}/g, '\n\n');
+    content = content.replace(/(\r?\n){3,}/g, '\n\n');
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.gemini', 'styleguide.md'), content);
   }
@@ -1779,7 +1779,7 @@ function syncWarp(templatesDir, tmpDir, vars, version, repoName) {
 
   let content = readFileSync(warpMdPath, 'utf-8');
   content = renderTemplate(content, { ...vars, repoName });
-  content = content.replace(/\n{3,}/g, '\n\n');
+  content = content.replace(/(\r?\n){3,}/g, '\n\n');
   content = insertHeader(content, '.md', version, repoName);
   writeOutput(resolve(tmpDir, 'WARP.md'), content);
 }

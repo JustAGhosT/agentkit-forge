@@ -3,22 +3,9 @@
 <!-- Regenerate: pnpm -C .agentkit agentkit:sync -->
 # __TEMPLATE__ — Gemini Instructions
 
-
-
 ## Project Context
 
-
-
-
-
-
-
-
-
-
-
 - **Default Branch**: main
-
 
 ## Coding Standards
 
@@ -29,45 +16,16 @@
 - Prefer explicit error handling over silent failures.
 - Use the strongest type safety available for the language.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Testing
 
-
-
-
-
-
 Always run the full test suite before creating a pull request.
-
-
 
 ## Documentation
 
 - **PRDs**: `docs/prd/`
 
-
-
-
 - See `AGENTS.md` for universal agent instructions.
 - See `QUALITY_GATES.md` for quality gate definitions.
-
-
-
-
 
 ## Code Review Guidelines
 

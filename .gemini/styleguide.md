@@ -15,14 +15,6 @@ See `AGENTS.md` for universal project conventions.
 - Prefer explicit error handling over silent failures.
 - Use the strongest type safety available for the language.
 
-
-
-
-
-
-
-
-
 ## Quality Gates
 
 Before marking any work complete:
