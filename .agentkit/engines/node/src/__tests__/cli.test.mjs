@@ -75,4 +75,27 @@ describe('CLI', () => {
     const result = run('spec-validate');
     expect(result.exitCode).toBe(0);
   });
+
+  describe('parseArgs flag scoping', () => {
+    it('orchestrate --status is treated as a boolean flag (no value required)', () => {
+      // --status is boolean for orchestrate; --help exits before running the command
+      const result = run('orchestrate', '--status', '--help');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('AgentKit Forge');
+    });
+
+    it('tasks --status accepts a string value', () => {
+      // --status is string for tasks; --help exits before running the command
+      const result = run('tasks', '--status', 'submitted', '--help');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('AgentKit Forge');
+    });
+
+    it('command without --status support does not error when --status is passed without a value', () => {
+      // spec-validate does not declare --status; with strict:false the unknown flag is
+      // tolerated and spec-validate runs to completion
+      const result = run('spec-validate', '--status');
+      expect(result.exitCode).toBe(0);
+    });
+  });
 });

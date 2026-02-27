@@ -180,19 +180,17 @@ function parseFlags(command, args) {
   // Build options for parseArgs
   const options = {};
 
-  // Special case: status
-  // orchestrate: --status (boolean)
-  // tasks: --status <string>
-  const statusType = command === 'orchestrate' ? 'boolean' : 'string';
-
   for (const [key, type] of Object.entries(FLAG_TYPES)) {
     options[key] = { type };
     if (key === 'quiet') options[key].short = 'q';
     if (key === 'verbose') options[key].short = 'v';
   }
 
-  // Apply status override
-  options.status = { type: statusType };
+  // Only add --status for commands that support it, with the correct type:
+  // orchestrate: boolean flag, tasks: string value
+  if (VALID_FLAGS[command]?.includes('status')) {
+    options.status = { type: command === 'orchestrate' ? 'boolean' : 'string' };
+  }
 
   try {
     const { values, positionals } = parseArgs({
