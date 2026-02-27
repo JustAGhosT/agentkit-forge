@@ -18,11 +18,6 @@ import {
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
-<<<<<<< HEAD
-=======
-import { PROJECT_MAPPING, get, transform, check } from './sync.refactor.mjs';
-
->>>>>>> main
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -163,7 +158,6 @@ function evalTruthy(value) {
 function flattenProjectYaml(project, docsSpec = null) {
   if (!project || typeof project !== 'object') return {};
   const vars = {};
-<<<<<<< HEAD
   // Top-level scalars
   if (project.name) vars.projectName = project.name;
   if (project.description) vars.projectDescription = project.description;
@@ -197,44 +191,21 @@ function flattenProjectYaml(project, docsSpec = null) {
   vars.hasPatternEventSourcing = !!patterns.eventSourcing;
   vars.hasPatternMediator = !!patterns.mediator;
   vars.hasPatternUnitOfWork = !!patterns.unitOfWork;
-=======
-
-  // Apply declarative mappings
-  for (const mapping of PROJECT_MAPPING) {
-    const value = get(project, mapping.src);
-    if (check(value, mapping.check)) {
-      const transformed = transform(value, mapping.type);
-      if (transformed !== undefined) {
-        vars[mapping.dest] = transformed;
-      }
-    }
-  }
-
-  // --- Post-processing / Complex derivations ---
-
-  // hasAnyPattern
->>>>>>> main
   vars.hasAnyPattern =
     vars.hasPatternRepository ||
     vars.hasPatternCqrs ||
     vars.hasPatternEventSourcing ||
     vars.hasPatternMediator ||
     vars.hasPatternUnitOfWork;
-<<<<<<< HEAD
   // Documentation
   const docs = project.documentation || {};
   vars.hasPrd = !!docs.hasPrd;
   if (docs.prdPath) vars.prdPath = docs.prdPath;
-=======
-
-  // docsSpec overlay for PRD
->>>>>>> main
   const prdSpec = docsSpec?.specialDirectories?.find((d) => d.id === 'prd');
   if (prdSpec) {
     vars.hasPrd = true;
     if (!vars.prdPath) vars.prdPath = prdSpec.path;
   }
-<<<<<<< HEAD
   vars.hasAdr = !!docs.hasAdr;
   if (docs.adrPath) vars.adrPath = docs.adrPath;
   vars.hasApiSpec = !!docs.hasApiSpec;
@@ -270,10 +241,6 @@ function flattenProjectYaml(project, docsSpec = null) {
     vars.infraMandatoryTags = tagging.mandatory.join(', ');
     vars.hasInfraTags = true;
   }
-=======
-
-  // hasAnyInfraConfig
->>>>>>> main
   vars.hasAnyInfraConfig =
     !!vars.infraNamingConvention ||
     !!vars.infraDefaultRegion ||
@@ -281,7 +248,6 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.infraIacToolchain ||
     !!vars.infraStateBackend ||
     !!vars.infraMandatoryTags;
-<<<<<<< HEAD
   if (Array.isArray(tagging.optional)) vars.infraOptionalTags = tagging.optional.join(', ');
   // Observability
   const obs = project.observability || {};
@@ -310,16 +276,11 @@ function flattenProjectYaml(project, docsSpec = null) {
   if (obsLogging.retentionDays !== undefined && obsLogging.retentionDays !== null) {
     vars.logRetentionDays = String(obsLogging.retentionDays);
   }
-=======
-
-  // hasAnyMonitoring
->>>>>>> main
   vars.hasAnyMonitoring =
     !!vars.monitoringProvider ||
     !!vars.alertingProvider ||
     !!vars.tracingProvider ||
     !!vars.hasCentralisedLogging;
-<<<<<<< HEAD
   // Compliance
   const comp = project.compliance || {};
   if (comp.framework && comp.framework !== 'none') {
@@ -334,10 +295,6 @@ function flattenProjectYaml(project, docsSpec = null) {
     vars.drTestSchedule = dr.backupSchedule;
   }
   vars.hasGeoRedundancy = !!dr.geoRedundancy;
-=======
-
-  // hasDr
->>>>>>> main
   vars.hasDr =
     !!vars.drRpoHours ||
     !!vars.drRtoHours ||
@@ -352,7 +309,6 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.drBackupSchedule ||
     !!vars.drTestSchedule ||
     !!vars.auditEventBus;
-<<<<<<< HEAD
   // Process
   const proc = project.process || {};
   if (proc.branchStrategy) vars.branchStrategy = proc.branchStrategy;
@@ -366,21 +322,14 @@ function flattenProjectYaml(project, docsSpec = null) {
   if (Array.isArray(testing.e2e)) vars.testingE2e = testing.e2e.join(', ');
   if (testing.coverage !== undefined && testing.coverage !== null)
     vars.testingCoverage = String(testing.coverage);
-=======
-
->>>>>>> main
   // Integrations (kept as array for {{#each}})
   if (Array.isArray(project.integrations)) {
     vars.integrations = project.integrations;
     vars.hasIntegrations = project.integrations.length > 0;
   }
-<<<<<<< HEAD
   // Cross-cutting concerns
   const cc = project.crosscutting || {};
   flattenCrosscutting(cc, vars);
-=======
-
->>>>>>> main
   return vars;
 }
 /**
@@ -389,7 +338,6 @@ function flattenProjectYaml(project, docsSpec = null) {
  * Kept exported for test compatibility if any tests import it directly.
  */
 function flattenCrosscutting(cc, vars) {
-<<<<<<< HEAD
   // Logging
   const logging = cc.logging || {};
   if (logging.framework && logging.framework !== 'none') {
@@ -466,24 +414,6 @@ function flattenCrosscutting(cc, vars) {
     vars.envConfigStrategy = envs.configStrategy;
   }
   if (envs.envFilePattern) vars.envFilePattern = envs.envFilePattern;
-=======
-  // Delegate to main flatten function by wrapping cc in a project-like structure
-  // This is a backward compatibility shim.
-  const tempProject = { crosscutting: cc };
-  const mapped = flattenProjectYaml(tempProject);
-
-  // Copy mapped crosscutting vars into the target vars object
-  // Filter out keys that don't belong to crosscutting to avoid noise
-  for (const [key, val] of Object.entries(mapped)) {
-    if (key !== 'hasAnyPattern' &&
-        key !== 'hasAnyInfraConfig' &&
-        key !== 'hasAnyMonitoring' &&
-        key !== 'hasDr' &&
-        key !== 'hasAnyComplianceConfig') {
-      vars[key] = val;
-    }
-  }
->>>>>>> main
 }
 /**
  * Sanitizes a template variable value to prevent injection.
@@ -619,6 +549,22 @@ function simpleDiff(a, b) {
   }
   return out.slice(0, 20).join('\n') + (out.length > 20 ? '\n...' : '');
 }
+/**
+ * Copies rendered template outputs from the temp directory into the project root,
+ * cleans up stale files from previous syncs, and writes a new manifest.
+ *
+ * @param {string} agentkitRoot - Absolute path to the .agentkit directory.
+ * @param {string} projectRoot - Absolute path to the consuming project root.
+ * @param {string} tmpDir - Absolute path to the temporary directory containing rendered outputs.
+ * @param {Object} newManifestFiles - Map of relative paths to their hash metadata.
+ * @param {Object} flags - CLI flags (e.g., `no-clean`, `overwrite`, `force`).
+ * @param {Object} vars - Flattened template variables (used for manifest metadata).
+ * @param {string} version - AgentKit version string written to the manifest.
+ * @param {Function} logVerbose - Logger function for verbose output.
+ * @returns {{ count: number, skippedScaffold: number, cleanedCount: number }}
+ *   Sync statistics: `count` = files written, `skippedScaffold` = project-owned files
+ *   skipped because they already exist, `cleanedCount` = stale files removed.
+ */
 function applySync(
   agentkitRoot,
   projectRoot,
@@ -650,8 +596,12 @@ function applySync(
     const relPath = relative(tmpDir, srcFile);
     const destFile = resolve(projectRoot, relPath);
 
-    // Path traversal protection
-    if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot)) {
+    // Path traversal protection.
+    // resolvedRoot = resolve(projectRoot) + sep (always ends with separator).
+    // Block if the destination is outside the project tree (doesn't start with resolvedRoot),
+    // OR if it resolves exactly to projectRoot itself (guards against a bare "" relative path).
+    // These two conditions are mutually exclusive since resolvedRoot ends with sep.
+    if (!resolve(destFile).startsWith(resolvedRoot) || resolve(destFile) === resolve(projectRoot)) {
       console.error(`[agentkit:sync] BLOCKED: path traversal detected — ${relPath}`);
       failedFiles.push({ file: relPath, error: 'path traversal blocked' });
       continue;
@@ -696,7 +646,9 @@ function applySync(
     for (const prevFile of Object.keys(previousManifest.files)) {
       if (!newManifestFiles[prevFile]) {
         const orphanPath = resolve(projectRoot, prevFile);
-        if (!orphanPath.startsWith(resolvedRoot) && orphanPath !== resolve(projectRoot)) {
+        // Same path-traversal guard as the write path: block manifest entries that
+        // resolve outside the project tree or to the bare project root directory.
+        if (!orphanPath.startsWith(resolvedRoot) || orphanPath === resolve(projectRoot)) {
           console.warn(`[agentkit:sync] BLOCKED: path traversal in manifest — ${prevFile}`);
           continue;
         }
@@ -734,6 +686,22 @@ function applySync(
 }
 
 
+/**
+ * Handles the `--dry-run` and `--diff` CLI flag modes.
+ * In dry-run mode, prints a summary of what would be generated and returns without writing.
+ * In diff mode, shows file-level diffs between current and new content and returns without writing.
+ *
+ * @param {string} tmpDir - Absolute path to the temporary directory containing rendered outputs.
+ * @param {string} projectRoot - Absolute path to the consuming project root.
+ * @param {Object} flags - CLI flags (e.g., `dry-run`, `diff`, `quiet`).
+ * @param {Object} newManifestFiles - Map of relative paths to their hash metadata.
+ * @param {Object} fileSummary - Category-to-count map for the sync summary.
+ * @param {Set<string>} targets - Set of active render target names.
+ * @param {Function} log - Logger function for standard output.
+ * @param {Function} logVerbose - Logger function for verbose output.
+ * @returns {boolean} Returns `true` if operating in dry-run or diff mode (no files written and
+ *   the caller should stop processing), `false` if normal sync should proceed.
+ */
 function handleDryRunOrDiff(tmpDir, projectRoot, flags, newManifestFiles, fileSummary, targets, log, logVerbose) {
   const dryRun = flags?.['dry-run'] || false;
   const diff = flags?.diff || false;
@@ -758,7 +726,7 @@ function handleDryRunOrDiff(tmpDir, projectRoot, flags, newManifestFiles, fileSu
       const relPath = relative(tmpDir, srcFile);
       const destFile = resolve(projectRoot, relPath);
       const normPath = relPath.replace(/\\/g, '/');
-      if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot))
+      if (!resolve(destFile).startsWith(resolvedRoot) || resolve(destFile) === resolve(projectRoot))
         continue;
       const wouldSkip = !overwrite && isScaffoldOnce(normPath) && existsSync(destFile);
       if (wouldSkip) {
@@ -803,6 +771,14 @@ function handleDryRunOrDiff(tmpDir, projectRoot, flags, newManifestFiles, fileSu
   }
   return false; // not handled
 }
+/**
+ * Walks the temp directory to build the manifest file map and a per-category file count summary.
+ *
+ * @param {string} tmpDir - Absolute path to the temporary directory containing rendered outputs.
+ * @returns {{ newManifestFiles: Object, fileSummary: Object }}
+ *   `newManifestFiles` maps relative paths to `{ hash }` objects;
+ *   `fileSummary` maps category names to file counts.
+ */
 function computeManifest(tmpDir) {
   const newManifestFiles = {};
   const fileSummary = {}; // category → count
@@ -825,6 +801,22 @@ function computeManifest(tmpDir) {
   }
   return { newManifestFiles, fileSummary };
 }
+/**
+ * Renders all templates for the enabled render targets into a fresh temp directory.
+ *
+ * @param {string} agentkitRoot - Absolute path to the .agentkit directory.
+ * @param {Object} vars - Flattened template variables for rendering.
+ * @param {string} version - AgentKit version string.
+ * @param {string} repoName - Overlay/repo name used to locate overlay files.
+ * @param {Set<string>} targets - Set of active render target names (e.g. `claude`, `cursor`).
+ * @param {Object} mergedPermissions - Merged allow/deny permission settings for Claude.
+ * @param {Object} settingsSpec - Parsed `settings.yaml` spec.
+ * @param {Object} teamsSpec - Parsed `teams.yaml` spec.
+ * @param {Object} commandsSpec - Parsed `commands.yaml` spec.
+ * @param {Object} agentsSpec - Parsed `agents.yaml` spec.
+ * @param {Object} rulesSpec - Parsed `rules.yaml` spec.
+ * @returns {string} Absolute path to the temp directory containing rendered outputs.
+ */
 function generateTemplates(agentkitRoot, vars, version, repoName, targets, mergedPermissions, settingsSpec, teamsSpec, commandsSpec, agentsSpec, rulesSpec) {
   const tmpDir = resolve(agentkitRoot, '.tmp');
   rmSync(tmpDir, { recursive: true, force: true });
@@ -904,6 +896,28 @@ function generateTemplates(agentkitRoot, vars, version, repoName, targets, merge
   }
   return tmpDir;
 }
+/**
+ * Loads and assembles all context needed for a sync run: version, specs, overlay settings,
+ * merged permissions, template variables, and render targets.
+ *
+ * @param {string} agentkitRoot - Absolute path to the .agentkit directory.
+ * @param {string} projectRoot - Absolute path to the consuming project root.
+ * @param {Object} flags - CLI flags (e.g., `overlay`, `only`, `verbose`).
+ * @param {Function} log - Logger function for standard output.
+ * @returns {{
+ *   version: string,
+ *   repoName: string,
+ *   vars: Object,
+ *   targets: Set<string>,
+ *   mergedPermissions: Object,
+ *   teamsSpec: Object,
+ *   commandsSpec: Object,
+ *   rulesSpec: Object,
+ *   settingsSpec: Object,
+ *   agentsSpec: Object,
+ *   projectSpec: Object|null
+ * }} All context required to render and apply a sync.
+ */
 function loadSyncContext(agentkitRoot, projectRoot, flags, log) {
   // 1. Load spec — version from package.json (primary) with VERSION file as fallback
   let version = '0.0.0';
