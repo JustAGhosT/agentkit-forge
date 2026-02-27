@@ -35,6 +35,21 @@ function parsePeriodDays(period) {
   return days > 0 ? days : 7;
 }
 
+/**
+ * Run a git command safely using execFileSync (avoids shell injection).
+ * @param {string[]} args - Git arguments
+ * @param {string} cwd - Working directory
+ * @returns {string} - Command output (stdout)
+ * @throws {Error} if command fails
+ */
+function runGitCommand(args, cwd) {
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Path helpers
 // ---------------------------------------------------------------------------
@@ -85,15 +100,11 @@ export function initSession({ agentkitRoot, projectRoot }) {
   let branch = 'unknown';
   let user = 'unknown';
   try {
-    branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim();
-  } catch (error) { console.warn('[agentkit:cost] git branch detection failed:', error.message); /* git not available — using default branch */ }
+    branch = runGitCommand(['rev-parse', '--abbrev-ref', 'HEAD'], projectRoot).trim();
+  } catch { /* git not available — using default branch */ }
   try {
-    user = execFileSync('git', ['config', 'user.email'], {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim() || 'unknown';
-  } catch (error) { console.warn('[agentkit:cost] git user detection failed:', error.message); /* git not available — using default user */ }
+    user = runGitCommand(['config', 'user.email'], projectRoot).trim() || 'unknown';
+  } catch { /* git not available — using default user */ }
 
   let repoName = basename(projectRoot);
   const markerPath = resolve(projectRoot, '.agentkit-repo');
@@ -160,9 +171,7 @@ export function endSession({ agentkitRoot, projectRoot, sessionId }) {
   // Count files modified via git
   let filesModified = 0;
   try {
-    const result = execFileSync('git', ['diff', '--name-only', 'HEAD'], {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const result = runGitCommand(['diff', '--name-only', 'HEAD'], projectRoot);
     filesModified = result.trim().split('\n').filter(Boolean).length;
   } catch (error) { console.warn('[agentkit:cost] git diff failed:', error.message); /* git not available — filesModified stays 0 */ }
 
