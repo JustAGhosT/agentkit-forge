@@ -3,8 +3,8 @@
  * Scans the repository to detect tech stacks, project structure, team boundaries,
  * and build a structured discovery report.
  */
-import { existsSync } from 'node:fs';
-import { readFile, readdir, access } from 'node:fs/promises';
+import { existsSync, readFileSync, readdirSync, promises as fsPromises } from 'fs';
+const { readdir, access, readFile } = fsPromises;
 import yaml from 'js-yaml';
 import { basename, extname, join, resolve } from 'node:path';
 
@@ -393,75 +393,60 @@ const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.n
 
 async function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
   let count = 0;
-
   // Simple concurrency limiter to avoid EMFILE
-  const CONCURRENCY_LIMIT = 20;
-  let activePromises = 0;
+  const CONCURRENCY_LIMIT = 50;
+  let active = 0;
   const queue = [];
 
-  const runTask = async (task) => {
-    activePromises++;
-    try {
-      await task();
-    } finally {
-      activePromises--;
-      if (queue.length > 0) {
-        const next = queue.shift();
-        runTask(next);
-      }
+  const processQueue = () => {
+    while (active < CONCURRENCY_LIMIT && queue.length > 0) {
+      const { run, resolve, reject } = queue.shift();
+      active++;
+      run()
+        .then(resolve)
+        .catch(reject)
+        .finally(() => {
+          active--;
+          processQueue();
+        });
     }
   };
 
-  const schedule = (task) => {
+  // Limits execution of `fn`
+  const limit = (fn) => {
     return new Promise((resolve, reject) => {
-      const wrappedTask = async () => {
-        try {
-          await task();
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      };
-
-      if (activePromises < CONCURRENCY_LIMIT) {
-        runTask(wrappedTask);
-      } else {
-        queue.push(wrappedTask);
-      }
+      queue.push({ run: fn, resolve, reject });
+      processQueue();
     });
   };
-
-  // We need to wait for all tasks to complete, but since we are recursing dynamically,
-  // we can't easily use Promise.all on a static array.
-  // Instead, we'll use a slightly different approach for the recursive walk.
-  // Given strict depth limits, we can probably just use Promise.all at each level.
 
   async function walk(currentDir, currentDepth) {
     if (currentDepth > depth || count > maxFiles) return;
 
-    let entries;
     try {
-      entries = await readdir(currentDir, { withFileTypes: true });
-    } catch {
-      return; // permission errors or not a dir
-    }
+      // Only limit the readdir call, not the recursive structure
+      const entries = await limit(() => fsPromises.readdir(currentDir, { withFileTypes: true }));
 
-    const tasks = [];
-
-    for (const entry of entries) {
+      const tasks = [];
+      for (const entry of entries) {
+        if (count > maxFiles) break;
         if (entry.name.startsWith('.') || SKIP_DIRS.has(entry.name)) continue;
         // Skip agentkit engine internals — framework code, not app code
         if (currentDepth === 0 && entry.name === '.agentkit') continue;
 
         const full = join(currentDir, entry.name);
+
         if (entry.isDirectory()) {
-            tasks.push(walk(full, currentDepth + 1));
+          tasks.push(walk(full, currentDepth + 1));
         } else if (extensions.includes(extname(entry.name))) {
             count++;
         }
-    }
+      }
 
-    await Promise.all(tasks);
+      await Promise.all(tasks);
+    } catch (err) {
+      /* permission errors or ENOENT */
+    }
   }
 
   await walk(dir, 0);
@@ -814,21 +799,12 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   }
 
   // --- Tech stack detection ---
-  // Run stack detectors in parallel
   const stackTasks = STACK_DETECTORS.map(async (detector) => {
-    const markersFound = await Promise.all(detector.markers.map(m => fileExists(projectRoot, m)));
-    if (markersFound.some(Boolean)) {
+    const results = await Promise.all(detector.markers.map((m) => fileExists(projectRoot, m)));
+    const markerFound = results.some(Boolean);
+    if (markerFound) {
       const fileCount = await countFilesByExt(projectRoot, detector.filePatterns);
-      const configsFoundStatus = await Promise.all(detector.configFiles.map(async c => ({ c, exists: await existsSync(resolve(projectRoot, c)) }))); // keeping existsSync for simple files check or should I change?
-      // Oops, I should use the async fileExists or just access.
-      // Let's use fileExists for consistency, although existsSync might be faster for single file if we don't care about blocking.
-      // But let's be fully async.
-
-      const configsFound = [];
-      for(const c of detector.configFiles) {
-          if (await fileExists(projectRoot, c)) configsFound.push(c);
-      }
-
+      const configsFound = detector.configFiles.filter((c) => existsSync(resolve(projectRoot, c)));
       return {
         name: detector.name,
         label: detector.label,
@@ -877,18 +853,12 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   };
 
   // --- Framework detection (§11a) ---
-  const frameworkTasks = Object.entries(FRAMEWORK_DETECTORS).map(async ([category, detectors]) => {
-      const found = await detectFromList(detectors, depContext);
-      if (found.length > 0) {
-          return { category, names: found.map(f => f.name) };
-      }
-      return null;
-  });
-
-  const frameworkResults = await Promise.all(frameworkTasks);
-  frameworkResults.filter(Boolean).forEach(res => {
-      report.frameworks[res.category] = res.names;
-  });
+  for (const [category, detectors] of Object.entries(FRAMEWORK_DETECTORS)) {
+    const found = await detectFromList(detectors, depContext);
+    if (found.length > 0) {
+      report.frameworks[category] = found.map((f) => f.name);
+    }
+  }
 
   // --- Testing tool detection (§11b) ---
   const testingFound = await detectFromList(TESTING_DETECTORS, depContext);
@@ -945,18 +915,12 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   report.designSystem = designResults.filter(Boolean);
 
   // --- Cross-cutting concern detection (§11f) ---
-  const ccTasks = Object.entries(CROSSCUTTING_DETECTORS).map(async ([concern, detectors]) => {
-      const found = await detectFromList(detectors, depContext);
-      if (found.length > 0) {
-          return { concern, names: found.map(f => f.name) };
-      }
-      return null;
-  });
-
-  const ccResults = await Promise.all(ccTasks);
-  ccResults.filter(Boolean).forEach(res => {
-      report.crosscutting[res.concern] = res.names;
-  });
+  for (const [concern, detectors] of Object.entries(CROSSCUTTING_DETECTORS)) {
+    const found = await detectFromList(detectors, depContext);
+    if (found.length > 0) {
+      report.crosscutting[concern] = found.map((f) => f.name);
+    }
+  }
 
   // --- Environment config detection ---
   if (await fileExists(projectRoot, '.env.example')) {
