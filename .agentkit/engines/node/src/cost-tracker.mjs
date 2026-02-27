@@ -9,7 +9,7 @@
  */
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, renameSync } from 'fs';
 import { resolve, basename } from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { formatTimestamp } from './runner.mjs';
 
 // ---------------------------------------------------------------------------
@@ -85,12 +85,12 @@ export function initSession({ agentkitRoot, projectRoot }) {
   let branch = 'unknown';
   let user = 'unknown';
   try {
-    branch = execSync('git rev-parse --abbrev-ref HEAD', {
+    branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
       cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
     }).trim();
   } catch { /* git not available — using default branch */ }
   try {
-    user = execSync('git config user.email', {
+    user = execFileSync('git', ['config', 'user.email'], {
       cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
     }).trim() || 'unknown';
   } catch { /* git not available — using default user */ }
@@ -160,7 +160,7 @@ export function endSession({ agentkitRoot, projectRoot, sessionId }) {
   // Count files modified via git
   let filesModified = 0;
   try {
-    const result = execSync('git diff --name-only HEAD', {
+    const result = execFileSync('git', ['diff', '--name-only', 'HEAD'], {
       cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
     });
     filesModified = result.trim().split('\n').filter(Boolean).length;
