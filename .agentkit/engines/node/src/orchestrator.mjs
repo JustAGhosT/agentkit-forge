@@ -714,8 +714,8 @@ export async function orchestratorProcessHandoffs(projectRoot, state) {
  * @param {string} projectRoot
  * @returns {string}
  */
-export function getTasksSummary(projectRoot) {
-  const listResult = listTasks(projectRoot);
+export async function getTasksSummary(projectRoot) {
+  const listResult = await listTasks(projectRoot);
   const activeTasks = Array.isArray(listResult?.tasks) ? listResult.tasks : [];
   if (activeTasks.length === 0) return 'No tasks in the task queue.';
 
