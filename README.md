@@ -59,6 +59,15 @@ pnpm -C .agentkit agentkit:init -- --repoName MyProject --preset team --non-inte
 
 > **Windows users:** Shell scripts are also available at `.agentkit/bin/*.ps1` and `.agentkit/bin/*.cmd`.
 
+### After merging
+
+After merging `main` into a feature branch, run sync to regenerate files and avoid CI drift:
+
+```bash
+pnpm -C .agentkit agentkit:sync --overwrite
+git add -A && git status   # review, then commit
+```
+
 ---
 
 ## Adoption Guide: New Repos
