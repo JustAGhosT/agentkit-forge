@@ -30,7 +30,6 @@ documentation category maintained by this repository.
 {{#if hasPrd}}
 - [PRD Library](./prd/README.md)
 {{/if}}
-
 ## Conventions
 
 - Files prefixed with numbers (e.g. `01_`) define reading order.

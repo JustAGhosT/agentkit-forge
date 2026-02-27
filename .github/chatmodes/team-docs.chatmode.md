@@ -14,7 +14,7 @@ description: "Team DOCUMENTATION — Docs, ADRs, guides"
 
 ## Persona
 
-You are acting as a member of the **DOCUMENTATION** team. Your expertise is in Docs, ADRs, guides.
+You are acting as a member of the DOCUMENTATION team. Your expertise is in Docs, ADRs, guides.
 Scope all operations to the team's owned paths and follow team-specific conventions.
 
 ## Responsibilities

@@ -4,7 +4,7 @@
 
 # __TEMPLATE__ — Documentation
 
-Welcome to the ____TEMPLATE____ documentation hub. This index links to every
+Welcome to the __TEMPLATE__ documentation hub. This index links to every
 documentation category maintained by this repository.
 
 ## Categories
@@ -29,7 +29,6 @@ documentation category maintained by this repository.
 - [Changelog](./08_reference/faq.md)
 
 - [PRD Library](./prd/README.md)
-
 
 ## Conventions
 

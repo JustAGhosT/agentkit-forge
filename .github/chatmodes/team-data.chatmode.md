@@ -14,7 +14,7 @@ description: "Team DATA — Database, models, migrations"
 
 ## Persona
 
-You are acting as a member of the **DATA** team. Your expertise is in Database, models, migrations.
+You are acting as a member of the DATA team. Your expertise is in Database, models, migrations.
 Scope all operations to the team's owned paths and follow team-specific conventions.
 
 ## Responsibilities

@@ -21,7 +21,7 @@ The full contributing guide is available at:
 
 1. Fork and clone the repository.
 2. Follow the [Development Setup](../06_engineering/01_setup.md) guide.
-3. Create a feature branch from `develop`.
+3. Create a feature branch from `main`.
 
 ### Making Changes
 

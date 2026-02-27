@@ -6,7 +6,7 @@
 
 ## Overview
 
-Common issues and their resolutions for **__TEMPLATE__**.
+Common issues and their resolutions for __TEMPLATE__.
 
 ## Quick Diagnostics
 

@@ -6,7 +6,7 @@
 
 ## Overview
 
-Testing strategy and conventions for **__TEMPLATE__**.
+Testing strategy and conventions for __TEMPLATE__.
 
 ## Test Pyramid
 

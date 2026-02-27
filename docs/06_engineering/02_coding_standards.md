@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document defines the coding standards and conventions for **__TEMPLATE__**.
+This document defines the coding standards and conventions for __TEMPLATE__.
 
 ## Language & Style
 

@@ -6,7 +6,7 @@
 
 ## Overview
 
-Git branching strategy and contribution workflow for **__TEMPLATE__**.
+Git branching strategy and contribution workflow for __TEMPLATE__.
 
 ## Branch Strategy
 

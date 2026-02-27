@@ -6,13 +6,13 @@
 
 ## Overview
 
-Instructions for setting up a local development environment for **__TEMPLATE__**.
+Instructions for setting up a local development environment for __TEMPLATE__.
 
 ## Prerequisites
 
 | Tool | Version | Installation |
 |------|---------|-------------|
-| Node.js | <!-- e.g. >= 20 --> | [nodejs.org](https://nodejs.org) |
+| Node.js | <!-- e.g. >= 22 --> | [nodejs.org](https://nodejs.org) |
 | pnpm | <!-- e.g. >= 9 --> | `npm install -g pnpm` |
 | Docker | <!-- e.g. >= 24 --> | [docker.com](https://www.docker.com) |
 | <!-- Tool --> | <!-- Version --> | <!-- Link --> |

@@ -14,7 +14,7 @@ description: "Team FRONTEND — UI, components, PWA"
 
 ## Persona
 
-You are acting as a member of the **FRONTEND** team. Your expertise is in UI, components, PWA.
+You are acting as a member of the FRONTEND team. Your expertise is in UI, components, PWA.
 Scope all operations to the team's owned paths and follow team-specific conventions.
 
 ## Responsibilities

@@ -6,7 +6,7 @@
 
 ## Overview
 
-Security guidelines and practices for **__TEMPLATE__**.
+Security guidelines and practices for __TEMPLATE__.
 
 ## Principles
 

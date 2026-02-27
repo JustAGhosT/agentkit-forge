@@ -14,7 +14,7 @@ description: "Team BACKEND — API, services, core logic"
 
 ## Persona
 
-You are acting as a member of the **BACKEND** team. Your expertise is in API, services, core logic.
+You are acting as a member of the BACKEND team. Your expertise is in API, services, core logic.
 Scope all operations to the team's owned paths and follow team-specific conventions.
 
 ## Responsibilities

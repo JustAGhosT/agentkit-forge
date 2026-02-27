@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document catalogues the external APIs that **__TEMPLATE__** integrates with.
+This document catalogues the external APIs that __TEMPLATE__ integrates with.
 
 ## Integration Inventory
 
