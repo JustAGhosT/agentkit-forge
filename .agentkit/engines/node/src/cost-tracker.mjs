@@ -173,7 +173,7 @@ export function endSession({ agentkitRoot, projectRoot, sessionId }) {
   try {
     const result = runGitCommand(['diff', '--name-only', 'HEAD'], projectRoot);
     filesModified = result.trim().split('\n').filter(Boolean).length;
-  } catch { /* git not available — filesModified stays 0 */ }
+  } catch (error) { console.warn('[agentkit:cost] git diff failed:', error.message); /* git not available — filesModified stays 0 */ }
 
   session.endTime = now.toISOString();
   session.durationMs = now.getTime() - startTime.getTime();
