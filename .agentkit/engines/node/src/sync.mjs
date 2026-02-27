@@ -18,22 +18,29 @@ import {
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
+import { PROJECT_MAPPING, get, transform, check } from './sync.refactor.mjs';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
 function readYaml(filePath) {
   if (!existsSync(filePath)) return null;
   return yaml.load(readFileSync(filePath, 'utf-8'));
 }
+
 function readText(filePath) {
   if (!existsSync(filePath)) return null;
   return readFileSync(filePath, 'utf-8');
 }
+
 const RAW_TEMPLATE_VARS = new Set(['commandFlags']);
+
 function isShellScriptTarget(targetPath) {
   const ext = extname(targetPath || '').toLowerCase();
   return ext === '.sh' || ext === '.ps1';
 }
+
 /**
  * Renders a template by:
  * 1. Resolving {{#if var}}...{{/if}} conditional blocks
@@ -47,10 +54,13 @@ function isShellScriptTarget(targetPath) {
 function renderTemplate(template, vars, targetPath = '') {
   let result = template;
   const allowRawVars = isShellScriptTarget(targetPath);
+
   // Phase 1: Resolve {{#if var}}...{{/if}} blocks (supports nesting)
   result = resolveConditionals(result, vars);
+
   // Phase 2: Resolve {{#each var}}...{{/each}} blocks
   result = resolveEachBlocks(result, vars);
+
   // Phase 3: Replace {{key}} placeholders
   const sortedKeys = Object.keys(vars).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
@@ -64,6 +74,7 @@ function renderTemplate(template, vars, targetPath = '') {
         : JSON.stringify(value);
     result = result.split(placeholder).join(safeValue);
   }
+
   // Warn about unresolved placeholders (ignore block syntax remnants, including {{else}})
   const unresolved = result.match(/\{\{(?!#|\/|else\}\})([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g);
   if (unresolved && process.env.DEBUG) {
@@ -72,6 +83,7 @@ function renderTemplate(template, vars, targetPath = '') {
   }
   return result;
 }
+
 /**
  * Resolves {{#if var}}...{{/if}} conditional blocks.
  * A var is truthy if it exists in vars and is not null, undefined, false, empty string, or empty array.
@@ -109,6 +121,7 @@ function resolveConditionals(template, vars) {
   }
   return result;
 }
+
 /**
  * Resolves {{#each var}}...{{/each}} iteration blocks.
  * Inside the block, {{.}} refers to the current item (for string arrays).
@@ -140,6 +153,7 @@ function resolveEachBlocks(template, vars) {
       .join('');
   });
 }
+
 /**
  * Evaluates whether a template variable is "truthy" for {{#if}} blocks.
  * Falsy: undefined, null, false, '', 0, empty array []
@@ -151,6 +165,7 @@ function evalTruthy(value) {
   if (Array.isArray(value) && value.length === 0) return false;
   return true;
 }
+
 /**
  * Flattens a project.yaml object into a flat key→value map suitable for template rendering.
  * Uses a declarative mapping configuration for cleaner code.
@@ -158,89 +173,36 @@ function evalTruthy(value) {
 function flattenProjectYaml(project, docsSpec = null) {
   if (!project || typeof project !== 'object') return {};
   const vars = {};
-  // Top-level scalars
-  if (project.name) vars.projectName = project.name;
-  if (project.description) vars.projectDescription = project.description;
-  if (project.phase) vars.projectPhase = project.phase;
-  // Stack
-  const stack = project.stack || {};
-  if (Array.isArray(stack.languages)) vars.stackLanguages = stack.languages.join(', ');
-  if (stack.frameworks) {
-    const fw = stack.frameworks;
-    if (Array.isArray(fw.frontend)) vars.stackFrontendFrameworks = fw.frontend.join(', ');
-    if (Array.isArray(fw.backend)) vars.stackBackendFrameworks = fw.backend.join(', ');
-    if (Array.isArray(fw.css)) vars.stackCssFrameworks = fw.css.join(', ');
+
+  // Apply declarative mappings
+  for (const mapping of PROJECT_MAPPING) {
+    const value = get(project, mapping.src);
+    if (check(value, mapping.check)) {
+      const transformed = transform(value, mapping.type);
+      if (transformed !== undefined) {
+        vars[mapping.dest] = transformed;
+      }
+    }
   }
-  if (stack.orm) vars.stackOrm = String(stack.orm);
-  if (Array.isArray(stack.database)) vars.stackDatabase = stack.database.join(', ');
-  else if (stack.database) vars.stackDatabase = String(stack.database);
-  if (stack.search) vars.stackSearch = String(stack.search);
-  if (Array.isArray(stack.messaging)) vars.stackMessaging = stack.messaging.join(', ');
-  else if (stack.messaging) vars.stackMessaging = String(stack.messaging);
-  // Architecture
-  const arch = project.architecture || {};
-  if (arch.pattern) vars.architecturePattern = arch.pattern;
-  if (arch.apiStyle) vars.architectureApiStyle = arch.apiStyle;
-  vars.monorepo = !!arch.monorepo;
-  vars.hasMonorepo = !!arch.monorepo;
-  if (arch.monorepoTool) vars.monorepoTool = arch.monorepoTool;
-  // Explicit implementation patterns
-  const patterns = project.patterns || {};
-  vars.hasPatternRepository = !!patterns.repository;
-  vars.hasPatternCqrs = !!patterns.cqrs;
-  vars.hasPatternEventSourcing = !!patterns.eventSourcing;
-  vars.hasPatternMediator = !!patterns.mediator;
-  vars.hasPatternUnitOfWork = !!patterns.unitOfWork;
+
+  // --- Post-processing / Complex derivations ---
+
+  // hasAnyPattern
   vars.hasAnyPattern =
     vars.hasPatternRepository ||
     vars.hasPatternCqrs ||
     vars.hasPatternEventSourcing ||
     vars.hasPatternMediator ||
     vars.hasPatternUnitOfWork;
-  // Documentation
-  const docs = project.documentation || {};
-  vars.hasPrd = !!docs.hasPrd;
-  if (docs.prdPath) vars.prdPath = docs.prdPath;
+
+  // docsSpec overlay for PRD
   const prdSpec = docsSpec?.specialDirectories?.find((d) => d.id === 'prd');
   if (prdSpec) {
     vars.hasPrd = true;
     if (!vars.prdPath) vars.prdPath = prdSpec.path;
   }
-  vars.hasAdr = !!docs.hasAdr;
-  if (docs.adrPath) vars.adrPath = docs.adrPath;
-  vars.hasApiSpec = !!docs.hasApiSpec;
-  if (docs.apiSpecPath) vars.apiSpecPath = docs.apiSpecPath;
-  vars.hasTechnicalSpec = !!docs.hasTechnicalSpec;
-  if (docs.technicalSpecPath) vars.technicalSpecPath = docs.technicalSpecPath;
-  vars.hasDesignSystem = !!docs.hasDesignSystem;
-  if (docs.designSystemPath) vars.designSystemPath = docs.designSystemPath;
-  vars.hasStorybook = !!docs.storybook;
-  if (docs.designTokensPath) vars.designTokensPath = docs.designTokensPath;
-  // Deployment
-  const deploy = project.deployment || {};
-  if (deploy.cloudProvider) vars.cloudProvider = deploy.cloudProvider;
-  vars.containerized = !!deploy.containerized;
-  vars.hasContainerized = !!deploy.containerized;
-  if (Array.isArray(deploy.environments)) vars.environments = deploy.environments.join(', ');
-  if (deploy.iacTool) vars.iacTool = deploy.iacTool;
-  // Infrastructure
-  const infra = project.infrastructure || {};
-  if (infra.namingConvention) vars.infraNamingConvention = infra.namingConvention;
-  if (infra.defaultRegion) vars.infraDefaultRegion = infra.defaultRegion;
-  if (infra.org) vars.infraOrg = infra.org;
-  if (Array.isArray(infra.iacToolchain)) vars.infraIacToolchain = infra.iacToolchain.join(', ');
-  if (infra.stateBackend && infra.stateBackend !== 'none') {
-    vars.infraStateBackend = infra.stateBackend;
-    vars.hasStateBackend = true;
-  }
-  if (infra.modulesRepo) vars.infraModulesRepo = infra.modulesRepo;
-  if (infra.lockProvider && infra.lockProvider !== 'none')
-    vars.infraLockProvider = infra.lockProvider;
-  const tagging = infra.tagging || {};
-  if (Array.isArray(tagging.mandatory) && tagging.mandatory.length > 0) {
-    vars.infraMandatoryTags = tagging.mandatory.join(', ');
-    vars.hasInfraTags = true;
-  }
+
+  // hasAnyInfraConfig
   vars.hasAnyInfraConfig =
     !!vars.infraNamingConvention ||
     !!vars.infraDefaultRegion ||
@@ -248,53 +210,15 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.infraIacToolchain ||
     !!vars.infraStateBackend ||
     !!vars.infraMandatoryTags;
-  if (Array.isArray(tagging.optional)) vars.infraOptionalTags = tagging.optional.join(', ');
-  // Observability
-  const obs = project.observability || {};
-  const mon = obs.monitoring || {};
-  if (mon.provider && mon.provider !== 'none') {
-    vars.monitoringProvider = mon.provider;
-    vars.hasMonitoring = true;
-  }
-  vars.hasMonitoringDashboards = !!mon.dashboards;
-  const alerting = obs.alerting || {};
-  if (alerting.provider && alerting.provider !== 'none') {
-    vars.alertingProvider = alerting.provider;
-    vars.hasAlerting = true;
-  }
-  if (Array.isArray(alerting.channels)) vars.alertingChannels = alerting.channels.join(', ');
-  const tracing = obs.tracing || {};
-  if (tracing.provider && tracing.provider !== 'none') {
-    vars.tracingProvider = tracing.provider;
-    vars.hasTracing = true;
-  }
-  if (tracing.samplingRate !== undefined && tracing.samplingRate !== null) {
-    vars.tracingSamplingRate = String(tracing.samplingRate);
-  }
-  const obsLogging = obs.logging || {};
-  vars.hasCentralisedLogging = !!obsLogging.centralised;
-  if (obsLogging.retentionDays !== undefined && obsLogging.retentionDays !== null) {
-    vars.logRetentionDays = String(obsLogging.retentionDays);
-  }
+
+  // hasAnyMonitoring
   vars.hasAnyMonitoring =
     !!vars.monitoringProvider ||
     !!vars.alertingProvider ||
     !!vars.tracingProvider ||
     !!vars.hasCentralisedLogging;
-  // Compliance
-  const comp = project.compliance || {};
-  if (comp.framework && comp.framework !== 'none') {
-    vars.complianceFramework = comp.framework;
-    vars.hasCompliance = true;
-  }
-  const dr = comp.disasterRecovery || {};
-  if (dr.rpoHours !== undefined && dr.rpoHours !== null) vars.drRpoHours = String(dr.rpoHours);
-  if (dr.rtoHours !== undefined && dr.rtoHours !== null) vars.drRtoHours = String(dr.rtoHours);
-  if (dr.backupSchedule && dr.backupSchedule !== 'none') {
-    vars.drBackupSchedule = dr.backupSchedule;
-    vars.drTestSchedule = dr.backupSchedule;
-  }
-  vars.hasGeoRedundancy = !!dr.geoRedundancy;
+
+  // hasDr
   vars.hasDr =
     !!vars.drRpoHours ||
     !!vars.drRtoHours ||
@@ -309,112 +233,40 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.drBackupSchedule ||
     !!vars.drTestSchedule ||
     !!vars.auditEventBus;
-  // Process
-  const proc = project.process || {};
-  if (proc.branchStrategy) vars.branchStrategy = proc.branchStrategy;
-  if (proc.commitConvention) vars.commitConvention = proc.commitConvention;
-  if (proc.codeReview) vars.codeReview = proc.codeReview;
-  if (proc.teamSize) vars.teamSize = proc.teamSize;
-  // Testing
-  const testing = project.testing || {};
-  if (Array.isArray(testing.unit)) vars.testingUnit = testing.unit.join(', ');
-  if (Array.isArray(testing.integration)) vars.testingIntegration = testing.integration.join(', ');
-  if (Array.isArray(testing.e2e)) vars.testingE2e = testing.e2e.join(', ');
-  if (testing.coverage !== undefined && testing.coverage !== null)
-    vars.testingCoverage = String(testing.coverage);
+
   // Integrations (kept as array for {{#each}})
   if (Array.isArray(project.integrations)) {
     vars.integrations = project.integrations;
     vars.hasIntegrations = project.integrations.length > 0;
   }
-  // Cross-cutting concerns
-  const cc = project.crosscutting || {};
-  flattenCrosscutting(cc, vars);
+
   return vars;
 }
+
 /**
  * Flattens the crosscutting section of project.yaml into template vars.
  * @deprecated - Merged into flattenProjectYaml via declarative mappings.
  * Kept exported for test compatibility if any tests import it directly.
  */
 function flattenCrosscutting(cc, vars) {
-  // Logging
-  const logging = cc.logging || {};
-  if (logging.framework && logging.framework !== 'none') {
-    vars.loggingFramework = logging.framework;
-    vars.hasLogging = true;
+  // Delegate to main flatten function by wrapping cc in a project-like structure
+  // This is a backward compatibility shim.
+  const tempProject = { crosscutting: cc };
+  const mapped = flattenProjectYaml(tempProject);
+
+  // Copy mapped crosscutting vars into the target vars object
+  // Filter out keys that don't belong to crosscutting to avoid noise
+  for (const [key, val] of Object.entries(mapped)) {
+    if (key !== 'hasAnyPattern' &&
+        key !== 'hasAnyInfraConfig' &&
+        key !== 'hasAnyMonitoring' &&
+        key !== 'hasDr' &&
+        key !== 'hasAnyComplianceConfig') {
+      vars[key] = val;
+    }
   }
-  vars.hasStructuredLogging = !!logging.structured;
-  vars.hasCorrelationId = !!logging.correlationId;
-  if (logging.level) vars.loggingLevel = logging.level;
-  if (Array.isArray(logging.sink)) vars.loggingSinks = logging.sink.join(', ');
-  // Error handling
-  const errors = cc.errorHandling || {};
-  if (errors.strategy && errors.strategy !== 'none') {
-    vars.errorStrategy = errors.strategy;
-    vars.hasErrorHandling = true;
-  }
-  vars.hasGlobalHandler = !!errors.globalHandler;
-  vars.hasCustomExceptions = !!errors.customExceptions;
-  // Authentication
-  const auth = cc.authentication || {};
-  if (auth.provider && auth.provider !== 'none') {
-    vars.authProvider = auth.provider;
-    vars.hasAuth = true;
-  }
-  if (auth.strategy) vars.authStrategy = auth.strategy;
-  vars.hasRbac = !!auth.rbac;
-  vars.hasMultiTenant = !!auth.multiTenant;
-  // Caching
-  const cache = cc.caching || {};
-  if (cache.provider && cache.provider !== 'none') {
-    vars.cachingProvider = cache.provider;
-    vars.hasCaching = true;
-  }
-  if (Array.isArray(cache.patterns)) vars.cachingPatterns = cache.patterns.join(', ');
-  vars.hasDistributedCache = !!cache.distributedCache;
-  // API
-  const api = cc.api || {};
-  if (api.versioning && api.versioning !== 'none') {
-    vars.apiVersioning = api.versioning;
-    vars.hasApiVersioning = true;
-  }
-  if (api.pagination && api.pagination !== 'none') {
-    vars.apiPagination = api.pagination;
-    vars.hasApiPagination = true;
-  }
-  if (api.responseFormat) vars.apiResponseFormat = api.responseFormat;
-  vars.hasRateLimiting = !!api.rateLimiting;
-  // Database
-  const db = cc.database || {};
-  if (db.migrations && db.migrations !== 'none') {
-    vars.dbMigrations = db.migrations;
-    vars.hasDbMigrations = true;
-  }
-  vars.hasDbSeeding = !!db.seeding;
-  if (db.transactionStrategy && db.transactionStrategy !== 'none') {
-    vars.dbTransactionStrategy = db.transactionStrategy;
-  }
-  vars.hasConnectionPooling = !!db.connectionPooling;
-  // Performance
-  const perf = cc.performance || {};
-  vars.hasLazyLoading = !!perf.lazyLoading;
-  vars.hasImageOptimization = !!perf.imageOptimization;
-  if (perf.bundleBudget) vars.bundleBudget = String(perf.bundleBudget);
-  // Feature flags
-  const ff = cc.featureFlags || {};
-  if (ff.provider && ff.provider !== 'none') {
-    vars.featureFlagProvider = ff.provider;
-    vars.hasFeatureFlags = true;
-  }
-  // Environments
-  const envs = cc.environments || {};
-  if (Array.isArray(envs.naming)) vars.envNames = envs.naming.join(', ');
-  if (envs.configStrategy && envs.configStrategy !== 'none') {
-    vars.envConfigStrategy = envs.configStrategy;
-  }
-  if (envs.envFilePattern) vars.envFilePattern = envs.envFilePattern;
 }
+
 /**
  * Sanitizes a template variable value to prevent injection.
  * Strips shell metacharacters that could cause command injection if the
@@ -426,6 +278,7 @@ function sanitizeTemplateValue(value) {
   s = s.replace(/[`$\\;|&<>!{}]/g, '');
   return s;
 }
+
 function formatCommandFlags(flags) {
   if (!Array.isArray(flags) || flags.length === 0) return '';
   const rows = flags.map(
@@ -436,6 +289,7 @@ function formatCommandFlags(flags) {
     '\n'
   );
 }
+
 function getGeneratedHeader(version, repoName, ext) {
   const comment = getCommentStyle(ext);
   if (!comment) return '';
@@ -446,6 +300,7 @@ function getGeneratedHeader(version, repoName, ext) {
     '',
   ].join('\n');
 }
+
 function getCommentStyle(ext) {
   switch (ext) {
     case '.md':
@@ -467,9 +322,11 @@ function getCommentStyle(ext) {
       return { start: '#', end: '' };
   }
 }
+
 function ensureDir(dirPath) {
   mkdirSync(dirPath, { recursive: true });
 }
+
 // Project-owned files: generated once as scaffolds, then owned by the consuming repo.
 // Sync will NOT overwrite these if they already exist at the destination.
 const SCAFFOLD_ONCE_ROOT_FILES = new Set([
@@ -482,17 +339,20 @@ const SCAFFOLD_ONCE_ROOT_FILES = new Set([
   '.prettierrc',
   '.markdownlint.json',
 ]);
+
 const SCAFFOLD_ONCE_DIRS = [
   'docs/',
   '.vscode/',
   '.github/ISSUE_TEMPLATE/',
   '.github/instructions/',
 ];
+
 // GitHub root files that are scaffold-once (matched by full relative path)
 const SCAFFOLD_ONCE_GITHUB_FILES = new Set([
   '.github/PULL_REQUEST_TEMPLATE.md',
   '.github/copilot-instructions.md',
 ]);
+
 /**
  * Check if a relative path is a scaffold-once file (project-owned content).
  * These are only written on first sync; subsequent syncs skip them if they exist.
@@ -507,10 +367,12 @@ function isScaffoldOnce(relPath) {
   }
   return false;
 }
+
 function writeOutput(filePath, content) {
   ensureDir(dirname(filePath));
   writeFileSync(filePath, content, 'utf-8');
 }
+
 function* walkDir(dir) {
   if (!existsSync(dir)) return;
   let entries = [];
@@ -529,9 +391,11 @@ function* walkDir(dir) {
     }
   }
 }
+
 // ---------------------------------------------------------------------------
 // Core sync logic
 // ---------------------------------------------------------------------------
+
 function simpleDiff(a, b) {
   const aLines = a.split(/\r?\n/);
   const bLines = b.split(/\r?\n/);
@@ -549,22 +413,7 @@ function simpleDiff(a, b) {
   }
   return out.slice(0, 20).join('\n') + (out.length > 20 ? '\n...' : '');
 }
-/**
- * Copies rendered template outputs from the temp directory into the project root,
- * cleans up stale files from previous syncs, and writes a new manifest.
- *
- * @param {string} agentkitRoot - Absolute path to the .agentkit directory.
- * @param {string} projectRoot - Absolute path to the consuming project root.
- * @param {string} tmpDir - Absolute path to the temporary directory containing rendered outputs.
- * @param {Object} newManifestFiles - Map of relative paths to their hash metadata.
- * @param {Object} flags - CLI flags (e.g., `no-clean`, `overwrite`, `force`).
- * @param {Object} vars - Flattened template variables (used for manifest metadata).
- * @param {string} version - AgentKit version string written to the manifest.
- * @param {Function} logVerbose - Logger function for verbose output.
- * @returns {{ count: number, skippedScaffold: number, cleanedCount: number }}
- *   Sync statistics: `count` = files written, `skippedScaffold` = project-owned files
- *   skipped because they already exist, `cleanedCount` = stale files removed.
- */
+
 function applySync(
   agentkitRoot,
   projectRoot,
@@ -716,6 +565,7 @@ function handleDryRunOrDiff(tmpDir, projectRoot, flags, newManifestFiles, fileSu
   }
   // --- Diff: show what would change and exit without writing ---
   if (diff) {
+    log('[agentkit:sync] Diff mode — showing what would change.');
     const resolvedRoot = resolve(projectRoot) + sep;
     const overwrite = flags?.overwrite || flags?.force;
     let createCount = 0;
@@ -1077,8 +927,11 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     }
   }
 }
+
+// ---------------------------------------------------------------------------
 // Sync helpers
 // ---------------------------------------------------------------------------
+
 /** All known render target names. */
 const ALL_RENDER_TARGETS = [
   'claude',
@@ -1093,6 +946,7 @@ const ALL_RENDER_TARGETS = [
   'ai',
   'mcp',
 ];
+
 /** Tool display names for summary output. */
 const TOOL_LABELS = {
   claude: 'Claude Code',
@@ -1111,6 +965,7 @@ const TOOL_LABELS = {
   universal: 'Universal',
   editor: 'Editor configs',
 };
+
 /**
  * Categorizes a generated file path into a tool/category name for summary.
  */
@@ -1145,6 +1000,7 @@ function categorizeFile(manifestKey) {
     return 'editor';
   return 'universal';
 }
+
 /**
  * Prints a grouped post-sync summary.
  */
@@ -1167,6 +1023,7 @@ function printSyncSummary(fileSummary, targets, opts = {}) {
     for (const line of otherEntries) console.log(line);
   }
 }
+
 /**
  * Resolves the active render targets from overlay settings + CLI flags.
  * - If --only flag is set, use only those targets (comma-separated)
@@ -1195,15 +1052,18 @@ function resolveRenderTargets(overlayTargets, flags) {
   // Default: generate everything (backward compatibility)
   return new Set(ALL_RENDER_TARGETS);
 }
+
 function mergePermissions(base, overlay) {
   const allow = [...new Set([...(base.allow || []), ...(overlay.allow || [])])];
   const deny = [...new Set([...(base.deny || []), ...(overlay.deny || [])])];
   return { allow, deny };
 }
+
 function computeProjectCompleteness(project) {
   if (!project || typeof project !== 'object') {
     return { percent: 0, present: 0, total: 0, missing: [] };
   }
+
   const fields = [
     'name',
     'description',
@@ -1229,12 +1089,15 @@ function computeProjectCompleteness(project) {
     'patterns.mediator',
     'patterns.unitOfWork',
   ];
+
   const get = (obj, path) =>
     path
       .split('.')
       .reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
+
   const missing = [];
   let present = 0;
+
   for (const field of fields) {
     const value = get(project, field);
     if (
@@ -1248,6 +1111,7 @@ function computeProjectCompleteness(project) {
       present += 1;
     }
   }
+
   return {
     percent: Math.round((present / fields.length) * 100),
     present,
@@ -1255,22 +1119,28 @@ function computeProjectCompleteness(project) {
     missing,
   };
 }
+
 function syncDirectCopy(templatesDir, srcSubdir, tmpDir, destSubdir, vars, version, repoName) {
   const srcDir = resolve(templatesDir, srcSubdir);
   if (!existsSync(srcDir)) return;
+
   for (const file of walkDir(srcDir)) {
     const relPath = relative(srcDir, file);
     const destPath = resolve(tmpDir, destSubdir, relPath);
     const ext = extname(file);
+
     let content = readFileSync(file, 'utf-8');
     content = renderTemplate(content, { ...vars, repoName }, file);
+
     // Add generated header for non-JSON, non-gitkeep files
     if (ext !== '.json' && basename(file) !== '.gitkeep') {
       content = insertHeader(content, ext, version, repoName);
     }
+
     writeOutput(destPath, content);
   }
 }
+
 /**
  * Inserts the GENERATED header into content, respecting shebangs and frontmatter.
  * - .sh/.ps1 files with shebang: header goes after shebang line
@@ -1281,6 +1151,7 @@ function insertHeader(content, ext, version, repoName) {
   if (content.includes('GENERATED by AgentKit Forge')) return content;
   const header = getGeneratedHeader(version, repoName, ext);
   if (!header) return content;
+
   // Shell scripts: insert after shebang line
   if ((ext === '.sh' || ext === '.ps1') && content.startsWith('#!')) {
     const firstNewline = content.indexOf('\n');
@@ -1288,6 +1159,7 @@ function insertHeader(content, ext, version, repoName) {
       return content.substring(0, firstNewline + 1) + header + content.substring(firstNewline + 1);
     }
   }
+
   // Markdown/mdc with YAML frontmatter: insert after closing ---
   if ((ext === '.md' || ext === '.mdc') && content.startsWith('---')) {
     const closingIdx = content.indexOf('\n---', 3);
@@ -1305,25 +1177,31 @@ function insertHeader(content, ext, version, repoName) {
       return content + '\n' + header;
     }
   }
+
   return header + content;
 }
+
 function syncClaudeSettings(templatesDir, tmpDir, vars, version, mergedPermissions, settingsSpec) {
   const templatePath = resolve(templatesDir, 'claude', 'settings.json');
   if (!existsSync(templatePath)) {
     console.warn('[agentkit:sync] Warning: claude/settings.json template not found');
     return;
   }
+
   let template = readFileSync(templatePath, 'utf-8');
   // The settings.json template has placeholder arrays — replace with merged permissions
   const settings = JSON.parse(renderTemplate(template, vars));
+
   // Override permissions with merged values
   if (settings.permissions) {
     settings.permissions.allow = mergedPermissions.allow;
     settings.permissions.deny = mergedPermissions.deny;
   }
+
   const destPath = resolve(tmpDir, '.claude', 'settings.json');
   writeOutput(destPath, JSON.stringify(settings, null, 2) + '\n');
 }
+
 function syncClaudeCommands(
   templatesDir,
   tmpDir,
@@ -1335,15 +1213,18 @@ function syncClaudeCommands(
 ) {
   const commandsDir = resolve(templatesDir, 'claude', 'commands');
   if (!existsSync(commandsDir)) return;
+
   const commandsByName = new Map();
   for (const cmd of commandsSpec.commands || []) {
     if (cmd.name) commandsByName.set(cmd.name, cmd);
   }
+
   const files = readdirSync(commandsDir);
   for (const file of files) {
     if (file === 'team-TEMPLATE.md') continue;
     const srcPath = resolve(commandsDir, file);
     if (statSync(srcPath).isDirectory()) continue;
+
     const baseName = file.replace(/\.md$/, '');
     const cmdSpec = commandsByName.get(baseName);
     const cmdVars = { ...vars };
@@ -1355,15 +1236,18 @@ function syncClaudeCommands(
       cmdVars.commandFlags = formatCommandFlags(cmdSpec.flags);
       cmdVars.commandType = cmdSpec.type || 'utility';
     }
+
     let content = readFileSync(srcPath, 'utf-8');
     content = renderTemplate(content, cmdVars);
     content = insertHeader(content, extname(file), version, repoName);
     writeOutput(resolve(tmpDir, '.claude', 'commands', file), content);
   }
+
   // Generate team commands from template
   const teamTemplatePath = resolve(commandsDir, 'team-TEMPLATE.md');
   if (existsSync(teamTemplatePath) && teamsSpec.teams) {
     const teamTemplate = readFileSync(teamTemplatePath, 'utf-8');
+
     for (const team of teamsSpec.teams) {
       const teamVars = {
         ...vars,
@@ -1376,6 +1260,7 @@ function syncClaudeCommands(
           ? team['handoff-chain'].join(', ')
           : '',
       };
+
       let content = renderTemplate(teamTemplate, teamVars);
       content = insertHeader(content, '.md', version, repoName);
       const fileName = `team-${team.id}.md`;
@@ -1383,6 +1268,7 @@ function syncClaudeCommands(
     }
   }
 }
+
 function normalizeGlobStem(glob) {
   if (typeof glob !== 'string' || !glob.trim()) return '';
   const raw = glob.trim().replace(/\\/g, '/');
@@ -1395,6 +1281,7 @@ function normalizeGlobStem(glob) {
     .replace(/\.(ts|tsx|js|jsx|mjs|mts|cs|py|rs|tf|md|json|yaml|yml)$/i, '')
     .replace(/^\/+|\/+$/g, '');
 }
+
 function hasGlobOverlap(a, b) {
   const aa = normalizeGlobStem(a);
   const bb = normalizeGlobStem(b);
@@ -1409,15 +1296,18 @@ function hasGlobOverlap(a, b) {
   }
   return true;
 }
+
 function buildAgentDomainRulesMarkdown(agent, rulesSpec) {
   if (!rulesSpec?.rules || !Array.isArray(agent?.focus)) return '';
   const matched = [];
+
   for (const ruleSet of rulesSpec.rules) {
     if (!Array.isArray(ruleSet['applies-to'])) continue;
     const overlaps = ruleSet['applies-to'].some((ruleGlob) =>
       agent.focus.some((focusGlob) => hasGlobOverlap(focusGlob, ruleGlob))
     );
     if (!overlaps) continue;
+
     const conventions = Array.isArray(ruleSet.conventions)
       ? ruleSet.conventions
           .map((c) => {
@@ -1428,16 +1318,21 @@ function buildAgentDomainRulesMarkdown(agent, rulesSpec) {
           })
           .join('\n')
       : '';
+
     if (conventions) {
       matched.push(`### ${ruleSet.domain}\n\n${conventions}`);
     }
   }
+
   return matched.join('\n\n');
 }
+
 function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec) {
   const agentTemplatePath = resolve(templatesDir, 'claude', 'agents', 'TEMPLATE.md');
   if (!existsSync(agentTemplatePath) || !agentsSpec.agents) return;
+
   const agentTemplate = readFileSync(agentTemplatePath, 'utf-8');
+
   // agents.yaml has nested structure: agents.engineering: [...], agents.design: [...], etc.
   // Flatten all agents from all categories
   const allAgents = [];
@@ -1447,6 +1342,7 @@ function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsS
       allAgents.push({ ...agent, category: agent.category || category });
     }
   }
+
   for (const agent of allAgents) {
     const focusList = Array.isArray(agent.focus)
       ? agent.focus.map((f) => `- \`${f}\``).join('\n')
@@ -1481,6 +1377,7 @@ function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsS
           })
           .join('\n\n')
       : '';
+
     const agentVars = {
       ...vars,
       agentId: agent.id,
@@ -1499,12 +1396,14 @@ function syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsS
       hasAgentConventions: !!conventionsList,
       agentConventions: conventionsList,
     };
+
     let content = renderTemplate(agentTemplate, agentVars);
     content = insertHeader(content, '.md', version, repoName);
     const destPath = resolve(tmpDir, '.claude', 'agents', agent.category, `${agent.id}.md`);
     writeOutput(destPath, content);
   }
 }
+
 function syncCopilot(templatesDir, tmpDir, vars, version, repoName) {
   // Main copilot instructions
   const mainPath = resolve(templatesDir, 'copilot', 'copilot-instructions.md');
@@ -1514,6 +1413,7 @@ function syncCopilot(templatesDir, tmpDir, vars, version, repoName) {
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.github', 'copilot-instructions.md'), content);
   }
+
   // Path-specific instructions
   const instrDir = resolve(templatesDir, 'copilot', 'instructions');
   if (existsSync(instrDir)) {
@@ -1528,9 +1428,11 @@ function syncCopilot(templatesDir, tmpDir, vars, version, repoName) {
     );
   }
 }
+
 function syncGitHub(templatesDir, tmpDir, vars, version, repoName) {
   const githubDir = resolve(templatesDir, 'github');
   if (!existsSync(githubDir)) return;
+
   // CI workflow
   const ciPath = resolve(githubDir, 'ai-framework-ci.yml');
   if (existsSync(ciPath)) {
@@ -1539,6 +1441,7 @@ function syncGitHub(templatesDir, tmpDir, vars, version, repoName) {
     content = insertHeader(content, '.yml', version, repoName);
     writeOutput(resolve(tmpDir, '.github', 'workflows', 'ai-framework-ci.yml'), content);
   }
+
   // Issue template
   const issueDir = resolve(githubDir, 'ISSUE_TEMPLATE');
   if (existsSync(issueDir)) {
@@ -1552,6 +1455,7 @@ function syncGitHub(templatesDir, tmpDir, vars, version, repoName) {
       repoName
     );
   }
+
   // PR template
   const prPath = resolve(githubDir, 'PULL_REQUEST_TEMPLATE.md');
   if (existsSync(prPath)) {
@@ -1561,13 +1465,16 @@ function syncGitHub(templatesDir, tmpDir, vars, version, repoName) {
     writeOutput(resolve(tmpDir, '.github', 'PULL_REQUEST_TEMPLATE.md'), content);
   }
 }
+
 function syncRootDocs(templatesDir, tmpDir, vars, version, repoName) {
   const rootDir = resolve(templatesDir, 'root');
   if (!existsSync(rootDir)) return;
+
   const files = readdirSync(rootDir);
   for (const file of files) {
     const srcPath = resolve(rootDir, file);
     if (statSync(srcPath).isDirectory()) continue;
+
     let content = readFileSync(srcPath, 'utf-8');
     content = renderTemplate(content, { ...vars, repoName });
     const ext = extname(file);
@@ -1575,9 +1482,11 @@ function syncRootDocs(templatesDir, tmpDir, vars, version, repoName) {
     writeOutput(resolve(tmpDir, file), content);
   }
 }
+
 function syncAgentsMd(templatesDir, tmpDir, vars, version, repoName) {
   const agentsMdPath = resolve(templatesDir, 'root', 'AGENTS.md');
   if (!existsSync(agentsMdPath)) return;
+
   let content = readFileSync(agentsMdPath, 'utf-8');
   content = renderTemplate(content, { ...vars, repoName });
   // Clean up blank lines left by unresolved conditionals
@@ -1585,9 +1494,11 @@ function syncAgentsMd(templatesDir, tmpDir, vars, version, repoName) {
   content = insertHeader(content, '.md', version, repoName);
   writeOutput(resolve(tmpDir, 'AGENTS.md'), content);
 }
+
 function syncClaudeMd(templatesDir, tmpDir, vars, version, repoName) {
   const claudeMdPath = resolve(templatesDir, 'claude', 'CLAUDE.md');
   if (!existsSync(claudeMdPath)) return;
+
   let content = readFileSync(claudeMdPath, 'utf-8');
   content = renderTemplate(content, { ...vars, repoName });
   // Clean up blank lines left by unresolved conditionals
@@ -1595,6 +1506,7 @@ function syncClaudeMd(templatesDir, tmpDir, vars, version, repoName) {
   content = insertHeader(content, '.md', version, repoName);
   writeOutput(resolve(tmpDir, 'CLAUDE.md'), content);
 }
+
 function syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName) {
   // .editorconfig, .prettierrc, .markdownlint.json — look in templates/root or templates/ root-level
   const configs = [
@@ -1602,22 +1514,28 @@ function syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName) {
     { src: 'root/.prettierrc', dest: '.prettierrc' },
     { src: 'root/.markdownlint.json', dest: '.markdownlint.json' },
   ];
+
   for (const cfg of configs) {
     const srcPath = resolve(templatesDir, cfg.src);
     if (!existsSync(srcPath)) continue;
+
     let content = readFileSync(srcPath, 'utf-8');
     content = renderTemplate(content, { ...vars, repoName });
     const ext = extname(cfg.dest);
+
     // JSON files don't get headers
     if (ext !== '.json') {
       const header = getGeneratedHeader(version, repoName, ext);
       if (header) content = header + content;
     }
+
     writeOutput(resolve(tmpDir, cfg.dest), content);
   }
 }
+
 function syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec) {
   if (!teamsSpec.teams) return;
+
   for (const team of teamsSpec.teams) {
     const scope = Array.isArray(team.scope) ? team.scope.join(', ') : team.scope || '**/*';
     const globs = Array.isArray(team.scope) ? team.scope.join(', ') : '';
@@ -1644,19 +1562,24 @@ function syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec) {
       '4. Use /handoff when passing work to another team',
       '',
     ].join('\n');
+
     content = renderTemplate(content, { ...vars, repoName });
     content = insertHeader(content, '.mdc', version, repoName);
     const fileName = `team-${team.id}.mdc`;
     writeOutput(resolve(tmpDir, '.cursor', 'rules', fileName), content);
   }
 }
+
 function syncCopilotPrompts(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
   const templatePath = resolve(templatesDir, 'copilot', 'prompts', 'TEMPLATE.prompt.md');
   if (!existsSync(templatePath) || !commandsSpec.commands) return;
+
   const template = readFileSync(templatePath, 'utf-8');
+
   for (const cmd of commandsSpec.commands) {
     // Skip team commands — they map to chat modes instead
     if (cmd.type === 'team') continue;
+
     const desc =
       typeof cmd.description === 'string' ? cmd.description.trim() : cmd.description || '';
     const cmdVars = {
@@ -1664,15 +1587,19 @@ function syncCopilotPrompts(templatesDir, tmpDir, vars, version, repoName, comma
       commandName: cmd.name,
       commandDescription: desc,
     };
+
     let content = renderTemplate(template, cmdVars);
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.github', 'prompts', `${cmd.name}.prompt.md`), content);
   }
 }
+
 function syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec) {
   const templatePath = resolve(templatesDir, 'copilot', 'agents', 'TEMPLATE.agent.md');
   if (!existsSync(templatePath) || !agentsSpec.agents) return;
+
   const template = readFileSync(templatePath, 'utf-8');
+
   // Flatten all agents from all categories
   const allAgents = [];
   for (const [category, agents] of Object.entries(agentsSpec.agents)) {
@@ -1681,6 +1608,7 @@ function syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agents
       allAgents.push({ ...agent, category: agent.category || category });
     }
   }
+
   for (const agent of allAgents) {
     const focusList = Array.isArray(agent.focus)
       ? agent.focus.map((f) => `- \`${f}\``).join('\n')
@@ -1697,6 +1625,7 @@ function syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agents
     const conventionsList = Array.isArray(agent.conventions)
       ? agent.conventions.map((c) => `- ${c}`).join('\n')
       : '';
+
     const agentVars = {
       ...vars,
       agentId: agent.id,
@@ -1711,15 +1640,19 @@ function syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agents
       hasAgentConventions: !!conventionsList,
       agentConventions: conventionsList,
     };
+
     let content = renderTemplate(template, agentVars);
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.github', 'agents', `${agent.id}.agent.md`), content);
   }
 }
+
 function syncCopilotChatModes(templatesDir, tmpDir, vars, version, repoName, teamsSpec) {
   const templatePath = resolve(templatesDir, 'copilot', 'chatmodes', 'TEMPLATE.chatmode.md');
   if (!existsSync(templatePath) || !teamsSpec.teams) return;
+
   const template = readFileSync(templatePath, 'utf-8');
+
   for (const team of teamsSpec.teams) {
     const scope = Array.isArray(team.scope) ? team.scope.join(', ') : team.scope || '**/*';
     const teamVars = {
@@ -1733,11 +1666,13 @@ function syncCopilotChatModes(templatesDir, tmpDir, vars, version, repoName, tea
         ? team['handoff-chain'].join(', ')
         : '',
     };
+
     let content = renderTemplate(template, teamVars);
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.github', 'chatmodes', `team-${team.id}.chatmode.md`), content);
   }
 }
+
 function syncGemini(templatesDir, tmpDir, vars, version, repoName) {
   // GEMINI.md
   const geminiMdPath = resolve(templatesDir, 'gemini', 'GEMINI.md');
@@ -1748,6 +1683,7 @@ function syncGemini(templatesDir, tmpDir, vars, version, repoName) {
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, 'GEMINI.md'), content);
   }
+
   // .gemini/styleguide.md
   const stylePath = resolve(templatesDir, 'gemini', 'styleguide.md');
   if (existsSync(stylePath)) {
@@ -1757,6 +1693,7 @@ function syncGemini(templatesDir, tmpDir, vars, version, repoName) {
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.gemini', 'styleguide.md'), content);
   }
+
   // .gemini/config.yaml
   const configPath = resolve(templatesDir, 'gemini', 'config.yaml');
   if (existsSync(configPath)) {
@@ -1766,21 +1703,27 @@ function syncGemini(templatesDir, tmpDir, vars, version, repoName) {
     writeOutput(resolve(tmpDir, '.gemini', 'config.yaml'), content);
   }
 }
+
 function syncWarp(templatesDir, tmpDir, vars, version, repoName) {
   const warpMdPath = resolve(templatesDir, 'warp', 'WARP.md');
   if (!existsSync(warpMdPath)) return;
+
   let content = readFileSync(warpMdPath, 'utf-8');
   content = renderTemplate(content, { ...vars, repoName });
   content = content.replace(/(\r?\n){3,}/g, '\n\n');
   content = insertHeader(content, '.md', version, repoName);
   writeOutput(resolve(tmpDir, 'WARP.md'), content);
 }
+
 function syncCursorCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
   const templatePath = resolve(templatesDir, 'cursor', 'commands', 'TEMPLATE.md');
   if (!existsSync(templatePath) || !commandsSpec.commands) return;
+
   const template = readFileSync(templatePath, 'utf-8');
+
   for (const cmd of commandsSpec.commands) {
     if (cmd.type === 'team') continue;
+
     const desc =
       typeof cmd.description === 'string' ? cmd.description.trim() : cmd.description || '';
     const cmdVars = {
@@ -1788,11 +1731,13 @@ function syncCursorCommands(templatesDir, tmpDir, vars, version, repoName, comma
       commandName: cmd.name,
       commandDescription: desc,
     };
+
     let content = renderTemplate(template, cmdVars);
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.cursor', 'commands', `${cmd.name}.md`), content);
   }
 }
+
 function syncSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec, outputPrefix) {
   // Shared logic for Codex (.agents/skills/) and Claude (.claude/skills/)
   // outputPrefix is either '.agents' or '.claude'
@@ -1801,9 +1746,12 @@ function syncSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec,
       ? resolve(templatesDir, 'codex', 'skills', 'TEMPLATE', 'SKILL.md')
       : resolve(templatesDir, 'claude', 'skills', 'TEMPLATE', 'SKILL.md');
   if (!existsSync(templateDir) || !commandsSpec.commands) return;
+
   const template = readFileSync(templateDir, 'utf-8');
+
   for (const cmd of commandsSpec.commands) {
     if (cmd.type === 'team') continue;
+
     const desc =
       typeof cmd.description === 'string' ? cmd.description.trim() : cmd.description || '';
     const cmdVars = {
@@ -1811,21 +1759,27 @@ function syncSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec,
       commandName: cmd.name,
       commandDescription: desc,
     };
+
     let content = renderTemplate(template, cmdVars);
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, outputPrefix, 'skills', cmd.name, 'SKILL.md'), content);
   }
 }
+
 function syncCodexSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
   syncSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec, '.agents');
 }
+
 function syncClaudeSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
   syncSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec, '.claude');
 }
+
 function syncClineRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec) {
   const templatePath = resolve(templatesDir, 'cline', 'clinerules', 'TEMPLATE.md');
   if (!existsSync(templatePath) || !rulesSpec.rules) return;
+
   const template = readFileSync(templatePath, 'utf-8');
+
   for (const ruleSet of rulesSpec.rules) {
     const appliesTo = Array.isArray(ruleSet['applies-to'])
       ? ruleSet['applies-to'].map((p) => `- \`${p}\``).join('\n')
@@ -1838,6 +1792,7 @@ function syncClineRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec
           })
           .join('\n')
       : '';
+
     const ruleVars = {
       ...vars,
       ruleDomain: ruleSet.domain,
@@ -1848,15 +1803,18 @@ function syncClineRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec
       ruleAppliesTo: appliesTo,
       ruleConventions: conventions,
     };
+
     let content = renderTemplate(template, ruleVars);
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.clinerules', `${ruleSet.domain}.md`), content);
   }
 }
+
 function syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec) {
   const agents = [
     { id: 'orchestrator', role: 'coordinator', capabilities: ['delegate', 'aggregate', 'monitor'] },
   ];
+
   // Build agent entries from agents.yaml
   if (agentsSpec?.agents) {
     for (const [category, agentList] of Object.entries(agentsSpec.agents)) {
@@ -1878,6 +1836,7 @@ function syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec) {
       }
     }
   }
+
   // Build handoff chains from teams.yaml
   const handoffChains = {};
   if (teamsSpec?.teams) {
@@ -1888,6 +1847,7 @@ function syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec) {
       }
     }
   }
+
   const config = {
     a2a: {
       enabled: true,
@@ -1912,13 +1872,17 @@ function syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec) {
       taskTypes: VALID_TASK_TYPES,
     },
   };
+
   const destPath = resolve(tmpDir, 'mcp', 'a2a-config.json');
   writeOutput(destPath, JSON.stringify(config, null, 2) + '\n');
 }
+
 function syncRooRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec) {
   const templatePath = resolve(templatesDir, 'roo', 'rules', 'TEMPLATE.md');
   if (!existsSync(templatePath) || !rulesSpec.rules) return;
+
   const template = readFileSync(templatePath, 'utf-8');
+
   for (const ruleSet of rulesSpec.rules) {
     const appliesTo = Array.isArray(ruleSet['applies-to'])
       ? ruleSet['applies-to'].map((p) => `- \`${p}\``).join('\n')
@@ -1931,6 +1895,7 @@ function syncRooRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec) 
           })
           .join('\n')
       : '';
+
     const ruleVars = {
       ...vars,
       ruleDomain: ruleSet.domain,
@@ -1941,15 +1906,19 @@ function syncRooRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec) 
       ruleAppliesTo: appliesTo,
       ruleConventions: conventions,
     };
+
     let content = renderTemplate(template, ruleVars);
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.roo', 'rules', `${ruleSet.domain}.md`), content);
   }
 }
+
 function syncWindsurfCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec) {
   const templatePath = resolve(templatesDir, 'windsurf', 'templates', 'command.md');
   if (!existsSync(templatePath) || !commandsSpec.commands) return;
+
   const template = readFileSync(templatePath, 'utf-8');
+
   for (const cmd of commandsSpec.commands) {
     if (cmd.type === 'team') continue;
     const desc =
@@ -1960,13 +1929,16 @@ function syncWindsurfCommands(templatesDir, tmpDir, vars, version, repoName, com
       commandName: cmd.name,
       commandDescription: desc,
     };
+
     let content = renderTemplate(template, cmdVars);
     content = insertHeader(content, '.md', version, repoName);
     writeOutput(resolve(tmpDir, '.windsurf', 'rules', `command-${cmd.name}.md`), content);
   }
 }
+
 function syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec) {
   if (!teamsSpec.teams) return;
+
   for (const team of teamsSpec.teams) {
     const scope = Array.isArray(team.scope) ? team.scope.join(', ') : team.scope || '**/*';
     let content = [
@@ -1987,12 +1959,14 @@ function syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec) {
       '4. Use /handoff when passing work to another team',
       '',
     ].join('\n');
+
     content = renderTemplate(content, { ...vars, repoName });
     content = insertHeader(content, '.md', version, repoName);
     const fileName = `team-${team.id}.md`;
     writeOutput(resolve(tmpDir, '.windsurf', 'rules', fileName), content);
   }
 }
+
 // ---------------------------------------------------------------------------
 // Exports for testing
 // ---------------------------------------------------------------------------
