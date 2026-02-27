@@ -4,6 +4,7 @@
  * and build a structured discovery report.
  */
 import { existsSync, readFileSync, readdirSync } from 'fs';
+import { readdir } from 'fs/promises';
 import yaml from 'js-yaml';
 import { basename, extname, join, resolve } from 'path';
 
@@ -379,28 +380,40 @@ function fileExists(projectRoot, pattern) {
 // should not be counted as application source code in consuming repos.
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.nuxt']);
 
-function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
+async function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
   let count = 0;
-  function walk(currentDir, currentDepth) {
+
+  async function walk(currentDir, currentDepth) {
     if (currentDepth > depth || count > maxFiles) return;
     if (!existsSync(currentDir)) return;
+
     try {
-      for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+      // Async readdir with parallel processing for subdirectories
+      const entries = await readdir(currentDir, { withFileTypes: true });
+      const tasks = [];
+
+      for (const entry of entries) {
         if (entry.name.startsWith('.') || SKIP_DIRS.has(entry.name)) continue;
         // Skip agentkit engine internals — framework code, not app code
         if (currentDepth === 0 && entry.name === '.agentkit') continue;
+
         const full = join(currentDir, entry.name);
         if (entry.isDirectory()) {
-          walk(full, currentDepth + 1);
+          tasks.push(walk(full, currentDepth + 1));
         } else if (extensions.includes(extname(entry.name))) {
           count++;
         }
       }
+
+      if (tasks.length > 0) {
+        await Promise.all(tasks);
+      }
     } catch {
-      /* permission errors */
+      /* permission errors or other fs issues */
     }
   }
-  walk(dir, 0);
+
+  await walk(dir, 0);
   return count;
 }
 
@@ -636,11 +649,14 @@ function getPythonDeps(projectRoot) {
 /**
  * Detects frameworks from a detector list using cached dependency data.
  */
-function detectFromList(
+async function detectFromList(
   detectors,
   { nodeDeps, csprojContent, cargoContent, gemfileContent, pomContent, pythonDeps, projectRoot }
 ) {
   const found = [];
+  // Use Promise.all to run file checks in parallel if we switch to async file operations for markers/configs
+  // For now, these are still sync or using cached content, except countFilesByExt which is now async.
+
   for (const d of detectors) {
     let matched = false;
     // Check Node.js deps
@@ -675,9 +691,10 @@ function detectFromList(
     if (!matched && d.deps?.length && pythonDeps.size > 0) {
       if (d.deps.some((dep) => pythonDeps.has(dep.toLowerCase()))) matched = true;
     }
-    // Check file extensions (e.g. .scss files)
+    // Check file extensions (e.g. .scss files) - NOW ASYNC
     if (!matched && d.fileExt) {
-      if (countFilesByExt(projectRoot, [d.fileExt], 2, 5) > 0) matched = true;
+      const count = await countFilesByExt(projectRoot, [d.fileExt], 2, 5);
+      if (count > 0) matched = true;
     }
     if (matched) found.push({ name: d.name, label: d.label });
   }
@@ -732,10 +749,11 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   }
 
   // --- Tech stack detection ---
-  for (const detector of STACK_DETECTORS) {
+  // Parallelize file counting
+  await Promise.all(STACK_DETECTORS.map(async (detector) => {
     const markerFound = detector.markers.some((m) => fileExists(projectRoot, m));
     if (markerFound) {
-      const fileCount = countFilesByExt(projectRoot, detector.filePatterns);
+      const fileCount = await countFilesByExt(projectRoot, detector.filePatterns);
       const configsFound = detector.configFiles.filter((c) => existsSync(resolve(projectRoot, c)));
       report.techStacks.push({
         name: detector.name,
@@ -744,7 +762,7 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
         configFiles: configsFound,
       });
     }
-  }
+  }));
 
   // --- Determine primary stack ---
   if (report.techStacks.length > 0) {
@@ -770,15 +788,15 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   };
 
   // --- Framework detection (§11a) ---
-  for (const [category, detectors] of Object.entries(FRAMEWORK_DETECTORS)) {
-    const found = detectFromList(detectors, depContext);
+  await Promise.all(Object.entries(FRAMEWORK_DETECTORS).map(async ([category, detectors]) => {
+    const found = await detectFromList(detectors, depContext);
     if (found.length > 0) {
       report.frameworks[category] = found.map((f) => f.name);
     }
-  }
+  }));
 
   // --- Testing tool detection (§11b) ---
-  const testingFound = detectFromList(TESTING_DETECTORS, depContext);
+  const testingFound = await detectFromList(TESTING_DETECTORS, depContext);
   report.testing = testingFound.map((t) => t.name);
 
   // --- Documentation artifact detection (§11c) ---
@@ -832,12 +850,12 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   }
 
   // --- Cross-cutting concern detection (§11f) ---
-  for (const [concern, detectors] of Object.entries(CROSSCUTTING_DETECTORS)) {
-    const found = detectFromList(detectors, depContext);
+  await Promise.all(Object.entries(CROSSCUTTING_DETECTORS).map(async ([concern, detectors]) => {
+    const found = await detectFromList(detectors, depContext);
     if (found.length > 0) {
       report.crosscutting[concern] = found.map((f) => f.name);
     }
-  }
+  }));
 
   // --- Environment config detection ---
   if (existsSync(resolve(projectRoot, '.env.example'))) {
@@ -949,7 +967,7 @@ function formatMarkdown(report) {
     for (const [category, values] of Object.entries(fw)) {
       if (!Array.isArray(values) || values.length === 0) continue;
       const label = category
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/([a-z])([A-Z])/g, ' ')
         .replace(/^./, (c) => c.toUpperCase());
       lines.push(`- **${label}:** ${values.join(', ')}`);
     }

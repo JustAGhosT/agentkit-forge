@@ -5,5 +5,8 @@
   "scripts": {
     "lint:md": "pnpm -C .agentkit lint:md",
     "lint:md:fix": "pnpm -C .agentkit lint:md:fix"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.1"
   }
 }

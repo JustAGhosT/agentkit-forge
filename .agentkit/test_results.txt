@@ -1,0 +1,1233 @@
+
+> agentkit-forge-runtime@0.2.0 test /app/.agentkit
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/app/.agentkit[39m
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCopilotPrompts (via runSync --only copilot)[2m > [22m[2mgenerates .github/prompts/*.prompt.md for non-team commands
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: copilot
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: GitHub Copilot
+  GitHub Copilot: 53 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 106 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCopilotPrompts (via runSync --only copilot)[2m > [22m[2mprompt files contain GENERATED header
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: copilot
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: GitHub Copilot
+  GitHub Copilot: 53 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 106 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCopilotPrompts (via runSync --only copilot)[2m > [22m[2mprompt files contain frontmatter
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: copilot
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: GitHub Copilot
+  GitHub Copilot: 53 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 106 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCopilotAgents (via runSync --only copilot)[2m > [22m[2mgenerates .github/agents/*.agent.md from agents.yaml
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: copilot
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: GitHub Copilot
+  GitHub Copilot: 53 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 106 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCopilotAgents (via runSync --only copilot)[2m > [22m[2magent files contain agent name and role
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: copilot
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: GitHub Copilot
+  GitHub Copilot: 53 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 106 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCopilotChatModes (via runSync --only copilot)[2m > [22m[2mgenerates .github/chatmodes/team-*.chatmode.md from teams.yaml
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: copilot
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: GitHub Copilot
+  GitHub Copilot: 53 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 106 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCopilotChatModes (via runSync --only copilot)[2m > [22m[2mchat mode files contain team focus
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: copilot
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: GitHub Copilot
+  GitHub Copilot: 53 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 106 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncGemini (via runSync --only gemini)[2m > [22m[2mgenerates GEMINI.md at project root
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: gemini
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Gemini
+  Gemini: 3 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 56 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncGemini (via runSync --only gemini)[2m > [22m[2mgenerates .gemini/styleguide.md
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: gemini
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Gemini
+  Gemini: 3 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 56 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncGemini (via runSync --only gemini)[2m > [22m[2mgenerates .gemini/config.yaml
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: gemini
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Gemini
+  Gemini: 3 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 56 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncGemini (via runSync --only gemini)[2m > [22m[2mGEMINI.md contains GENERATED header
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: gemini
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Gemini
+  Gemini: 3 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 56 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncGemini (via runSync --only gemini)[2m > [22m[2mGEMINI.md contains project template vars
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: gemini
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Gemini
+  Gemini: 3 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 56 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCodexSkills (via runSync --only codex)[2m > [22m[2mgenerates .agents/skills/*/SKILL.md for non-team commands
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: codex
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Codex
+  Codex: 19 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 72 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCodexSkills (via runSync --only codex)[2m > [22m[2mSKILL.md contains command name
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: codex
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Codex
+  Codex: 19 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 72 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncClaudeSkills (via runSync --only claude)[2m > [22m[2mgenerates .claude/skills/*/SKILL.md for non-team commands
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: claude
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Claude Code
+  Claude Code: 86 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 139 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCursorCommands (via runSync --only cursor)[2m > [22m[2mgenerates .cursor/commands/*.md for non-team commands
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: cursor
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Cursor
+  Cursor: 32 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 85 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncCursorCommands (via runSync --only cursor)[2m > [22m[2mcursor command files contain GENERATED header
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: cursor
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Cursor
+  Cursor: 32 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 85 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncWarp (via runSync --only warp)[2m > [22m[2mgenerates WARP.md at project root
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: warp
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Warp
+  Warp: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 54 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncWarp (via runSync --only warp)[2m > [22m[2mWARP.md contains GENERATED header
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: warp
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Warp
+  Warp: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 54 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncWarp (via runSync --only warp)[2m > [22m[2mWARP.md contains Warp Instructions heading
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: warp
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Warp
+  Warp: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 54 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncClineRules (via runSync --only cline)[2m > [22m[2mgenerates .clinerules/*.md from rules.yaml domains
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: cline
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Cline
+  Cline: 7 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 60 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncClineRules (via runSync --only cline)[2m > [22m[2mcline rule files contain domain name and conventions
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: cline
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Cline
+  Cline: 7 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 60 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncRooRules (via runSync --only roo)[2m > [22m[2mgenerates .roo/rules/*.md from rules.yaml domains
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: roo
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Roo Code
+  Roo Code: 7 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 60 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2msyncRooRules (via runSync --only roo)[2m > [22m[2mroo rule files contain GENERATED header
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: roo
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Roo Code
+  Roo Code: 7 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 60 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender target gating for new tools[2m > [22m[2m--only claude does NOT generate gemini, warp, cline, roo, codex files
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: claude
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Claude Code
+  Claude Code: 86 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 139 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender target gating for new tools[2m > [22m[2malways-on outputs generated regardless of --only flag
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: warp
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Warp
+  Warp: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 54 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2m--overwrite flag[2m > [22m[2mskips project-owned files by default, overwrites with --overwrite
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini, Codex, Warp, Cline, Roo Code, Continue/AI, MCP
+  Codex: 19 file(s)
+  Continue/AI: 4 file(s)
+  Claude Code: 86 file(s)
+  Cline: 7 file(s)
+  Cursor: 32 file(s)
+  Gemini: 3 file(s)
+  GitHub Copilot: 53 file(s)
+  Roo Code: 7 file(s)
+  Windsurf: 34 file(s)
+  Warp: 1 file(s)
+  MCP: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 300 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2m--overwrite flag[2m > [22m[2mskips project-owned files by default, overwrites with --overwrite
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Skipped 51 project-owned file(s) (already exist).
+[agentkit:sync] Summary for: Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini, Codex, Warp, Cline, Roo Code, Continue/AI, MCP
+  Codex: 19 file(s)
+  Continue/AI: 4 file(s)
+  Claude Code: 86 file(s)
+  Cline: 7 file(s)
+  Cursor: 32 file(s)
+  Gemini: 3 file(s)
+  GitHub Copilot: 53 file(s)
+  Roo Code: 7 file(s)
+  Windsurf: 34 file(s)
+  Warp: 1 file(s)
+  MCP: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 249 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2m--overwrite flag[2m > [22m[2mskips project-owned files by default, overwrites with --overwrite
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini, Codex, Warp, Cline, Roo Code, Continue/AI, MCP
+  Codex: 19 file(s)
+  Continue/AI: 4 file(s)
+  Claude Code: 86 file(s)
+  Cline: 7 file(s)
+  Cursor: 32 file(s)
+  Gemini: 3 file(s)
+  GitHub Copilot: 53 file(s)
+  Roo Code: 7 file(s)
+  Windsurf: 34 file(s)
+  Warp: 1 file(s)
+  MCP: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 300 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2m--overwrite flag[2m > [22m[2m--force is alias for --overwrite
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini, Codex, Warp, Cline, Roo Code, Continue/AI, MCP
+  Codex: 19 file(s)
+  Continue/AI: 4 file(s)
+  Claude Code: 86 file(s)
+  Cline: 7 file(s)
+  Cursor: 32 file(s)
+  Gemini: 3 file(s)
+  GitHub Copilot: 53 file(s)
+  Roo Code: 7 file(s)
+  Windsurf: 34 file(s)
+  Warp: 1 file(s)
+  MCP: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 300 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[agentkit] Dependencies not installed. Running pnpm install in .agentkit...
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2m--overwrite flag[2m > [22m[2m--force is alias for --overwrite
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini, Codex, Warp, Cline, Roo Code, Continue/AI, MCP
+  Codex: 19 file(s)
+  Continue/AI: 4 file(s)
+  Claude Code: 86 file(s)
+  Cline: 7 file(s)
+  Cursor: 32 file(s)
+  Gemini: 3 file(s)
+  GitHub Copilot: 53 file(s)
+  Roo Code: 7 file(s)
+  Windsurf: 34 file(s)
+  Warp: 1 file(s)
+  MCP: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 300 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2m--quiet, --verbose, --no-clean, --diff flags[2m > [22m[2m--diff shows create/update/skip without writing
+[22m[39m[agentkit:sync] Diff mode — showing what would change.
+[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+  create .agents/skills/build/SKILL.md
+  create .agents/skills/check/SKILL.md
+  create .agents/skills/cost/SKILL.md
+  create .agents/skills/deploy/SKILL.md
+  create .agents/skills/discover/SKILL.md
+  create .agents/skills/doctor/SKILL.md
+  create .agents/skills/format/SKILL.md
+  create .agents/skills/handoff/SKILL.md
+  create .agents/skills/healthcheck/SKILL.md
+  create .agents/skills/orchestrate/SKILL.md
+  create .agents/skills/plan/SKILL.md
+  create .agents/skills/preflight/SKILL.md
+  create .agents/skills/project-review/SKILL.md
+  create .agents/skills/review/SKILL.md
+  create .agents/skills/scaffold/SKILL.md
+  create .agents/skills/security/SKILL.md
+  create .agents/skills/sync-backlog/SKILL.md
+  create .agents/skills/test/SKILL.md
+  create .agents/skills/validate/SKILL.md
+  create .ai/README.md
+  create .ai/continuerules
+  create .ai/cursorrules
+  create .ai/windsurfrules
+  create .claude/agents/design/brand-guardian.md
+  create .claude/agents/design/ui-designer.md
+  create .claude/agents/engineering/backend.md
+  create .claude/agents/engineering/data.md
+  create .claude/agents/engineering/devops.md
+  create .claude/agents/engineering/frontend.md
+  create .claude/agents/engineering/infra.md
+  create .claude/agents/marketing/content-strategist.md
+  create .claude/agents/marketing/growth-analyst.md
+  create .claude/agents/operations/dependency-watcher.md
+  create .claude/agents/operations/environment-manager.md
+  create .claude/agents/operations/security-auditor.md
+  create .claude/agents/product/product-manager.md
+  create .claude/agents/product/roadmap-tracker.md
+  create .claude/agents/project-management/project-shipper.md
+  create .claude/agents/project-management/release-manager.md
+  create .claude/agents/testing/coverage-tracker.md
+  create .claude/agents/testing/integration-tester.md
+  create .claude/agents/testing/test-lead.md
+  create .claude/commands/build.md
+  create .claude/commands/check.md
+  create .claude/commands/cost.md
+  create .claude/commands/deploy.md
+  create .claude/commands/discover.md
+  create .claude/commands/doctor.md
+  create .claude/commands/format.md
+  create .claude/commands/handoff.md
+  create .claude/commands/healthcheck.md
+  create .claude/commands/orchestrate.md
+  create .claude/commands/plan.md
+  create .claude/commands/preflight.md
+  create .claude/commands/project-review.md
+  create .claude/commands/review.md
+  create .claude/commands/scaffold.md
+  create .claude/commands/security.md
+  create .claude/commands/sync-backlog.md
+  create .claude/commands/team-backend.md
+  create .claude/commands/team-data.md
+  create .claude/commands/team-devops.md
+  create .claude/commands/team-docs.md
+  create .claude/commands/team-frontend.md
+  create .claude/commands/team-infra.md
+  create .claude/commands/team-product.md
+  create .claude/commands/team-quality.md
+  create .claude/commands/team-security.md
+  create .claude/commands/team-testing.md
+  create .claude/commands/test.md
+  create .claude/hooks/guard-destructive-commands.ps1
+  create .claude/hooks/guard-destructive-commands.sh
+  create .claude/hooks/protect-sensitive.ps1
+  create .claude/hooks/protect-sensitive.sh
+  create .claude/hooks/session-start.ps1
+  create .claude/hooks/session-start.sh
+  create .claude/hooks/stop-build-check.ps1
+  create .claude/hooks/stop-build-check.sh
+  create .claude/hooks/warn-uncommitted.ps1
+  create .claude/hooks/warn-uncommitted.sh
+  create .claude/rules/blockchain.md
+  create .claude/rules/dotnet.md
+  create .claude/rules/python.md
+  create .claude/rules/rust.md
+  create .claude/rules/security.md
+  create .claude/rules/typescript.md
+  create .claude/settings.json
+  create .claude/skills/build/SKILL.md
+  create .claude/skills/check/SKILL.md
+  create .claude/skills/cost/SKILL.md
+  create .claude/skills/deploy/SKILL.md
+  create .claude/skills/discover/SKILL.md
+  create .claude/skills/doctor/SKILL.md
+  create .claude/skills/format/SKILL.md
+  create .claude/skills/handoff/SKILL.md
+  create .claude/skills/healthcheck/SKILL.md
+  create .claude/skills/orchestrate/SKILL.md
+  create .claude/skills/plan/SKILL.md
+  create .claude/skills/preflight/SKILL.md
+  create .claude/skills/project-review/SKILL.md
+  create .claude/skills/review/SKILL.md
+  create .claude/skills/scaffold/SKILL.md
+  create .claude/skills/security/SKILL.md
+  create .claude/skills/sync-backlog/SKILL.md
+  create .claude/skills/test/SKILL.md
+  create .claude/skills/validate/SKILL.md
+  create .claude/state/orchestrator.json.template
+  create .claude/state/schema.json
+  create .clinerules/blockchain.md
+  create .clinerules/dotnet.md
+  create .clinerules/iac.md
+  create .clinerules/python.md
+  create .clinerules/rust.md
+  create .clinerules/security.md
+  create .clinerules/typescript.md
+  create .cursor/commands/build.md
+  create .cursor/commands/check.md
+  create .cursor/commands/cost.md
+  create .cursor/commands/deploy.md
+  create .cursor/commands/discover.md
+  create .cursor/commands/doctor.md
+  create .cursor/commands/format.md
+  create .cursor/commands/handoff.md
+  create .cursor/commands/healthcheck.md
+  create .cursor/commands/orchestrate.md
+  create .cursor/commands/plan.md
+  create .cursor/commands/preflight.md
+  create .cursor/commands/project-review.md
+  create .cursor/commands/review.md
+  create .cursor/commands/scaffold.md
+  create .cursor/commands/security.md
+  create .cursor/commands/sync-backlog.md
+  create .cursor/commands/test.md
+  create .cursor/commands/validate.md
+  create .cursor/rules/orchestrate.mdc
+  create .cursor/rules/project-context.mdc
+  create .cursor/rules/security.mdc
+  create .cursor/rules/team-backend.mdc
+  create .cursor/rules/team-data.mdc
+  create .cursor/rules/team-devops.mdc
+  create .cursor/rules/team-docs.mdc
+  create .cursor/rules/team-frontend.mdc
+  create .cursor/rules/team-infra.mdc
+  create .cursor/rules/team-product.mdc
+  create .cursor/rules/team-quality.mdc
+  create .cursor/rules/team-security.mdc
+  create .cursor/rules/team-testing.mdc
+  create .editorconfig
+  create .gemini/config.yaml
+  create .gemini/styleguide.md
+  create .github/ISSUE_TEMPLATE/bug_report.md
+  create .github/PULL_REQUEST_TEMPLATE.md
+  create .github/agents/backend.agent.md
+  create .github/agents/brand-guardian.agent.md
+  create .github/agents/content-strategist.agent.md
+  create .github/agents/coverage-tracker.agent.md
+  create .github/agents/data.agent.md
+  create .github/agents/dependency-watcher.agent.md
+  create .github/agents/devops.agent.md
+  create .github/agents/environment-manager.agent.md
+  create .github/agents/frontend.agent.md
+  create .github/agents/growth-analyst.agent.md
+  create .github/agents/infra.agent.md
+  create .github/agents/integration-tester.agent.md
+  create .github/agents/product-manager.agent.md
+  create .github/agents/project-shipper.agent.md
+  create .github/agents/release-manager.agent.md
+  create .github/agents/roadmap-tracker.agent.md
+  create .github/agents/security-auditor.agent.md
+  create .github/agents/test-lead.agent.md
+  create .github/agents/ui-designer.agent.md
+  create .github/chatmodes/team-backend.chatmode.md
+  create .github/chatmodes/team-data.chatmode.md
+  create .github/chatmodes/team-devops.chatmode.md
+  create .github/chatmodes/team-docs.chatmode.md
+  create .github/chatmodes/team-frontend.chatmode.md
+  create .github/chatmodes/team-infra.chatmode.md
+  create .github/chatmodes/team-product.chatmode.md
+  create .github/chatmodes/team-quality.chatmode.md
+  create .github/chatmodes/team-security.chatmode.md
+  create .github/chatmodes/team-testing.chatmode.md
+  create .github/copilot-instructions.md
+  create .github/instructions/README.md
+  create .github/instructions/docs.md
+  create .github/instructions/marketing.md
+  create .github/instructions/rust.md
+  create .github/prompts/build.prompt.md
+  create .github/prompts/check.prompt.md
+  create .github/prompts/cost.prompt.md
+  create .github/prompts/deploy.prompt.md
+  create .github/prompts/discover.prompt.md
+  create .github/prompts/doctor.prompt.md
+  create .github/prompts/format.prompt.md
+  create .github/prompts/handoff.prompt.md
+  create .github/prompts/healthcheck.prompt.md
+  create .github/prompts/orchestrate.prompt.md
+  create .github/prompts/plan.prompt.md
+  create .github/prompts/preflight.prompt.md
+  create .github/prompts/project-review.prompt.md
+  create .github/prompts/review.prompt.md
+  create .github/prompts/scaffold.prompt.md
+  create .github/prompts/security.prompt.md
+  create .github/prompts/sync-backlog.prompt.md
+  create .github/prompts/test.prompt.md
+  create .github/prompts/validate.prompt.md
+  create .github/workflows/ai-framework-ci.yml
+  create .markdownlint.json
+  create .prettierrc
+  create .roo/rules/blockchain.md
+  create .roo/rules/dotnet.md
+  create .roo/rules/iac.md
+  create .roo/rules/python.md
+  create .roo/rules/rust.md
+  create .roo/rules/security.md
+  create .roo/rules/typescript.md
+  create .vscode/extensions.json
+  create .vscode/settings.json
+  create .windsurf/rules/command-build.md
+  create .windsurf/rules/command-check.md
+  create .windsurf/rules/command-cost.md
+  create .windsurf/rules/command-deploy.md
+  create .windsurf/rules/command-discover.md
+  create .windsurf/rules/command-doctor.md
+  create .windsurf/rules/command-format.md
+  create .windsurf/rules/command-handoff.md
+  create .windsurf/rules/command-healthcheck.md
+  create .windsurf/rules/command-orchestrate.md
+  create .windsurf/rules/command-plan.md
+  create .windsurf/rules/command-preflight.md
+  create .windsurf/rules/command-project-review.md
+  create .windsurf/rules/command-review.md
+  create .windsurf/rules/command-scaffold.md
+  create .windsurf/rules/command-security.md
+  create .windsurf/rules/command-sync-backlog.md
+  create .windsurf/rules/command-test.md
+  create .windsurf/rules/command-validate.md
+  create .windsurf/rules/orchestrate.md
+  create .windsurf/rules/project.md
+  create .windsurf/rules/security.md
+  create .windsurf/rules/team-backend.md
+  create .windsurf/rules/team-data.md
+  create .windsurf/rules/team-devops.md
+  create .windsurf/rules/team-docs.md
+  create .windsurf/rules/team-frontend.md
+  create .windsurf/rules/team-infra.md
+  create .windsurf/rules/team-product.md
+  create .windsurf/rules/team-quality.md
+  create .windsurf/rules/team-security.md
+  create .windsurf/rules/team-testing.md
+  create .windsurf/workflows/full-assessment.yml
+  create .windsurf/workflows/phase-execution.yml
+  create AGENTS.md
+  create AGENT_BACKLOG.md
+  create AGENT_TEAMS.md
+  create CHANGELOG.md
+  create CLAUDE.md
+  create COMMAND_GUIDE.md
+  create CONTRIBUTING.md
+  create GEMINI.md
+  create MIGRATIONS.md
+  create QUALITY_GATES.md
+  create RUNBOOK_AI.md
+  create SECURITY.md
+  create UNIFIED_AGENT_TEAMS.md
+  create WARP.md
+  create docs/01_product/01_prd.md
+  create docs/01_product/02_user_stories.md
+  create docs/01_product/03_roadmap.md
+  create docs/01_product/04_personas.md
+  create docs/02_specs/01_functional_spec.md
+  create docs/02_specs/02_technical_spec.md
+  create docs/02_specs/03_api_spec.md
+  create docs/02_specs/04_data_models.md
+  create docs/03_architecture/01_overview.md
+  create docs/03_architecture/02_diagrams/.gitkeep
+  create docs/03_architecture/03_decisions/0001-adopt-agentkit-forge.md
+  create docs/04_api/01_overview.md
+  create docs/04_api/02_endpoints.md
+  create docs/04_api/03_authentication.md
+  create docs/04_api/04_examples.md
+  create docs/05_operations/01_deployment.md
+  create docs/05_operations/02_monitoring.md
+  create docs/05_operations/03_incident_response.md
+  create docs/05_operations/04_troubleshooting.md
+  create docs/06_engineering/01_setup.md
+  create docs/06_engineering/02_coding_standards.md
+  create docs/06_engineering/03_testing.md
+  create docs/06_engineering/04_git_workflow.md
+  create docs/06_engineering/05_security.md
+  create docs/07_integrations/01_external_apis.md
+  create docs/07_integrations/02_webhooks.md
+  create docs/07_integrations/03_sdk.md
+  create docs/08_reference/01_glossary.md
+  create docs/08_reference/02_faq.md
+  create docs/08_reference/03_changelog.md
+  create docs/08_reference/04_contributing.md
+  create docs/08_reference/ai_handoffs/.gitkeep
+  create docs/README.md
+  create docs/prd/.gitkeep
+  create mcp/a2a-config.json
+[agentkit:sync] Diff: 300 create, 0 update, 0 unchanged/skip
+
+ [32m✓[39m engines/node/src/__tests__/fresh-install.test.mjs [2m([22m[2m1 test[22m[2m)[22m[33m 3604[2mms[22m[39m
+     [33m[2m✓[22m[39m auto-installs dependencies and runs sync --dry-run [33m 3602[2mms[22m[39m
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2m--quiet, --verbose, --no-clean, --diff flags[2m > [22m[2m--no-clean preserves orphaned files
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: __TEMPLATE__, Version: 0.2.0
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini, Codex, Warp, Cline, Roo Code, Continue/AI, MCP
+  Codex: 19 file(s)
+  Continue/AI: 4 file(s)
+  Claude Code: 86 file(s)
+  Cline: 7 file(s)
+  Cursor: 32 file(s)
+  Gemini: 3 file(s)
+  GitHub Copilot: 53 file(s)
+  Roo Code: 7 file(s)
+  Windsurf: 34 file(s)
+  Warp: 1 file(s)
+  MCP: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 300 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2m--quiet, --verbose, --no-clean, --diff flags[2m > [22m[2m--no-clean preserves orphaned files
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: __TEMPLATE__, Version: 0.2.0
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Skipped 51 project-owned file(s) (already exist).
+[agentkit:sync] Summary for: Claude Code, Cursor, Windsurf, GitHub Copilot, Gemini, Codex, Warp, Cline, Roo Code, Continue/AI, MCP
+  Codex: 19 file(s)
+  Continue/AI: 4 file(s)
+  Claude Code: 86 file(s)
+  Cline: 7 file(s)
+  Cursor: 32 file(s)
+  Gemini: 3 file(s)
+  GitHub Copilot: 53 file(s)
+  Roo Code: 7 file(s)
+  Windsurf: 34 file(s)
+  Warp: 1 file(s)
+  MCP: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 249 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only mcp produces no copilot prompts
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: mcp
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: MCP
+  MCP: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 54 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only windsurf produces no cursor command files
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: windsurf
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Windsurf
+  Windsurf: 34 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 87 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only cline produces no codex skills
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: cline
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Cline
+  Cline: 7 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 60 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only ai produces no cursor team rules
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: ai
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Continue/AI
+  Continue/AI: 4 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 57 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only codex produces no windsurf team rules
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: codex
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Codex
+  Codex: 19 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 72 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+Unknown command: "nonexistent"
+Valid commands: init, sync, validate, discover, spec-validate, orchestrate, plan, check, review, handoff, healthcheck, cost, project-review, add, remove, list, tasks, delegate, doctor, scaffold, preflight
+Run with --help for usage information.
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only gemini produces no copilot chatmodes
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: gemini
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Gemini
+  Gemini: 3 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 56 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+Unknown command: "foo"
+Valid commands: init, sync, validate, discover, spec-validate, orchestrate, plan, check, review, handoff, healthcheck, cost, project-review, add, remove, list, tasks, delegate, doctor, scaffold, preflight
+Run with --help for usage information.
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only warp produces no copilot agent files
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: warp
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Warp
+  Warp: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 54 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only roo produces no claude agent files
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: roo
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Roo Code
+  Roo Code: 7 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 60 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only warp produces no cline rules
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: warp
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: Warp
+  Warp: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 54 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+[90mstdout[2m | engines/node/src/__tests__/wave3-sync.test.mjs[2m > [22m[2mrender-target output isolation (--only flag)[2m > [22m[2m--only mcp produces no roo rules
+[22m[39m[agentkit:sync] Starting sync...
+[agentkit:sync] No overlay detected, using __TEMPLATE__
+[agentkit:sync] Repo: agentkit-forge, Version: 0.2.0
+[agentkit:sync] Syncing only: mcp
+[agentkit:sync] Writing outputs...
+[agentkit:sync] Summary for: MCP
+  MCP: 1 file(s)
+  Editor configs: 5 file(s)
+  GitHub: 3 file(s)
+  Universal: 11 file(s)
+  Docs: 34 file(s)
+[agentkit:sync] project.yaml completeness: 26% (6/23 fields populated)
+[agentkit:sync] Top missing fields: description, phase, stack.languages, stack.database, architecture.pattern
+[agentkit:sync] Done! Generated 54 files.
+
+  Tip: Run "agentkit init" to customize which AI tools you generate configs for.
+       Run "agentkit add <tool>" to add tools incrementally.
+
+ [32m✓[39m engines/node/src/__tests__/wave3-sync.test.mjs [2m([22m[2m40 tests[22m[2m)[22m[33m 4317[2mms[22m[39m
+     [33m[2m✓[22m[39m skips project-owned files by default, overwrites with --overwrite [33m 771[2mms[22m[39m
+     [33m[2m✓[22m[39m --force is alias for --overwrite [33m 453[2mms[22m[39m
+     [33m[2m✓[22m[39m --no-clean preserves orphaned files [33m 397[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/cli.test.mjs [2m([22m[2m8 tests[22m[2m)[22m[33m 626[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/init.test.mjs [2m([22m[2m19 tests[22m[2m)[22m[32m 237[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/runner.test.mjs [2m([22m[2m19 tests[22m[2m)[22m[32m 227[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/task-protocol.test.mjs [2m([22m[2m48 tests[22m[2m)[22m[32m 149[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/validate.test.mjs [2m([22m[2m3 tests[22m[2m)[22m[32m 161[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/sync.test.mjs [2m([22m[2m101 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/orchestrator.test.mjs [2m([22m[2m20 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/spec-validator.test.mjs [2m([22m[2m40 tests[22m[2m)[22m[32m 87[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/cost-tracker.test.mjs [2m([22m[2m11 tests[22m[2m)[22m[32m 118[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/add-remove.test.mjs [2m([22m[2m18 tests[22m[2m)[22m[32m 73[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/review-runner.test.mjs [2m([22m[2m17 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/plan-runner.test.mjs [2m([22m[2m7 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/discover.test.mjs [2m([22m[2m2 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/healthcheck.test.mjs [2m([22m[2m4 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/handoff.test.mjs [2m([22m[2m6 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/resolveWindowsExecutable.test.mjs [2m([22m[2m8 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m engines/node/src/__tests__/check.test.mjs [2m([22m[2m17 tests[22m[2m)[22m[33m 21260[2mms[22m[39m
+     [33m[2m✓[22m[39m returns a structured result object [33m 12049[2mms[22m[39m
+     [33m[2m✓[22m[39m respects --fast flag structure [33m 9201[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+[2m      Tests [22m [1m[32m389 passed[39m[22m[90m (389)[39m
+[2m   Start at [22m 18:49:21
+[2m   Duration [22m 21.75s[2m (transform 912ms, setup 0ms, import 1.75s, tests 31.19s, environment 4ms)[22m
