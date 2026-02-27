@@ -27,7 +27,7 @@ What actually happened. Include error messages, stack traces, or screenshots if 
 ## Environment
 
 - OS: [e.g., macOS 14.2, Ubuntu 22.04]
-- Runtime: [e.g., Node.js 20.11, Python 3.12, Rust 1.75]
+- Runtime: [e.g., Node.js 22.x, Python 3.12, Rust 1.75]
 - Package version: [e.g., 1.2.3]
 - IDE: [e.g., VS Code 1.85, Cursor 0.43]
 

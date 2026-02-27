@@ -1,11 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { runInit } from '../init.mjs';
-import {
-  mkdirSync, writeFileSync, existsSync, readFileSync, rmSync, readdirSync, cpSync,
-} from 'fs';
-import { resolve, join } from 'path';
-import { tmpdir } from 'os';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import yaml from 'js-yaml';
+import { tmpdir } from 'os';
+import { resolve } from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -16,7 +13,7 @@ const AGENTKIT_ROOT = resolve(import.meta.dirname, '..', '..', '..', '..');
 function makeTmpDir() {
   const dir = resolve(
     tmpdir(),
-    `agentkit-init-test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    `agentkit-init-test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   );
   mkdirSync(dir, { recursive: true });
   return dir;
@@ -30,35 +27,23 @@ function setupAgentkitRoot(dir) {
   const specDir = resolve(dir, 'spec');
   mkdirSync(specDir, { recursive: true });
   writeFileSync(resolve(specDir, 'VERSION'), '0.1.0\n', 'utf-8');
-  writeFileSync(
-    resolve(specDir, 'project.yaml'),
-    yaml.dump({ name: null, phase: null }),
-    'utf-8',
-  );
+  writeFileSync(resolve(specDir, 'project.yaml'), yaml.dump({ name: null, phase: null }), 'utf-8');
 
   const templateDir = resolve(dir, 'overlays', '__TEMPLATE__');
   mkdirSync(templateDir, { recursive: true });
   writeFileSync(
     resolve(templateDir, 'settings.yaml'),
     yaml.dump({ repoName: '__TEMPLATE__', renderTargets: [] }),
-    'utf-8',
+    'utf-8'
   );
-  writeFileSync(
-    resolve(templateDir, 'commands.yaml'),
-    yaml.dump({ commands: [] }),
-    'utf-8',
-  );
-  writeFileSync(
-    resolve(templateDir, 'rules.yaml'),
-    yaml.dump({ rules: [] }),
-    'utf-8',
-  );
+  writeFileSync(resolve(templateDir, 'commands.yaml'), yaml.dump({ commands: [] }), 'utf-8');
+  writeFileSync(resolve(templateDir, 'rules.yaml'), yaml.dump({ rules: [] }), 'utf-8');
 
   // Minimal package.json
   writeFileSync(
     resolve(dir, 'package.json'),
     JSON.stringify({ name: 'test', version: '0.0.1' }),
-    'utf-8',
+    'utf-8'
   );
 
   return dir;
@@ -116,8 +101,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
-      // Re-import after mock
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -138,7 +122,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -159,7 +143,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -168,7 +152,7 @@ describe('runInit', () => {
       });
 
       const projectYaml = yaml.load(
-        readFileSync(resolve(agentkitRoot, 'spec', 'project.yaml'), 'utf-8'),
+        readFileSync(resolve(agentkitRoot, 'spec', 'project.yaml'), 'utf-8')
       );
       expect(projectYaml.name).toBe('yaml-test');
     });
@@ -181,7 +165,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -190,10 +174,7 @@ describe('runInit', () => {
       });
 
       const settings = yaml.load(
-        readFileSync(
-          resolve(agentkitRoot, 'overlays', 'targets-test', 'settings.yaml'),
-          'utf-8',
-        ),
+        readFileSync(resolve(agentkitRoot, 'overlays', 'targets-test', 'settings.yaml'), 'utf-8')
       );
       // non-interactive defaults to full preset
       expect(settings.renderTargets.length).toBeGreaterThanOrEqual(5);
@@ -214,7 +195,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -223,10 +204,7 @@ describe('runInit', () => {
       });
 
       const settings = yaml.load(
-        readFileSync(
-          resolve(agentkitRoot, 'overlays', 'min-test', 'settings.yaml'),
-          'utf-8',
-        ),
+        readFileSync(resolve(agentkitRoot, 'overlays', 'min-test', 'settings.yaml'), 'utf-8')
       );
       expect(settings.renderTargets).toEqual(['claude']);
     });
@@ -239,7 +217,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -248,12 +226,42 @@ describe('runInit', () => {
       });
 
       const settings = yaml.load(
-        readFileSync(
-          resolve(agentkitRoot, 'overlays', 'team-test', 'settings.yaml'),
-          'utf-8',
-        ),
+        readFileSync(resolve(agentkitRoot, 'overlays', 'team-test', 'settings.yaml'), 'utf-8')
       );
       expect(settings.renderTargets).toEqual(['claude', 'cursor', 'copilot', 'windsurf']);
+    });
+
+    it('uses infra preset renderTargets and applies infra defaults', async () => {
+      const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      vi.doMock('../discover.mjs', () => ({
+        runDiscover: vi.fn().mockResolvedValue(makeStubReport()),
+      }));
+      vi.doMock('../sync.mjs', () => ({
+        runSync: vi.fn().mockResolvedValue(undefined),
+      }));
+      vi.resetModules();
+      const { runInit: initFn } = await import('../init.mjs');
+      await initFn({
+        agentkitRoot,
+        projectRoot,
+        flags: { 'non-interactive': true, preset: 'infra', repoName: 'infra-test' },
+      });
+
+      const settings = yaml.load(
+        readFileSync(resolve(agentkitRoot, 'overlays', 'infra-test', 'settings.yaml'), 'utf-8')
+      );
+      expect(settings.renderTargets).toEqual(['claude', 'cursor', 'copilot', 'windsurf', 'mcp']);
+
+      const projectYaml = yaml.load(
+        readFileSync(resolve(agentkitRoot, 'spec', 'project.yaml'), 'utf-8')
+      );
+      expect(projectYaml.deployment.cloudProvider).toBe('azure');
+      expect(projectYaml.deployment.iacTool).toBe('terraform');
+      expect(projectYaml.infrastructure.namingConvention).toBe(
+        '{org}-{env}-{project}-{resourcetype}-{region}'
+      );
+      expect(projectYaml.infrastructure.iacToolchain).toEqual(['terraform', 'terragrunt']);
+      expect(projectYaml.infrastructure.stateBackend).toBe('azurerm');
     });
   });
 
@@ -261,30 +269,78 @@ describe('runInit', () => {
   // Error cases
   // ---------------------------------------------------------------------------
   describe('error handling', () => {
+    it('throws on invalid repoName (empty string)', async () => {
+      const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
+      await expect(
+        runInit({
+          agentkitRoot,
+          projectRoot,
+          flags: { repoName: '', 'non-interactive': true },
+        })
+      ).rejects.toThrow('Invalid repo name');
+    });
+
+    it('throws on invalid repoName (.)', async () => {
+      const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
+      await expect(
+        runInit({
+          agentkitRoot,
+          projectRoot,
+          flags: { repoName: '.', 'non-interactive': true },
+        })
+      ).rejects.toThrow('Invalid repo name');
+    });
+
+    it('throws on invalid repoName (..)', async () => {
+      const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
+      await expect(
+        runInit({
+          agentkitRoot,
+          projectRoot,
+          flags: { repoName: '..', 'non-interactive': true },
+        })
+      ).rejects.toThrow('Invalid repo name');
+    });
+
+    it('throws on invalid repoName (path traversal)', async () => {
+      const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
+      await expect(
+        runInit({
+          agentkitRoot,
+          projectRoot,
+          flags: { repoName: '../evil', 'non-interactive': true },
+        })
+      ).rejects.toThrow('Invalid repo name');
+    });
+
     it('throws on unknown preset', async () => {
       const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
+      const { runInit } = await import('../init.mjs');
       await expect(
         runInit({
           agentkitRoot,
           projectRoot,
           flags: { preset: 'nonexistent', repoName: 'err-test' },
-        }),
+        })
       ).rejects.toThrow('Unknown preset');
     });
 
     it('throws when overlay already exists without --force', async () => {
       const agentkitRoot = setupAgentkitRoot(resolve(tmpRoot, 'agentkit'));
-      // Create an overlay dir that already exists
       mkdirSync(resolve(agentkitRoot, 'overlays', 'existing-project'), {
         recursive: true,
       });
-
+      const { runInit } = await import('../init.mjs');
       await expect(
         runInit({
           agentkitRoot,
           projectRoot,
           flags: { repoName: 'existing-project', 'non-interactive': true },
-        }),
+        })
       ).rejects.toThrow('Overlay already exists');
     });
 
@@ -300,14 +356,14 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await expect(
         initFn({
           agentkitRoot,
           projectRoot,
           flags: { repoName: 'force-project', force: true, 'non-interactive': true },
-        }),
+        })
       ).resolves.not.toThrow();
     });
 
@@ -318,12 +374,12 @@ describe('runInit', () => {
       writeFileSync(
         resolve(agentkitRoot, 'package.json'),
         JSON.stringify({ name: 'test', version: '0.0.1' }),
-        'utf-8',
+        'utf-8'
       );
       writeFileSync(
         resolve(agentkitRoot, 'spec', 'project.yaml'),
         yaml.dump({ name: null }),
-        'utf-8',
+        'utf-8'
       );
       // No __TEMPLATE__ overlay
 
@@ -333,14 +389,14 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await expect(
         initFn({
           agentkitRoot,
           projectRoot,
           flags: { repoName: 'no-template', 'non-interactive': true },
-        }),
+        })
       ).rejects.toThrow('Template overlay not found');
     });
   });
@@ -362,7 +418,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -371,7 +427,7 @@ describe('runInit', () => {
       });
 
       const projectYaml = yaml.load(
-        readFileSync(resolve(agentkitRoot, 'spec', 'project.yaml'), 'utf-8'),
+        readFileSync(resolve(agentkitRoot, 'spec', 'project.yaml'), 'utf-8')
       );
       expect(projectYaml.stack.languages).toContain('node');
       expect(projectYaml.stack.frameworks.frontend).toContain('react');
@@ -391,6 +447,7 @@ describe('runInit', () => {
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
 
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -399,7 +456,7 @@ describe('runInit', () => {
       });
 
       const projectYaml = yaml.load(
-        readFileSync(resolve(agentkitRoot, 'spec', 'project.yaml'), 'utf-8'),
+        readFileSync(resolve(agentkitRoot, 'spec', 'project.yaml'), 'utf-8')
       );
       expect(projectYaml.deployment.containerized).toBe(true);
     });
@@ -421,7 +478,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -430,7 +487,7 @@ describe('runInit', () => {
       });
 
       const projectYaml = yaml.load(
-        readFileSync(resolve(agentkitRoot, 'spec', 'project.yaml'), 'utf-8'),
+        readFileSync(resolve(agentkitRoot, 'spec', 'project.yaml'), 'utf-8')
       );
       expect(projectYaml.crosscutting.logging.framework).toBe('winston');
       expect(projectYaml.crosscutting.authentication.provider).toBe('auth0');
@@ -453,7 +510,7 @@ describe('runInit', () => {
       vi.doMock('../sync.mjs', () => ({
         runSync: vi.fn().mockResolvedValue(undefined),
       }));
-
+      vi.resetModules();
       const { runInit: initFn } = await import('../init.mjs');
       await initFn({
         agentkitRoot,
@@ -462,10 +519,7 @@ describe('runInit', () => {
       });
 
       const settings = yaml.load(
-        readFileSync(
-          resolve(agentkitRoot, 'overlays', 'stack-test', 'settings.yaml'),
-          'utf-8',
-        ),
+        readFileSync(resolve(agentkitRoot, 'overlays', 'stack-test', 'settings.yaml'), 'utf-8')
       );
       expect(settings.primaryStack).toBe('rust');
     });

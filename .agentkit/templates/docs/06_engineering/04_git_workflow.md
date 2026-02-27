@@ -6,7 +6,7 @@
 
 ## Overview
 
-Git branching strategy and contribution workflow for **{{repoName}}**.
+Git branching strategy and contribution workflow for {{repoName}}.
 
 ## Branch Strategy
 

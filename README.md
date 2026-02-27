@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/JustAGhosT/agentkit-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/JustAGhosT/agentkit-forge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/Node.js-%3E%3D20-green.svg)](https://nodejs.org/)
+[![Node](https://img.shields.io/badge/Node.js-%3E%3D22-green.svg)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9-orange.svg)](https://pnpm.io/)
 
 A universal AI-orchestration template repository. Generates tool-specific configs from a single YAML spec for **15+ AI coding tools** — Claude Code, Cursor, Windsurf, Copilot, Codex, Gemini, Warp, Cline, Roo Code, Continue, Jules, Amp, Factory, and more. Cross-platform (Windows, macOS, Linux) with polyglot support and MCP/A2A protocol integration.
@@ -19,7 +19,7 @@ AgentKit Forge is a **single source of truth** for all your AI tool configuratio
 
 ## How
 
-```
+```text
 .agentkit/spec/project.yaml   ← You describe your project once
 .agentkit/spec/*.yaml          ← Teams, commands, rules, settings
 .agentkit/templates/           ← Templates per tool
@@ -38,7 +38,7 @@ Every developer runs `sync` after cloning. The generated files are gitignored �
 
 ## Quick Start
 
-**Prerequisites:** Node.js 20+ and pnpm 9+.
+**Prerequisites:** Node.js 22.x LTS (>=22.0.0) and pnpm 9+.
 
 ```bash
 # Install runtime
@@ -221,13 +221,13 @@ renderTargets:
 
 ### Step 5 — Handle conflicts with existing configs
 
-| Existing file | Resolution |
-|---|---|
-| `.claude/` directory | Back up, then let `sync` regenerate. Merge any custom commands into your overlay's `commands.yaml` |
-| `.cursor/rules/` | Back up custom rules. Add them to `.agentkit/overlays/<repo>/rules.yaml` to have them rendered automatically |
-| `.github/PULL_REQUEST_TEMPLATE.md` | Keep yours — sync uses scaffold-once and won't overwrite existing files |
-| `.editorconfig` | Keep yours — sync uses scaffold-once and won't overwrite existing files |
-| `CLAUDE.md` | Move custom instructions into your overlay or into `.agentkit/spec/` |
+| Existing file                      | Resolution                                                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `.claude/` directory               | Back up, then let `sync` regenerate. Merge any custom commands into your overlay's `commands.yaml`           |
+| `.cursor/rules/`                   | Back up custom rules. Add them to `.agentkit/overlays/<repo>/rules.yaml` to have them rendered automatically |
+| `.github/PULL_REQUEST_TEMPLATE.md` | Keep yours — sync uses scaffold-once and won't overwrite existing files                                      |
+| `.editorconfig`                    | Keep yours — sync uses scaffold-once and won't overwrite existing files                                      |
+| `CLAUDE.md`                        | Move custom instructions into your overlay or into `.agentkit/spec/`                                         |
 
 ### Step 6 — Run sync, validate, and commit
 
@@ -244,27 +244,28 @@ git commit -m "feat: adopt agentkit-forge for AI orchestration"
 
 Comprehensive guides for using AgentKit Forge:
 
-| Guide | Description |
-|-------|-------------|
-| **[Quick Start](.agentkit/docs/QUICK_START.md)** | Your first 15 minutes — setup, first session, command overview |
-| **[Command Reference](.agentkit/docs/COMMAND_REFERENCE.md)** | All 23 commands with examples, flags, and expected outputs |
-| **[Workflows](.agentkit/docs/WORKFLOWS.md)** | Worked examples: feature dev, bug fix, project audit, multi-session |
-| **[Team Guide](.agentkit/docs/TEAM_GUIDE.md)** | When to use which team, decision matrix, handoff patterns |
-| **[State & Sessions](.agentkit/docs/STATE_AND_SESSIONS.md)** | Orchestrator state, events log, session continuity, lock files |
-| **[Customization](.agentkit/docs/CUSTOMIZATION.md)** | Overlays, settings reference, adding commands/rules/teams |
-| **[Troubleshooting](.agentkit/docs/TROUBLESHOOTING.md)** | Common errors, recovery procedures, FAQ |
-| **[Onboarding](.agentkit/docs/ONBOARDING.md)** | Full adoption guide with CI integration |
-| **[Cost Tracking](.agentkit/docs/COST_TRACKING.md)** | Session tracking, usage reports, optimization tips |
-| **[AGENTS.md Guide](.agentkit/docs/AGENTS_MD_GUIDE.md)** | What AGENTS.md is, which tools read it, best practices |
-| **[project.yaml Reference](.agentkit/docs/PROJECT_YAML_REFERENCE.md)** | Full schema with examples for every field |
-| **[Migration Guide](.agentkit/docs/MIGRATION_GUIDE.md)** | Upgrading from older versions of AgentKit Forge |
-| **[Architecture](.agentkit/docs/ARCHITECTURE.md)** | Sync engine, template rendering, CLI, orchestrator internals |
-| **[Tools](.agentkit/docs/TOOLS.md)** | All 11 render targets + AGENTS.md-only tools |
-| **[Security Model](.agentkit/docs/SECURITY_MODEL.md)** | Permission model, secret scanning, path traversal protection |
-| **[MCP/A2A Guide](.agentkit/docs/MCP_A2A_GUIDE.md)** | Model Context Protocol and Agent-to-Agent integration |
-| **[CLI Installation](.agentkit/docs/CLI_INSTALLATION.md)** | Installing and configuring the CLI |
-| **[Agents vs Teams](.agentkit/docs/AGENTS_VS_TEAMS.md)** | When to use agents vs teams, comparison guide |
-| **[Roadmap](.agentkit/docs/ROADMAP.md)** | Planned features and development roadmap |
+| Guide                                                                  | Description                                                         |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **[Quick Start](.agentkit/docs/QUICK_START.md)**                       | Your first 15 minutes — setup, first session, command overview      |
+| **[Command Reference](.agentkit/docs/COMMAND_REFERENCE.md)**           | All 23 commands with examples, flags, and expected outputs          |
+| **[Workflows](.agentkit/docs/WORKFLOWS.md)**                           | Worked examples: feature dev, bug fix, project audit, multi-session |
+| **[Team Guide](.agentkit/docs/TEAM_GUIDE.md)**                         | When to use which team, decision matrix, handoff patterns           |
+| **[State & Sessions](.agentkit/docs/STATE_AND_SESSIONS.md)**           | Orchestrator state, events log, session continuity, lock files      |
+| **[Customization](.agentkit/docs/CUSTOMIZATION.md)**                   | Overlays, settings reference, adding commands/rules/teams           |
+| **[Troubleshooting](.agentkit/docs/TROUBLESHOOTING.md)**               | Common errors, recovery procedures, FAQ                             |
+| **[Onboarding](.agentkit/docs/ONBOARDING.md)**                         | Full adoption guide with CI integration                             |
+| **[Cost Tracking](.agentkit/docs/COST_TRACKING.md)**                   | Session tracking, usage reports, optimization tips                  |
+| **[AGENTS.md Guide](.agentkit/docs/AGENTS_MD_GUIDE.md)**               | What AGENTS.md is, which tools read it, best practices              |
+| **[project.yaml Reference](.agentkit/docs/PROJECT_YAML_REFERENCE.md)** | Full schema with examples for every field                           |
+| **[Migration Guide](.agentkit/docs/MIGRATION_GUIDE.md)**               | Upgrading from older versions of AgentKit Forge                     |
+| **[Architecture](.agentkit/docs/ARCHITECTURE.md)**                     | Sync engine, template rendering, CLI, orchestrator internals        |
+| **[Tools](.agentkit/docs/TOOLS.md)**                                   | All 11 render targets + AGENTS.md-only tools                        |
+| **[Security Model](.agentkit/docs/SECURITY_MODEL.md)**                 | Permission model, secret scanning, path traversal protection        |
+| **[MCP/A2A Guide](.agentkit/docs/MCP_A2A_GUIDE.md)**                   | Model Context Protocol and Agent-to-Agent integration               |
+| **[CLI Installation](.agentkit/docs/CLI_INSTALLATION.md)**             | Installing and configuring the CLI                                  |
+| **[Agents vs Teams](.agentkit/docs/AGENTS_VS_TEAMS.md)**               | When to use agents vs teams, comparison guide                       |
+| **[Roadmap](.agentkit/docs/ROADMAP.md)**                               | Planned features and development roadmap                            |
+| **[PRD Library](docs/prd/README.md)**                                  | Product requirement docs and LLM-mapping PRD examples               |
 
 ---
 
@@ -274,76 +275,76 @@ After running `sync`, these are created in your project root:
 
 **Always-regenerate** (gitignored — regenerated every sync):
 
-| Output | Tool(s) | Purpose |
-|--------|---------|---------|
-| `AGENTS.md` | Universal | Agent instruction file (Linux Foundation standard) — read by Codex, Jules, Copilot, Cline, Roo, Amp, Factory, and more |
-| `CLAUDE.md` | Claude Code | Root Claude Code instructions with project context |
-| `GEMINI.md` | Gemini | Gemini Code Assist / CLI context file |
-| `WARP.md` | Warp | Warp terminal/IDE context file |
-| `.claude/` | Claude Code | Commands, skills, hooks, agents, rules, state, settings |
-| `.cursor/` | Cursor | Rules (.mdc), team rules, slash commands |
-| `.windsurf/` | Windsurf | Rules + workflows |
-| `.github/prompts/` | Copilot | Reusable prompt files (slash commands) |
-| `.github/agents/` | Copilot | Custom agent definitions |
-| `.github/chatmodes/` | Copilot | Team-scoped chat modes |
-| `.gemini/` | Gemini | Styleguide + code review config |
-| `.agents/skills/` | Codex | Open Agent Skills (SKILL.md format) |
-| `.clinerules/` | Cline | Project rules per domain |
-| `.roo/rules/` | Roo Code | Project rules per domain |
-| `.ai/` | Continue | Portable multi-IDE rules |
-| `mcp/` | MCP/A2A | Server + protocol configurations |
-| `UNIFIED_AGENT_TEAMS.md` | All | Team definitions and routing |
-| `QUALITY_GATES.md` | All | Quality gate checks per stack |
+| Output                   | Tool(s)     | Purpose                                                                                                                |
+| ------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `AGENTS.md`              | Universal   | Agent instruction file (Linux Foundation standard) — read by Codex, Jules, Copilot, Cline, Roo, Amp, Factory, and more |
+| `CLAUDE.md`              | Claude Code | Root Claude Code instructions with project context                                                                     |
+| `GEMINI.md`              | Gemini      | Gemini Code Assist / CLI context file                                                                                  |
+| `WARP.md`                | Warp        | Warp terminal/IDE context file                                                                                         |
+| `.claude/`               | Claude Code | Commands, skills, hooks, agents, rules, state, settings                                                                |
+| `.cursor/`               | Cursor      | Rules (.mdc), team rules, slash commands                                                                               |
+| `.windsurf/`             | Windsurf    | Rules + workflows                                                                                                      |
+| `.github/prompts/`       | Copilot     | Reusable prompt files (slash commands)                                                                                 |
+| `.github/agents/`        | Copilot     | Custom agent definitions                                                                                               |
+| `.github/chatmodes/`     | Copilot     | Team-scoped chat modes                                                                                                 |
+| `.gemini/`               | Gemini      | Styleguide + code review config                                                                                        |
+| `.agents/skills/`        | Codex       | Open Agent Skills (SKILL.md format)                                                                                    |
+| `.clinerules/`           | Cline       | Project rules per domain                                                                                               |
+| `.roo/rules/`            | Roo Code    | Project rules per domain                                                                                               |
+| `.ai/`                   | Continue    | Portable multi-IDE rules                                                                                               |
+| `mcp/`                   | MCP/A2A     | Server + protocol configurations                                                                                       |
+| `UNIFIED_AGENT_TEAMS.md` | All         | Team definitions and routing                                                                                           |
+| `QUALITY_GATES.md`       | All         | Quality gate checks per stack                                                                                          |
 
 **Scaffold-once** (committed — generated once, then you own them):
 
-| Directory | Purpose |
-|-----------|---------|
-| `docs/` | Full 8-category documentation structure |
-| `AGENT_BACKLOG.md` | Backlog tracking for agent work |
-| `CONTRIBUTING.md` | Contributing guide |
-| `SECURITY.md` | Security policy |
-| `.github/ISSUE_TEMPLATE/` | Issue templates |
-| `.github/PULL_REQUEST_TEMPLATE.md` | PR template |
-| `.vscode/` | Editor settings and recommended extensions |
-| `.editorconfig`, `.prettierrc` | Formatting configs |
+| Directory                          | Purpose                                    |
+| ---------------------------------- | ------------------------------------------ |
+| `docs/`                            | Full 8-category documentation structure    |
+| `AGENT_BACKLOG.md`                 | Backlog tracking for agent work            |
+| `CONTRIBUTING.md`                  | Contributing guide                         |
+| `SECURITY.md`                      | Security policy                            |
+| `.github/ISSUE_TEMPLATE/`          | Issue templates                            |
+| `.github/PULL_REQUEST_TEMPLATE.md` | PR template                                |
+| `.vscode/`                         | Editor settings and recommended extensions |
+| `.editorconfig`, `.prettierrc`     | Formatting configs                         |
 
 ## Core Commands
 
-| Command | Purpose |
-|---------|---------|
-| `/orchestrate` | Master coordinator with state persistence |
-| `/discover` | Codebase scanner |
-| `/plan` | Structured plan before writing code |
-| `/check` | Universal quality gate (format → lint → typecheck → test) |
-| `/review` | Structured code review |
-| `/handoff` | Session handoff summary |
-| `/sync-backlog` | Update AGENT_BACKLOG.md |
+| Command         | Purpose                                                   |
+| --------------- | --------------------------------------------------------- |
+| `/orchestrate`  | Master coordinator with state persistence                 |
+| `/discover`     | Codebase scanner                                          |
+| `/plan`         | Structured plan before writing code                       |
+| `/check`        | Universal quality gate (format → lint → typecheck → test) |
+| `/review`       | Structured code review                                    |
+| `/handoff`      | Session handoff summary                                   |
+| `/sync-backlog` | Update AGENT_BACKLOG.md                                   |
 
 **Tool management (CLI):**
 
-| Command | Purpose |
-|---------|---------|
-| `agentkit add <tool...>` | Enable AI tool(s) and sync |
+| Command                            | Purpose                                         |
+| ---------------------------------- | ----------------------------------------------- |
+| `agentkit add <tool...>`           | Enable AI tool(s) and sync                      |
 | `agentkit remove <tool> [--clean]` | Disable tool; `--clean` deletes generated files |
-| `agentkit list` | Show enabled, available, and always-on tools |
+| `agentkit list`                    | Show enabled, available, and always-on tools    |
 
 ## Teams
 
 See the **[Team Guide](.agentkit/docs/TEAM_GUIDE.md)** for decision matrices, handoff patterns, and when to use which team.
 
-| ID | Team | Focus |
-|----|------|-------|
-| T1 | BACKEND | API, services, core logic |
-| T2 | FRONTEND | UI, components, PWA |
-| T3 | DATA | Database, models, migrations |
-| T4 | INFRA | IaC, cloud, Terraform/Bicep |
-| T5 | DEVOPS | CI/CD, pipelines, automation |
-| T6 | TESTING | Unit, E2E, integration tests |
-| T7 | SECURITY | Auth, compliance, audit |
-| T8 | DOCUMENTATION | Docs, ADRs, guides |
-| T9 | PRODUCT | Features, PRDs, roadmap |
-| T10 | QUALITY | Code review, refactoring, bugs |
+| ID  | Team          | Focus                          |
+| --- | ------------- | ------------------------------ |
+| T1  | BACKEND       | API, services, core logic      |
+| T2  | FRONTEND      | UI, components, PWA            |
+| T3  | DATA          | Database, models, migrations   |
+| T4  | INFRA         | IaC, cloud, Terraform/Bicep    |
+| T5  | DEVOPS        | CI/CD, pipelines, automation   |
+| T6  | TESTING       | Unit, E2E, integration tests   |
+| T7  | SECURITY      | Auth, compliance, audit        |
+| T8  | DOCUMENTATION | Docs, ADRs, guides             |
+| T9  | PRODUCT       | Features, PRDs, roadmap        |
+| T10 | QUALITY       | Code review, refactoring, bugs |
 
 ## Supported Tools
 
@@ -354,7 +355,7 @@ See **[Tools](.agentkit/docs/TOOLS.md)** for per-tool output details and configu
 
 ## Architecture
 
-```
+```text
 .agentkit/              ← Committed source of truth
 ├── spec/               ← Teams, commands, rules, project.yaml (YAML)
 ├── templates/          ← Output templates per tool (15+ tools)
@@ -387,7 +388,28 @@ git add .agentkit/ .gitignore .gitattributes
 git commit -m "chore: upgrade agentkit-forge to latest"
 ```
 
+> **Note:** If the upgrade adds new scaffold-once files (docs, templates, editor configs), they will appear as untracked after your first `sync`. This is expected — review them and `git add` the ones you want to keep. Subsequent syncs will not overwrite them. Use `pnpm -C .agentkit agentkit:sync --overwrite` to regenerate all project-owned files from templates.
+
 Your overlay (`overlays/<your-repo>/`) is never touched by upstream merges. See the **[Migration Guide](.agentkit/docs/MIGRATION_GUIDE.md)** for detailed upgrade paths and conflict resolution.
+
+### What merges cleanly vs. what needs attention
+
+| Component                          | Merge behaviour                                                |
+| ---------------------------------- | -------------------------------------------------------------- |
+| `.agentkit/engines/`               | Auto-merges unless you modified engine source                  |
+| `.agentkit/spec/`                  | Auto-merges; new teams/commands appear automatically           |
+| `.agentkit/templates/`             | Auto-merges; new template files appear, existing ones update   |
+| `.agentkit/overlays/__TEMPLATE__/` | Auto-merges; your repo-specific overlay is untouched           |
+| `.agentkit/overlays/<your-repo>/`  | **Never touched by upstream** — this is your customization     |
+| `.agentkit/package.json`           | May conflict if both sides changed versions — resolve manually |
+
+### Version pinning
+
+The current agentkit version is defined in `.agentkit/package.json` → `version`. After upgrading, check the version to confirm the merge landed:
+
+```bash
+node -e "console.log(require('./.agentkit/package.json').version)"
+```
 
 ## License
 

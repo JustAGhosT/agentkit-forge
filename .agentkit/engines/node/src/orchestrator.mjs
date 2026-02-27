@@ -3,11 +3,27 @@
  * State machine for the 5-phase lifecycle: Discovery → Planning → Implementation → Validation → Ship.
  * Manages orchestrator state, event logging, and session locking.
  */
-import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, unlinkSync, renameSync } from 'fs';
-import { resolve } from 'path';
 import { execSync } from 'child_process';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync,
+} from 'fs';
 import yaml from 'js-yaml';
+import { resolve } from 'path';
 import { formatTimestamp } from './runner.mjs';
+import {
+  TERMINAL_STATES,
+  checkDependencies,
+  createTask,
+  formatTaskList,
+  listTasks,
+  processHandoffs,
+} from './task-protocol.mjs';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -22,8 +38,16 @@ const PHASES = {
 };
 
 const DEFAULT_TEAM_IDS = [
-  'team-backend', 'team-frontend', 'team-data', 'team-infra', 'team-devops',
-  'team-testing', 'team-security', 'team-docs', 'team-product', 'team-quality',
+  'team-backend',
+  'team-frontend',
+  'team-data',
+  'team-infra',
+  'team-devops',
+  'team-testing',
+  'team-security',
+  'team-docs',
+  'team-product',
+  'team-quality',
 ];
 
 // Overridable via loadTeamIdsFromSpec(). Starts with defaults; initialized on first use.
@@ -45,7 +69,7 @@ export function loadTeamIdsFromSpec(agentkitRoot) {
     if (existsSync(teamsPath)) {
       const spec = yaml.load(readFileSync(teamsPath, 'utf-8'));
       if (spec.teams && Array.isArray(spec.teams)) {
-        const ids = spec.teams.map(t => t.id).filter(Boolean);
+        const ids = spec.teams.map((t) => t.id).filter(Boolean);
         if (ids.length > 0) {
           VALID_TEAM_IDS = ids;
           _teamIdsInitialized = true;
@@ -54,7 +78,9 @@ export function loadTeamIdsFromSpec(agentkitRoot) {
       }
     }
   } catch (err) {
-    console.warn(`[agentkit:orchestrate] Could not load teams from spec: ${err?.message ?? String(err)}`);
+    console.warn(
+      `[agentkit:orchestrate] Could not load teams from spec: ${err?.message ?? String(err)}`
+    );
   }
   VALID_TEAM_IDS = [...DEFAULT_TEAM_IDS];
   _teamIdsInitialized = true;
@@ -112,9 +138,13 @@ function createDefaultState(projectRoot) {
   let branch = 'main';
   try {
     branch = execSync('git rev-parse --abbrev-ref HEAD', {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: projectRoot,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
     }).trim();
-  } catch { /* fallback */ }
+  } catch {
+    /* fallback */
+  }
 
   const teamProgress = {};
   for (const teamId of VALID_TEAM_IDS) {
@@ -191,14 +221,17 @@ export function acquireLock(projectRoot, holder = {}) {
 
   const lockData = {
     pid: holder.pid || process.pid,
-    hostname: holder.hostname || (getHostname()),
+    hostname: holder.hostname || getHostname(),
     started_at: new Date().toISOString(),
     session_id: holder.sessionId || '',
   };
 
   try {
     // Atomic create — fails with EEXIST if lock file already exists
-    writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
+    writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', {
+      encoding: 'utf-8',
+      flag: 'wx',
+    });
     return { acquired: true };
   } catch (err) {
     if (err.code !== 'EEXIST') throw err;
@@ -208,9 +241,16 @@ export function acquireLock(projectRoot, holder = {}) {
       existing = JSON.parse(readFileSync(lPath, 'utf-8'));
     } catch {
       // Corrupted lock file — delete and retry
-      try { unlinkSync(lPath); } catch { /* ignore */ }
       try {
-        writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
+        unlinkSync(lPath);
+      } catch {
+        /* ignore */
+      }
+      try {
+        writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', {
+          encoding: 'utf-8',
+          flag: 'wx',
+        });
         return { acquired: true };
       } catch {
         return { acquired: false, existingLock: null };
@@ -223,14 +263,19 @@ export function acquireLock(projectRoot, holder = {}) {
     // Stale lock — remove and retry once
     unlinkSync(lPath);
     try {
-      writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', { encoding: 'utf-8', flag: 'wx' });
+      writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', {
+        encoding: 'utf-8',
+        flag: 'wx',
+      });
       return { acquired: true };
     } catch {
       // Another process acquired the lock — re-read current holder
       let currentLock = existing;
       try {
         currentLock = JSON.parse(readFileSync(lPath, 'utf-8'));
-      } catch { /* use stale data as fallback */ }
+      } catch {
+        /* use stale data as fallback */
+      }
       return { acquired: false, existingLock: currentLock };
     }
   }
@@ -321,9 +366,15 @@ export function readEvents(projectRoot, limit = 20) {
   const path = eventsPath(projectRoot);
   if (!existsSync(path)) return [];
   const lines = readFileSync(path, 'utf-8').trim().split('\n').filter(Boolean);
-  const events = lines.map(line => {
-    try { return JSON.parse(line); } catch { return null; }
-  }).filter(Boolean);
+  const events = lines
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
   return events.slice(-limit);
 }
 
@@ -385,12 +436,18 @@ export function setPhase(state, phase) {
 
 function getNextAction(phase) {
   switch (phase) {
-    case 1: return 'Run /discover to scan the repository and identify tech stacks';
-    case 2: return 'Run /plan to create implementation plans for identified work items';
-    case 3: return 'Delegate to team agents (/team-*) to implement planned changes';
-    case 4: return 'Run /check to validate all changes pass quality gates';
-    case 5: return 'Run /review for final review, then prepare deployment';
-    default: return '';
+    case 1:
+      return 'Run /discover to scan the repository and identify tech stacks';
+    case 2:
+      return 'Run /plan to create implementation plans for identified work items';
+    case 3:
+      return 'Delegate to team agents (/team-*) to implement planned changes';
+    case 4:
+      return 'Run /check to validate all changes pass quality gates';
+    case 5:
+      return 'Run /review for final review, then prepare deployment';
+    default:
+      return '';
   }
 }
 
@@ -501,6 +558,186 @@ export function getStatus(projectRoot, agentkitRoot) {
 }
 
 // ---------------------------------------------------------------------------
+// Task Delegation (A2A-lite protocol)
+// ---------------------------------------------------------------------------
+
+/**
+ * Delegate a task to a team/agent.
+ * @param {string} projectRoot
+ * @param {object} state - Current orchestrator state
+ * @param {object} taskData - Task creation data (see task-protocol.mjs createTask)
+ * @returns {Promise<{ state: object, task: object|null, error?: string }>}
+ */
+export async function delegateTask(projectRoot, state, taskData) {
+  const result = await createTask(projectRoot, {
+    ...taskData,
+    delegator: taskData.delegator || 'orchestrator',
+  });
+
+  if (result.error) {
+    return { state, task: null, error: result.error };
+  }
+
+  const task = result.task;
+
+  // Update orchestrator state — track active tasks per team
+  // Deep clone to ensure immutability
+  const newState = {
+    ...state,
+    active_tasks: state.active_tasks ? JSON.parse(JSON.stringify(state.active_tasks)) : {},
+    team_progress: state.team_progress ? JSON.parse(JSON.stringify(state.team_progress)) : {},
+  };
+  if (!newState.active_tasks) newState.active_tasks = {};
+
+  for (const assignee of task.assignees || []) {
+    if (!newState.active_tasks[assignee]) {
+      newState.active_tasks[assignee] = [];
+    }
+    newState.active_tasks[assignee].push(task.id);
+
+    // Initialize or merge team_progress with uniform structure
+    if (!newState.team_progress[assignee]) {
+      newState.team_progress[assignee] = {
+        status: 'in_progress',
+        tasks: {},
+        last_updated: new Date().toISOString(),
+      };
+    }
+    // Ensure tasks object exists
+    if (!newState.team_progress[assignee].tasks) {
+      newState.team_progress[assignee].tasks = {};
+    }
+    // Set task as present in tasks object
+    newState.team_progress[assignee].tasks[task.id] = { status: 'in_progress', present: true };
+    // Preserve existing fields and update timestamp
+    newState.team_progress[assignee] = {
+      ...newState.team_progress[assignee],
+      status: 'in_progress',
+      notes: `Task ${task.id}: ${task.title}`,
+      last_updated: new Date().toISOString(),
+    };
+  }
+
+  return { state: newState, task };
+}
+
+/**
+ * Check task dependencies and unblock tasks. Returns cloned state with unblocked tasks applied.
+ * @param {string} projectRoot
+ * @param {object} state - Current orchestrator state
+ * @returns {Promise<{ state: object, unblocked: string[], errors: string[] }>}
+ */
+export async function orchestratorCheckDependencies(projectRoot, state) {
+  const { unblocked, errors } = await checkDependencies(projectRoot);
+
+  // Clone state to ensure immutability
+  const newState = {
+    ...state,
+    active_tasks: state.active_tasks ? JSON.parse(JSON.stringify(state.active_tasks)) : {},
+    team_progress: state.team_progress ? JSON.parse(JSON.stringify(state.team_progress)) : {},
+  };
+
+  // Apply unblocked tasks to state
+  if (unblocked.length > 0 && newState.team_progress) {
+    for (const taskId of unblocked) {
+      // Mark unblocked tasks as ready/available in team_progress
+      for (const [teamId, progress] of Object.entries(newState.team_progress)) {
+        if (progress.tasks && progress.tasks[taskId]) {
+          progress.tasks[taskId].status = 'ready';
+          progress.tasks[taskId].blocked = false;
+        }
+      }
+    }
+  }
+
+  return { state: newState, unblocked, errors };
+}
+
+/**
+ * Process completed tasks with handoffTo and create follow-up tasks.
+ * Updates orchestrator state with new delegations.
+ * @param {string} projectRoot
+ * @param {object} state - Current orchestrator state
+ * @returns {Promise<{ state: object, created: object[], errors: string[] }>}
+ */
+export async function orchestratorProcessHandoffs(projectRoot, state) {
+  const { created, errors } = await processHandoffs(projectRoot, 'orchestrator');
+
+  // Deep clone to ensure immutability
+  const newState = {
+    ...state,
+    active_tasks: state.active_tasks ? JSON.parse(JSON.stringify(state.active_tasks)) : {},
+    team_progress: state.team_progress ? JSON.parse(JSON.stringify(state.team_progress)) : {},
+  };
+  for (const task of created) {
+    // Track new handoff tasks in orchestrator state
+    if (!newState.active_tasks) newState.active_tasks = {};
+    if (!newState.team_progress) newState.team_progress = {};
+
+    for (const assignee of task.assignees || []) {
+      // Update active_tasks
+      if (!newState.active_tasks[assignee]) {
+        newState.active_tasks[assignee] = [];
+      }
+      newState.active_tasks[assignee].push(task.id);
+
+      // Update team_progress to match delegateTask behavior
+      if (!newState.team_progress[assignee]) {
+        newState.team_progress[assignee] = {
+          status: 'in_progress',
+          tasks: {},
+          last_updated: new Date().toISOString(),
+        };
+        newState.team_progress[assignee].tasks[task.id] = {
+          status: 'in_progress',
+          present: true,
+        };
+      } else {
+        if (!newState.team_progress[assignee].tasks) {
+          newState.team_progress[assignee].tasks = {};
+        }
+        newState.team_progress[assignee].tasks[task.id] = {
+          status: 'in_progress',
+          present: true,
+        };
+        newState.team_progress[assignee].status = 'in_progress';
+        newState.team_progress[assignee].last_updated = new Date().toISOString();
+      }
+    }
+  }
+
+  return { state: newState, created, errors };
+}
+
+/**
+ * Get a summary of all active tasks for display.
+ * @param {string} projectRoot
+ * @returns {string}
+ */
+export function getTasksSummary(projectRoot) {
+  const listResult = listTasks(projectRoot);
+  const activeTasks = Array.isArray(listResult?.tasks) ? listResult.tasks : [];
+  if (activeTasks.length === 0) return 'No tasks in the task queue.';
+
+  const nonTerminal = activeTasks.filter((t) => !TERMINAL_STATES.includes(t.status));
+  const terminal = activeTasks.filter((t) => TERMINAL_STATES.includes(t.status));
+
+  const lines = ['--- Task Queue ---', ''];
+
+  if (nonTerminal.length > 0) {
+    lines.push(`Active tasks: ${nonTerminal.length}`);
+    lines.push(formatTaskList(nonTerminal));
+    lines.push('');
+  }
+
+  if (terminal.length > 0) {
+    lines.push(`Completed/closed tasks: ${terminal.length}`);
+  }
+
+  return lines.join('\n');
+}
+
+// ---------------------------------------------------------------------------
 // CLI Handler
 // ---------------------------------------------------------------------------
 
@@ -537,7 +774,9 @@ export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
   if (!lockResult.acquired) {
     const lock = lockResult.existingLock;
     if (lock) {
-      console.error(`[agentkit:orchestrate] Session locked by PID ${lock.pid} since ${lock.started_at}.`);
+      console.error(
+        `[agentkit:orchestrate] Session locked by PID ${lock.pid} since ${lock.started_at}.`
+      );
     } else {
       console.error(`[agentkit:orchestrate] Session lock exists but is corrupted.`);
     }
@@ -580,3 +819,14 @@ export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
 }
 
 export { PHASES, VALID_TEAM_IDS, VALID_TEAM_STATUSES };
+
+// Re-export task protocol for convenience
+export {
+  addTaskArtifact,
+  createTask,
+  formatTaskList,
+  formatTaskSummary,
+  getTask as getTaskById,
+  listTasks,
+  updateTaskStatus as updateTaskState,
+} from './task-protocol.mjs';

@@ -71,6 +71,12 @@ describe('sanitizeTemplateValue', () => {
     expect(sanitizeTemplateValue('$(rm -rf /)')).toBe('rm -rf /');
   });
 
+  it('preserves parentheses in non-injection context', () => {
+    expect(sanitizeTemplateValue('IO operations (file system, network, database)')).toBe(
+      'IO operations (file system, network, database)'
+    );
+  });
+
   it('strips backtick injection', () => {
     expect(sanitizeTemplateValue('`whoami`')).toBe('whoami');
   });

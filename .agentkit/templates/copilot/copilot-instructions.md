@@ -45,7 +45,38 @@ understand team assignments, ownership boundaries, and escalation paths.
 When referencing documentation, always check these files first before making
 assumptions about project structure or conventions.
 
+{{#if hasAnyInfraConfig}}
+
+## Infrastructure Conventions
+
+{{#if infraNamingConvention}}- Naming convention: `{{infraNamingConvention}}`
+{{/if}}
+{{#if infraDefaultRegion}}- Default region: {{infraDefaultRegion}}{{/if}}
+{{#if infraOrg}}- Organisation prefix: {{infraOrg}}{{/if}}
+{{#if infraIacToolchain}}- Preferred IaC toolchain: {{infraIacToolchain}}{{/if}}
+{{#if infraStateBackend}}- State backend: {{infraStateBackend}}{{/if}}
+{{#if infraMandatoryTags}}- Mandatory tags: {{infraMandatoryTags}}{{/if}}
+{{/if}}{{#if hasAnyMonitoringConfig}}
+
+## Observability
+
+{{#if monitoringProvider}}- Monitoring provider: {{monitoringProvider}}{{/if}}
+{{#if alertingProvider}}- Alerting provider: {{alertingProvider}}{{/if}}
+{{#if tracingProvider}}- Tracing provider: {{tracingProvider}}{{/if}}
+{{#if tracingSamplingRate}}- Trace sampling rate: {{tracingSamplingRate}}{{/if}}
+{{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
+{{/if}}{{#if hasAnyComplianceConfig}}
+
+## Compliance and DR
+
+{{#if complianceFramework}}- Framework: {{complianceFramework}}{{/if}}
+{{#if drRpoHours}}- DR RPO (hours): {{drRpoHours}}{{/if}}
+{{#if drRtoHours}}- DR RTO (hours): {{drRtoHours}}{{/if}}
+{{#if drTestSchedule}}- DR test schedule: {{drTestSchedule}}{{/if}}
+{{#if auditEventBus}}- Audit event bus: {{auditEventBus}}{{/if}}
+{{/if}}
 ## Working with Issues
+
 
 - Read the full issue description and all comments before starting
 - Link your changes to the relevant issue number in commit messages

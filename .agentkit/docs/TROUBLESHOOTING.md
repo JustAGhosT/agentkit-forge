@@ -8,7 +8,7 @@ Consolidated FAQ and error guide for agentkit-forge.
 
 Node.js is not installed or not on your PATH.
 
-**Fix:** Install Node.js 18 or later. Verify with:
+**Fix:** Install Node.js 22.x or later (recommend 22.x LTS or 24.x LTS for longer support). Verify with:
 
 ```bash
 node --version
@@ -18,12 +18,12 @@ If you installed Node.js via a version manager (nvm, fnm), make sure it is activ
 
 ### "Cannot find module 'js-yaml'"
 
-Dependencies have not been installed.
+Dependencies have not been installed. The CLI now auto-installs on first run; if you still see this error, the auto-install may have failed.
 
-**Fix:** Run the package install from the agentkit directory:
+**Fix:** Run the package install from the .agentkit directory:
 
 ```bash
-cd agentkit && pnpm install
+pnpm -C .agentkit install
 ```
 
 If `pnpm` is not installed, install it first:

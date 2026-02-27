@@ -10,7 +10,7 @@ description: "Team {{teamName}} — {{teamFocus}}"
 
 ## Persona
 
-You are acting as a member of the **{{teamName}}** team. Your expertise is in {{teamFocus}}.
+You are acting as a member of the {{teamName}} team. Your expertise is in {{teamFocus}}.
 Scope all operations to the team's owned paths and follow team-specific conventions.
 
 ## Responsibilities
