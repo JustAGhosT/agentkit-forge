@@ -18,6 +18,11 @@ import {
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
+<<<<<<< HEAD
+=======
+import { PROJECT_MAPPING, get, transform, check } from './sync.refactor.mjs';
+
+>>>>>>> main
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -153,12 +158,12 @@ function evalTruthy(value) {
 }
 /**
  * Flattens a project.yaml object into a flat key→value map suitable for template rendering.
- * Nested keys become camelCase: project.stack.languages → stackLanguages = "TypeScript, C#"
- * Boolean fields get has* prefixes: crosscutting.logging.correlationId → hasCorrelationId
+ * Uses a declarative mapping configuration for cleaner code.
  */
 function flattenProjectYaml(project, docsSpec = null) {
   if (!project || typeof project !== 'object') return {};
   const vars = {};
+<<<<<<< HEAD
   // Top-level scalars
   if (project.name) vars.projectName = project.name;
   if (project.description) vars.projectDescription = project.description;
@@ -192,21 +197,44 @@ function flattenProjectYaml(project, docsSpec = null) {
   vars.hasPatternEventSourcing = !!patterns.eventSourcing;
   vars.hasPatternMediator = !!patterns.mediator;
   vars.hasPatternUnitOfWork = !!patterns.unitOfWork;
+=======
+
+  // Apply declarative mappings
+  for (const mapping of PROJECT_MAPPING) {
+    const value = get(project, mapping.src);
+    if (check(value, mapping.check)) {
+      const transformed = transform(value, mapping.type);
+      if (transformed !== undefined) {
+        vars[mapping.dest] = transformed;
+      }
+    }
+  }
+
+  // --- Post-processing / Complex derivations ---
+
+  // hasAnyPattern
+>>>>>>> main
   vars.hasAnyPattern =
     vars.hasPatternRepository ||
     vars.hasPatternCqrs ||
     vars.hasPatternEventSourcing ||
     vars.hasPatternMediator ||
     vars.hasPatternUnitOfWork;
+<<<<<<< HEAD
   // Documentation
   const docs = project.documentation || {};
   vars.hasPrd = !!docs.hasPrd;
   if (docs.prdPath) vars.prdPath = docs.prdPath;
+=======
+
+  // docsSpec overlay for PRD
+>>>>>>> main
   const prdSpec = docsSpec?.specialDirectories?.find((d) => d.id === 'prd');
   if (prdSpec) {
     vars.hasPrd = true;
     if (!vars.prdPath) vars.prdPath = prdSpec.path;
   }
+<<<<<<< HEAD
   vars.hasAdr = !!docs.hasAdr;
   if (docs.adrPath) vars.adrPath = docs.adrPath;
   vars.hasApiSpec = !!docs.hasApiSpec;
@@ -242,6 +270,10 @@ function flattenProjectYaml(project, docsSpec = null) {
     vars.infraMandatoryTags = tagging.mandatory.join(', ');
     vars.hasInfraTags = true;
   }
+=======
+
+  // hasAnyInfraConfig
+>>>>>>> main
   vars.hasAnyInfraConfig =
     !!vars.infraNamingConvention ||
     !!vars.infraDefaultRegion ||
@@ -249,6 +281,7 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.infraIacToolchain ||
     !!vars.infraStateBackend ||
     !!vars.infraMandatoryTags;
+<<<<<<< HEAD
   if (Array.isArray(tagging.optional)) vars.infraOptionalTags = tagging.optional.join(', ');
   // Observability
   const obs = project.observability || {};
@@ -277,11 +310,16 @@ function flattenProjectYaml(project, docsSpec = null) {
   if (obsLogging.retentionDays !== undefined && obsLogging.retentionDays !== null) {
     vars.logRetentionDays = String(obsLogging.retentionDays);
   }
+=======
+
+  // hasAnyMonitoring
+>>>>>>> main
   vars.hasAnyMonitoring =
     !!vars.monitoringProvider ||
     !!vars.alertingProvider ||
     !!vars.tracingProvider ||
     !!vars.hasCentralisedLogging;
+<<<<<<< HEAD
   // Compliance
   const comp = project.compliance || {};
   if (comp.framework && comp.framework !== 'none') {
@@ -296,15 +334,17 @@ function flattenProjectYaml(project, docsSpec = null) {
     vars.drTestSchedule = dr.backupSchedule;
   }
   vars.hasGeoRedundancy = !!dr.geoRedundancy;
+=======
+
+  // hasDr
+>>>>>>> main
   vars.hasDr =
-    (dr.rpoHours !== undefined && dr.rpoHours !== null) ||
-    (dr.rtoHours !== undefined && dr.rtoHours !== null) ||
-    (dr.backupSchedule && dr.backupSchedule !== 'none') ||
+    !!vars.drRpoHours ||
+    !!vars.drRtoHours ||
+    !!vars.drBackupSchedule ||
     vars.hasGeoRedundancy;
-  const audit = comp.audit || {};
-  vars.hasAudit = !!audit.enabled;
-  vars.hasAppendOnlyAudit = !!audit.appendOnly;
-  if (audit.eventBus && audit.eventBus !== 'none') vars.auditEventBus = audit.eventBus;
+
+  // hasAnyComplianceConfig
   vars.hasAnyComplianceConfig =
     !!vars.complianceFramework ||
     !!vars.drRpoHours ||
@@ -312,6 +352,7 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.drBackupSchedule ||
     !!vars.drTestSchedule ||
     !!vars.auditEventBus;
+<<<<<<< HEAD
   // Process
   const proc = project.process || {};
   if (proc.branchStrategy) vars.branchStrategy = proc.branchStrategy;
@@ -325,20 +366,30 @@ function flattenProjectYaml(project, docsSpec = null) {
   if (Array.isArray(testing.e2e)) vars.testingE2e = testing.e2e.join(', ');
   if (testing.coverage !== undefined && testing.coverage !== null)
     vars.testingCoverage = String(testing.coverage);
+=======
+
+>>>>>>> main
   // Integrations (kept as array for {{#each}})
   if (Array.isArray(project.integrations)) {
     vars.integrations = project.integrations;
     vars.hasIntegrations = project.integrations.length > 0;
   }
+<<<<<<< HEAD
   // Cross-cutting concerns
   const cc = project.crosscutting || {};
   flattenCrosscutting(cc, vars);
+=======
+
+>>>>>>> main
   return vars;
 }
 /**
  * Flattens the crosscutting section of project.yaml into template vars.
+ * @deprecated - Merged into flattenProjectYaml via declarative mappings.
+ * Kept exported for test compatibility if any tests import it directly.
  */
 function flattenCrosscutting(cc, vars) {
+<<<<<<< HEAD
   // Logging
   const logging = cc.logging || {};
   if (logging.framework && logging.framework !== 'none') {
@@ -415,6 +466,24 @@ function flattenCrosscutting(cc, vars) {
     vars.envConfigStrategy = envs.configStrategy;
   }
   if (envs.envFilePattern) vars.envFilePattern = envs.envFilePattern;
+=======
+  // Delegate to main flatten function by wrapping cc in a project-like structure
+  // This is a backward compatibility shim.
+  const tempProject = { crosscutting: cc };
+  const mapped = flattenProjectYaml(tempProject);
+
+  // Copy mapped crosscutting vars into the target vars object
+  // Filter out keys that don't belong to crosscutting to avoid noise
+  for (const [key, val] of Object.entries(mapped)) {
+    if (key !== 'hasAnyPattern' &&
+        key !== 'hasAnyInfraConfig' &&
+        key !== 'hasAnyMonitoring' &&
+        key !== 'hasDr' &&
+        key !== 'hasAnyComplianceConfig') {
+      vars[key] = val;
+    }
+  }
+>>>>>>> main
 }
 /**
  * Sanitizes a template variable value to prevent injection.
