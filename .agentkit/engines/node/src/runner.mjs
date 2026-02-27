@@ -46,10 +46,10 @@ export function resolveWindowsExecutable(command, cwd) {
   // If we are not on Windows, just return the command
   if (process.platform !== 'win32') return command;
 
-  // Helper to verify file existence
+  // Helper to verify file existence (optimized to single FS call)
   const isFile = (p) => {
     try {
-      return fs.existsSync(p) && fs.statSync(p).isFile();
+      return fs.statSync(p).isFile();
     } catch {
       return false;
     }
@@ -71,7 +71,8 @@ export function resolveWindowsExecutable(command, cwd) {
   };
 
   // 1. Handle absolute paths or explicit relative paths
-  if (path.isAbsolute(command) || command.startsWith('.' + path.sep) || command.startsWith('..' + path.sep)) {
+  // Matches regex for paths starting with ./, .\, ../, ..\
+  if (path.isAbsolute(command) || /^(\.|\.\.)[\\/]/.test(command)) {
     return checkExtensions(command) || command;
   }
 

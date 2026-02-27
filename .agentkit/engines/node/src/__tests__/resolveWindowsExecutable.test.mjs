@@ -5,32 +5,38 @@ import { resolveWindowsExecutable } from '../runner.mjs';
 
 describe('resolveWindowsExecutable()', () => {
   const originalPlatform = process.platform;
-  const originalEnv = process.env;
+  let originalEnv;
 
   beforeEach(() => {
     vi.resetModules();
+    // Deep clone env to prevent side effects
+    originalEnv = { ...process.env };
     process.env = { ...originalEnv };
     // Default PATHEXT for testing
     process.env.PATHEXT = '.COM;.EXE;.BAT;.CMD';
 
-    // Mock platform to win32
+    // Mock platform to win32, ensuring configurable so it can be restored
     Object.defineProperty(process, 'platform', {
-      value: 'win32'
+      value: 'win32',
+      configurable: true
     });
 
-    vi.spyOn(fs, 'existsSync').mockImplementation(() => false);
     vi.spyOn(fs, 'statSync').mockImplementation(() => ({ isFile: () => false }));
   });
 
   afterEach(() => {
+    // Restore platform
     Object.defineProperty(process, 'platform', {
-      value: originalPlatform
+      value: originalPlatform,
+      configurable: true
     });
+    // Restore env
+    process.env = originalEnv;
     vi.restoreAllMocks();
   });
 
   it('returns original command if not on Windows', () => {
-    Object.defineProperty(process, 'platform', { value: 'linux' });
+    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
     expect(resolveWindowsExecutable('ls')).toBe('ls');
   });
 
@@ -39,7 +45,6 @@ describe('resolveWindowsExecutable()', () => {
     const absPath = path.resolve('/bin/tool.exe');
 
     vi.spyOn(path, 'isAbsolute').mockReturnValue(true);
-    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === absPath);
     vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === absPath }));
 
     expect(resolveWindowsExecutable(absPath)).toBe(absPath);
@@ -50,7 +55,6 @@ describe('resolveWindowsExecutable()', () => {
     const resolvedPath = path.resolve('/bin/tool.CMD');
 
     vi.spyOn(path, 'isAbsolute').mockReturnValue(true);
-    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === resolvedPath);
     vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === resolvedPath }));
 
     expect(resolveWindowsExecutable(inputPath)).toBe(resolvedPath);
@@ -61,7 +65,6 @@ describe('resolveWindowsExecutable()', () => {
     const cmd = 'script';
     const resolvedPath = path.join(cwd, 'script.BAT');
 
-    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === resolvedPath);
     vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === resolvedPath }));
 
     expect(resolveWindowsExecutable(cmd, cwd)).toBe(resolvedPath);
@@ -73,7 +76,6 @@ describe('resolveWindowsExecutable()', () => {
     const cmd = 'npm';
     const resolvedPath = path.join(binDir, 'npm.CMD');
 
-    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === resolvedPath);
     vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === resolvedPath }));
 
     expect(resolveWindowsExecutable(cmd)).toBe(resolvedPath);
@@ -92,8 +94,7 @@ describe('resolveWindowsExecutable()', () => {
     process.env.PATH = path.resolve('/bin');
 
     // Both exist
-    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === cwdPath || p === pathPath);
-    vi.spyOn(fs, 'statSync').mockImplementation(() => ({ isFile: () => true }));
+    vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === cwdPath || p === pathPath }));
 
     expect(resolveWindowsExecutable(cmd, cwd)).toBe(cwdPath);
   });
