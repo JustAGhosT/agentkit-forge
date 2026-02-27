@@ -98,4 +98,26 @@ describe('resolveWindowsExecutable()', () => {
 
     expect(resolveWindowsExecutable(cmd, cwd)).toBe(cwdPath);
   });
+
+  it('resolves relative path with extension', () => {
+    const cwd = path.resolve('/project');
+    const cmd = path.join('.', 'tool.BAT');
+    const resolvedPath = path.join(cwd, cmd);
+
+    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === resolvedPath);
+    vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === resolvedPath }));
+
+    expect(resolveWindowsExecutable(cmd, cwd)).toBe(resolvedPath);
+  });
+
+  it('resolves relative path by appending extension', () => {
+    const cwd = path.resolve('/project');
+    const cmd = path.join('.', 'tool');
+    const resolvedPath = path.join(cwd, `${cmd}.CMD`);
+
+    vi.spyOn(fs, 'existsSync').mockImplementation((p) => p === resolvedPath);
+    vi.spyOn(fs, 'statSync').mockImplementation((p) => ({ isFile: () => p === resolvedPath }));
+
+    expect(resolveWindowsExecutable(cmd, cwd)).toBe(resolvedPath);
+  });
 });
