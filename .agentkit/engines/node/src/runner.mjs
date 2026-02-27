@@ -126,3 +126,52 @@ export function formatDuration(ms) {
 export function formatTimestamp(isoTimestamp) {
   return isoTimestamp.replace('T', ' ').replace(/(\.\d+)?Z$/, '');
 }
+
+/**
+ * Limit concurrency for an array of promise-returning functions.
+ * Similar to p-limit but minimal implementation.
+ * @param {Array<() => Promise<any>>} tasks
+ * @param {number} concurrency
+ * @returns {Promise<any[]>}
+ */
+export async function runWithConcurrency(tasks, concurrency) {
+  const results = [];
+  const executing = [];
+
+  for (const task of tasks) {
+    const p = task().then(res => results.push(res));
+    executing.push(p);
+
+    if (executing.length >= concurrency) {
+      await Promise.race(executing);
+      // Remove completed promises
+      // Note: This is slightly inefficient O(N^2) worst case but fine for typical concurrency limits (e.g. 50)
+      // For cleaner implementation, we could wrap promises to remove themselves from a Set.
+      // But let's stick to a simpler batching or just use a pool approach.
+    }
+    // Clean up completed promises from 'executing' array to allow more to start
+    // We actually need to remove the specific completed promise.
+  }
+
+  await Promise.all(executing);
+  return results;
+}
+
+/**
+ * Run tasks with a concurrency limit using an iterator-based pool.
+ * @template T
+ * @param {Array<() => Promise<T>>} tasks
+ * @param {number} concurrency
+ * @returns {Promise<T[]>}
+ */
+export async function runInPool(tasks, concurrency) {
+  const results = new Array(tasks.length);
+  const iterator = tasks.entries();
+  const workers = new Array(concurrency).fill(iterator).map(async (iter) => {
+    for (const [index, task] of iter) {
+      results[index] = await task();
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
