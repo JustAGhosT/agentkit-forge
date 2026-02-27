@@ -249,7 +249,7 @@ export function recordCommand(agentkitRoot, command) {
       if (tryUpdateSession(filePath, session)) {
         // Opportunistically update pointer
         try {
-            writeFileSync(pointerPath, session.sessionId, 'utf-8');
+          writeFileSync(pointerPath, session.sessionId, 'utf-8');
         } catch {}
         return;
       }
