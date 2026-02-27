@@ -280,9 +280,11 @@ rules:
       - id: iac-naming-convention
         rule: >
           All cloud resources must follow the naming convention
-          {org}-{env}-{project}-{resourcetype}-{region}. The default org is "nl",
-          the default region is "southafricanorth". Deviations require a comment
-          explaining why. Use locals blocks to compose names from variables.
+          {org}-{env}-{project}-{resourcetype}-{region}. Configure org and region
+          in project.yaml (infrastructure.org, infrastructure.defaultRegion) or
+          use Terraform variables — do not hardcode. Example placeholders:
+          YOUR_ORG, YOUR_DEFAULT_REGION. Deviations require a comment explaining
+          why. Use locals blocks to compose names from variables.
         severity: error
         autofix: false
 

@@ -24,21 +24,23 @@ The user may pass the following flags via `$ARGUMENTS`:
 
 ### Shared Assets
 
-The orchestrator, `/plan`, and `/project-review` all use the same state files. The orchestrator is the only command that acquires the lock.
+The orchestrator, `/plan`, and `/project-review` all use the same state files. The orchestrator, `/plan`, and `/project-review` may each acquire `orchestrator.lock` when writing to shared state (orchestrator for full sessions; `/plan` and `/project-review` when appending to `events.log`).
 
-| Asset               | Purpose                | Orchestrator    | Plan   | Project-Review |
-| ------------------- | ---------------------- | --------------- | ------ | -------------- |
-| `AGENT_BACKLOG.md`  | Work items, priorities | Read/Write      | Read   | Read           |
-| `orchestrator.json` | Phase, teams, metrics  | Read/Write      | Read   | Read           |
-| `events.log`        | Audit trail            | Append          | Append | Append         |
-| `orchestrator.lock` | Session lock           | Acquire/Release | —      | —              |
+| Asset               | Purpose                | Orchestrator    | Plan              | Project-Review    |
+| ------------------- | ---------------------- | --------------- | ----------------- | ----------------- |
+| `AGENT_BACKLOG.md`  | Work items, priorities | Read/Write      | Read              | Read              |
+| `orchestrator.json` | Phase, teams, metrics  | Read/Write      | Read              | Read              |
+| `events.log`        | Audit trail            | Append          | Append            | Append            |
+| `orchestrator.lock` | Session lock           | Acquire/Release | Acquire when writing | Acquire when writing |
 
-**Coordination requirement for `events.log`:** Writers (`/plan`,
-`/project-review`) must either use atomic append semantics (open with
+**Coordination requirement for `events.log`:** Writers (orchestrator,
+`/plan`, `/project-review`) must either use atomic append semantics (open with
 `O_APPEND` or equivalent) or acquire `orchestrator.lock` before appending to
-prevent interleaved writes. The Orchestrator always holds the lock when
-writing. O_APPEND atomic-append semantics are only guaranteed on local POSIX
-filesystems and may not be reliable on NFS, SMB, or distributed storage.
+prevent interleaved writes. The orchestrator holds the lock for its full
+session; `/plan` and `/project-review` acquire it only when appending (when
+O_APPEND is insufficient). O_APPEND atomic-append semantics are only
+guaranteed on local POSIX filesystems and may not be reliable on NFS, SMB, or
+distributed storage.
 
 **Filesystem detection:** Use a simple heuristic to decide when to acquire the lock: on Unix, inspect mount type for NFS/SMB/CIFS; on Windows, treat UNC paths (e.g., `\\server\share`) as network mounts. If the mount type indicates network storage or detection is unavailable, acquire `orchestrator.lock` before writing to `events.log`. Otherwise, O_APPEND may be used on local POSIX filesystems. **Conservative default:** When in doubt, use the lock. All non-orchestrator writers may acquire `orchestrator.lock` to eliminate ambiguity.
 

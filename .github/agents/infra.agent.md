@@ -70,7 +70,7 @@ Scan the codebase within your focus area before making changes. Read `AGENT_BACK
 
 ### iac
 
-- **iac-naming-convention** [error]: All cloud resources must follow the naming convention org-env-project-resourcetype-region. The default org is "nl", the default region is "southafricanorth". Deviations require a comment explaining why. Use locals blocks to compose names from variables.
+- **iac-naming-convention** [error]: All cloud resources must follow the naming convention org-env-project-resourcetype-region. Configure org and region in project.yaml (infrastructure.org, infrastructure.defaultRegion) or use Terraform variables — do not hardcode. Example placeholders: YOUR_ORG, YOUR_DEFAULT_REGION. Deviations require a comment explaining why. Use locals blocks to compose names from variables.
 - **iac-toolchain** [error]: Use Terraform for resource definitions and Terragrunt for DRY configuration, remote state management, and environment orchestration. All environments must be managed through Terragrunt live configurations.
 - **iac-state-backend** [critical]: Terraform state must be stored remotely (Azure Storage / S3 / GCS) with locking enabled. Never commit .tfstate files. State backend configuration must be managed through Terragrunt to avoid duplication.
 - **iac-modules** [error]: Reusable infrastructure must be extracted into versioned Terraform modules. Modules must have README.md, variables.tf, outputs.tf, and examples/. Pin module versions in consumers — never use unversioned source references.

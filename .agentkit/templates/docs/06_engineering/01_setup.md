@@ -6,7 +6,7 @@
 
 ## Overview
 
-Instructions for setting up a local development environment for **{{repoName}}**.
+Instructions for setting up a local development environment for {{repoName}}.
 
 ## Prerequisites
 

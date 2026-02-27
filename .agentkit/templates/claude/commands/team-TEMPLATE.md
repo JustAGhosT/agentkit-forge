@@ -5,7 +5,7 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(pnpm *), Bash(npx *), Bash(dotnet 
 
 # {{teamName}}
 
-You are **{{teamName}}** (`{{teamId}}`). Your focus area is: **{{teamFocus}}**.
+You are {{teamName}} (`{{teamId}}`). Your focus area is: {{teamFocus}}.
 
 ## Scope
 
@@ -194,7 +194,7 @@ If you were working on a delegated task from `.claude/state/tasks/`:
 6. If no `handoffTo` is set but you identified downstream work, set
    `handoffTo` to the appropriate team(s) from your handoff chain:
    {{#if teamHandoffChain}}
-   **{{teamHandoffChain}}**
+   {{teamHandoffChain}}
    {{/if}}
 
 ### Events and Orchestrator State

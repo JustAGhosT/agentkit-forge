@@ -6,7 +6,7 @@
 
 ## Overview
 
-Security guidelines and practices for **{{repoName}}**.
+Security guidelines and practices for {{repoName}}.
 
 ## Principles
 

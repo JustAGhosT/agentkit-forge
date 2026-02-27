@@ -91,7 +91,7 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 
 ### Logging
 
-{{#if loggingFramework}}Use **{{loggingFramework}}** for all logging.{{/if}}
+{{#if loggingFramework}}Use {{loggingFramework}} for all logging.{{/if}}
 {{#if hasStructuredLogging}} Use structured logging — never use raw `console.log` or `Console.WriteLine`.{{/if}}
 {{#if hasCorrelationId}} Include correlation IDs in all log entries.{{/if}}
 
@@ -103,7 +103,7 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 
 ### Error Handling
 
-{{#if errorStrategy}}Strategy: **{{errorStrategy}}**.{{/if}}
+{{#if errorStrategy}}Strategy: {{errorStrategy}}.{{/if}}
 {{#if hasGlobalHandler}} A global error handler is configured.{{/if}}
 {{#if hasCustomExceptions}} Use the project's custom exception types.{{/if}}
 
@@ -112,7 +112,7 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 
 ### Authentication
 
-{{#if authProvider}}Provider: **{{authProvider}}**{{#if authStrategy}}, strategy: **{{authStrategy}}**{{/if}}.{{/if}}
+{{#if authProvider}}Provider: {{authProvider}}{{#if authStrategy}}, strategy: {{authStrategy}}{{/if}}.{{/if}}
 {{#if hasRbac}} RBAC is enforced.{{/if}}
 
 {{/if}}
@@ -120,7 +120,7 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 
 ### Caching
 
-{{#if cachingProvider}}Provider: **{{cachingProvider}}**.{{/if}}
+{{#if cachingProvider}}Provider: {{cachingProvider}}.{{/if}}
 {{#if cachingPatterns}} Patterns: {{cachingPatterns}}.{{/if}}
 {{#if hasDistributedCache}} Distributed cache — consider invalidation across nodes.{{/if}}
 
@@ -129,17 +129,17 @@ This repository uses **AgentKit Forge** to manage AI agent team workflows across
 
 ### API
 
-- Versioning: **{{apiVersioning}}**
-{{#if hasApiPagination}}- Pagination: **{{apiPagination}}**{{/if}}
-{{#if apiResponseFormat}}- Response format: **{{apiResponseFormat}}**{{/if}}
+- Versioning: {{apiVersioning}}
+{{#if hasApiPagination}}- Pagination: {{apiPagination}}{{/if}}
+{{#if apiResponseFormat}}- Response format: {{apiResponseFormat}}{{/if}}
 
 {{/if}}
 {{#if hasDbMigrations}}
 
 ### Database
 
-- Migrations: **{{dbMigrations}}**
-{{#if dbTransactionStrategy}}- Transactions: **{{dbTransactionStrategy}}**{{/if}}
+- Migrations: {{dbMigrations}}
+{{#if dbTransactionStrategy}}- Transactions: {{dbTransactionStrategy}}{{/if}}
 
 {{/if}}
 
@@ -195,7 +195,7 @@ All project documentation follows the unified 8-category structure in `docs/`:
 
 ## External Integrations
 
-{{#each integrations}}- **{{.name}}** — {{.purpose}}
+{{#each integrations}}- {{.name}} — {{.purpose}}
 {{/each}}
 {{/if}}
 

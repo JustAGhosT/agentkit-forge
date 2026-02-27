@@ -6,7 +6,7 @@
 
 ## Overview
 
-Testing strategy and conventions for **{{repoName}}**.
+Testing strategy and conventions for {{repoName}}.
 
 ## Test Pyramid
 

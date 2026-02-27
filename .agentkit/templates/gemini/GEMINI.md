@@ -25,14 +25,14 @@
 - Never commit secrets, API keys, or credentials. Use environment variables.
 - Prefer explicit error handling over silent failures.
 - Use the strongest type safety available for the language.
-{{#if commitConvention}}- Follow **{{commitConvention}}** commit convention.{{/if}}
-{{#if branchStrategy}}- Branch strategy: **{{branchStrategy}}**.{{/if}}
-{{#if codeReview}}- Code review: **{{codeReview}}**.{{/if}}
+{{#if commitConvention}}- Follow {{commitConvention}} commit convention.{{/if}}
+{{#if branchStrategy}}- Branch strategy: {{branchStrategy}}.{{/if}}
+{{#if codeReview}}- Code review: {{codeReview}}.{{/if}}
 
 {{#if hasLogging}}
 ## Logging
 
-Use **{{loggingFramework}}** for all logging.{{#if hasStructuredLogging}} Use structured logging — never use raw `console.log` or `Console.WriteLine`.{{/if}}{{#if hasCorrelationId}} Include correlation IDs in all log entries.{{/if}}
+Use {{loggingFramework}} for all logging.{{#if hasStructuredLogging}} Use structured logging — never use raw `console.log` or `Console.WriteLine`.{{/if}}{{#if hasCorrelationId}} Include correlation IDs in all log entries.{{/if}}
 {{#if loggingLevel}}- Default level: `{{loggingLevel}}`{{/if}}
 {{#if loggingSinks}}- Sinks: {{loggingSinks}}{{/if}}
 {{/if}}
@@ -40,35 +40,35 @@ Use **{{loggingFramework}}** for all logging.{{#if hasStructuredLogging}} Use st
 {{#if hasErrorHandling}}
 ## Error Handling
 
-Strategy: **{{errorStrategy}}**.{{#if hasGlobalHandler}} A global error handler is configured.{{/if}}{{#if hasCustomExceptions}} Use the project's custom exception types.{{/if}}
+Strategy: {{errorStrategy}}.{{#if hasGlobalHandler}} A global error handler is configured.{{/if}}{{#if hasCustomExceptions}} Use the project's custom exception types.{{/if}}
 {{/if}}
 
 {{#if hasAuth}}
 ## Authentication & Authorization
 
-Provider: **{{authProvider}}**{{#if authStrategy}}, strategy: **{{authStrategy}}**{{/if}}.{{#if hasRbac}} RBAC is enforced.{{/if}}{{#if hasMultiTenant}} Multi-tenant — never leak data across tenants.{{/if}}
+Provider: {{authProvider}}{{#if authStrategy}}, strategy: {{authStrategy}}{{/if}}.{{#if hasRbac}} RBAC is enforced.{{/if}}{{#if hasMultiTenant}} Multi-tenant — never leak data across tenants.{{/if}}
 {{/if}}
 
 {{#if hasCaching}}
 ## Caching
 
-Provider: **{{cachingProvider}}**.{{#if cachingPatterns}} Patterns: {{cachingPatterns}}.{{/if}}{{#if hasDistributedCache}} Distributed cache — consider invalidation across nodes.{{/if}}
+Provider: {{cachingProvider}}.{{#if cachingPatterns}} Patterns: {{cachingPatterns}}.{{/if}}{{#if hasDistributedCache}} Distributed cache — consider invalidation across nodes.{{/if}}
 {{/if}}
 
 {{#if hasApiVersioning}}
 ## API Conventions
 
-{{#if hasApiVersioning}}- Versioning: **{{apiVersioning}}**{{/if}}
-{{#if hasApiPagination}}- Pagination: **{{apiPagination}}**{{/if}}
-{{#if apiResponseFormat}}- Response format: **{{apiResponseFormat}}**{{/if}}
+{{#if hasApiVersioning}}- Versioning: {{apiVersioning}}{{/if}}
+{{#if hasApiPagination}}- Pagination: {{apiPagination}}{{/if}}
+{{#if apiResponseFormat}}- Response format: {{apiResponseFormat}}{{/if}}
 {{#if hasRateLimiting}}- Rate limiting is enabled{{/if}}
 {{/if}}
 
 {{#if hasDbMigrations}}
 ## Database
 
-- Migrations: **{{dbMigrations}}**{{#if hasDbSeeding}} with seeding{{/if}}
-{{#if dbTransactionStrategy}}- Transactions: **{{dbTransactionStrategy}}**{{/if}}
+- Migrations: {{dbMigrations}}{{#if hasDbSeeding}} with seeding{{/if}}
+{{#if dbTransactionStrategy}}- Transactions: {{dbTransactionStrategy}}{{/if}}
 {{#if hasConnectionPooling}}- Connection pooling is enabled{{/if}}
 {{/if}}
 
@@ -84,7 +84,7 @@ Always run the full test suite before creating a pull request.
 {{#if hasIntegrations}}
 ## External Integrations
 
-{{#each integrations}}- **{{.name}}** — {{.purpose}}
+{{#each integrations}}- {{.name}} — {{.purpose}}
 {{/each}}
 Treat external service boundaries carefully. Mock integrations in tests.
 {{/if}}
@@ -102,7 +102,7 @@ Treat external service boundaries carefully. Mock integrations in tests.
 {{#if hasFeatureFlags}}
 ## Feature Flags
 
-Provider: **{{featureFlagProvider}}**. Gate new features behind flags.
+Provider: {{featureFlagProvider}}. Gate new features behind flags.
 {{/if}}
 
 {{#if containerized}}

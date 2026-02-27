@@ -4,7 +4,7 @@
 
 # {{repoName}} — Documentation
 
-Welcome to the __{{repoName}}__ documentation hub. This index links to every
+Welcome to the {{repoName}} documentation hub. This index links to every
 documentation category maintained by this repository.
 
 ## Categories

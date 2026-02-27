@@ -56,9 +56,7 @@ assumptions about project structure or conventions.
 {{#if infraIacToolchain}}- Preferred IaC toolchain: {{infraIacToolchain}}{{/if}}
 {{#if infraStateBackend}}- State backend: {{infraStateBackend}}{{/if}}
 {{#if infraMandatoryTags}}- Mandatory tags: {{infraMandatoryTags}}{{/if}}
-{{/if}}
-
-{{#if hasAnyMonitoringConfig}}
+{{/if}}{{#if hasAnyMonitoringConfig}}
 
 ## Observability
 
@@ -67,9 +65,7 @@ assumptions about project structure or conventions.
 {{#if tracingProvider}}- Tracing provider: {{tracingProvider}}{{/if}}
 {{#if tracingSamplingRate}}- Trace sampling rate: {{tracingSamplingRate}}{{/if}}
 {{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
-{{/if}}
-
-{{#if hasAnyComplianceConfig}}
+{{/if}}{{#if hasAnyComplianceConfig}}
 
 ## Compliance and DR
 
@@ -79,8 +75,8 @@ assumptions about project structure or conventions.
 {{#if drTestSchedule}}- DR test schedule: {{drTestSchedule}}{{/if}}
 {{#if auditEventBus}}- Audit event bus: {{auditEventBus}}{{/if}}
 {{/if}}
-
 ## Working with Issues
+
 
 - Read the full issue description and all comments before starting
 - Link your changes to the relevant issue number in commit messages

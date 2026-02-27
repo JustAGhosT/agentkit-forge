@@ -49,12 +49,8 @@ When referencing documentation, always check these files first before making
 assumptions about project structure or conventions.
 
 
-
-
-
-
-
 ## Working with Issues
+
 
 - Read the full issue description and all comments before starting
 - Link your changes to the relevant issue number in commit messages

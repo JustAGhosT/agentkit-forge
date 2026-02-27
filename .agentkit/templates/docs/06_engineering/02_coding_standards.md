@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document defines the coding standards and conventions for **{{repoName}}**.
+This document defines the coding standards and conventions for {{repoName}}.
 
 ## Language & Style
 
