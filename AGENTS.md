@@ -3,9 +3,22 @@
 <!-- Regenerate: pnpm -C .agentkit agentkit:sync -->
 # __TEMPLATE__
 
+
+
 ## Project Context
 
+
+
+
+
+
+
+
+
+
+
 - **Default Branch**: main
+
 
 ## Coding Standards
 
@@ -16,13 +29,39 @@
 - Prefer explicit error handling over silent failures.
 - Use the strongest type safety available for the language.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Testing
 
+
+
+
+
+
 Always run the full test suite before creating a pull request. Never disable or skip existing tests without explicit justification.
+
+
 
 ## Documentation
 
 - **PRDs**: `docs/prd/`
+
+
+
+
 
 - **Quality Gates**: `QUALITY_GATES.md`
 - **Runbook**: `RUNBOOK_AI.md`
@@ -38,3 +77,9 @@ This project uses a multi-team orchestration model. Teams are specialized by dom
 
 See `UNIFIED_AGENT_TEAMS.md` for full team definitions and workflow phases.
 See `COMMAND_GUIDE.md` for when to choose `/orchestrate`, `/plan`, `/project-review`, and other commands.
+
+
+
+
+
+
