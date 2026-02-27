@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, rmSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import * as child_process from 'node:child_process';
+import * as child_process from 'child_process';
 import { initSession, endSession } from '../cost-tracker.mjs';
 
 // Mock child_process
-vi.mock('node:child_process', () => {
+vi.mock('child_process', () => {
   return {
     execSync: vi.fn(),
     execFileSync: vi.fn(),
@@ -72,5 +72,34 @@ describe('cost-tracker security', () => {
       ['diff', '--name-only', 'HEAD'],
       expect.objectContaining({ cwd: PROJECT_ROOT })
     );
+  });
+
+  it('initSession should handle git failures gracefully', () => {
+    // Simulate git command failure (e.g. git not installed or not a git repo)
+    child_process.execFileSync.mockImplementation(() => {
+      throw new Error('git not found');
+    });
+
+    const session = initSession({ agentkitRoot: TEST_ROOT, projectRoot: PROJECT_ROOT });
+
+    // Should fall back to 'unknown'
+    expect(session.branch).toBe('unknown');
+    expect(session.user).toBe('unknown');
+  });
+
+  it('endSession should handle git failures gracefully', () => {
+    // Setup session first (successfully)
+    child_process.execFileSync.mockReturnValue('mock-output');
+    const session = initSession({ agentkitRoot: TEST_ROOT, projectRoot: PROJECT_ROOT });
+
+    // Simulate failure for endSession
+    child_process.execFileSync.mockImplementation(() => {
+      throw new Error('git not found');
+    });
+
+    const endedSession = endSession({ agentkitRoot: TEST_ROOT, projectRoot: PROJECT_ROOT, sessionId: session.sessionId });
+
+    // Should default to 0 files modified
+    expect(endedSession.filesModified).toBe(0);
   });
 });
