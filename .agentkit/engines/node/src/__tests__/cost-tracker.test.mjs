@@ -93,7 +93,8 @@ describe('cost-tracker', () => {
 
       const files = readdirSync(sessDir).filter(f => f.startsWith('session-') && f.endsWith('.json'));
       expect(files.length).toBeGreaterThan(0);
-      expect(files[0]).toContain(session.sessionId);
+      const sessionFile = files.find(f => f.includes(session.sessionId));
+      expect(sessionFile).toBeDefined();
     });
 
     it('creates a latest-session pointer file', () => {
