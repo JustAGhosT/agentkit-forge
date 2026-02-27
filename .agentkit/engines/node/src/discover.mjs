@@ -3,7 +3,7 @@
  * Scans the repository to detect tech stacks, project structure, team boundaries,
  * and build a structured discovery report.
  */
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, promises as fsPromises } from 'fs';
 import yaml from 'js-yaml';
 import { basename, extname, join, resolve } from 'path';
 
@@ -379,28 +379,65 @@ function fileExists(projectRoot, pattern) {
 // should not be counted as application source code in consuming repos.
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.nuxt']);
 
-function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
+async function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
   let count = 0;
-  function walk(currentDir, currentDepth) {
+  // Simple concurrency limiter to avoid EMFILE
+  const CONCURRENCY_LIMIT = 50;
+  let active = 0;
+  const queue = [];
+
+  const processQueue = () => {
+    while (active < CONCURRENCY_LIMIT && queue.length > 0) {
+      const { run, resolve, reject } = queue.shift();
+      active++;
+      run()
+        .then(resolve)
+        .catch(reject)
+        .finally(() => {
+          active--;
+          processQueue();
+        });
+    }
+  };
+
+  // Limits execution of `fn`
+  const limit = (fn) => {
+    return new Promise((resolve, reject) => {
+      queue.push({ run: fn, resolve, reject });
+      processQueue();
+    });
+  };
+
+  async function walk(currentDir, currentDepth) {
     if (currentDepth > depth || count > maxFiles) return;
-    if (!existsSync(currentDir)) return;
+
     try {
-      for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+      // Only limit the readdir call, not the recursive structure
+      const entries = await limit(() => fsPromises.readdir(currentDir, { withFileTypes: true }));
+
+      const tasks = [];
+      for (const entry of entries) {
+        if (count > maxFiles) break;
         if (entry.name.startsWith('.') || SKIP_DIRS.has(entry.name)) continue;
         // Skip agentkit engine internals — framework code, not app code
         if (currentDepth === 0 && entry.name === '.agentkit') continue;
+
         const full = join(currentDir, entry.name);
+
         if (entry.isDirectory()) {
-          walk(full, currentDepth + 1);
+          tasks.push(walk(full, currentDepth + 1));
         } else if (extensions.includes(extname(entry.name))) {
           count++;
         }
       }
-    } catch {
-      /* permission errors */
+
+      await Promise.all(tasks);
+    } catch (err) {
+      /* permission errors or ENOENT */
     }
   }
-  walk(dir, 0);
+
+  await walk(dir, 0);
   return count;
 }
 
@@ -636,7 +673,7 @@ function getPythonDeps(projectRoot) {
 /**
  * Detects frameworks from a detector list using cached dependency data.
  */
-function detectFromList(
+async function detectFromList(
   detectors,
   { nodeDeps, csprojContent, cargoContent, gemfileContent, pomContent, pythonDeps, projectRoot }
 ) {
@@ -677,7 +714,7 @@ function detectFromList(
     }
     // Check file extensions (e.g. .scss files)
     if (!matched && d.fileExt) {
-      if (countFilesByExt(projectRoot, [d.fileExt], 2, 5) > 0) matched = true;
+      if ((await countFilesByExt(projectRoot, [d.fileExt], 2, 5)) > 0) matched = true;
     }
     if (matched) found.push({ name: d.name, label: d.label });
   }
@@ -735,7 +772,7 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   for (const detector of STACK_DETECTORS) {
     const markerFound = detector.markers.some((m) => fileExists(projectRoot, m));
     if (markerFound) {
-      const fileCount = countFilesByExt(projectRoot, detector.filePatterns);
+      const fileCount = await countFilesByExt(projectRoot, detector.filePatterns);
       const configsFound = detector.configFiles.filter((c) => existsSync(resolve(projectRoot, c)));
       report.techStacks.push({
         name: detector.name,
@@ -771,14 +808,14 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
 
   // --- Framework detection (§11a) ---
   for (const [category, detectors] of Object.entries(FRAMEWORK_DETECTORS)) {
-    const found = detectFromList(detectors, depContext);
+    const found = await detectFromList(detectors, depContext);
     if (found.length > 0) {
       report.frameworks[category] = found.map((f) => f.name);
     }
   }
 
   // --- Testing tool detection (§11b) ---
-  const testingFound = detectFromList(TESTING_DETECTORS, depContext);
+  const testingFound = await detectFromList(TESTING_DETECTORS, depContext);
   report.testing = testingFound.map((t) => t.name);
 
   // --- Documentation artifact detection (§11c) ---
@@ -833,7 +870,7 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
 
   // --- Cross-cutting concern detection (§11f) ---
   for (const [concern, detectors] of Object.entries(CROSSCUTTING_DETECTORS)) {
-    const found = detectFromList(detectors, depContext);
+    const found = await detectFromList(detectors, depContext);
     if (found.length > 0) {
       report.crosscutting[concern] = found.map((f) => f.name);
     }
