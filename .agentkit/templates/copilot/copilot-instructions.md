@@ -1,3 +1,4 @@
+<!-- generated_by: {{lastAgent}} | last_model: {{lastModel}} | last_updated: {{syncDate}} -->
 # GitHub Copilot Instructions
 
 You are assisting with a project managed by the AgentKit Forge framework.
