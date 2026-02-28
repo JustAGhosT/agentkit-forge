@@ -4,7 +4,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
   generateSessionId, initSession, endSession, logEvent,
-  getSessions, generateReport,
+  getSessions, generateReport, recordCommand,
 } from '../cost-tracker.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -134,6 +134,70 @@ describe('cost-tracker', () => {
 
       const sessions = getSessions(TEST_AGENTKIT);
       expect(sessions).toHaveLength(2);
+    });
+  });
+
+  describe('initSession() — active-session-id pointer', () => {
+    it('writes active-session-id pointer file on session start', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      const pointerPath = resolve(TEST_AGENTKIT, 'logs', 'active-session-id');
+      expect(existsSync(pointerPath)).toBe(true);
+      expect(readFileSync(pointerPath, 'utf-8').trim()).toBe(session.sessionId);
+    });
+  });
+
+  describe('endSession() — active-session-id pointer', () => {
+    it('removes the pointer file when the session ends', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      const pointerPath = resolve(TEST_AGENTKIT, 'logs', 'active-session-id');
+      expect(existsSync(pointerPath)).toBe(true);
+
+      endSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT, sessionId: session.sessionId });
+      expect(existsSync(pointerPath)).toBe(false);
+    });
+
+    it('does not remove pointer when it points to a different session', () => {
+      const session1 = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      const session2 = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      const pointerPath = resolve(TEST_AGENTKIT, 'logs', 'active-session-id');
+
+      // pointer now points to session2; ending session1 should not remove it
+      endSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT, sessionId: session1.sessionId });
+      expect(existsSync(pointerPath)).toBe(true);
+      expect(readFileSync(pointerPath, 'utf-8').trim()).toBe(session2.sessionId);
+    });
+  });
+
+  describe('recordCommand()', () => {
+    it('appends a command to the active session via O(1) pointer path', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      recordCommand(TEST_AGENTKIT, 'discover');
+
+      const sessDir = resolve(TEST_AGENTKIT, 'logs', 'sessions');
+      const sessionFile = resolve(sessDir, `session-${session.sessionId}.json`);
+      const updated = JSON.parse(readFileSync(sessionFile, 'utf-8'));
+      expect(updated.commandsRun).toHaveLength(1);
+      expect(updated.commandsRun[0].command).toBe('discover');
+    });
+
+    it('does nothing when there is no active session', () => {
+      // No session started — should not throw
+      expect(() => recordCommand(TEST_AGENTKIT, 'check')).not.toThrow();
+    });
+
+    it('self-heals the pointer file during O(N) fallback', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      const pointerPath = resolve(TEST_AGENTKIT, 'logs', 'active-session-id');
+
+      // Remove pointer to simulate missing pointer (forces O(N) scan)
+      if (existsSync(pointerPath)) rmSync(pointerPath);
+      expect(existsSync(pointerPath)).toBe(false);
+
+      recordCommand(TEST_AGENTKIT, 'check');
+
+      // Pointer should be self-healed
+      expect(existsSync(pointerPath)).toBe(true);
+      expect(readFileSync(pointerPath, 'utf-8').trim()).toBe(session.sessionId);
     });
   });
 
