@@ -14,7 +14,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'fs';
-import { open } from 'fs/promises';
+import { open, access, readdir, readFile } from 'fs/promises';
 import { resolve } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
 
@@ -395,9 +395,9 @@ export function getTask(projectRoot, taskId) {
  * @param {string} [filters.delegator] - Filter by delegator
  * @param {string} [filters.type] - Filter by type
  * @param {string} [filters.priority] - Filter by priority
- * @returns {{ tasks: object[] }}
+ * @returns {Promise<{ tasks: object[] }>}
  */
-export function listTasks(projectRoot, filters = {}) {
+export async function listTasks(projectRoot, filters = {}) {
   const dir = tasksDir(projectRoot);
   if (!existsSync(dir)) return { tasks: [] };
 
@@ -632,7 +632,7 @@ export async function addTaskArtifact(projectRoot, taskId, artifact) {
  * @returns {Promise<{ unblocked: string[], errors: string[] }>}
  */
 export async function checkDependencies(projectRoot) {
-  const { tasks } = listTasks(projectRoot);
+  const { tasks } = await listTasks(projectRoot);
   const unblocked = [];
   const errors = [];
   const { errors: cycleErrors, cycleTaskIds } = detectDependencyCycles(tasks);
@@ -747,10 +747,10 @@ function detectDependencyCycles(tasks) {
  * @returns {Promise<{ created: object[], errors: string[] }>}
  */
 export async function processHandoffs(projectRoot, delegator = 'orchestrator') {
-  const { tasks } = listTasks(projectRoot, { status: 'completed' });
+  const { tasks } = await listTasks(projectRoot, { status: 'completed' });
   const created = [];
   const errors = [];
-  const allTasks = listTasks(projectRoot).tasks;
+  const { tasks: allTasks } = await listTasks(projectRoot);
 
   for (const task of tasks) {
     if (!Array.isArray(task.handoffTo) || task.handoffTo.length === 0) continue;
