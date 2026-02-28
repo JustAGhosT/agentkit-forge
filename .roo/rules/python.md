@@ -7,14 +7,17 @@ Standards for all Python code. Covers linting, formatting, testing, and architec
 
 ## Applies To
 
-- **/*.py
-- pyproject.toml
+**/*.py
+pyproject.toml
 
 ## Conventions
 
-- **py-lint** [error]: All code must pass ruff check with the project configuration
-- **py-format** [error]: All code must be formatted with black
-- **py-test-coverage** [error]: All modules must have corresponding pytest test files. New code must include tests. Coverage must not decrease from the current baseline. Use pytest fixtures for test setup and parameterize for variant testing.
-- **py-io-boundaries** [error]: IO operations (file system, network, database) must be isolated at module boundaries using dependency injection or explicit IO boundary patterns. Core logic must be pure and testable without mocking IO. Use protocols (typing.Protocol) to define IO interfaces.
-- **py-type-hints** [warning]: All public functions and methods must have type hints. Use typing.Protocol for structural subtyping. Run mypy in strict mode for new modules.
-- **py-docstrings** [warning]: All public modules, classes, and functions must have docstrings following Google style. Include Args, Returns, and Raises sections where applicable.
+- **[py-lint]** All code must pass ruff check with the project configuration
+- **[py-format]** All code must be formatted with black
+- **[py-test-coverage]** All modules must have corresponding pytest test files. New code must include tests. Coverage must not decrease from the current baseline. Use pytest fixtures for test setup and parameterize for variant testing.
+
+- **[py-io-boundaries]** IO operations (file system, network, database) must be isolated at module boundaries using dependency injection or explicit IO boundary patterns. Core logic must be pure and testable without mocking IO. Use protocols (typing.Protocol) to define IO interfaces.
+- **[py-type-hints]** All public functions and methods must have type hints. Use typing.Protocol for structural subtyping. Run mypy in strict mode for new modules.
+
+- **[py-docstrings]** All public modules, classes, and functions must have docstrings following Google style. Include Args, Returns, and Raises sections where applicable.
+
