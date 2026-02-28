@@ -3,7 +3,7 @@
  * Auto-detects tech stacks and runs format, lint, typecheck, test, build in sequence.
  * Outputs a structured results table and logs to events.
  */
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { readdir } from 'fs/promises';
 import { resolve } from 'path';
 import yaml from 'js-yaml';

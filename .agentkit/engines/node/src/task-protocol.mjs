@@ -5,7 +5,7 @@
  * messages, artifacts, dependency tracking, and chained handoffs.
  */
 import { randomBytes } from 'crypto';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync } from 'fs';
 import { access, mkdir, open, readdir, readFile, rename, unlink, writeFile } from 'fs/promises';
 import { resolve } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
@@ -57,6 +57,9 @@ function tasksDir(projectRoot) {
 }
 
 const TASK_ID_PATH_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+/** Maximum number of task files read in parallel to avoid EMFILE errors. */
+const TASK_READ_CONCURRENCY = 8;
 
 function normalizeTaskId(taskId) {
   if (typeof taskId !== 'string' || !TASK_ID_PATH_PATTERN.test(taskId)) {
@@ -418,16 +421,21 @@ export async function listTasks(projectRoot, filters = {}) {
   }
 
   const tasks = [];
-  const readPromises = files.map(async (file) => {
-    try {
-      const content = await readFile(resolve(dir, file), 'utf-8');
-      return JSON.parse(content);
-    } catch {
-      return null;
-    }
-  });
-
-  const results = await Promise.all(readPromises);
+  const results = [];
+  for (let i = 0; i < files.length; i += TASK_READ_CONCURRENCY) {
+    const batch = files.slice(i, i + TASK_READ_CONCURRENCY);
+    const batchResults = await Promise.all(
+      batch.map(async (file) => {
+        try {
+          const content = await readFile(resolve(dir, file), 'utf-8');
+          return JSON.parse(content);
+        } catch {
+          return null;
+        }
+      })
+    );
+    results.push(...batchResults);
+  }
 
   for (const data of results) {
     if (!data) continue;
