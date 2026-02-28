@@ -143,7 +143,7 @@ async function withHandoffLock(projectRoot, taskId, fn) {
  */
 function generateRandomSuffix() {
   const bytes = new Uint8Array(3);
-  crypto.getRandomValues(bytes);
+  globalThis.crypto.getRandomValues(bytes);
   return Buffer.from(bytes).toString('hex');
 }
 
