@@ -318,7 +318,7 @@ async function main() {
         break;
       }
       case 'sync': {
-        const { runSync } = await import('./sync.mjs');
+        const { runSync } = await import('./synchronize.mjs');
         await runSync({ agentkitRoot: AGENTKIT_ROOT, projectRoot: PROJECT_ROOT, flags });
         break;
       }

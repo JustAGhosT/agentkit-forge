@@ -726,7 +726,7 @@ export async function getTasksSummary(projectRoot) {
  * Tasks are sorted by priority (P0 first) then creation date (newest first)
  * to match the ordering produced by listTasks().
  * @param {string} projectRoot
- * @returns {string}
+ * @returns {Promise<string>}
  */
 export function getTasksSummarySync(projectRoot) {
   const dir = resolve(projectRoot, '.claude', 'state', 'tasks');
