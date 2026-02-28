@@ -40,7 +40,18 @@ export function renderTemplate(template, vars, targetPath = '') {
   // Phase 3: Replace {{key}} placeholders
   result = replacePlaceholders(result, vars, allowRawVars);
 
+  // Phase 4: Collapse excessive blank lines left by removed conditionals
+  result = collapseBlankLines(result);
+
   return result;
+}
+
+/**
+ * Collapses runs of 3+ consecutive blank lines down to a single blank line.
+ * Preserves one blank line between sections (standard Markdown paragraph break).
+ */
+export function collapseBlankLines(text) {
+  return text.replace(/\n{3,}/g, '\n\n');
 }
 
 /**
@@ -109,6 +120,24 @@ export function resolveConditionals(template, vars) {
       );
     }
   }
+
+  // Process {{#unless var}}...{{/unless}} blocks (inverted #if)
+  const unlessRegex =
+    /\{\{#unless\s+([a-zA-Z_][a-zA-Z0-9_]*)\}\}((?:(?!\{\{#unless\s)(?!\{\{\/unless\}\})[\s\S])*?)\{\{\/unless\}\}/g;
+  safety = 50;
+  while (unlessRegex.test(result) && safety-- > 0) {
+    result = result.replace(unlessRegex, (_, varName, body) => {
+      const isTruthy = evalTruthy(vars[varName]);
+      const elseMarker = '{{else}}';
+      const elseIndex = body.indexOf(elseMarker);
+      if (elseIndex === -1) {
+        return isTruthy ? '' : body;
+      }
+      return isTruthy ? body.slice(elseIndex + elseMarker.length) : body.slice(0, elseIndex);
+    });
+    unlessRegex.lastIndex = 0;
+  }
+
   return result;
 }
 

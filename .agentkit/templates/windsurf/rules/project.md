@@ -38,14 +38,12 @@ This repository uses the AgentKit Forge unified agent team framework.
 {{#if alertingProvider}}- Alerting provider: {{alertingProvider}}{{/if}}
 {{#if tracingProvider}}- Tracing provider: {{tracingProvider}}{{/if}}
 {{#if hasCentralisedLogging}}- Centralised logging: enabled{{/if}}
-{{/if}}
-
-{{#unless hasAnyMonitoring}}
+{{else}}
 
 ## No Monitoring
 
 - No monitoring configured
-{{/unless}}
+{{/if}}
 
 {{#if hasAnyComplianceConfig}}
 
