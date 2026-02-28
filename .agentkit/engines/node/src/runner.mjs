@@ -208,19 +208,25 @@ export async function runWithConcurrency(tasks, concurrency) {
   const results = [];
   const executing = [];
 
-  for (const task of tasks) {
-    const p = task().then(res => results.push(res));
-    executing.push(p);
+  for (let i = 0; i < tasks.length; i++) {
+    const index = i;
+    const p = tasks[index]().then((res) => {
+      results[index] = res;
+      return res;
+    });
+
+    // Wrap so the promise removes itself from `executing` when it settles,
+    // ensuring Promise.race() below reliably picks up newly-freed slots.
+    const e = p.finally(() => {
+      const idx = executing.indexOf(e);
+      if (idx !== -1) executing.splice(idx, 1);
+    });
+
+    executing.push(e);
 
     if (executing.length >= concurrency) {
       await Promise.race(executing);
-      // Remove completed promises
-      // Note: This is slightly inefficient O(N^2) worst case but fine for typical concurrency limits (e.g. 50)
-      // For cleaner implementation, we could wrap promises to remove themselves from a Set.
-      // But let's stick to a simpler batching or just use a pool approach.
     }
-    // Clean up completed promises from 'executing' array to allow more to start
-    // We actually need to remove the specific completed promise.
   }
 
   await Promise.all(executing);
@@ -235,9 +241,20 @@ export async function runWithConcurrency(tasks, concurrency) {
  * @returns {Promise<T[]>}
  */
 export async function runInPool(tasks, concurrency) {
+  if (!Array.isArray(tasks)) {
+    throw new TypeError('runInPool: tasks must be an array');
+  }
+  if (tasks.length === 0) return [];
+
+  let limit = Math.floor(concurrency);
+  if (!isFinite(limit) || limit <= 0) {
+    throw new RangeError('runInPool: concurrency must be a finite positive integer');
+  }
+  limit = Math.min(limit, tasks.length);
+
   const results = new Array(tasks.length);
   const iterator = tasks.entries();
-  const workers = new Array(concurrency).fill(iterator).map(async (iter) => {
+  const workers = new Array(limit).fill(iterator).map(async (iter) => {
     for (const [index, task] of iter) {
       results[index] = await task();
     }
