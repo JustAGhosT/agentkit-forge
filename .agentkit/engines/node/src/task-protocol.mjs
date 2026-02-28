@@ -152,9 +152,9 @@ function generateRandomSuffix() {
  * NNN is a zero-padded sequence number based on existing tasks for that day.
  * XXXXXX is a short collision-resistant suffix.
  * @param {string} projectRoot
- * @returns {string}
+ * @returns {Promise<string>}
  */
-export function generateTaskId(projectRoot) {
+export async function generateTaskId(projectRoot) {
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
   const prefix = `task-${dateStr}-`;
@@ -309,7 +309,7 @@ export async function createTask(projectRoot, taskData) {
   }
 
   const now = new Date().toISOString();
-  const taskId = generateTaskId(projectRoot);
+  const taskId = await generateTaskId(projectRoot);
 
   const task = {
     id: taskId,
@@ -349,7 +349,7 @@ export async function createTask(projectRoot, taskData) {
   if (task.dependsOn.length > 0) {
     const blockers = new Set();
     for (const depId of task.dependsOn) {
-      const dep = getTask(projectRoot, depId);
+      const dep = await getTask(projectRoot, depId);
       if (!dep.task) continue;
       const depStatus = dep.task.status;
       if (depStatus !== 'completed') {
@@ -367,9 +367,9 @@ export async function createTask(projectRoot, taskData) {
  * Get a task by ID.
  * @param {string} projectRoot
  * @param {string} taskId
- * @returns {{ task: object|null, error?: string }}
+ * @returns {Promise<{ task: object|null, error?: string }>}
  */
-export function getTask(projectRoot, taskId) {
+export async function getTask(projectRoot, taskId) {
   let path;
   try {
     path = taskPath(projectRoot, taskId);
@@ -396,9 +396,9 @@ export function getTask(projectRoot, taskId) {
  * @param {string} [filters.delegator] - Filter by delegator
  * @param {string} [filters.type] - Filter by type
  * @param {string} [filters.priority] - Filter by priority
- * @returns {{ tasks: object[] }}
+ * @returns {Promise<{ tasks: object[] }>}
  */
-export function listTasks(projectRoot, filters = {}) {
+export async function listTasks(projectRoot, filters = {}) {
   const dir = tasksDir(projectRoot);
   if (!existsSync(dir)) return { tasks: [] };
 
@@ -466,7 +466,7 @@ const VALID_TRANSITIONS = {
  * @returns {Promise<{ task: object|null, error?: string }>}
  */
 export async function updateTaskStatus(projectRoot, taskId, newStatus, messageData = {}) {
-  const result = getTask(projectRoot, taskId);
+  const result = await getTask(projectRoot, taskId);
   if (!result.task) return result;
 
   const task = result.task;
@@ -525,7 +525,7 @@ export async function updateTaskStatus(projectRoot, taskId, newStatus, messageDa
  * @returns {Promise<{ task: object|null, error?: string }>}
  */
 export async function addTaskMessage(projectRoot, taskId, message) {
-  const result = getTask(projectRoot, taskId);
+  const result = await getTask(projectRoot, taskId);
   if (!result.task) return result;
 
   if (!MESSAGE_ROLES.includes(message.role)) {
@@ -581,7 +581,7 @@ export async function addTaskMessage(projectRoot, taskId, message) {
  * @returns {Promise<{ task: object|null, error?: string }>}
  */
 export async function addTaskArtifact(projectRoot, taskId, artifact) {
-  const result = getTask(projectRoot, taskId);
+  const result = await getTask(projectRoot, taskId);
   if (!result.task) return result;
 
   if (!ARTIFACT_TYPES.includes(artifact.type)) {
@@ -617,7 +617,7 @@ export async function addTaskArtifact(projectRoot, taskId, artifact) {
  * @returns {Promise<{ unblocked: string[], errors: string[] }>}
  */
 export async function checkDependencies(projectRoot) {
-  const { tasks } = listTasks(projectRoot);
+  const { tasks } = await listTasks(projectRoot);
   const unblocked = [];
   const errors = [];
   const { errors: cycleErrors, cycleTaskIds } = detectDependencyCycles(tasks);
@@ -633,7 +633,7 @@ export async function checkDependencies(projectRoot) {
     let hasCanceledDep = false;
 
     for (const depId of task.dependsOn) {
-      const dep = getTask(projectRoot, depId);
+      const dep = await getTask(projectRoot, depId);
       if (!dep.task) {
         errors.push(`Task ${task.id}: dependency ${depId} not found`);
         continue;
@@ -732,16 +732,16 @@ function detectDependencyCycles(tasks) {
  * @returns {Promise<{ created: object[], errors: string[] }>}
  */
 export async function processHandoffs(projectRoot, delegator = 'orchestrator') {
-  const { tasks } = listTasks(projectRoot, { status: 'completed' });
+  const { tasks } = await listTasks(projectRoot, { status: 'completed' });
   const created = [];
   const errors = [];
-  const allTasks = listTasks(projectRoot).tasks;
+  const { tasks: allTasks } = await listTasks(projectRoot);
 
   for (const task of tasks) {
     if (!Array.isArray(task.handoffTo) || task.handoffTo.length === 0) continue;
 
     const result = await withHandoffLock(projectRoot, task.id, async () => {
-      const fresh = getTask(projectRoot, task.id);
+      const fresh = await getTask(projectRoot, task.id);
       if (!fresh.task) return { created: [], errors: [] };
       const t = fresh.task;
       if (!Array.isArray(t._handoffProcessedTargets)) {
