@@ -3,7 +3,7 @@
  * State machine for the 5-phase lifecycle: Discovery → Planning → Implementation → Validation → Ship.
  * Manages orchestrator state, event logging, and session locking.
  */
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import {
   appendFileSync,
   existsSync,
@@ -137,7 +137,7 @@ function createDefaultState(projectRoot) {
 
   let branch = 'main';
   try {
-    branch = execSync('git rev-parse --abbrev-ref HEAD', {
+    branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
       cwd: projectRoot,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -283,7 +283,7 @@ export function acquireLock(projectRoot, holder = {}) {
 
 function getHostname() {
   try {
-    return execSync('hostname', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    return execFileSync('hostname', [], { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
   } catch {
     return 'unknown';
   }

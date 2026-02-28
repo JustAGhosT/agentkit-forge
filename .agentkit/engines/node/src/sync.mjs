@@ -18,6 +18,7 @@ import {
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
+import { PROJECT_MAPPING, get, transform, check } from './sync.refactor.mjs';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -41,26 +42,13 @@ function isShellScriptTarget(targetPath) {
 }
 
 /**
- * Renders a template by:
- * 1. Resolving {{#if var}}...{{/if}} conditional blocks
- * 2. Resolving {{#each var}}...{{/each}} iteration blocks
- * 3. Replacing {{key}} placeholders with values from vars
- *
+ * Phase 3 of template rendering: replaces {{key}} placeholders with values from vars.
  * - Replaces longest keys first to prevent partial matches (e.g., {{versionInfo}} before {{version}})
- * - Sanitizes string values to prevent shell metacharacter injection
+ * - Sanitizes string values to prevent shell metacharacter injection unless allowRawVars is set
  * - Warns on unresolved placeholders when DEBUG is set
  */
-function renderTemplate(template, vars, targetPath = '') {
+function replacePlaceholders(template, vars, allowRawVars = false) {
   let result = template;
-  const allowRawVars = isShellScriptTarget(targetPath);
-
-  // Phase 1: Resolve {{#if var}}...{{/if}} blocks (supports nesting)
-  result = resolveConditionals(result, vars);
-
-  // Phase 2: Resolve {{#each var}}...{{/each}} blocks
-  result = resolveEachBlocks(result, vars);
-
-  // Phase 3: Replace {{key}} placeholders
   const sortedKeys = Object.keys(vars).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
     const value = vars[key];
@@ -81,6 +69,19 @@ function renderTemplate(template, vars, targetPath = '') {
     console.warn(`[agentkit:sync] Warning: unresolved placeholders: ${unique.join(', ')}`);
   }
   return result;
+}
+
+/**
+ * Renders a template by running three pipeline phases:
+ * 1. Resolving {{#if var}}...{{/if}} conditional blocks
+ * 2. Resolving {{#each var}}...{{/each}} iteration blocks
+ * 3. Replacing {{key}} placeholders with values from vars
+ */
+function renderTemplate(template, vars, targetPath = '') {
+  const allowRawVars = isShellScriptTarget(targetPath);
+  let result = resolveConditionals(template, vars);
+  result = resolveEachBlocks(result, vars);
+  return replacePlaceholders(result, vars, allowRawVars);
 }
 
 /**
@@ -167,49 +168,26 @@ function evalTruthy(value) {
 
 /**
  * Flattens a project.yaml object into a flat key→value map suitable for template rendering.
- * Nested keys become camelCase: project.stack.languages → stackLanguages = "TypeScript, C#"
- * Boolean fields get has* prefixes: crosscutting.logging.correlationId → hasCorrelationId
+ * Uses a declarative mapping configuration for cleaner code.
  */
 function flattenProjectYaml(project, docsSpec = null) {
   if (!project || typeof project !== 'object') return {};
   const vars = {};
 
-  // Top-level scalars
-  if (project.name) vars.projectName = project.name;
-  if (project.description) vars.projectDescription = project.description;
-  if (project.phase) vars.projectPhase = project.phase;
-
-  // Stack
-  const stack = project.stack || {};
-  if (Array.isArray(stack.languages)) vars.stackLanguages = stack.languages.join(', ');
-  if (stack.frameworks) {
-    const fw = stack.frameworks;
-    if (Array.isArray(fw.frontend)) vars.stackFrontendFrameworks = fw.frontend.join(', ');
-    if (Array.isArray(fw.backend)) vars.stackBackendFrameworks = fw.backend.join(', ');
-    if (Array.isArray(fw.css)) vars.stackCssFrameworks = fw.css.join(', ');
+  // Apply declarative mappings
+  for (const mapping of PROJECT_MAPPING) {
+    const value = get(project, mapping.src);
+    if (check(value, mapping.check)) {
+      const transformed = transform(value, mapping.type);
+      if (transformed !== undefined) {
+        vars[mapping.dest] = transformed;
+      }
+    }
   }
-  if (stack.orm) vars.stackOrm = String(stack.orm);
-  if (Array.isArray(stack.database)) vars.stackDatabase = stack.database.join(', ');
-  else if (stack.database) vars.stackDatabase = String(stack.database);
-  if (stack.search) vars.stackSearch = String(stack.search);
-  if (Array.isArray(stack.messaging)) vars.stackMessaging = stack.messaging.join(', ');
-  else if (stack.messaging) vars.stackMessaging = String(stack.messaging);
 
-  // Architecture
-  const arch = project.architecture || {};
-  if (arch.pattern) vars.architecturePattern = arch.pattern;
-  if (arch.apiStyle) vars.architectureApiStyle = arch.apiStyle;
-  vars.monorepo = !!arch.monorepo;
-  vars.hasMonorepo = !!arch.monorepo;
-  if (arch.monorepoTool) vars.monorepoTool = arch.monorepoTool;
+  // --- Post-processing / Complex derivations ---
 
-  // Explicit implementation patterns
-  const patterns = project.patterns || {};
-  vars.hasPatternRepository = !!patterns.repository;
-  vars.hasPatternCqrs = !!patterns.cqrs;
-  vars.hasPatternEventSourcing = !!patterns.eventSourcing;
-  vars.hasPatternMediator = !!patterns.mediator;
-  vars.hasPatternUnitOfWork = !!patterns.unitOfWork;
+  // hasAnyPattern
   vars.hasAnyPattern =
     vars.hasPatternRepository ||
     vars.hasPatternCqrs ||
@@ -217,52 +195,14 @@ function flattenProjectYaml(project, docsSpec = null) {
     vars.hasPatternMediator ||
     vars.hasPatternUnitOfWork;
 
-  // Documentation
-  const docs = project.documentation || {};
-  vars.hasPrd = !!docs.hasPrd;
-  if (docs.prdPath) vars.prdPath = docs.prdPath;
+  // docsSpec overlay for PRD
   const prdSpec = docsSpec?.specialDirectories?.find((d) => d.id === 'prd');
   if (prdSpec) {
     vars.hasPrd = true;
     if (!vars.prdPath) vars.prdPath = prdSpec.path;
   }
-  vars.hasAdr = !!docs.hasAdr;
-  if (docs.adrPath) vars.adrPath = docs.adrPath;
-  vars.hasApiSpec = !!docs.hasApiSpec;
-  if (docs.apiSpecPath) vars.apiSpecPath = docs.apiSpecPath;
-  vars.hasTechnicalSpec = !!docs.hasTechnicalSpec;
-  if (docs.technicalSpecPath) vars.technicalSpecPath = docs.technicalSpecPath;
-  vars.hasDesignSystem = !!docs.hasDesignSystem;
-  if (docs.designSystemPath) vars.designSystemPath = docs.designSystemPath;
-  vars.hasStorybook = !!docs.storybook;
-  if (docs.designTokensPath) vars.designTokensPath = docs.designTokensPath;
 
-  // Deployment
-  const deploy = project.deployment || {};
-  if (deploy.cloudProvider) vars.cloudProvider = deploy.cloudProvider;
-  vars.containerized = !!deploy.containerized;
-  vars.hasContainerized = !!deploy.containerized;
-  if (Array.isArray(deploy.environments)) vars.environments = deploy.environments.join(', ');
-  if (deploy.iacTool) vars.iacTool = deploy.iacTool;
-
-  // Infrastructure
-  const infra = project.infrastructure || {};
-  if (infra.namingConvention) vars.infraNamingConvention = infra.namingConvention;
-  if (infra.defaultRegion) vars.infraDefaultRegion = infra.defaultRegion;
-  if (infra.org) vars.infraOrg = infra.org;
-  if (Array.isArray(infra.iacToolchain)) vars.infraIacToolchain = infra.iacToolchain.join(', ');
-  if (infra.stateBackend && infra.stateBackend !== 'none') {
-    vars.infraStateBackend = infra.stateBackend;
-    vars.hasStateBackend = true;
-  }
-  if (infra.modulesRepo) vars.infraModulesRepo = infra.modulesRepo;
-  if (infra.lockProvider && infra.lockProvider !== 'none')
-    vars.infraLockProvider = infra.lockProvider;
-  const tagging = infra.tagging || {};
-  if (Array.isArray(tagging.mandatory) && tagging.mandatory.length > 0) {
-    vars.infraMandatoryTags = tagging.mandatory.join(', ');
-    vars.hasInfraTags = true;
-  }
+  // hasAnyInfraConfig
   vars.hasAnyInfraConfig =
     !!vars.infraNamingConvention ||
     !!vars.infraDefaultRegion ||
@@ -270,64 +210,22 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.infraIacToolchain ||
     !!vars.infraStateBackend ||
     !!vars.infraMandatoryTags;
-  if (Array.isArray(tagging.optional)) vars.infraOptionalTags = tagging.optional.join(', ');
 
-  // Observability
-  const obs = project.observability || {};
-  const mon = obs.monitoring || {};
-  if (mon.provider && mon.provider !== 'none') {
-    vars.monitoringProvider = mon.provider;
-    vars.hasMonitoring = true;
-  }
-  vars.hasMonitoringDashboards = !!mon.dashboards;
-  const alerting = obs.alerting || {};
-  if (alerting.provider && alerting.provider !== 'none') {
-    vars.alertingProvider = alerting.provider;
-    vars.hasAlerting = true;
-  }
-  if (Array.isArray(alerting.channels)) vars.alertingChannels = alerting.channels.join(', ');
-  const tracing = obs.tracing || {};
-  if (tracing.provider && tracing.provider !== 'none') {
-    vars.tracingProvider = tracing.provider;
-    vars.hasTracing = true;
-  }
-  if (tracing.samplingRate !== undefined && tracing.samplingRate !== null) {
-    vars.tracingSamplingRate = String(tracing.samplingRate);
-  }
-  const obsLogging = obs.logging || {};
-  vars.hasCentralisedLogging = !!obsLogging.centralised;
-  if (obsLogging.retentionDays !== undefined && obsLogging.retentionDays !== null) {
-    vars.logRetentionDays = String(obsLogging.retentionDays);
-  }
+  // hasAnyMonitoring
   vars.hasAnyMonitoring =
     !!vars.monitoringProvider ||
     !!vars.alertingProvider ||
     !!vars.tracingProvider ||
     !!vars.hasCentralisedLogging;
 
-  // Compliance
-  const comp = project.compliance || {};
-  if (comp.framework && comp.framework !== 'none') {
-    vars.complianceFramework = comp.framework;
-    vars.hasCompliance = true;
-  }
-  const dr = comp.disasterRecovery || {};
-  if (dr.rpoHours !== undefined && dr.rpoHours !== null) vars.drRpoHours = String(dr.rpoHours);
-  if (dr.rtoHours !== undefined && dr.rtoHours !== null) vars.drRtoHours = String(dr.rtoHours);
-  if (dr.backupSchedule && dr.backupSchedule !== 'none') {
-    vars.drBackupSchedule = dr.backupSchedule;
-    vars.drTestSchedule = dr.backupSchedule;
-  }
-  vars.hasGeoRedundancy = !!dr.geoRedundancy;
+  // hasDr
   vars.hasDr =
-    (dr.rpoHours !== undefined && dr.rpoHours !== null) ||
-    (dr.rtoHours !== undefined && dr.rtoHours !== null) ||
-    (dr.backupSchedule && dr.backupSchedule !== 'none') ||
+    !!vars.drRpoHours ||
+    !!vars.drRtoHours ||
+    !!vars.drBackupSchedule ||
     vars.hasGeoRedundancy;
-  const audit = comp.audit || {};
-  vars.hasAudit = !!audit.enabled;
-  vars.hasAppendOnlyAudit = !!audit.appendOnly;
-  if (audit.eventBus && audit.eventBus !== 'none') vars.auditEventBus = audit.eventBus;
+
+  // hasAnyComplianceConfig
   vars.hasAnyComplianceConfig =
     !!vars.complianceFramework ||
     !!vars.drRpoHours ||
@@ -336,122 +234,37 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.drTestSchedule ||
     !!vars.auditEventBus;
 
-  // Process
-  const proc = project.process || {};
-  if (proc.branchStrategy) vars.branchStrategy = proc.branchStrategy;
-  if (proc.commitConvention) vars.commitConvention = proc.commitConvention;
-  if (proc.codeReview) vars.codeReview = proc.codeReview;
-  if (proc.teamSize) vars.teamSize = proc.teamSize;
-
-  // Testing
-  const testing = project.testing || {};
-  if (Array.isArray(testing.unit)) vars.testingUnit = testing.unit.join(', ');
-  if (Array.isArray(testing.integration)) vars.testingIntegration = testing.integration.join(', ');
-  if (Array.isArray(testing.e2e)) vars.testingE2e = testing.e2e.join(', ');
-  if (testing.coverage !== undefined && testing.coverage !== null)
-    vars.testingCoverage = String(testing.coverage);
-
   // Integrations (kept as array for {{#each}})
   if (Array.isArray(project.integrations)) {
     vars.integrations = project.integrations;
     vars.hasIntegrations = project.integrations.length > 0;
   }
 
-  // Cross-cutting concerns
-  const cc = project.crosscutting || {};
-  flattenCrosscutting(cc, vars);
-
   return vars;
 }
 
 /**
  * Flattens the crosscutting section of project.yaml into template vars.
+ * @deprecated - Merged into flattenProjectYaml via declarative mappings.
+ * Kept exported for test compatibility if any tests import it directly.
  */
 function flattenCrosscutting(cc, vars) {
-  // Logging
-  const logging = cc.logging || {};
-  if (logging.framework && logging.framework !== 'none') {
-    vars.loggingFramework = logging.framework;
-    vars.hasLogging = true;
-  }
-  vars.hasStructuredLogging = !!logging.structured;
-  vars.hasCorrelationId = !!logging.correlationId;
-  if (logging.level) vars.loggingLevel = logging.level;
-  if (Array.isArray(logging.sink)) vars.loggingSinks = logging.sink.join(', ');
+  // Delegate to main flatten function by wrapping cc in a project-like structure
+  // This is a backward compatibility shim.
+  const tempProject = { crosscutting: cc };
+  const mapped = flattenProjectYaml(tempProject);
 
-  // Error handling
-  const errors = cc.errorHandling || {};
-  if (errors.strategy && errors.strategy !== 'none') {
-    vars.errorStrategy = errors.strategy;
-    vars.hasErrorHandling = true;
+  // Copy mapped crosscutting vars into the target vars object
+  // Filter out keys that don't belong to crosscutting to avoid noise
+  for (const [key, val] of Object.entries(mapped)) {
+    if (key !== 'hasAnyPattern' &&
+        key !== 'hasAnyInfraConfig' &&
+        key !== 'hasAnyMonitoring' &&
+        key !== 'hasDr' &&
+        key !== 'hasAnyComplianceConfig') {
+      vars[key] = val;
+    }
   }
-  vars.hasGlobalHandler = !!errors.globalHandler;
-  vars.hasCustomExceptions = !!errors.customExceptions;
-
-  // Authentication
-  const auth = cc.authentication || {};
-  if (auth.provider && auth.provider !== 'none') {
-    vars.authProvider = auth.provider;
-    vars.hasAuth = true;
-  }
-  if (auth.strategy) vars.authStrategy = auth.strategy;
-  vars.hasRbac = !!auth.rbac;
-  vars.hasMultiTenant = !!auth.multiTenant;
-
-  // Caching
-  const cache = cc.caching || {};
-  if (cache.provider && cache.provider !== 'none') {
-    vars.cachingProvider = cache.provider;
-    vars.hasCaching = true;
-  }
-  if (Array.isArray(cache.patterns)) vars.cachingPatterns = cache.patterns.join(', ');
-  vars.hasDistributedCache = !!cache.distributedCache;
-
-  // API
-  const api = cc.api || {};
-  if (api.versioning && api.versioning !== 'none') {
-    vars.apiVersioning = api.versioning;
-    vars.hasApiVersioning = true;
-  }
-  if (api.pagination && api.pagination !== 'none') {
-    vars.apiPagination = api.pagination;
-    vars.hasApiPagination = true;
-  }
-  if (api.responseFormat) vars.apiResponseFormat = api.responseFormat;
-  vars.hasRateLimiting = !!api.rateLimiting;
-
-  // Database
-  const db = cc.database || {};
-  if (db.migrations && db.migrations !== 'none') {
-    vars.dbMigrations = db.migrations;
-    vars.hasDbMigrations = true;
-  }
-  vars.hasDbSeeding = !!db.seeding;
-  if (db.transactionStrategy && db.transactionStrategy !== 'none') {
-    vars.dbTransactionStrategy = db.transactionStrategy;
-  }
-  vars.hasConnectionPooling = !!db.connectionPooling;
-
-  // Performance
-  const perf = cc.performance || {};
-  vars.hasLazyLoading = !!perf.lazyLoading;
-  vars.hasImageOptimization = !!perf.imageOptimization;
-  if (perf.bundleBudget) vars.bundleBudget = String(perf.bundleBudget);
-
-  // Feature flags
-  const ff = cc.featureFlags || {};
-  if (ff.provider && ff.provider !== 'none') {
-    vars.featureFlagProvider = ff.provider;
-    vars.hasFeatureFlags = true;
-  }
-
-  // Environments
-  const envs = cc.environments || {};
-  if (Array.isArray(envs.naming)) vars.envNames = envs.naming.join(', ');
-  if (envs.configStrategy && envs.configStrategy !== 'none') {
-    vars.envConfigStrategy = envs.configStrategy;
-  }
-  if (envs.envFilePattern) vars.envFilePattern = envs.envFilePattern;
 }
 
 /**
@@ -480,10 +293,12 @@ function formatCommandFlags(flags) {
 function getGeneratedHeader(version, repoName, ext) {
   const comment = getCommentStyle(ext);
   if (!comment) return '';
+  const line = (text) =>
+    comment.end ? `${comment.start} ${text} ${comment.end}` : `${comment.start} ${text}`;
   return [
-    `${comment.start} GENERATED by AgentKit Forge v${version} — DO NOT EDIT ${comment.end}`,
-    `${comment.start} Source: .agentkit/spec + .agentkit/overlays/${repoName} ${comment.end}`,
-    `${comment.start} Regenerate: pnpm -C .agentkit agentkit:sync ${comment.end}`,
+    line(`GENERATED by AgentKit Forge v${version} — DO NOT EDIT`),
+    line(`Source: .agentkit/spec + .agentkit/overlays/${repoName}`),
+    line(`Regenerate: pnpm -C .agentkit agentkit:sync`),
     '',
   ].join('\n');
 }
@@ -601,209 +416,158 @@ function simpleDiff(a, b) {
   return out.slice(0, 20).join('\n') + (out.length > 20 ? '\n...' : '');
 }
 
-export async function runSync({ agentkitRoot, projectRoot, flags }) {
-  const dryRun = flags?.['dry-run'] || false;
-  const diff = flags?.diff || false;
-  const quiet = flags?.quiet || false;
-  const verbose = flags?.verbose || false;
+function applySync(
+  agentkitRoot,
+  projectRoot,
+  tmpDir,
+  newManifestFiles,
+  flags,
+  vars,
+  version,
+  logVerbose
+) {
   const noClean = flags?.['no-clean'] || false;
-
-  const log = (...args) => {
-    if (!quiet) console.log(...args);
-  };
-  const logVerbose = (...args) => {
-    if (verbose && !quiet) console.log(...args);
-  };
-
-  if (dryRun) {
-    log('[agentkit:sync] Dry-run mode — no files will be written.');
-  }
-  if (diff) {
-    log('[agentkit:sync] Diff mode — showing what would change.');
-  }
-  log('[agentkit:sync] Starting sync...');
-
-  // 1. Load spec — version from package.json (primary) with VERSION file as fallback
-  let version = '0.0.0';
+  const manifestPath = resolve(agentkitRoot, '.manifest.json');
+  let previousManifest = null;
   try {
-    const pkg = JSON.parse(readFileSync(resolve(agentkitRoot, 'package.json'), 'utf-8'));
-    version = pkg.version || version;
-  } catch {
-    version = readText(resolve(agentkitRoot, 'spec', 'VERSION'))?.trim() || version;
-  }
-  const teamsSpec = readYaml(resolve(agentkitRoot, 'spec', 'teams.yaml')) || {};
-  const commandsSpec = readYaml(resolve(agentkitRoot, 'spec', 'commands.yaml')) || {};
-  const rulesSpec = readYaml(resolve(agentkitRoot, 'spec', 'rules.yaml')) || {};
-  const settingsSpec = readYaml(resolve(agentkitRoot, 'spec', 'settings.yaml')) || {};
-  const agentsSpec = readYaml(resolve(agentkitRoot, 'spec', 'agents.yaml')) || {};
-  const docsSpec = readYaml(resolve(agentkitRoot, 'spec', 'docs.yaml')) || {};
-  const projectSpec = readYaml(resolve(agentkitRoot, 'spec', 'project.yaml'));
-
-  // 2. Detect overlay
-  let repoName = flags?.overlay;
-  if (!repoName) {
-    const markerPath = resolve(projectRoot, '.agentkit-repo');
-    if (existsSync(markerPath)) {
-      repoName = readText(markerPath).trim();
+    if (existsSync(manifestPath)) {
+      previousManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
     }
-  }
-  if (!repoName) {
-    repoName = '__TEMPLATE__';
-    log('[agentkit:sync] No overlay detected, using __TEMPLATE__');
+  } catch {
+    /* ignore corrupt manifest */
   }
 
-  // 3. Load overlay
-  const overlayDir = resolve(agentkitRoot, 'overlays', repoName);
-  const overlaySettings = readYaml(resolve(overlayDir, 'settings.yaml')) || {};
+  const resolvedRoot = resolve(projectRoot) + sep;
+  let count = 0;
+  let skippedScaffold = 0;
+  const failedFiles = [];
 
-  // Merge settings (data-level: union allow, union deny, deny wins)
-  const mergedPermissions = mergePermissions(
-    settingsSpec.permissions || {},
-    overlaySettings.permissions || {}
-  );
-
-  // Template variables — start with project.yaml flat vars, then overlay with core vars
-  const projectVars = projectSpec ? flattenProjectYaml(projectSpec, docsSpec) : {};
-  const vars = {
-    ...projectVars,
-    version,
-    repoName: (overlaySettings.repoName === '__TEMPLATE__' && projectSpec?.name) || overlaySettings.repoName || repoName,
-    defaultBranch: overlaySettings.defaultBranch || 'main',
-    primaryStack: overlaySettings.primaryStack || 'auto',
-  };
-
-  // Resolve render targets — determines which tool outputs to generate
-  let targets = resolveRenderTargets(overlaySettings.renderTargets, flags);
-
-  log(`[agentkit:sync] Repo: ${vars.repoName}, Version: ${version}`);
-  if (flags?.only) {
-    log(`[agentkit:sync] Syncing only: ${[...targets].join(', ')}`);
-  }
-
-  // 4. Render templates to temp directory
-  const tmpDir = resolve(agentkitRoot, '.tmp');
-  rmSync(tmpDir, { recursive: true, force: true });
-  mkdirSync(tmpDir, { recursive: true });
-
-  const templatesDir = resolve(agentkitRoot, 'templates');
-
-  // --- Always-on outputs (not gated by renderTargets) ---
-  syncAgentsMd(templatesDir, tmpDir, vars, version, repoName);
-  syncRootDocs(templatesDir, tmpDir, vars, version, repoName);
-  syncGitHub(templatesDir, tmpDir, vars, version, repoName);
-  syncDirectCopy(templatesDir, 'docs', tmpDir, 'docs', vars, version, repoName);
-  syncDirectCopy(templatesDir, 'vscode', tmpDir, '.vscode', vars, version, repoName);
-  syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName);
-
-  // --- Gated by renderTargets ---
-  if (targets.has('claude')) {
-    syncDirectCopy(templatesDir, 'claude/hooks', tmpDir, '.claude/hooks', vars, version, repoName);
-    syncClaudeSettings(templatesDir, tmpDir, vars, version, mergedPermissions, settingsSpec);
-    syncClaudeCommands(templatesDir, tmpDir, vars, version, repoName, teamsSpec, commandsSpec);
-    syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec);
-    syncDirectCopy(templatesDir, 'claude/rules', tmpDir, '.claude/rules', vars, version, repoName);
-    syncDirectCopy(templatesDir, 'claude/state', tmpDir, '.claude/state', vars, version, repoName);
-    syncClaudeMd(templatesDir, tmpDir, vars, version, repoName);
-    syncClaudeSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
-  }
-
-  if (targets.has('cursor')) {
-    syncDirectCopy(templatesDir, 'cursor/rules', tmpDir, '.cursor/rules', vars, version, repoName);
-    syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec);
-    syncCursorCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
-  }
-
-  if (targets.has('windsurf')) {
-    syncDirectCopy(
-      templatesDir,
-      'windsurf/rules',
-      tmpDir,
-      '.windsurf/rules',
-      vars,
-      version,
-      repoName
-    );
-    syncWindsurfCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
-    syncDirectCopy(
-      templatesDir,
-      'windsurf/workflows',
-      tmpDir,
-      '.windsurf/workflows',
-      vars,
-      version,
-      repoName
-    );
-    syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec);
-  }
-
-  if (targets.has('ai')) {
-    syncDirectCopy(templatesDir, 'ai', tmpDir, '.ai', vars, version, repoName);
-  }
-
-  if (targets.has('copilot')) {
-    syncCopilot(templatesDir, tmpDir, vars, version, repoName);
-    syncCopilotPrompts(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
-    syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec);
-    syncCopilotChatModes(templatesDir, tmpDir, vars, version, repoName, teamsSpec);
-  }
-
-  if (targets.has('gemini')) {
-    syncGemini(templatesDir, tmpDir, vars, version, repoName);
-  }
-
-  if (targets.has('codex')) {
-    syncCodexSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
-  }
-
-  if (targets.has('warp')) {
-    syncWarp(templatesDir, tmpDir, vars, version, repoName);
-  }
-
-  if (targets.has('cline')) {
-    syncClineRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec);
-  }
-
-  if (targets.has('roo')) {
-    syncRooRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec);
-  }
-
-  if (targets.has('mcp')) {
-    syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec);
-  }
-
-  // 5. Build file list from temp and compute summary
-  const newManifestFiles = {};
-  const fileSummary = {}; // category → count
   for (const srcFile of walkDir(tmpDir)) {
     if (!existsSync(srcFile)) continue;
     const relPath = relative(tmpDir, srcFile);
-    const manifestKey = relPath.replace(/\\/g, '/');
-    let fileContent;
-    try {
-      fileContent = readFileSync(srcFile);
-    } catch (err) {
-      if (err?.code === 'ENOENT') continue;
-      throw err;
-    }
-    const hash = createHash('sha256').update(fileContent).digest('hex').slice(0, 12);
-    newManifestFiles[manifestKey] = { hash };
+    const destFile = resolve(projectRoot, relPath);
 
-    // Categorize for summary
-    const cat = categorizeFile(manifestKey);
-    fileSummary[cat] = (fileSummary[cat] || 0) + 1;
+    // Path traversal protection.
+    // resolvedRoot = resolve(projectRoot) + sep (always ends with separator).
+    // Block if the destination is outside the project tree (doesn't start with resolvedRoot),
+    // OR if it resolves exactly to projectRoot itself (guards against a bare "" relative path).
+    // These two conditions are mutually exclusive since resolvedRoot ends with sep.
+    if (!resolve(destFile).startsWith(resolvedRoot) || resolve(destFile) === resolve(projectRoot)) {
+      console.error(`[agentkit:sync] BLOCKED: path traversal detected — ${relPath}`);
+      failedFiles.push({ file: relPath, error: 'path traversal blocked' });
+      continue;
+    }
+
+    const overwrite = flags?.overwrite || flags?.force;
+    if (!overwrite && isScaffoldOnce(relPath) && existsSync(destFile)) {
+      skippedScaffold++;
+      continue;
+    }
+
+    try {
+      ensureDir(dirname(destFile));
+      cpSync(srcFile, destFile, { force: true });
+      if (extname(srcFile) === '.sh') {
+        try {
+          chmodSync(destFile, 0o755);
+        } catch {
+          /* ignore on Windows */
+        }
+      }
+      count++;
+      logVerbose(`  wrote ${relPath.replace(/\\/g, '/')}`);
+    } catch (err) {
+      failedFiles.push({ file: relPath, error: err.message });
+      console.error(`[agentkit:sync] Failed to write: ${relPath} — ${err.message}`);
+    }
   }
 
+  if (failedFiles.length > 0) {
+    rmSync(tmpDir, { recursive: true, force: true });
+    console.error(`[agentkit:sync] Error: ${failedFiles.length} file(s) failed to write:`);
+    for (const f of failedFiles) {
+      console.error(`  - ${f.file}: ${f.error}`);
+    }
+    throw new Error(`Sync completed with ${failedFiles.length} write failure(s)`);
+  }
+
+  // Stale file cleanup
+  let cleanedCount = 0;
+  if (!noClean && previousManifest?.files) {
+    for (const prevFile of Object.keys(previousManifest.files)) {
+      if (!newManifestFiles[prevFile]) {
+        const orphanPath = resolve(projectRoot, prevFile);
+        // Same path-traversal guard as the write path: block manifest entries that
+        // resolve outside the project tree or to the bare project root directory.
+        if (!orphanPath.startsWith(resolvedRoot) || orphanPath === resolve(projectRoot)) {
+          console.warn(`[agentkit:sync] BLOCKED: path traversal in manifest — ${prevFile}`);
+          continue;
+        }
+        if (existsSync(orphanPath)) {
+          try {
+            unlinkSync(orphanPath);
+            cleanedCount++;
+            logVerbose(`[agentkit:sync] Cleaned stale file: ${prevFile}`);
+          } catch (err) {
+            console.warn(
+              `[agentkit:sync] Warning: could not clean stale file ${prevFile} — ${err.message}`
+            );
+          }
+        }
+      }
+    }
+  }
+
+  // Write new manifest
+  const newManifest = {
+    generatedAt: new Date().toISOString(),
+    version,
+    repoName: vars.repoName,
+    files: newManifestFiles,
+  };
+  try {
+    writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + '\n', 'utf-8');
+  } catch (err) {
+    console.warn(`[agentkit:sync] Warning: could not write manifest — ${err.message}`);
+  }
+
+  rmSync(tmpDir, { recursive: true, force: true });
+
+  return { count, skippedScaffold, cleanedCount };
+}
+
+
+/**
+ * Handles the `--dry-run` and `--diff` CLI flag modes.
+ * In dry-run mode, prints a summary of what would be generated and returns without writing.
+ * In diff mode, shows file-level diffs between current and new content and returns without writing.
+ *
+ * @param {string} tmpDir - Absolute path to the temporary directory containing rendered outputs.
+ * @param {string} projectRoot - Absolute path to the consuming project root.
+ * @param {Object} flags - CLI flags (e.g., `dry-run`, `diff`, `quiet`).
+ * @param {Object} newManifestFiles - Map of relative paths to their hash metadata.
+ * @param {Object} fileSummary - Category-to-count map for the sync summary.
+ * @param {Set<string>} targets - Set of active render target names.
+ * @param {Function} log - Logger function for standard output.
+ * @param {Function} logVerbose - Logger function for verbose output.
+ * @returns {boolean} Returns `true` if operating in dry-run or diff mode (no files written and
+ *   the caller should stop processing), `false` if normal sync should proceed.
+ */
+function handleDryRunOrDiff(tmpDir, projectRoot, flags, newManifestFiles, fileSummary, targets, log, logVerbose) {
+  const dryRun = flags?.['dry-run'] || false;
+  const diff = flags?.diff || false;
+  const quiet = flags?.quiet || false;
   // --- Dry-run: print summary and exit without writing ---
   if (dryRun) {
     rmSync(tmpDir, { recursive: true, force: true });
     const total = Object.keys(newManifestFiles).length;
     log(`[agentkit:sync] Dry-run: would generate ${total} file(s):`);
     printSyncSummary(fileSummary, targets, { quiet });
-    return;
+    return true; // handled
   }
-
   // --- Diff: show what would change and exit without writing ---
   if (diff) {
+    log('[agentkit:sync] Diff mode — showing what would change.');
     const resolvedRoot = resolve(projectRoot) + sep;
     const overwrite = flags?.overwrite || flags?.force;
     let createCount = 0;
@@ -814,7 +578,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       const relPath = relative(tmpDir, srcFile);
       const destFile = resolve(projectRoot, relPath);
       const normPath = relPath.replace(/\\/g, '/');
-      if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot))
+      if (!resolve(destFile).startsWith(resolvedRoot) || resolve(destFile) === resolve(projectRoot))
         continue;
       const wouldSkip = !overwrite && isScaffoldOnce(normPath) && existsSync(destFile);
       if (wouldSkip) {
@@ -855,124 +619,294 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     log(
       `[agentkit:sync] Diff: ${createCount} create, ${updateCount} update, ${skipCount} unchanged/skip`
     );
-    return;
+    return true; // handled
   }
-
-  // 6. Load previous manifest for stale file cleanup
-  const manifestPath = resolve(agentkitRoot, '.manifest.json');
-  let previousManifest = null;
-  try {
-    if (existsSync(manifestPath)) {
-      previousManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-    }
-  } catch {
-    /* ignore corrupt manifest */
-  }
-
-  // 7. Atomic swap: move temp outputs to project root & build new manifest
-  log('[agentkit:sync] Writing outputs...');
-  const resolvedRoot = resolve(projectRoot) + sep;
-  let count = 0;
-  let skippedScaffold = 0;
-  const failedFiles = [];
+  return false; // not handled
+}
+/**
+ * Walks the temp directory to build the manifest file map and a per-category file count summary.
+ *
+ * @param {string} tmpDir - Absolute path to the temporary directory containing rendered outputs.
+ * @returns {{ newManifestFiles: Object, fileSummary: Object }}
+ *   `newManifestFiles` maps relative paths to `{ hash }` objects;
+ *   `fileSummary` maps category names to file counts.
+ */
+function computeManifest(tmpDir) {
+  const newManifestFiles = {};
+  const fileSummary = {}; // category → count
   for (const srcFile of walkDir(tmpDir)) {
     if (!existsSync(srcFile)) continue;
     const relPath = relative(tmpDir, srcFile);
-    const destFile = resolve(projectRoot, relPath);
-
-    // Path traversal protection: ensure all output stays within project root
-    if (!resolve(destFile).startsWith(resolvedRoot) && resolve(destFile) !== resolve(projectRoot)) {
-      console.error(`[agentkit:sync] BLOCKED: path traversal detected — ${relPath}`);
-      failedFiles.push({ file: relPath, error: 'path traversal blocked' });
-      continue;
-    }
-
-    // Scaffold-once: skip project-owned files that already exist (unless --overwrite)
-    const overwrite = flags?.overwrite || flags?.force;
-    if (!overwrite && isScaffoldOnce(relPath) && existsSync(destFile)) {
-      skippedScaffold++;
-      continue;
-    }
-
+    const manifestKey = relPath.replace(/\\/g, '/');
+    let fileContent;
     try {
-      ensureDir(dirname(destFile));
-      cpSync(srcFile, destFile, { force: true });
-
-      // Make .sh files executable
-      if (extname(srcFile) === '.sh') {
-        try {
-          chmodSync(destFile, 0o755);
-        } catch {
-          /* ignore on Windows */
-        }
-      }
-      count++;
-      logVerbose(`  wrote ${relPath.replace(/\\/g, '/')}`);
+      fileContent = readFileSync(srcFile);
     } catch (err) {
-      failedFiles.push({ file: relPath, error: err.message });
-      console.error(`[agentkit:sync] Failed to write: ${relPath} — ${err.message}`);
+      if (err?.code === 'ENOENT') continue;
+      throw err;
     }
+    const hash = createHash('sha256').update(fileContent).digest('hex').slice(0, 12);
+    newManifestFiles[manifestKey] = { hash };
+    // Categorize for summary
+    const cat = categorizeFile(manifestKey);
+    fileSummary[cat] = (fileSummary[cat] || 0) + 1;
   }
-
-  if (failedFiles.length > 0) {
-    rmSync(tmpDir, { recursive: true, force: true });
-    console.error(`[agentkit:sync] Error: ${failedFiles.length} file(s) failed to write:`);
-    for (const f of failedFiles) {
-      console.error(`  - ${f.file}: ${f.error}`);
-    }
-    throw new Error(`Sync completed with ${failedFiles.length} write failure(s)`);
-  }
-
-  // 8. Stale file cleanup: delete orphaned files from previous sync (unless --no-clean)
-  let cleanedCount = 0;
-  if (!noClean && previousManifest?.files) {
-    for (const prevFile of Object.keys(previousManifest.files)) {
-      if (!newManifestFiles[prevFile]) {
-        // File was in previous sync but not in this one — it's orphaned
-        const orphanPath = resolve(projectRoot, prevFile);
-        // Path traversal protection: ensure orphan path stays within project root
-        if (!orphanPath.startsWith(resolvedRoot) && orphanPath !== resolve(projectRoot)) {
-          console.warn(`[agentkit:sync] BLOCKED: path traversal in manifest — ${prevFile}`);
-          continue;
-        }
-        if (existsSync(orphanPath)) {
-          try {
-            unlinkSync(orphanPath);
-            cleanedCount++;
-            logVerbose(`[agentkit:sync] Cleaned stale file: ${prevFile}`);
-          } catch (err) {
-            console.warn(
-              `[agentkit:sync] Warning: could not clean stale file ${prevFile} — ${err.message}`
-            );
-          }
-        }
-      }
-    }
-  }
-
-  // 9. Write new manifest
-  const newManifest = {
-    generatedAt: new Date().toISOString(),
-    version,
-    repoName: vars.repoName,
-    files: newManifestFiles,
-  };
-  try {
-    writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + '\n', 'utf-8');
-  } catch (err) {
-    console.warn(`[agentkit:sync] Warning: could not write manifest — ${err.message}`);
-  }
-
-  // 10. Cleanup temp
+  return { newManifestFiles, fileSummary };
+}
+/**
+ * Renders all templates for the enabled render targets into a fresh temp directory.
+ *
+ * @param {string} agentkitRoot - Absolute path to the .agentkit directory.
+ * @param {Object} vars - Flattened template variables for rendering.
+ * @param {string} version - AgentKit version string.
+ * @param {string} repoName - Overlay/repo name used to locate overlay files.
+ * @param {Set<string>} targets - Set of active render target names (e.g. `claude`, `cursor`).
+ * @param {Object} mergedPermissions - Merged allow/deny permission settings for Claude.
+ * @param {Object} settingsSpec - Parsed `settings.yaml` spec.
+ * @param {Object} teamsSpec - Parsed `teams.yaml` spec.
+ * @param {Object} commandsSpec - Parsed `commands.yaml` spec.
+ * @param {Object} agentsSpec - Parsed `agents.yaml` spec.
+ * @param {Object} rulesSpec - Parsed `rules.yaml` spec.
+ * @returns {string} Absolute path to the temp directory containing rendered outputs.
+ */
+function generateTemplates(agentkitRoot, vars, version, repoName, targets, mergedPermissions, settingsSpec, teamsSpec, commandsSpec, agentsSpec, rulesSpec) {
+  const tmpDir = resolve(agentkitRoot, '.tmp');
   rmSync(tmpDir, { recursive: true, force: true });
-
+  mkdirSync(tmpDir, { recursive: true });
+  const templatesDir = resolve(agentkitRoot, 'templates');
+  // --- Always-on outputs (not gated by renderTargets) ---
+  syncAgentsMd(templatesDir, tmpDir, vars, version, repoName);
+  syncRootDocs(templatesDir, tmpDir, vars, version, repoName);
+  syncGitHub(templatesDir, tmpDir, vars, version, repoName);
+  syncDirectCopy(templatesDir, 'docs', tmpDir, 'docs', vars, version, repoName);
+  syncDirectCopy(templatesDir, 'vscode', tmpDir, '.vscode', vars, version, repoName);
+  syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName);
+  // --- Gated by renderTargets ---
+  if (targets.has('claude')) {
+    syncDirectCopy(templatesDir, 'claude/hooks', tmpDir, '.claude/hooks', vars, version, repoName);
+    syncClaudeSettings(templatesDir, tmpDir, vars, version, mergedPermissions, settingsSpec);
+    syncClaudeCommands(templatesDir, tmpDir, vars, version, repoName, teamsSpec, commandsSpec);
+    syncClaudeAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec);
+    syncDirectCopy(templatesDir, 'claude/rules', tmpDir, '.claude/rules', vars, version, repoName);
+    syncDirectCopy(templatesDir, 'claude/state', tmpDir, '.claude/state', vars, version, repoName);
+    syncClaudeMd(templatesDir, tmpDir, vars, version, repoName);
+    syncClaudeSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
+  }
+  if (targets.has('cursor')) {
+    syncDirectCopy(templatesDir, 'cursor/rules', tmpDir, '.cursor/rules', vars, version, repoName);
+    syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec);
+    syncCursorCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
+  }
+  if (targets.has('windsurf')) {
+    syncDirectCopy(
+      templatesDir,
+      'windsurf/rules',
+      tmpDir,
+      '.windsurf/rules',
+      vars,
+      version,
+      repoName
+    );
+    syncWindsurfCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
+    syncDirectCopy(
+      templatesDir,
+      'windsurf/workflows',
+      tmpDir,
+      '.windsurf/workflows',
+      vars,
+      version,
+      repoName
+    );
+    syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec);
+  }
+  if (targets.has('ai')) {
+    syncDirectCopy(templatesDir, 'ai', tmpDir, '.ai', vars, version, repoName);
+  }
+  if (targets.has('copilot')) {
+    syncCopilot(templatesDir, tmpDir, vars, version, repoName);
+    syncCopilotPrompts(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
+    syncCopilotAgents(templatesDir, tmpDir, vars, version, repoName, agentsSpec, rulesSpec);
+    syncCopilotChatModes(templatesDir, tmpDir, vars, version, repoName, teamsSpec);
+  }
+  if (targets.has('gemini')) {
+    syncGemini(templatesDir, tmpDir, vars, version, repoName);
+  }
+  if (targets.has('codex')) {
+    syncCodexSkills(templatesDir, tmpDir, vars, version, repoName, commandsSpec);
+  }
+  if (targets.has('warp')) {
+    syncWarp(templatesDir, tmpDir, vars, version, repoName);
+  }
+  if (targets.has('cline')) {
+    syncClineRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec);
+  }
+  if (targets.has('roo')) {
+    syncRooRules(templatesDir, tmpDir, vars, version, repoName, rulesSpec);
+  }
+  if (targets.has('mcp')) {
+    syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec);
+  }
+  return tmpDir;
+}
+/**
+ * Loads and assembles all context needed for a sync run: version, specs, overlay settings,
+ * merged permissions, template variables, and render targets.
+ *
+ * @param {string} agentkitRoot - Absolute path to the .agentkit directory.
+ * @param {string} projectRoot - Absolute path to the consuming project root.
+ * @param {Object} flags - CLI flags (e.g., `overlay`, `only`, `verbose`).
+ * @param {Function} log - Logger function for standard output.
+ * @returns {{
+ *   version: string,
+ *   repoName: string,
+ *   vars: Object,
+ *   targets: Set<string>,
+ *   mergedPermissions: Object,
+ *   teamsSpec: Object,
+ *   commandsSpec: Object,
+ *   rulesSpec: Object,
+ *   settingsSpec: Object,
+ *   agentsSpec: Object,
+ *   projectSpec: Object|null
+ * }} All context required to render and apply a sync.
+ */
+function loadSyncContext(agentkitRoot, projectRoot, flags, log) {
+  // 1. Load spec — version from package.json (primary) with VERSION file as fallback
+  let version = '0.0.0';
+  try {
+    const pkg = JSON.parse(readFileSync(resolve(agentkitRoot, 'package.json'), 'utf-8'));
+    version = pkg.version || version;
+  } catch {
+    version = readText(resolve(agentkitRoot, 'spec', 'VERSION'))?.trim() || version;
+  }
+  const teamsSpec = readYaml(resolve(agentkitRoot, 'spec', 'teams.yaml')) || {};
+  const commandsSpec = readYaml(resolve(agentkitRoot, 'spec', 'commands.yaml')) || {};
+  const rulesSpec = readYaml(resolve(agentkitRoot, 'spec', 'rules.yaml')) || {};
+  const settingsSpec = readYaml(resolve(agentkitRoot, 'spec', 'settings.yaml')) || {};
+  const agentsSpec = readYaml(resolve(agentkitRoot, 'spec', 'agents.yaml')) || {};
+  const docsSpec = readYaml(resolve(agentkitRoot, 'spec', 'docs.yaml')) || {};
+  const projectSpec = readYaml(resolve(agentkitRoot, 'spec', 'project.yaml'));
+  // 2. Detect overlay
+  let repoName = flags?.overlay;
+  if (!repoName) {
+    const markerPath = resolve(projectRoot, '.agentkit-repo');
+    if (existsSync(markerPath)) {
+      repoName = readText(markerPath).trim();
+    }
+  }
+  if (!repoName) {
+    repoName = '__TEMPLATE__';
+    log('[agentkit:sync] No overlay detected, using __TEMPLATE__');
+  }
+  // 3. Load overlay
+  const overlayDir = resolve(agentkitRoot, 'overlays', repoName);
+  const overlaySettings = readYaml(resolve(overlayDir, 'settings.yaml')) || {};
+  // Merge settings (data-level: union allow, union deny, deny wins)
+  const mergedPermissions = mergePermissions(
+    settingsSpec.permissions || {},
+    overlaySettings.permissions || {}
+  );
+  // Template variables — start with project.yaml flat vars, then overlay with core vars
+  const projectVars = projectSpec ? flattenProjectYaml(projectSpec, docsSpec) : {};
+  const vars = {
+    ...projectVars,
+    version,
+    repoName: (overlaySettings.repoName === '__TEMPLATE__' && projectSpec?.name) || overlaySettings.repoName || repoName,
+    defaultBranch: overlaySettings.defaultBranch || 'main',
+    primaryStack: overlaySettings.primaryStack || 'auto',
+  };
+  // Resolve render targets — determines which tool outputs to generate
+  let targets = resolveRenderTargets(overlaySettings.renderTargets, flags);
+  log(`[agentkit:sync] Repo: ${vars.repoName}, Version: ${version}`);
+  if (flags?.only) {
+    log(`[agentkit:sync] Syncing only: ${[...targets].join(', ')}`);
+  }
+  return {
+    version,
+    repoName,
+    vars,
+    targets,
+    mergedPermissions,
+    teamsSpec,
+    commandsSpec,
+    rulesSpec,
+    settingsSpec,
+    agentsSpec,
+    projectSpec
+  };
+}
+export async function runSync({ agentkitRoot, projectRoot, flags }) {
+  const quiet = flags?.quiet || false;
+  const verbose = flags?.verbose || false;
+  const log = (...args) => {
+    if (!quiet) console.log(...args);
+  };
+  const logVerbose = (...args) => {
+    if (verbose && !quiet) console.log(...args);
+  };
+  log('[agentkit:sync] Starting sync...');
+  // 1-3. Load Context
+  const {
+    version,
+    repoName,
+    vars,
+    targets,
+    mergedPermissions,
+    teamsSpec,
+    commandsSpec,
+    rulesSpec,
+    settingsSpec,
+    agentsSpec,
+    projectSpec
+  } = loadSyncContext(agentkitRoot, projectRoot, flags, log);
+  // 4. Render templates to temp directory
+  const tmpDir = generateTemplates(
+    agentkitRoot,
+    vars,
+    version,
+    repoName,
+    targets,
+    mergedPermissions,
+    settingsSpec,
+    teamsSpec,
+    commandsSpec,
+    agentsSpec,
+    rulesSpec
+  );
+  // 5. Build file list from temp and compute summary
+  const { newManifestFiles, fileSummary } = computeManifest(tmpDir);
+  if (
+    handleDryRunOrDiff(
+      tmpDir,
+      projectRoot,
+      flags,
+      newManifestFiles,
+      fileSummary,
+      targets,
+      log,
+      logVerbose
+    )
+  ) {
+    return;
+  }
+  // 6-10. Atomic swap: move temp outputs to project root & build new manifest
+  log('[agentkit:sync] Writing outputs...');
+  const { count, skippedScaffold, cleanedCount } = applySync(
+    agentkitRoot,
+    projectRoot,
+    tmpDir,
+    newManifestFiles,
+    flags,
+    vars,
+    version,
+    logVerbose
+  );
   if (skippedScaffold > 0) {
     log(`[agentkit:sync] Skipped ${skippedScaffold} project-owned file(s) (already exist).`);
   }
   if (cleanedCount > 0) {
     log(`[agentkit:sync] Cleaned ${cleanedCount} stale file(s) from previous sync.`);
   }
-
   // 11. Post-sync summary
   printSyncSummary(fileSummary, targets, { quiet });
   const completeness = computeProjectCompleteness(projectSpec);
@@ -985,7 +919,6 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     }
   }
   log(`[agentkit:sync] Done! Generated ${count} files.`);
-
   // 12. First-sync hint (when not called from init)
   if (!flags?.overlay) {
     const markerPath = resolve(projectRoot, '.agentkit-repo');
@@ -2050,6 +1983,7 @@ export {
   isScaffoldOnce,
   mergePermissions,
   renderTemplate,
+  replacePlaceholders,
   resolveConditionals,
   resolveEachBlocks,
   resolveRenderTargets,

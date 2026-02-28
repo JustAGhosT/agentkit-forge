@@ -1,10 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'fs';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  generateSessionId, initSession, endSession, logEvent,
-  getSessions, generateReport,
+    endSession,
+    generateReport,
+    generateSessionId,
+    getSessions,
+    initSession,
+    logEvent,
+    recordCommand,
 } from '../cost-tracker.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -91,9 +96,48 @@ describe('cost-tracker', () => {
       const sessDir = resolve(TEST_AGENTKIT, 'logs', 'sessions');
       expect(existsSync(sessDir)).toBe(true);
 
-      const files = readdirSync(sessDir);
+      const files = readdirSync(sessDir).filter(f => f.startsWith('session-') && f.endsWith('.json'));
       expect(files.length).toBeGreaterThan(0);
       expect(files.some((f) => f.includes(session.sessionId))).toBe(true);
+    });
+
+    it('creates a latest-session pointer file', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      const pointerPath = resolve(TEST_AGENTKIT, 'logs', 'sessions', 'latest-session.txt');
+      expect(existsSync(pointerPath)).toBe(true);
+      expect(readFileSync(pointerPath, 'utf-8').trim()).toBe(session.sessionId);
+    });
+  });
+
+  describe('recordCommand()', () => {
+    it('records a command on the active session', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      recordCommand(TEST_AGENTKIT, 'check');
+
+      const pointerPath = resolve(TEST_AGENTKIT, 'logs', 'sessions', 'latest-session.txt');
+      const sessionPath = resolve(TEST_AGENTKIT, 'logs', 'sessions', `session-${session.sessionId}.json`);
+      const updated = JSON.parse(readFileSync(sessionPath, 'utf-8'));
+      expect(updated.commandsRun).toHaveLength(1);
+      expect(updated.commandsRun[0].command).toBe('check');
+      // Pointer should still point to the active session
+      expect(readFileSync(pointerPath, 'utf-8').trim()).toBe(session.sessionId);
+    });
+
+    it('uses the pointer file for O(1) fast-path lookup', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      const pointerPath = resolve(TEST_AGENTKIT, 'logs', 'sessions', 'latest-session.txt');
+      expect(existsSync(pointerPath)).toBe(true);
+
+      recordCommand(TEST_AGENTKIT, 'discover');
+
+      const sessionPath = resolve(TEST_AGENTKIT, 'logs', 'sessions', `session-${session.sessionId}.json`);
+      const updated = JSON.parse(readFileSync(sessionPath, 'utf-8'));
+      expect(updated.commandsRun.some(c => c.command === 'discover')).toBe(true);
+    });
+
+    it('does nothing when no sessions directory exists', () => {
+      // No initSession called — directory does not exist
+      expect(() => recordCommand(TEST_AGENTKIT, 'check')).not.toThrow();
     });
   });
 
