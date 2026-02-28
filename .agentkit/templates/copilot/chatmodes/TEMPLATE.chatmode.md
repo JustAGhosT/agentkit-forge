@@ -1,6 +1,9 @@
 ---
 name: "{{teamName}}"
 description: "Team {{teamName}} — {{teamFocus}}"
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 
 # Team: {{teamName}}

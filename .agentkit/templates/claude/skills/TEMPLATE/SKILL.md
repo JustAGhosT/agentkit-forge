@@ -1,6 +1,9 @@
 ---
 name: "{{commandName}}"
 description: "{{commandDescription}}"
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 
 # {{commandName}}

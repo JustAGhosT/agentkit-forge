@@ -814,6 +814,9 @@ function loadSyncContext(agentkitRoot, projectRoot, flags, log) {
     repoName: (overlaySettings.repoName === '__TEMPLATE__' && projectSpec?.name) || overlaySettings.repoName || repoName,
     defaultBranch: overlaySettings.defaultBranch || 'main',
     primaryStack: overlaySettings.primaryStack || 'auto',
+    syncDate: new Date().toISOString().slice(0, 10),
+    lastModel: process.env.AGENTKIT_LAST_MODEL || 'sync-engine',
+    lastAgent: process.env.AGENTKIT_LAST_AGENT || 'agentkit-forge',
   };
   // Resolve render targets — determines which tool outputs to generate
   let targets = resolveRenderTargets(overlaySettings.renderTargets, flags);
@@ -1546,6 +1549,9 @@ function syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec) {
       `description: "Team ${team.name} — ${team.focus}"`,
       `globs: ${globs}`,
       'alwaysApply: false',
+      `generated_by: "${vars.lastAgent}"`,
+      `last_model: "${vars.lastModel}"`,
+      `last_updated: "${vars.syncDate}"`,
       '---',
       `# Team: ${team.name}`,
       '',

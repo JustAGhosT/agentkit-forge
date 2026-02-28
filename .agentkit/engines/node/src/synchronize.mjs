@@ -317,6 +317,9 @@ async function syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec) {
 description: "Team {{teamName}} — {{teamFocus}}"
 globs: []
 alwaysApply: false
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 # Team: {{teamName}}
 
@@ -831,6 +834,9 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     repoName: (overlaySettings.repoName === '__TEMPLATE__' && projectSpec?.name) || overlaySettings.repoName || repoName,
     defaultBranch: overlaySettings.defaultBranch || 'main',
     primaryStack: overlaySettings.primaryStack || 'auto',
+    syncDate: new Date().toISOString().slice(0, 10),
+    lastModel: process.env.AGENTKIT_LAST_MODEL || 'sync-engine',
+    lastAgent: process.env.AGENTKIT_LAST_AGENT || 'agentkit-forge',
   };
 
   // Resolve render targets — determines which tool outputs to generate
