@@ -29,7 +29,7 @@ import {
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
-import { PROJECT_MAPPING, get, transform, check } from './sync.refactor.mjs';
+import { PROJECT_MAPPING, get, transform, check } from './project-mapping.mjs';
 
 // ---------------------------------------------------------------------------
 // Helpers
