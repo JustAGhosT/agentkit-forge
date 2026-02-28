@@ -416,15 +416,21 @@ export async function listTasks(projectRoot, filters = {}) {
 
   try {
     await access(dir);
-  } catch {
-    return { tasks: [] };
+  } catch (error) {
+    if (error && (error.code === 'ENOENT' || error.code === 'ENOTDIR')) {
+      return { tasks: [] };
+    }
+    throw error;
   }
 
   let files;
   try {
     files = (await readdir(dir)).filter((f) => f.endsWith('.json') && !f.endsWith('.tmp'));
-  } catch {
-    return { tasks: [] };
+  } catch (error) {
+    if (error && (error.code === 'ENOENT' || error.code === 'ENOTDIR')) {
+      return { tasks: [] };
+    }
+    throw error;
   }
 
   const tasks = [];
