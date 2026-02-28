@@ -318,6 +318,28 @@ describe('orchestrator', () => {
       expect(result).not.toContain('Active tasks');
       expect(result).toContain('Completed/closed tasks: 1');
     });
+
+    it('sorts active tasks by priority then newest createdAt first', () => {
+      mkdirSync(TASKS_DIR, { recursive: true });
+      writeFileSync(
+        resolve(TASKS_DIR, 'task-low-priority.json'),
+        JSON.stringify({ id: 'task-low-priority', status: 'working', priority: 'P2', title: 'Low priority', assignees: [], createdAt: '2024-01-01T08:00:00Z' })
+      );
+      writeFileSync(
+        resolve(TASKS_DIR, 'task-high-older.json'),
+        JSON.stringify({ id: 'task-high-older', status: 'working', priority: 'P0', title: 'High priority older', assignees: [], createdAt: '2024-01-01T09:00:00Z' })
+      );
+      writeFileSync(
+        resolve(TASKS_DIR, 'task-high-newer.json'),
+        JSON.stringify({ id: 'task-high-newer', status: 'working', priority: 'P0', title: 'Newer high priority', assignees: [], createdAt: '2024-01-01T10:00:00Z' })
+      );
+      const result = getTasksSummary(TEST_ROOT);
+      const newerPos = result.indexOf('task-high-newer');
+      const olderPos = result.indexOf('task-high-older');
+      const lowPos = result.indexOf('task-low-priority');
+      expect(newerPos).toBeLessThan(olderPos);
+      expect(olderPos).toBeLessThan(lowPos);
+    });
   });
 
   describe('getTasksSummaryAsync()', () => {
@@ -355,150 +377,5 @@ describe('orchestrator', () => {
       const result = await getTasksSummaryAsync(TEST_ROOT);
       expect(result).toContain('Active tasks: 1');
     });
-  });
-});
-
-// ---------------------------------------------------------------------------
-// getTasksSummary / getTasksSummarySync
-// ---------------------------------------------------------------------------
-
-const TASKS_DIR = resolve(TEST_ROOT, '.claude', 'state', 'tasks');
-
-function writeTask(id, data) {
-  mkdirSync(TASKS_DIR, { recursive: true });
-  writeFileSync(resolve(TASKS_DIR, `${id}.json`), JSON.stringify(data), 'utf-8');
-}
-
-describe('getTasksSummary', () => {
-  const TEST_ROOT_LOCAL = resolve(
-    dirname(fileURLToPath(import.meta.url)),
-    '..', '..', '..', '..', '..', '.test-orchestrator-summary'
-  );
-  const TASKS_DIR_LOCAL = resolve(TEST_ROOT_LOCAL, '.claude', 'state', 'tasks');
-
-  function writeLocalTask(id, data) {
-    mkdirSync(TASKS_DIR_LOCAL, { recursive: true });
-    writeFileSync(resolve(TASKS_DIR_LOCAL, `${id}.json`), JSON.stringify(data), 'utf-8');
-  }
-
-  beforeEach(() => {
-    if (existsSync(TEST_ROOT_LOCAL)) rmSync(TEST_ROOT_LOCAL, { recursive: true });
-  });
-
-  afterEach(() => {
-    if (existsSync(TEST_ROOT_LOCAL)) rmSync(TEST_ROOT_LOCAL, { recursive: true });
-  });
-
-  it('returns "No tasks" when directory does not exist', async () => {
-    const result = await getTasksSummary(TEST_ROOT_LOCAL);
-    expect(result).toBe('No tasks in the task queue.');
-  });
-
-  it('returns "No tasks" when directory is empty', async () => {
-    mkdirSync(TASKS_DIR_LOCAL, { recursive: true });
-    const result = await getTasksSummary(TEST_ROOT_LOCAL);
-    expect(result).toBe('No tasks in the task queue.');
-  });
-
-  it('includes active and terminal counts', async () => {
-    writeLocalTask('task-001', {
-      id: 'task-001', status: 'working', priority: 'P1',
-      createdAt: '2024-01-01T10:00:00Z',
-    });
-    writeLocalTask('task-002', {
-      id: 'task-002', status: 'completed', priority: 'P2',
-      createdAt: '2024-01-01T09:00:00Z',
-    });
-    const result = await getTasksSummary(TEST_ROOT_LOCAL);
-    expect(result).toContain('Active tasks: 1');
-    expect(result).toContain('Completed/closed tasks: 1');
-  });
-
-  it('skips corrupted JSON files', async () => {
-    mkdirSync(TASKS_DIR_LOCAL, { recursive: true });
-    writeFileSync(resolve(TASKS_DIR_LOCAL, 'bad.json'), '{ not valid json', 'utf-8');
-    writeLocalTask('task-good', {
-      id: 'task-good', status: 'working', priority: 'P1',
-      createdAt: '2024-01-01T10:00:00Z',
-    });
-    const result = await getTasksSummary(TEST_ROOT_LOCAL);
-    expect(result).toContain('Active tasks: 1');
-  });
-});
-
-describe('getTasksSummarySync', () => {
-  const TEST_ROOT_LOCAL = resolve(
-    dirname(fileURLToPath(import.meta.url)),
-    '..', '..', '..', '..', '..', '.test-orchestrator-summary-sync'
-  );
-  const TASKS_DIR_LOCAL = resolve(TEST_ROOT_LOCAL, '.claude', 'state', 'tasks');
-
-  function writeLocalTask(id, data) {
-    mkdirSync(TASKS_DIR_LOCAL, { recursive: true });
-    writeFileSync(resolve(TASKS_DIR_LOCAL, `${id}.json`), JSON.stringify(data), 'utf-8');
-  }
-
-  beforeEach(() => {
-    if (existsSync(TEST_ROOT_LOCAL)) rmSync(TEST_ROOT_LOCAL, { recursive: true });
-  });
-
-  afterEach(() => {
-    if (existsSync(TEST_ROOT_LOCAL)) rmSync(TEST_ROOT_LOCAL, { recursive: true });
-  });
-
-  it('returns "No tasks" when directory does not exist', () => {
-    expect(getTasksSummarySync(TEST_ROOT_LOCAL)).toBe('No tasks in the task queue.');
-  });
-
-  it('returns "No tasks" when directory is empty', () => {
-    mkdirSync(TASKS_DIR_LOCAL, { recursive: true });
-    expect(getTasksSummarySync(TEST_ROOT_LOCAL)).toBe('No tasks in the task queue.');
-  });
-
-  it('includes active and terminal counts', () => {
-    writeLocalTask('task-001', {
-      id: 'task-001', status: 'working', priority: 'P1',
-      createdAt: '2024-01-01T10:00:00Z',
-    });
-    writeLocalTask('task-002', {
-      id: 'task-002', status: 'completed', priority: 'P2',
-      createdAt: '2024-01-01T09:00:00Z',
-    });
-    const result = getTasksSummarySync(TEST_ROOT_LOCAL);
-    expect(result).toContain('Active tasks: 1');
-    expect(result).toContain('Completed/closed tasks: 1');
-  });
-
-  it('sorts tasks by priority then newest createdAt first', () => {
-    writeLocalTask('task-low-priority', {
-      id: 'task-low-priority', status: 'working', priority: 'P2',
-      title: 'Low priority', createdAt: '2024-01-01T08:00:00Z',
-    });
-    writeLocalTask('task-high-older', {
-      id: 'task-high-older', status: 'working', priority: 'P0',
-      title: 'High priority older', createdAt: '2024-01-01T09:00:00Z',
-    });
-    writeLocalTask('task-high-newer', {
-      id: 'task-high-newer', status: 'working', priority: 'P0',
-      title: 'Newer high priority', createdAt: '2024-01-01T10:00:00Z',
-    });
-    const result = getTasksSummarySync(TEST_ROOT_LOCAL);
-    const newerPos = result.indexOf('task-high-newer');
-    const olderPos = result.indexOf('task-high-older');
-    const lowPos = result.indexOf('task-low-priority');
-    // P0-newer (same priority, newer) should appear before P0-older, both before P2
-    expect(newerPos).toBeLessThan(olderPos);
-    expect(olderPos).toBeLessThan(lowPos);
-  });
-
-  it('skips corrupted JSON files', () => {
-    mkdirSync(TASKS_DIR_LOCAL, { recursive: true });
-    writeFileSync(resolve(TASKS_DIR_LOCAL, 'bad.json'), '{ not valid json', 'utf-8');
-    writeLocalTask('task-good', {
-      id: 'task-good', status: 'working', priority: 'P1',
-      createdAt: '2024-01-01T10:00:00Z',
-    });
-    const result = getTasksSummarySync(TEST_ROOT_LOCAL);
-    expect(result).toContain('Active tasks: 1');
   });
 });

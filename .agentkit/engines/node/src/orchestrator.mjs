@@ -712,23 +712,13 @@ export async function orchestratorProcessHandoffs(projectRoot, state) {
 }
 
 /**
- * Get a summary of all active tasks for display (async — preferred).
- * Delegates to getTasksSummaryAsync for sorted, consistent output.
- * @param {string} projectRoot
- * @returns {Promise<string>}
- */
-export async function getTasksSummary(projectRoot) {
-  return getTasksSummaryAsync(projectRoot);
-}
-
-/**
- * Synchronous variant of getTasksSummary for call sites that cannot await.
+ * Get a summary of all active tasks for display.
  * Tasks are sorted by priority (P0 first) then creation date (newest first)
  * to match the ordering produced by listTasks().
  * @param {string} projectRoot
- * @returns {Promise<string>}
+ * @returns {string}
  */
-export function getTasksSummarySync(projectRoot) {
+export function getTasksSummary(projectRoot) {
   const dir = resolve(projectRoot, '.claude', 'state', 'tasks');
   if (!existsSync(dir)) return 'No tasks in the task queue.';
 
