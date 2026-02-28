@@ -4,9 +4,9 @@
  * TODO/FIXME scanning, and lint on changed files.
  * This is NOT the AI review — that's the /review slash command.
  */
-import { existsSync, readFileSync, readdirSync, statSync, realpathSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync, promises as fsPromises } from 'fs';
 import { resolve, relative, extname, sep } from 'path';
-import { execCommand, formatDuration } from './runner.mjs';
+import { execCommand, formatDuration, runInPool } from './runner.mjs';
 import { appendEvent } from './orchestrator.mjs';
 
 // ---------------------------------------------------------------------------
@@ -24,6 +24,10 @@ const SECRET_PATTERNS = [
   { name: 'Connection String', pattern: /mongodb(\+srv)?:\/\/[^\s'"]+/g },
   { name: 'JWT', pattern: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g },
 ];
+
+// Maximum number of files processed in parallel during secret/TODO scanning.
+// Keeps the number of open file descriptors bounded and avoids EMFILE errors.
+const CONCURRENCY_POOL_SIZE = 50;
 
 // Paths that commonly produce false positives in secret scanning, or that are
 // framework internals (.agentkit/) which should not be reported as app issues.
@@ -64,23 +68,12 @@ function getChangedFiles(projectRoot, flags) {
     return r.exitCode === 0 ? r.stdout.trim().split('\n').filter(Boolean) : [];
   }
 
-    if (flags.file) {
+  if (flags.file) {
     // Constrain to project root to prevent path traversal
     const abs = resolve(projectRoot, flags.file);
     if (!abs.startsWith(resolve(projectRoot) + sep) && abs !== resolve(projectRoot)) {
       throw new Error(`--file must be within the project root: ${flags.file}`);
     }
-
-    if (existsSync(abs)) {
-      const realPath = realpathSync(abs);
-      const realProjectRoot = realpathSync(projectRoot);
-      if (!realPath.startsWith(realProjectRoot + sep) && realPath !== realProjectRoot) {
-        throw new Error(`File must be within the project root (symlinks traversing outside are not allowed): ${flags.file}`);
-      }
-    } else {
-      throw new Error(`File not found: ${flags.file}`);
-    }
-
     return [flags.file];
   }
 
@@ -98,32 +91,33 @@ function getChangedFiles(projectRoot, flags) {
 // Check functions
 // ---------------------------------------------------------------------------
 
-function scanSecrets(projectRoot, files) {
-  const findings = [];
-  for (const file of files) {
+async function scanSecrets(projectRoot, files) {
+  // Use a concurrency pool of 50 to avoid EMFILE on large scans
+  const tasks = files.map(file => async () => {
     // Skip paths known to produce false positives (lockfiles, vendored code, etc.)
     const normalised = '/' + file.replace(/\\/g, '/');
-    if (SKIP_SECRET_SCAN_PATHS.some(p => normalised.includes(p))) continue;
-    if (SKIP_SECRET_SCAN_EXTENSIONS.some(ext => normalised.endsWith(ext))) continue;
+    if (SKIP_SECRET_SCAN_PATHS.some(p => normalised.includes(p))) return [];
+    if (SKIP_SECRET_SCAN_EXTENSIONS.some(ext => normalised.endsWith(ext))) return [];
 
     const fullPath = resolve(projectRoot, file);
-    if (!existsSync(fullPath)) continue;
 
-    // Skip binary and large files
+    // We check existence/stats inside the task
+    // We can use sync or async stat here. Using async for consistency.
     try {
-      const stat = statSync(fullPath);
-      if (stat.size > 1_000_000) continue; // Skip files > 1MB
-    } catch { continue; }
+      const stat = await fsPromises.stat(fullPath);
+      if (stat.size > 1_000_000) return []; // Skip files > 1MB
+    } catch { return []; }
 
     const ext = extname(file).toLowerCase();
-    if (['.png', '.jpg', '.gif', '.ico', '.woff', '.ttf', '.eot', '.zip', '.tar', '.gz'].includes(ext)) continue;
+    if (['.png', '.jpg', '.gif', '.ico', '.woff', '.ttf', '.eot', '.zip', '.tar', '.gz'].includes(ext)) return [];
 
+    const fileFindings = [];
     try {
-      const content = readFileSync(fullPath, 'utf-8');
+      const content = await fsPromises.readFile(fullPath, 'utf-8');
       for (const secret of SECRET_PATTERNS) {
         const matches = content.match(secret.pattern);
         if (matches) {
-          findings.push({
+          fileFindings.push({
             type: 'secret',
             severity: 'HIGH',
             file,
@@ -133,8 +127,12 @@ function scanSecrets(projectRoot, files) {
         }
       }
     } catch { /* skip unreadable files */ }
-  }
-  return findings;
+
+    return fileFindings;
+  });
+
+  const results = await runInPool(tasks, CONCURRENCY_POOL_SIZE);
+  return results.flat();
 }
 
 function scanLargeFiles(projectRoot, files, threshold = 500_000) {
@@ -164,30 +162,32 @@ const SKIP_TODO_SCAN_PATHS = [
   '/.agentkit/templates/',
 ];
 
-function scanTodos(projectRoot, files) {
-  const findings = [];
+async function scanTodos(projectRoot, files) {
   const todoPattern = /\b(TODO|FIXME|HACK|XXX|TEMP)\b.*$/gm;
 
-  for (const file of files) {
+  // Use a concurrency pool of 50 to avoid EMFILE on large scans
+  const tasks = files.map(file => async () => {
     const normalised = '/' + file.replace(/\\/g, '/');
-    if (SKIP_TODO_SCAN_PATHS.some(p => normalised.includes(p))) continue;
+    if (SKIP_TODO_SCAN_PATHS.some(p => normalised.includes(p))) return [];
 
     const fullPath = resolve(projectRoot, file);
-    if (!existsSync(fullPath)) continue;
-
-    const ext = extname(file).toLowerCase();
-    if (['.png', '.jpg', '.gif', '.ico', '.woff', '.ttf'].includes(ext)) continue;
 
     try {
-      const stat = statSync(fullPath);
-      if (stat.size > 1_000_000) continue;
+      const stat = await fsPromises.stat(fullPath);
+      if (stat.size > 1_000_000) return [];
+    } catch { return []; }
 
-      const content = readFileSync(fullPath, 'utf-8');
+    const ext = extname(file).toLowerCase();
+    if (['.png', '.jpg', '.gif', '.ico', '.woff', '.ttf'].includes(ext)) return [];
+
+    const fileFindings = [];
+    try {
+      const content = await fsPromises.readFile(fullPath, 'utf-8');
       const lines = content.split('\n');
       for (let i = 0; i < lines.length; i++) {
         const matches = lines[i].match(todoPattern);
         if (matches) {
-          findings.push({
+          fileFindings.push({
             type: 'todo',
             severity: 'LOW',
             file,
@@ -197,8 +197,12 @@ function scanTodos(projectRoot, files) {
         }
       }
     } catch { /* skip */ }
-  }
-  return findings;
+
+    return fileFindings;
+  });
+
+  const results = await runInPool(tasks, CONCURRENCY_POOL_SIZE);
+  return results.flat();
 }
 
 // ---------------------------------------------------------------------------
@@ -238,7 +242,8 @@ export async function runReview({ agentkitRoot /* kept for interface compatibili
   const allFindings = [];
 
   console.log('--- Secret Scan ---');
-  const secrets = scanSecrets(projectRoot, changedFiles);
+  // Parallel secret scan
+  const secrets = await scanSecrets(projectRoot, changedFiles);
   allFindings.push(...secrets);
   if (secrets.length > 0) {
     for (const f of secrets) {
@@ -250,6 +255,8 @@ export async function runReview({ agentkitRoot /* kept for interface compatibili
   console.log('');
 
   console.log('--- Large File Detection ---');
+  // This is still sync and fast (stat only), keeping it sync is fine or could be async.
+  // Given it's just stat, let's leave it as is unless requested.
   const largeFiles = scanLargeFiles(projectRoot, changedFiles);
   allFindings.push(...largeFiles);
   if (largeFiles.length > 0) {
@@ -262,7 +269,8 @@ export async function runReview({ agentkitRoot /* kept for interface compatibili
   console.log('');
 
   console.log('--- TODO/FIXME Scan ---');
-  const todos = scanTodos(projectRoot, changedFiles);
+  // Parallel TODO scan
+  const todos = await scanTodos(projectRoot, changedFiles);
   allFindings.push(...todos);
   if (todos.length > 0) {
     for (const f of todos.slice(0, 10)) {

@@ -18,7 +18,6 @@ import {
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
 import { VALID_TASK_TYPES } from './task-types.mjs';
-import { PROJECT_MAPPING, get, transform, check } from './sync.refactor.mjs';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -168,26 +167,49 @@ function evalTruthy(value) {
 
 /**
  * Flattens a project.yaml object into a flat key→value map suitable for template rendering.
- * Uses a declarative mapping configuration for cleaner code.
+ * Nested keys become camelCase: project.stack.languages → stackLanguages = "TypeScript, C#"
+ * Boolean fields get has* prefixes: crosscutting.logging.correlationId → hasCorrelationId
  */
 function flattenProjectYaml(project, docsSpec = null) {
   if (!project || typeof project !== 'object') return {};
   const vars = {};
 
-  // Apply declarative mappings
-  for (const mapping of PROJECT_MAPPING) {
-    const value = get(project, mapping.src);
-    if (check(value, mapping.check)) {
-      const transformed = transform(value, mapping.type);
-      if (transformed !== undefined) {
-        vars[mapping.dest] = transformed;
-      }
-    }
+  // Top-level scalars
+  if (project.name) vars.projectName = project.name;
+  if (project.description) vars.projectDescription = project.description;
+  if (project.phase) vars.projectPhase = project.phase;
+
+  // Stack
+  const stack = project.stack || {};
+  if (Array.isArray(stack.languages)) vars.stackLanguages = stack.languages.join(', ');
+  if (stack.frameworks) {
+    const fw = stack.frameworks;
+    if (Array.isArray(fw.frontend)) vars.stackFrontendFrameworks = fw.frontend.join(', ');
+    if (Array.isArray(fw.backend)) vars.stackBackendFrameworks = fw.backend.join(', ');
+    if (Array.isArray(fw.css)) vars.stackCssFrameworks = fw.css.join(', ');
   }
+  if (stack.orm) vars.stackOrm = String(stack.orm);
+  if (Array.isArray(stack.database)) vars.stackDatabase = stack.database.join(', ');
+  else if (stack.database) vars.stackDatabase = String(stack.database);
+  if (stack.search) vars.stackSearch = String(stack.search);
+  if (Array.isArray(stack.messaging)) vars.stackMessaging = stack.messaging.join(', ');
+  else if (stack.messaging) vars.stackMessaging = String(stack.messaging);
 
-  // --- Post-processing / Complex derivations ---
+  // Architecture
+  const arch = project.architecture || {};
+  if (arch.pattern) vars.architecturePattern = arch.pattern;
+  if (arch.apiStyle) vars.architectureApiStyle = arch.apiStyle;
+  vars.monorepo = !!arch.monorepo;
+  vars.hasMonorepo = !!arch.monorepo;
+  if (arch.monorepoTool) vars.monorepoTool = arch.monorepoTool;
 
-  // hasAnyPattern
+  // Explicit implementation patterns
+  const patterns = project.patterns || {};
+  vars.hasPatternRepository = !!patterns.repository;
+  vars.hasPatternCqrs = !!patterns.cqrs;
+  vars.hasPatternEventSourcing = !!patterns.eventSourcing;
+  vars.hasPatternMediator = !!patterns.mediator;
+  vars.hasPatternUnitOfWork = !!patterns.unitOfWork;
   vars.hasAnyPattern =
     vars.hasPatternRepository ||
     vars.hasPatternCqrs ||
@@ -195,14 +217,52 @@ function flattenProjectYaml(project, docsSpec = null) {
     vars.hasPatternMediator ||
     vars.hasPatternUnitOfWork;
 
-  // docsSpec overlay for PRD
+  // Documentation
+  const docs = project.documentation || {};
+  vars.hasPrd = !!docs.hasPrd;
+  if (docs.prdPath) vars.prdPath = docs.prdPath;
   const prdSpec = docsSpec?.specialDirectories?.find((d) => d.id === 'prd');
   if (prdSpec) {
     vars.hasPrd = true;
     if (!vars.prdPath) vars.prdPath = prdSpec.path;
   }
+  vars.hasAdr = !!docs.hasAdr;
+  if (docs.adrPath) vars.adrPath = docs.adrPath;
+  vars.hasApiSpec = !!docs.hasApiSpec;
+  if (docs.apiSpecPath) vars.apiSpecPath = docs.apiSpecPath;
+  vars.hasTechnicalSpec = !!docs.hasTechnicalSpec;
+  if (docs.technicalSpecPath) vars.technicalSpecPath = docs.technicalSpecPath;
+  vars.hasDesignSystem = !!docs.hasDesignSystem;
+  if (docs.designSystemPath) vars.designSystemPath = docs.designSystemPath;
+  vars.hasStorybook = !!docs.storybook;
+  if (docs.designTokensPath) vars.designTokensPath = docs.designTokensPath;
 
-  // hasAnyInfraConfig
+  // Deployment
+  const deploy = project.deployment || {};
+  if (deploy.cloudProvider) vars.cloudProvider = deploy.cloudProvider;
+  vars.containerized = !!deploy.containerized;
+  vars.hasContainerized = !!deploy.containerized;
+  if (Array.isArray(deploy.environments)) vars.environments = deploy.environments.join(', ');
+  if (deploy.iacTool) vars.iacTool = deploy.iacTool;
+
+  // Infrastructure
+  const infra = project.infrastructure || {};
+  if (infra.namingConvention) vars.infraNamingConvention = infra.namingConvention;
+  if (infra.defaultRegion) vars.infraDefaultRegion = infra.defaultRegion;
+  if (infra.org) vars.infraOrg = infra.org;
+  if (Array.isArray(infra.iacToolchain)) vars.infraIacToolchain = infra.iacToolchain.join(', ');
+  if (infra.stateBackend && infra.stateBackend !== 'none') {
+    vars.infraStateBackend = infra.stateBackend;
+    vars.hasStateBackend = true;
+  }
+  if (infra.modulesRepo) vars.infraModulesRepo = infra.modulesRepo;
+  if (infra.lockProvider && infra.lockProvider !== 'none')
+    vars.infraLockProvider = infra.lockProvider;
+  const tagging = infra.tagging || {};
+  if (Array.isArray(tagging.mandatory) && tagging.mandatory.length > 0) {
+    vars.infraMandatoryTags = tagging.mandatory.join(', ');
+    vars.hasInfraTags = true;
+  }
   vars.hasAnyInfraConfig =
     !!vars.infraNamingConvention ||
     !!vars.infraDefaultRegion ||
@@ -210,22 +270,64 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.infraIacToolchain ||
     !!vars.infraStateBackend ||
     !!vars.infraMandatoryTags;
+  if (Array.isArray(tagging.optional)) vars.infraOptionalTags = tagging.optional.join(', ');
 
-  // hasAnyMonitoring
+  // Observability
+  const obs = project.observability || {};
+  const mon = obs.monitoring || {};
+  if (mon.provider && mon.provider !== 'none') {
+    vars.monitoringProvider = mon.provider;
+    vars.hasMonitoring = true;
+  }
+  vars.hasMonitoringDashboards = !!mon.dashboards;
+  const alerting = obs.alerting || {};
+  if (alerting.provider && alerting.provider !== 'none') {
+    vars.alertingProvider = alerting.provider;
+    vars.hasAlerting = true;
+  }
+  if (Array.isArray(alerting.channels)) vars.alertingChannels = alerting.channels.join(', ');
+  const tracing = obs.tracing || {};
+  if (tracing.provider && tracing.provider !== 'none') {
+    vars.tracingProvider = tracing.provider;
+    vars.hasTracing = true;
+  }
+  if (tracing.samplingRate !== undefined && tracing.samplingRate !== null) {
+    vars.tracingSamplingRate = String(tracing.samplingRate);
+  }
+  const obsLogging = obs.logging || {};
+  vars.hasCentralisedLogging = !!obsLogging.centralised;
+  if (obsLogging.retentionDays !== undefined && obsLogging.retentionDays !== null) {
+    vars.logRetentionDays = String(obsLogging.retentionDays);
+  }
   vars.hasAnyMonitoring =
     !!vars.monitoringProvider ||
     !!vars.alertingProvider ||
     !!vars.tracingProvider ||
     !!vars.hasCentralisedLogging;
 
-  // hasDr
+  // Compliance
+  const comp = project.compliance || {};
+  if (comp.framework && comp.framework !== 'none') {
+    vars.complianceFramework = comp.framework;
+    vars.hasCompliance = true;
+  }
+  const dr = comp.disasterRecovery || {};
+  if (dr.rpoHours !== undefined && dr.rpoHours !== null) vars.drRpoHours = String(dr.rpoHours);
+  if (dr.rtoHours !== undefined && dr.rtoHours !== null) vars.drRtoHours = String(dr.rtoHours);
+  if (dr.backupSchedule && dr.backupSchedule !== 'none') {
+    vars.drBackupSchedule = dr.backupSchedule;
+    vars.drTestSchedule = dr.backupSchedule;
+  }
+  vars.hasGeoRedundancy = !!dr.geoRedundancy;
   vars.hasDr =
-    !!vars.drRpoHours ||
-    !!vars.drRtoHours ||
-    !!vars.drBackupSchedule ||
+    (dr.rpoHours !== undefined && dr.rpoHours !== null) ||
+    (dr.rtoHours !== undefined && dr.rtoHours !== null) ||
+    (dr.backupSchedule && dr.backupSchedule !== 'none') ||
     vars.hasGeoRedundancy;
-
-  // hasAnyComplianceConfig
+  const audit = comp.audit || {};
+  vars.hasAudit = !!audit.enabled;
+  vars.hasAppendOnlyAudit = !!audit.appendOnly;
+  if (audit.eventBus && audit.eventBus !== 'none') vars.auditEventBus = audit.eventBus;
   vars.hasAnyComplianceConfig =
     !!vars.complianceFramework ||
     !!vars.drRpoHours ||
@@ -234,37 +336,122 @@ function flattenProjectYaml(project, docsSpec = null) {
     !!vars.drTestSchedule ||
     !!vars.auditEventBus;
 
+  // Process
+  const proc = project.process || {};
+  if (proc.branchStrategy) vars.branchStrategy = proc.branchStrategy;
+  if (proc.commitConvention) vars.commitConvention = proc.commitConvention;
+  if (proc.codeReview) vars.codeReview = proc.codeReview;
+  if (proc.teamSize) vars.teamSize = proc.teamSize;
+
+  // Testing
+  const testing = project.testing || {};
+  if (Array.isArray(testing.unit)) vars.testingUnit = testing.unit.join(', ');
+  if (Array.isArray(testing.integration)) vars.testingIntegration = testing.integration.join(', ');
+  if (Array.isArray(testing.e2e)) vars.testingE2e = testing.e2e.join(', ');
+  if (testing.coverage !== undefined && testing.coverage !== null)
+    vars.testingCoverage = String(testing.coverage);
+
   // Integrations (kept as array for {{#each}})
   if (Array.isArray(project.integrations)) {
     vars.integrations = project.integrations;
     vars.hasIntegrations = project.integrations.length > 0;
   }
 
+  // Cross-cutting concerns
+  const cc = project.crosscutting || {};
+  flattenCrosscutting(cc, vars);
+
   return vars;
 }
 
 /**
  * Flattens the crosscutting section of project.yaml into template vars.
- * @deprecated - Merged into flattenProjectYaml via declarative mappings.
- * Kept exported for test compatibility if any tests import it directly.
  */
 function flattenCrosscutting(cc, vars) {
-  // Delegate to main flatten function by wrapping cc in a project-like structure
-  // This is a backward compatibility shim.
-  const tempProject = { crosscutting: cc };
-  const mapped = flattenProjectYaml(tempProject);
-
-  // Copy mapped crosscutting vars into the target vars object
-  // Filter out keys that don't belong to crosscutting to avoid noise
-  for (const [key, val] of Object.entries(mapped)) {
-    if (key !== 'hasAnyPattern' &&
-        key !== 'hasAnyInfraConfig' &&
-        key !== 'hasAnyMonitoring' &&
-        key !== 'hasDr' &&
-        key !== 'hasAnyComplianceConfig') {
-      vars[key] = val;
-    }
+  // Logging
+  const logging = cc.logging || {};
+  if (logging.framework && logging.framework !== 'none') {
+    vars.loggingFramework = logging.framework;
+    vars.hasLogging = true;
   }
+  vars.hasStructuredLogging = !!logging.structured;
+  vars.hasCorrelationId = !!logging.correlationId;
+  if (logging.level) vars.loggingLevel = logging.level;
+  if (Array.isArray(logging.sink)) vars.loggingSinks = logging.sink.join(', ');
+
+  // Error handling
+  const errors = cc.errorHandling || {};
+  if (errors.strategy && errors.strategy !== 'none') {
+    vars.errorStrategy = errors.strategy;
+    vars.hasErrorHandling = true;
+  }
+  vars.hasGlobalHandler = !!errors.globalHandler;
+  vars.hasCustomExceptions = !!errors.customExceptions;
+
+  // Authentication
+  const auth = cc.authentication || {};
+  if (auth.provider && auth.provider !== 'none') {
+    vars.authProvider = auth.provider;
+    vars.hasAuth = true;
+  }
+  if (auth.strategy) vars.authStrategy = auth.strategy;
+  vars.hasRbac = !!auth.rbac;
+  vars.hasMultiTenant = !!auth.multiTenant;
+
+  // Caching
+  const cache = cc.caching || {};
+  if (cache.provider && cache.provider !== 'none') {
+    vars.cachingProvider = cache.provider;
+    vars.hasCaching = true;
+  }
+  if (Array.isArray(cache.patterns)) vars.cachingPatterns = cache.patterns.join(', ');
+  vars.hasDistributedCache = !!cache.distributedCache;
+
+  // API
+  const api = cc.api || {};
+  if (api.versioning && api.versioning !== 'none') {
+    vars.apiVersioning = api.versioning;
+    vars.hasApiVersioning = true;
+  }
+  if (api.pagination && api.pagination !== 'none') {
+    vars.apiPagination = api.pagination;
+    vars.hasApiPagination = true;
+  }
+  if (api.responseFormat) vars.apiResponseFormat = api.responseFormat;
+  vars.hasRateLimiting = !!api.rateLimiting;
+
+  // Database
+  const db = cc.database || {};
+  if (db.migrations && db.migrations !== 'none') {
+    vars.dbMigrations = db.migrations;
+    vars.hasDbMigrations = true;
+  }
+  vars.hasDbSeeding = !!db.seeding;
+  if (db.transactionStrategy && db.transactionStrategy !== 'none') {
+    vars.dbTransactionStrategy = db.transactionStrategy;
+  }
+  vars.hasConnectionPooling = !!db.connectionPooling;
+
+  // Performance
+  const perf = cc.performance || {};
+  vars.hasLazyLoading = !!perf.lazyLoading;
+  vars.hasImageOptimization = !!perf.imageOptimization;
+  if (perf.bundleBudget) vars.bundleBudget = String(perf.bundleBudget);
+
+  // Feature flags
+  const ff = cc.featureFlags || {};
+  if (ff.provider && ff.provider !== 'none') {
+    vars.featureFlagProvider = ff.provider;
+    vars.hasFeatureFlags = true;
+  }
+
+  // Environments
+  const envs = cc.environments || {};
+  if (Array.isArray(envs.naming)) vars.envNames = envs.naming.join(', ');
+  if (envs.configStrategy && envs.configStrategy !== 'none') {
+    vars.envConfigStrategy = envs.configStrategy;
+  }
+  if (envs.envFilePattern) vars.envFilePattern = envs.envFilePattern;
 }
 
 /**
