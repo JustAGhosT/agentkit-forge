@@ -23,6 +23,7 @@ import {
   formatTaskList,
   listTasks,
   processHandoffs,
+  TASK_PRIORITIES,
   TERMINAL_STATES,
 } from './task-protocol.mjs';
 
@@ -711,11 +712,23 @@ export async function orchestratorProcessHandoffs(projectRoot, state) {
 }
 
 /**
- * Get a summary of all active tasks for display.
+ * Get a summary of all active tasks for display (async — preferred).
+ * Delegates to getTasksSummaryAsync for sorted, consistent output.
+ * @param {string} projectRoot
+ * @returns {Promise<string>}
+ */
+export async function getTasksSummary(projectRoot) {
+  return getTasksSummaryAsync(projectRoot);
+}
+
+/**
+ * Synchronous variant of getTasksSummary for call sites that cannot await.
+ * Tasks are sorted by priority (P0 first) then creation date (newest first)
+ * to match the ordering produced by listTasks().
  * @param {string} projectRoot
  * @returns {string}
  */
-export function getTasksSummary(projectRoot) {
+export function getTasksSummarySync(projectRoot) {
   const dir = resolve(projectRoot, '.claude', 'state', 'tasks');
   if (!existsSync(dir)) return 'No tasks in the task queue.';
 
@@ -740,6 +753,16 @@ export function getTasksSummary(projectRoot) {
   }
 
   if (activeTasks.length === 0) return 'No tasks in the task queue.';
+
+  // Sort by priority (P0 first), then by creation date (newest first) — matches listTasks()
+  activeTasks.sort((a, b) => {
+    const paRaw = TASK_PRIORITIES.indexOf(a.priority);
+    const pbRaw = TASK_PRIORITIES.indexOf(b.priority);
+    const pa = paRaw === -1 ? Number.POSITIVE_INFINITY : paRaw;
+    const pb = pbRaw === -1 ? Number.POSITIVE_INFINITY : pbRaw;
+    if (pa !== pb) return pa - pb;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
 
   const nonTerminal = activeTasks.filter((t) => !TERMINAL_STATES.includes(t.status));
   const terminal = activeTasks.filter((t) => TERMINAL_STATES.includes(t.status));
@@ -870,13 +893,13 @@ export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
 export { PHASES, VALID_TEAM_IDS, VALID_TEAM_STATUSES };
 
 // Re-export task protocol for convenience
-  export {
-    addTaskArtifact,
-    createTask,
-    formatTaskList,
-    formatTaskSummary,
-    getTask as getTaskById,
-    listTasks,
-    updateTaskStatus as updateTaskState
-  } from './task-protocol.mjs';
+export {
+  addTaskArtifact,
+  createTask,
+  formatTaskList,
+  formatTaskSummary,
+  getTask as getTaskById,
+  listTasks,
+  updateTaskStatus as updateTaskState,
+} from './task-protocol.mjs';
 
