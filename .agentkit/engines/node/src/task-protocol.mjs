@@ -138,7 +138,7 @@ async function withHandoffLock(projectRoot, taskId, fn) {
 
 /**
  * Generate a fixed 6-character random suffix (hex) for collision resistance.
- * Uses crypto.getRandomValues for reliable length; Buffer.from converts the 3-byte Uint8Array to a 6-character hex string.
+ * Uses globalThis.crypto.getRandomValues (Web Crypto) for reliable length; Buffer.from converts the 3-byte Uint8Array to a 6-character hex string.
  * @returns {string}
  */
 function generateRandomSuffix() {
