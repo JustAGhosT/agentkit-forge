@@ -10,7 +10,7 @@ export const PROJECT_MAPPING = [
   { src: 'stack.frameworks.backend', dest: 'stackBackendFrameworks', type: 'array-join' },
   { src: 'stack.frameworks.css', dest: 'stackCssFrameworks', type: 'array-join' },
   { src: 'stack.orm', dest: 'stackOrm', type: 'string' },
-  { src: 'stack.database', dest: 'stackDatabase', type: 'array-or-string' },
+  { src: 'stack.database', dest: 'stackDatabase', type: 'array-join' },
   { src: 'stack.search', dest: 'stackSearch', type: 'string' },
   { src: 'stack.messaging', dest: 'stackMessaging', type: 'array-join' },
 
@@ -176,7 +176,9 @@ export function transform(value, type) {
     case 'boolean':
       return !!value;
     case 'array-join':
-      return Array.isArray(value) ? value.join(', ') : undefined;
+      if (Array.isArray(value)) return value.join(', ');
+      if (typeof value === 'string') return value;
+      return undefined;
     case 'array-or-string':
       return Array.isArray(value) ? value.join(', ') : String(value);
     case 'boolean-array-length':

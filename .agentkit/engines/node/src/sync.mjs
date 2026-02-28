@@ -607,7 +607,7 @@ export function computeProjectCompleteness(projectSpec) {
  * Renders each file as a template and inserts a generated header.
  * If source dir does not exist, returns without error (no-op).
  */
-async function syncDirectCopy(
+export async function syncDirectCopy(
   templatesDir,
   sourceSubdir,
   tmpDir,
@@ -1185,16 +1185,9 @@ async function syncRooRules(
 
 /**
  * Copies templates/mcp/ → tmpDir/.mcp/
- */
-/**
- * Copies templates/mcp/ → tmpDir/.mcp/
  * agentsSpec and teamsSpec are accepted for API symmetry and future use.
  */
 async function syncA2aConfig(tmpDir, vars, version, repoName, _agentsSpec, _teamsSpec, templatesDir) {
-  await _syncA2aConfig(templatesDir, tmpDir, vars, version, repoName);
-}
-
-async function _syncA2aConfig(templatesDir, tmpDir, vars, version, repoName) {
   const mcpDir = join(templatesDir, 'mcp');
   if (!existsSync(mcpDir)) return;
   for await (const srcFile of walkDir(mcpDir)) {
