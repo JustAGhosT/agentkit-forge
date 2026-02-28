@@ -393,15 +393,39 @@ const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.n
 
 async function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
   let count = 0;
+  // Global semaphore — limits total concurrent readdir calls across the entire walk
+  // to prevent EMFILE errors on deep or wide repository trees.
   const MAX_CONCURRENCY = 8;
+  let active = 0;
+  const queue = [];
+
+  function schedule(fn) {
+    return new Promise((resolve, reject) => {
+      const run = async () => {
+        active++;
+        try {
+          resolve(await fn());
+        } catch (err) {
+          reject(err);
+        } finally {
+          active--;
+          if (queue.length > 0) queue.shift()();
+        }
+      };
+      if (active < MAX_CONCURRENCY) {
+        run();
+      } else {
+        queue.push(run);
+      }
+    });
+  }
 
   async function walk(currentDir, currentDepth) {
     if (currentDepth > depth || count > maxFiles) return;
     if (!existsSync(currentDir)) return;
 
     try {
-      // Async readdir with bounded parallel processing for subdirectories
-      const entries = await readdir(currentDir, { withFileTypes: true });
+      const entries = await schedule(() => readdir(currentDir, { withFileTypes: true }));
       const subdirs = [];
 
       for (const entry of entries) {
@@ -414,16 +438,11 @@ async function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
         if (entry.isDirectory()) {
           subdirs.push(full);
         } else if (extensions.includes(extname(entry.name))) {
-            count++;
+          count++;
         }
       }
 
-      // Process subdirectories in bounded batches to limit concurrency
-      for (let i = 0; i < subdirs.length; i += MAX_CONCURRENCY) {
-        if (count > maxFiles) break;
-        const batch = subdirs.slice(i, i + MAX_CONCURRENCY);
-        await Promise.all(batch.map(full => walk(full, currentDepth + 1)));
-      }
+      await Promise.all(subdirs.map(full => walk(full, currentDepth + 1)));
     } catch {
       /* permission errors or other fs issues */
     }
