@@ -335,10 +335,11 @@ export function insertHeader(content, ext, version, repoName) {
       const endFrontmatter = content.indexOf(closingMarker, 3);
       if (endFrontmatter !== -1) {
         const afterClose = endFrontmatter + closingMarker.length;
-        // Skip a trailing newline after ---
+        // Include the trailing newline after --- so header is on its own line,
+        // then add a blank line to separate front-matter from the generated comment.
         const insertPos =
           content[afterClose] === '\n' ? afterClose + 1 : afterClose;
-        return content.slice(0, insertPos) + header + content.slice(insertPos);
+        return content.slice(0, insertPos) + '\n' + header + content.slice(insertPos);
       }
     }
     return header + content;
