@@ -13,10 +13,11 @@ what AgentKit Forge generates, gap analysis, and integration recommendations.
 
 | Category | Description | Platforms |
 |----------|-------------|-----------|
-| **AI-Native IDE** | Full editor or terminal with built-in AI | Cursor, Windsurf, Warp |
-| **IDE Extension** | AI extension for existing IDEs (VS Code, JetBrains) | Copilot, Cline, Roo Code, Continue, Cody, Amazon Q |
-| **CLI Agent** | Terminal-based AI coding agent | Claude Code, Codex, Gemini CLI, Aider, Amp, OpenCode |
-| **Cloud / Autonomous Agent** | Fully autonomous cloud-hosted coding agent | Jules, Factory, Codex (Cloud), Copilot (Coding Agent) |
+| **AI-Native IDE** | Full editor or terminal with built-in AI | Cursor, Windsurf, Warp, Trae, Qoder, Nimbalyst, Zed, PearAI, Void |
+| **IDE Extension** | AI extension for existing IDEs (VS Code, JetBrains) | Copilot, Cline, Roo Code, Continue, Cody, Amazon Q, Junie, Tabnine, Augment Code, Supermaven, Codeium |
+| **CLI Agent** | Terminal-based AI coding agent | Claude Code, Codex, Gemini CLI, Aider, Amp, OpenCode, Jules Tools |
+| **Cloud / Autonomous Agent** | Fully autonomous cloud-hosted coding agent | Jules, Factory, Codex (Cloud), Copilot (Coding Agent), Devin |
+| **Vibe Coding / App Builder** | Prompt-to-app platforms for rapid prototyping | Bolt.new, Lovable, Replit Agent, Vercel v0, Same.new |
 | **Universal Standard** | Cross-platform instruction specification | AGENTS.md |
 
 > Platforms may appear in multiple categories. See each platform doc for details.
@@ -38,13 +39,30 @@ what AgentKit Forge generates, gap analysis, and integration recommendations.
 | 9 | [Cline](./09-cline.md) | IDE Extension | ⭐⭐⭐½ 73 | `cline` | Open-source AI assistant |
 | 10 | [Roo Code](./10-roo-code.md) | IDE Extension | ⭐⭐⭐½ 73 | `roo` | Open-source AI assistant (Cline fork) |
 | 11 | [Continue](./11-continue.md) | IDE Extension | ⭐⭐⭐ 61 | `ai` | Open-source AI assistant |
-| 12 | [Google Jules](./12-google-jules.md) | Cloud Agent | ⭐⭐⭐½ 71 | _(via AGENTS.md)_ | Google's autonomous coding agent |
+| 12 | [Google Jules](./12-google-jules.md) | Cloud Agent, CLI Agent | ⭐⭐⭐½ 71 | _(via AGENTS.md)_ | Google's autonomous coding agent + CLI |
 | 13 | [Amazon Q Developer](./13-amazon-q-developer.md) | IDE Extension | ⭐⭐⭐½ 70 | _(via AGENTS.md)_ | AWS AI coding assistant |
 | 14 | [Sourcegraph Cody](./14-sourcegraph-cody.md) | IDE Extension | ⭐⭐⭐½ 68 | _(via AGENTS.md)_ | Code intelligence AI assistant |
 | 15 | [Aider](./15-aider.md) | CLI Agent | ⭐⭐⭐⭐ 76 | _(via AGENTS.md)_ | Open-source AI pair programming |
 | 16 | [Amp](./16-amp.md) | CLI Agent | ⭐⭐⭐½ 72 | _(via AGENTS.md)_ | Sourcegraph's coding agent |
 | 17 | [OpenCode](./17-opencode.md) | CLI Agent | ⭐⭐⭐ 56 | _(via AGENTS.md)_ | Open-source terminal AI |
 | 18 | [Factory](./18-factory.md) | Cloud Agent | ⭐⭐⭐½ 72 | _(via AGENTS.md)_ | Autonomous coding platform |
+| 19 | [Trae IDE](./19-trae-ide.md) | AI-Native IDE | ⭐⭐⭐½ 72 | _(via AGENTS.md)_ | ByteDance's free AI code editor |
+| 20 | [Qoder IDE](./20-qoder-ide.md) | AI-Native IDE | ⭐⭐⭐½ 70 | _(via AGENTS.md)_ | Alibaba's agentic coding platform |
+| 21 | [Nimbalyst](./21-nimbalyst.md) | AI-Native IDE | ⭐⭐⭐ 58 | _(via AGENTS.md)_ | Claude Code session manager |
+| 22 | [JetBrains Junie](./22-jetbrains-junie.md) | IDE Extension | ⭐⭐⭐⭐ 76 | _(via AGENTS.md)_ | JetBrains AI coding agent |
+| 23 | [Tabnine](./23-tabnine.md) | IDE Extension | ⭐⭐⭐½ 68 | _(via AGENTS.md)_ | Privacy-first AI assistant |
+| 24 | [Augment Code](./24-augment-code.md) | IDE Extension | ⭐⭐⭐⭐ 75 | _(via AGENTS.md)_ | Enterprise context engine |
+| 25 | [Devin](./25-devin.md) | Cloud Agent | ⭐⭐⭐½ 70 | _(via AGENTS.md)_ | Autonomous AI software engineer |
+| 26 | [Bolt.new](./26-bolt-new.md) | Vibe Coding | ⭐⭐⭐½ 68 | _(via AGENTS.md)_ | Prompt-to-app builder |
+| 27 | [Lovable](./27-lovable.md) | Vibe Coding | ⭐⭐⭐½ 66 | _(via AGENTS.md)_ | Natural language to full-stack app |
+| 28 | [Replit Agent](./28-replit-agent.md) | AI-Native IDE, Vibe Coding | ⭐⭐⭐½ 67 | _(via AGENTS.md)_ | Cloud IDE + autonomous agent |
+| 29 | [Vercel v0](./29-vercel-v0.md) | Vibe Coding | ⭐⭐⭐ 62 | _(via AGENTS.md)_ | AI UI component generator |
+| 30 | [Zed Editor](./30-zed-editor.md) | AI-Native IDE | ⭐⭐⭐½ 71 | _(via AGENTS.md)_ | Rust-based AI editor |
+| 31 | [PearAI](./31-pearai.md) | AI-Native IDE | ⭐⭐⭐½ 68 | _(via AGENTS.md)_ | Open-source bundled AI editor |
+| 32 | [Void Editor](./32-void-editor.md) | AI-Native IDE | ⭐⭐⭐ 60 | _(via AGENTS.md)_ | Privacy-first open-source AI editor |
+| 33 | [Supermaven](./33-supermaven.md) | IDE Extension | ⭐⭐⭐½ 70 | _(via AGENTS.md)_ | 1M-token context completions |
+| 34 | [Codeium](./34-codeium.md) | IDE Extension | ⭐⭐⭐½ 67 | _(via AGENTS.md)_ | Free AI completions engine |
+| 35 | [Same.new](./35-same-new.md) | Vibe Coding | ⭐⭐⭐½ 66 | _(via AGENTS.md)_ | Prompt-to-app + URL cloning |
 
 ---
 
@@ -121,6 +139,10 @@ For the phased integration plan to address gaps across all platforms, see
 
 ## See Also
 
+- [SPENDING_GUIDES.md](./SPENDING_GUIDES.md) — Budget-optimized tool stacks ($0, $10–25, $50–200+)
+- [SPENDING_FREE_TIER.md](./SPENDING_FREE_TIER.md) — Free tier rotation strategy
+- [SPENDING_MINIMUM_SUB.md](./SPENDING_MINIMUM_SUB.md) — $10–25/month subscription guide
+- [SPENDING_PREMIUM.md](./SPENDING_PREMIUM.md) — $50–200+/month premium guide
 - [PLATFORM_CONSOLIDATED_RATING.md](./PLATFORM_CONSOLIDATED_RATING.md) — Combined final rankings and recommendations
 - [PLATFORM_CODING_PERFORMANCE.md](./PLATFORM_CODING_PERFORMANCE.md) — Coding ability evaluation
 - [PLATFORM_COST_ANALYSIS.md](./PLATFORM_COST_ANALYSIS.md) — Cost and pricing evaluation

@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| **Type** | Autonomous Cloud Coding Agent |
-| **Categories** | Cloud / Autonomous Agent |
-| **Access** | Web interface — [jules.google](https://jules.google/) — requires Google account and GitHub repo access |
-| **Documentation** | [developers.google.com/jules](https://developers.google.com/jules) |
+| **Type** | Autonomous Cloud Coding Agent + CLI Tool |
+| **Categories** | Cloud / Autonomous Agent, CLI Agent |
+| **Access** | Web — [jules.google](https://jules.google/); CLI — `npm install -g @google/jules` |
+| **Documentation** | [jules.google/docs](https://jules.google/docs/cli/reference) |
 | **Performance Rating** | ⭐⭐⭐½ — **71/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cloud--autonomous-agents)) |
 
 ---
@@ -20,6 +20,25 @@ making it automatically compatible with AgentKit Forge's universal output.
 
 Jules operates as a cloud-based agent, analyzing your codebase, creating plans,
 and submitting pull requests — all driven by the instructions in `AGENTS.md`.
+
+### Jules Tools CLI (2025)
+
+Jules also offers a command-line companion (`@google/jules`) for terminal-native
+workflows. The CLI allows starting remote sessions, pulling results, running
+parallel tasks, and integrating with CI/CD pipelines.
+
+```bash
+npm install -g @google/jules
+jules login
+jules remote new --repo . --session "write unit tests"
+jules remote pull --session 123456
+```
+
+Key CLI features:
+- **Interactive TUI dashboard** — `jules` launches a terminal UI
+- **Parallel sessions** — `--parallel 3` runs multiple tasks concurrently
+- **Scriptable** — pipe GitHub issues or TODO items to Jules
+- **API access** — public API for automation and CI/CD integration
 
 ---
 
@@ -99,15 +118,15 @@ of the generated `AGENTS.md` directly determines Jules' effectiveness.
 
 ### Not Ideal For
 
-- **Interactive/iterative coding** — async-only, no real-time collaboration
+- **Interactive/iterative coding** — cloud async model isn't real-time
 - **Complex customization** — only reads AGENTS.md, no rules directory or skills
 - **Enterprise governance** — emerging enterprise features, not yet mature
-- **Time-sensitive tasks** — cloud execution introduces latency
 
 ---
 
 ## References
 
 - [Google Jules — AI coding agent](https://jules.google/)
-- [Google Jules documentation](https://developers.google.com/jules)
+- [Jules Tools CLI Reference](https://jules.google/docs/cli/reference)
+- [Meet Jules Tools — Google Developers Blog](https://developers.googleblog.com/en/meet-jules-tools-a-command-line-companion-for-googles-async-coding-agent/)
 - [AGENTS.md open standard](https://agents.md/)
