@@ -128,11 +128,18 @@ async function withHandoffLock(projectRoot, taskId, fn) {
 
 /**
  * Generate a fixed 6-character random suffix (hex) for collision resistance.
- * Uses crypto.randomBytes for reliable length; Math.random().toString(36) can produce fewer than 6 chars.
+ * Uses globalThis.crypto.getRandomValues (Web Crypto) for reliable length; Buffer.from converts the 3-byte Uint8Array to a 6-character hex string.
  * @returns {string}
  */
 function generateRandomSuffix() {
-  return randomBytes(3).toString('hex');
+  if (!globalThis.crypto || typeof globalThis.crypto.getRandomValues !== 'function') {
+    throw new Error(
+      'AgentKit Forge Node engine requires Node.js >= 22 with Web Crypto API available (globalThis.crypto.getRandomValues).',
+    );
+  }
+  const bytes = new Uint8Array(3);
+  globalThis.crypto.getRandomValues(bytes);
+  return Buffer.from(bytes).toString('hex');
 }
 
 /**
