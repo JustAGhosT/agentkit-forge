@@ -35,6 +35,21 @@ function parsePeriodDays(period) {
   return days > 0 ? days : 7;
 }
 
+/**
+ * Run a git command safely using execFileSync (avoids shell injection).
+ * @param {string[]} args - Git arguments
+ * @param {string} cwd - Working directory
+ * @returns {string} - Command output (stdout)
+ * @throws {Error} if command fails
+ */
+function runGitCommand(args, cwd) {
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Path helpers
 // ---------------------------------------------------------------------------
@@ -45,6 +60,10 @@ function logsDir(agentkitRoot) {
 
 function sessionsDir(agentkitRoot) {
   return resolve(agentkitRoot, 'logs', 'sessions');
+}
+
+function latestSessionPath(agentkitRoot) {
+  return resolve(sessionsDir(agentkitRoot), 'latest-session.txt');
 }
 
 function usageLogPath(agentkitRoot, date) {
@@ -85,14 +104,10 @@ export function initSession({ agentkitRoot, projectRoot }) {
   let branch = 'unknown';
   let user = 'unknown';
   try {
-    branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim();
+    branch = runGitCommand(['rev-parse', '--abbrev-ref', 'HEAD'], projectRoot).trim();
   } catch { /* git not available — using default branch */ }
   try {
-    user = execFileSync('git', ['config', 'user.email'], {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim() || 'unknown';
+    user = runGitCommand(['config', 'user.email'], projectRoot).trim() || 'unknown';
   } catch { /* git not available — using default user */ }
 
   let repoName = basename(projectRoot);
@@ -120,6 +135,9 @@ export function initSession({ agentkitRoot, projectRoot }) {
     mkdirSync(dir, { recursive: true });
   }
   writeFileSync(sessionFilePath(agentkitRoot, sessionId), JSON.stringify(session, null, 2) + '\n', 'utf-8');
+
+  // Update latest session pointer
+  writeFileSync(latestSessionPath(agentkitRoot), sessionId, 'utf-8');
 
   // Log event
   logEvent(agentkitRoot, {
@@ -160,11 +178,9 @@ export function endSession({ agentkitRoot, projectRoot, sessionId }) {
   // Count files modified via git
   let filesModified = 0;
   try {
-    const result = execFileSync('git', ['diff', '--name-only', 'HEAD'], {
-      cwd: projectRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const result = runGitCommand(['diff', '--name-only', 'HEAD'], projectRoot);
     filesModified = result.trim().split('\n').filter(Boolean).length;
-  } catch { /* git not available — filesModified stays 0 */ }
+  } catch (error) { console.warn('[agentkit:cost] git diff failed:', error.message); /* git not available — filesModified stays 0 */ }
 
   session.endTime = now.toISOString();
   session.durationMs = now.getTime() - startTime.getTime();
@@ -197,7 +213,38 @@ export function recordCommand(agentkitRoot, command) {
   const dir = sessionsDir(agentkitRoot);
   if (!existsSync(dir)) return;
 
-  // Find the most recent active session file
+  const tryUpdateSession = (filePath, session) => {
+    if (session.status === 'active') {
+      session.commandsRun = session.commandsRun || [];
+      session.commandsRun.push({ command, timestamp: new Date().toISOString() });
+      // Atomic write: temp file + rename to prevent partial reads
+      const tmpPath = filePath + '.tmp';
+      writeFileSync(tmpPath, JSON.stringify(session, null, 2) + '\n', 'utf-8');
+      renameSync(tmpPath, filePath);
+
+      logEvent(agentkitRoot, { event: 'command_run', command, sessionId: session.sessionId });
+      return true;
+    }
+    return false;
+  };
+
+  // Optimization: Check latest-session pointer first
+  const pointerPath = latestSessionPath(agentkitRoot);
+  if (existsSync(pointerPath)) {
+    try {
+      const latestId = readFileSync(pointerPath, 'utf-8').trim();
+      const filePath = sessionFilePath(agentkitRoot, latestId);
+      if (existsSync(filePath)) {
+        const raw = readFileSync(filePath, 'utf-8');
+        const session = JSON.parse(raw);
+        if (tryUpdateSession(filePath, session)) {
+          return;
+        }
+      }
+    } catch { /* ignore pointer errors, fall back to scan */ }
+  }
+
+  // Fallback: Find the most recent active session file
   const files = readdirSync(dir)
     .filter(f => f.startsWith('session-') && f.endsWith('.json'))
     .sort()
@@ -208,15 +255,11 @@ export function recordCommand(agentkitRoot, command) {
       const filePath = resolve(dir, file);
       const raw = readFileSync(filePath, 'utf-8');
       const session = JSON.parse(raw);
-      if (session.status === 'active') {
-        session.commandsRun = session.commandsRun || [];
-        session.commandsRun.push({ command, timestamp: new Date().toISOString() });
-        // Atomic write: temp file + rename to prevent partial reads
-        const tmpPath = filePath + '.tmp';
-        writeFileSync(tmpPath, JSON.stringify(session, null, 2) + '\n', 'utf-8');
-        renameSync(tmpPath, filePath);
-
-        logEvent(agentkitRoot, { event: 'command_run', command, sessionId: session.sessionId });
+      if (tryUpdateSession(filePath, session)) {
+        // Opportunistically update pointer
+        try {
+          writeFileSync(pointerPath, session.sessionId, 'utf-8');
+        } catch {}
         return;
       }
     } catch { /* skip corrupted session files */ }

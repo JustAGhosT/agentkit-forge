@@ -77,3 +77,5 @@ benchmark-check.mjs
 temp_benchmark
 temp_benchmark/
 temp_discover_benchmark/
+.benchmark/
+bench-temp/

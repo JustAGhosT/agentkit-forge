@@ -53,6 +53,11 @@ describe('validate()', () => {
     expect(validate('z', schema, 'x')).toHaveLength(1);
   });
 
+  it('rejects empty string for enum fields', () => {
+    const schema = { type: 'string', enum: ['a', 'b', 'c'] };
+    expect(validate('', schema, 'x')).toHaveLength(1);
+  });
+
   it('validates minLength', () => {
     const schema = { type: 'string', minLength: 3 };
     expect(validate('abc', schema, 'x')).toEqual([]);
