@@ -4,7 +4,6 @@
  * Tasks are JSON files in .claude/state/tasks/ with lifecycle states,
  * messages, artifacts, dependency tracking, and chained handoffs.
  */
-import { randomBytes } from 'crypto';
 import { existsSync } from 'fs';
 import { access, mkdir, open, readdir, readFile, rename, unlink, writeFile } from 'fs/promises';
 import { resolve } from 'path';
@@ -433,7 +432,7 @@ export async function listTasks(projectRoot, filters = {}) {
     throw error;
   }
 
-  const tasks = [];
+  // Limit concurrent file reads to avoid hitting OS file descriptor limits (EMFILE)
   const results = [];
   for (let i = 0; i < files.length; i += TASK_READ_CONCURRENCY) {
     const batch = files.slice(i, i + TASK_READ_CONCURRENCY);
@@ -441,30 +440,28 @@ export async function listTasks(projectRoot, filters = {}) {
       batch.map(async (file) => {
         try {
           const content = await readFile(resolve(dir, file), 'utf-8');
-          return JSON.parse(content);
+          const data = JSON.parse(content);
+
+          if (filters.status && data.status !== filters.status) return null;
+          if (
+            filters.assignee &&
+            !(Array.isArray(data.assignees) && data.assignees.includes(filters.assignee))
+          )
+            return null;
+          if (filters.delegator && data.delegator !== filters.delegator) return null;
+          if (filters.type && data.type !== filters.type) return null;
+          if (filters.priority && data.priority !== filters.priority) return null;
+
+          return data;
         } catch {
+          // Skip corrupted task files
           return null;
         }
       })
     );
     results.push(...batchResults);
   }
-
-  for (const data of results) {
-    if (!data) continue;
-
-    if (filters.status && data.status !== filters.status) continue;
-    if (
-      filters.assignee &&
-      !(Array.isArray(data.assignees) && data.assignees.includes(filters.assignee))
-    )
-      continue;
-    if (filters.delegator && data.delegator !== filters.delegator) continue;
-    if (filters.type && data.type !== filters.type) continue;
-    if (filters.priority && data.priority !== filters.priority) continue;
-
-    tasks.push(data);
-  }
+  const tasks = results.filter(Boolean);
 
   // Sort by priority (P0 first), then by creation date (newest first)
   tasks.sort((a, b) => {
