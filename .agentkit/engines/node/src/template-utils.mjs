@@ -38,6 +38,20 @@ export function renderTemplate(template, vars, targetPath = '') {
   result = resolveEachBlocks(result, vars);
 
   // Phase 3: Replace {{key}} placeholders
+  result = replacePlaceholders(result, vars, allowRawVars);
+
+  return result;
+}
+
+/**
+ * Replaces {{key}} placeholders with values from vars.
+ * - Replaces longest keys first to prevent partial matches
+ * - Sanitizes string values to prevent shell metacharacter injection
+ * - Allows raw values for keys in RAW_TEMPLATE_VARS when allowRawVars is true
+ * - Warns on unresolved placeholders when DEBUG is set
+ */
+export function replacePlaceholders(template, vars, allowRawVars = false) {
+  let result = template;
   const sortedKeys = Object.keys(vars).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
     const value = vars[key];
