@@ -13,6 +13,9 @@
 /.gemini/
 /mcp/
 /.github/workflows/ai-framework-ci.yml
+/.github/agents/
+/.github/chatmodes/
+/.github/prompts/
 
 # Generated AI instruction files (always regenerated)
 /CLAUDE.md
