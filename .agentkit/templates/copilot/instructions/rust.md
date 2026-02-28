@@ -1,3 +1,5 @@
+<!-- Format: Plain Markdown. Copilot domain-specific instructions. -->
+<!-- Docs: https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot -->
 # Copilot Instructions — Rust
 
 Apply these rules when editing `.rs` files or `Cargo.toml`.

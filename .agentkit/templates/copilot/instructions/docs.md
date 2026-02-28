@@ -1,3 +1,5 @@
+<!-- Format: Plain Markdown. Copilot domain-specific instructions. -->
+<!-- Docs: https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot -->
 # Copilot Instructions — Documentation
 
 Apply these rules when editing files in `docs/`, `*.md`, or `*.mdx`.

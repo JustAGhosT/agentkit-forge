@@ -1,3 +1,5 @@
+<!-- Format: Plain Markdown. Claude slash command. -->
+<!-- Docs: https://docs.anthropic.com/en/docs/claude-code/memory#slash-commands -->
 # /preflight
 
 {{commandDescription}}

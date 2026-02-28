@@ -1,4 +1,6 @@
 <!-- generated_by: {{lastAgent}} | last_model: {{lastModel}} | last_updated: {{syncDate}} -->
+<!-- Format: Plain Markdown. GitHub Copilot repository-wide instructions. -->
+<!-- Docs: https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot -->
 # GitHub Copilot Instructions
 
 You are assisting with a project managed by the AgentKit Forge framework.

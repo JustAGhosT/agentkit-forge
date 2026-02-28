@@ -1,4 +1,6 @@
 <!-- generated_by: {{lastAgent}} | last_model: {{lastModel}} | last_updated: {{syncDate}} -->
+<!-- Format: Plain Markdown rule for Windsurf Cascade AI. -->
+<!-- Docs: https://docs.windsurf.com/windsurf/cascade -->
 # Project Context
 
 This repository uses the AgentKit Forge unified agent team framework.
