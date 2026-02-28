@@ -4,7 +4,6 @@
  * Tasks are JSON files in .claude/state/tasks/ with lifecycle states,
  * messages, artifacts, dependency tracking, and chained handoffs.
  */
-import { randomBytes } from 'crypto';
 import {
   existsSync,
   mkdirSync,
@@ -143,7 +142,9 @@ async function withHandoffLock(projectRoot, taskId, fn) {
  * @returns {string}
  */
 function generateRandomSuffix() {
-  return randomBytes(3).toString('hex');
+  const bytes = new Uint8Array(3);
+  crypto.getRandomValues(bytes);
+  return Buffer.from(bytes).toString('hex');
 }
 
 /**
