@@ -207,10 +207,17 @@ describe('review-runner', () => {
     it('rejects --file symlinks that point outside project root', async () => {
       setupTestRepo();
       const outsideFile = resolve(TEST_ROOT, '..', 'outside-secret.txt');
+      const symlinkPath = resolve(TEST_ROOT, 'evil-link.js');
       // Create a real file outside the project root, then a symlink inside pointing to it
       writeFileSync(outsideFile, 'AKIAIOSFODNN7EXAMPLE', 'utf-8');
       try {
-        symlinkSync(outsideFile, resolve(TEST_ROOT, 'evil-link.js'));
+        try {
+          symlinkSync(outsideFile, symlinkPath);
+        } catch (symlinkErr) {
+          // On Windows without developer mode, symlinkSync throws EPERM; skip in that case
+          if (symlinkErr.code === 'EPERM' || symlinkErr.code === 'ENOTSUP') return;
+          throw symlinkErr;
+        }
 
         vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -223,6 +230,7 @@ describe('review-runner', () => {
         ).rejects.toThrow('symlinks traversing outside are not allowed');
       } finally {
         if (existsSync(outsideFile)) rmSync(outsideFile, { force: true });
+        if (existsSync(symlinkPath)) rmSync(symlinkPath, { force: true });
       }
     });
   });
