@@ -299,9 +299,9 @@ describe('validateProjectYaml', () => {
     expect(errors).toEqual([]);
   });
 
-  it('accepts empty string for enum fields without error', () => {
+  it('rejects empty string for enum fields', () => {
     const { errors } = validateProjectYaml({ phase: '' });
-    expect(errors).toEqual([]);
+    expect(errors.some(e => e.includes('phase'))).toBe(true);
   });
 
   it('validates architecture.monorepoTool enum', () => {

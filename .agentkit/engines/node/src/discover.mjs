@@ -382,15 +382,16 @@ const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', '.next', '.n
 
 async function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
   let count = 0;
+  const MAX_CONCURRENCY = 8;
 
   async function walk(currentDir, currentDepth) {
     if (currentDepth > depth || count > maxFiles) return;
     if (!existsSync(currentDir)) return;
 
     try {
-      // Async readdir with parallel processing for subdirectories
+      // Async readdir with bounded parallel processing for subdirectories
       const entries = await readdir(currentDir, { withFileTypes: true });
-      const tasks = [];
+      const subdirs = [];
 
       for (const entry of entries) {
         if (entry.name.startsWith('.') || SKIP_DIRS.has(entry.name)) continue;
@@ -399,14 +400,17 @@ async function countFilesByExt(dir, extensions, depth = 4, maxFiles = 5000) {
 
         const full = join(currentDir, entry.name);
         if (entry.isDirectory()) {
-          tasks.push(walk(full, currentDepth + 1));
+          subdirs.push(full);
         } else if (extensions.includes(extname(entry.name))) {
           count++;
         }
       }
 
-      if (tasks.length > 0) {
-        await Promise.all(tasks);
+      // Process subdirectories in bounded batches to limit concurrency
+      for (let i = 0; i < subdirs.length; i += MAX_CONCURRENCY) {
+        if (count > maxFiles) break;
+        const batch = subdirs.slice(i, i + MAX_CONCURRENCY);
+        await Promise.all(batch.map(full => walk(full, currentDepth + 1)));
       }
     } catch {
       /* permission errors or other fs issues */
@@ -749,20 +753,22 @@ export async function runDiscover({ agentkitRoot, projectRoot, flags }) {
   }
 
   // --- Tech stack detection ---
-  // Parallelize file counting
-  await Promise.all(STACK_DETECTORS.map(async (detector) => {
+  // Parallelize file counting, then push in deterministic (STACK_DETECTORS) order
+  const stackResults = await Promise.all(STACK_DETECTORS.map(async (detector) => {
     const markerFound = detector.markers.some((m) => fileExists(projectRoot, m));
-    if (markerFound) {
-      const fileCount = await countFilesByExt(projectRoot, detector.filePatterns);
-      const configsFound = detector.configFiles.filter((c) => existsSync(resolve(projectRoot, c)));
-      report.techStacks.push({
-        name: detector.name,
-        label: detector.label,
-        fileCount,
-        configFiles: configsFound,
-      });
-    }
+    if (!markerFound) return null;
+    const fileCount = await countFilesByExt(projectRoot, detector.filePatterns);
+    const configsFound = detector.configFiles.filter((c) => existsSync(resolve(projectRoot, c)));
+    return {
+      name: detector.name,
+      label: detector.label,
+      fileCount,
+      configFiles: configsFound,
+    };
   }));
+  for (const result of stackResults) {
+    if (result !== null) report.techStacks.push(result);
+  }
 
   // --- Determine primary stack ---
   if (report.techStacks.length > 0) {
@@ -967,7 +973,7 @@ function formatMarkdown(report) {
     for (const [category, values] of Object.entries(fw)) {
       if (!Array.isArray(values) || values.length === 0) continue;
       const label = category
-        .replace(/([a-z])([A-Z])/g, ' ')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
         .replace(/^./, (c) => c.toUpperCase());
       lines.push(`- **${label}:** ${values.join(', ')}`);
     }

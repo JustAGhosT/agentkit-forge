@@ -201,7 +201,8 @@ async function detectStacks(agentkitRoot, projectRoot, filterStack) {
   let projectFiles = null;
   const needsWildcard = stacks.some(stack =>
     (!filterStack || stack.name === filterStack) &&
-    (stack.detect || []).some(m => m.startsWith('*'))
+    Array.isArray(stack.detect) &&
+    stack.detect.some(m => typeof m === 'string' && m.startsWith('*'))
   );
 
   if (needsWildcard) {
@@ -215,7 +216,9 @@ async function detectStacks(agentkitRoot, projectRoot, filterStack) {
   return stacks.filter(stack => {
     if (filterStack && stack.name !== filterStack) return false;
     // Check if any detect markers exist in the project
-    return (stack.detect || []).some(marker => {
+    if (!Array.isArray(stack.detect)) return false;
+    return stack.detect.some(marker => {
+      if (typeof marker !== 'string') return false;
       if (marker.startsWith('*')) {
         // Wildcard: check for files with this extension at root using cached file list
         if (!projectFiles) return false;
