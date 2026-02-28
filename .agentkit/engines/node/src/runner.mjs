@@ -124,10 +124,20 @@ export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
   let [executable, ...args] = parsed;
 
   // SECURITY (defense-in-depth):
-  // We manually resolve the executable path on Windows to avoid using shell:true.
+  // On Windows, manually resolve the executable path to avoid using shell:true by default.
   // This prevents command injection vulnerabilities via cmd.exe argument parsing quirks.
+  // However, .cmd and .bat files cannot be spawned directly without shell on Windows,
+  // so we fall back to spawning via cmd.exe /d /s /c for those extensions.
   if (process.platform === 'win32') {
-     executable = resolveWindowsExecutable(executable, cwd);
+    const resolved = resolveWindowsExecutable(executable, cwd);
+    if (resolved.toLowerCase().endsWith('.cmd') || resolved.toLowerCase().endsWith('.bat')) {
+      // Spawn via cmd.exe to support .cmd/.bat files (e.g. npm.cmd, pnpm.cmd, npx.cmd).
+      // Use /d (disable AutoRun), /s (strip surrounding quotes), /c (execute and exit).
+      args = ['/d', '/s', '/c', resolved, ...args];
+      executable = process.env.ComSpec || 'cmd.exe';
+    } else {
+      executable = resolved;
+    }
   }
 
   const result = spawnSync(executable, args, {
@@ -136,8 +146,6 @@ export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, FORCE_COLOR: '0' },
-    // Always use shell: false for security.
-    // Executable resolution is handled manually above for Windows.
     shell: false,
   });
 
