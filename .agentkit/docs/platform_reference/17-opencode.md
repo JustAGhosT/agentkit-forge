@@ -2,6 +2,14 @@
 
 **Render target:** _(via AGENTS.md — no dedicated render target)_
 
+| | |
+|---|---|
+| **Type** | AI Coding Assistant (CLI, open-source) |
+| **Categories** | CLI Agent |
+| **Access** | CLI tool — `go install github.com/opencode-ai/opencode@latest` or build from source |
+| **Documentation** | [github.com/opencode-ai/opencode](https://github.com/opencode-ai/opencode) |
+| **Performance Rating** | ⭐⭐⭐ — **56/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents)) |
+
 ---
 
 ## Platform Overview

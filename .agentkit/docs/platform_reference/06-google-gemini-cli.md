@@ -2,6 +2,14 @@
 
 **Render target:** `gemini`
 
+| | |
+|---|---|
+| **Type** | AI Coding Agent (CLI) |
+| **Categories** | CLI Agent |
+| **Access** | CLI tool — `npm install -g @anthropic-ai/gemini-cli` or see [installation guide](https://google-gemini.github.io/gemini-cli/docs/get-started/) |
+| **Documentation** | [google-gemini.github.io/gemini-cli](https://google-gemini.github.io/gemini-cli/) |
+| **Performance Rating** | ⭐⭐⭐½ — **73/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents)) |
+
 ---
 
 ## Platform Overview

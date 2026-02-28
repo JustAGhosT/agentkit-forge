@@ -9,28 +9,42 @@ what AgentKit Forge generates, gap analysis, and integration recommendations.
 
 ---
 
+## Platform Categories
+
+| Category | Description | Platforms |
+|----------|-------------|-----------|
+| **AI-Native IDE** | Full editor or terminal with built-in AI | Cursor, Windsurf, Warp |
+| **IDE Extension** | AI extension for existing IDEs (VS Code, JetBrains) | Copilot, Cline, Roo Code, Continue, Cody, Amazon Q |
+| **CLI Agent** | Terminal-based AI coding agent | Claude Code, Codex, Gemini CLI, Aider, Amp, OpenCode |
+| **Cloud / Autonomous Agent** | Fully autonomous cloud-hosted coding agent | Jules, Factory, Codex (Cloud), Copilot (Coding Agent) |
+| **Universal Standard** | Cross-platform instruction specification | AGENTS.md |
+
+> Platforms may appear in multiple categories. See each platform doc for details.
+
+---
+
 ## Supported Platforms
 
-| # | Platform | Type | Render Target | Document |
-|---|----------|------|---------------|----------|
-| 1 | [AGENTS.md](./01-agents-md.md) | Universal Standard | _(always generated)_ | Universal agent instruction file |
-| 2 | [Claude Code](./02-claude-code.md) | IDE Agent | `claude` | Anthropic's AI coding agent |
-| 3 | [Cursor IDE](./03-cursor-ide.md) | IDE | `cursor` | AI-native code editor |
-| 4 | [Windsurf IDE](./04-windsurf-ide.md) | IDE | `windsurf` | Cascade AI editor |
-| 5 | [GitHub Copilot](./05-github-copilot.md) | IDE Extension | `copilot` | Microsoft/GitHub AI assistant |
-| 6 | [Google Gemini CLI](./06-google-gemini-cli.md) | CLI | `gemini` | Google's AI coding CLI |
-| 7 | [OpenAI Codex](./07-openai-codex.md) | CLI Agent | `codex` | OpenAI's coding agent |
-| 8 | [Warp Terminal](./08-warp-terminal.md) | Terminal | `warp` | AI-native terminal |
-| 9 | [Cline](./09-cline.md) | VS Code Extension | `cline` | Open-source AI assistant |
-| 10 | [Roo Code](./10-roo-code.md) | VS Code Extension | `roo` | Open-source AI assistant (Cline fork) |
-| 11 | [Continue](./11-continue.md) | IDE Extension | `ai` | Open-source AI assistant |
-| 12 | [Google Jules](./12-google-jules.md) | Cloud Agent | _(via AGENTS.md)_ | Google's autonomous coding agent |
-| 13 | [Amazon Q Developer](./13-amazon-q-developer.md) | IDE Extension / CLI | _(via AGENTS.md)_ | AWS AI coding assistant |
-| 14 | [Sourcegraph Cody](./14-sourcegraph-cody.md) | IDE Extension | _(via AGENTS.md)_ | Code intelligence AI assistant |
-| 15 | [Aider](./15-aider.md) | CLI | _(via AGENTS.md)_ | Open-source AI pair programming |
-| 16 | [Amp](./16-amp.md) | CLI Agent | _(via AGENTS.md)_ | Sourcegraph's coding agent |
-| 17 | [OpenCode](./17-opencode.md) | CLI | _(via AGENTS.md)_ | Open-source terminal AI |
-| 18 | [Factory](./18-factory.md) | Cloud Agent | _(via AGENTS.md)_ | Autonomous coding platform |
+| # | Platform | Categories | Rating | Render Target | Document |
+|---|----------|------------|--------|---------------|----------|
+| 1 | [AGENTS.md](./01-agents-md.md) | Universal Standard | N/A | _(always generated)_ | Universal agent instruction file |
+| 2 | [Claude Code](./02-claude-code.md) | CLI Agent | ⭐⭐⭐⭐½ 89 | `claude` | Anthropic's AI coding agent |
+| 3 | [Cursor IDE](./03-cursor-ide.md) | AI-Native IDE | ⭐⭐⭐⭐ 77 | `cursor` | AI-native code editor |
+| 4 | [Windsurf IDE](./04-windsurf-ide.md) | AI-Native IDE | ⭐⭐⭐½ 69 | `windsurf` | Cascade AI editor |
+| 5 | [GitHub Copilot](./05-github-copilot.md) | IDE Extension, Cloud Agent | ⭐⭐⭐⭐ 78 | `copilot` | Microsoft/GitHub AI assistant |
+| 6 | [Google Gemini CLI](./06-google-gemini-cli.md) | CLI Agent | ⭐⭐⭐½ 73 | `gemini` | Google's AI coding CLI |
+| 7 | [OpenAI Codex](./07-openai-codex.md) | CLI Agent, Cloud Agent | ⭐⭐⭐⭐ 79 | `codex` | OpenAI's coding agent |
+| 8 | [Warp Terminal](./08-warp-terminal.md) | AI-Native IDE | ⭐⭐⭐ 63 | `warp` | AI-native terminal |
+| 9 | [Cline](./09-cline.md) | IDE Extension | ⭐⭐⭐½ 73 | `cline` | Open-source AI assistant |
+| 10 | [Roo Code](./10-roo-code.md) | IDE Extension | ⭐⭐⭐½ 73 | `roo` | Open-source AI assistant (Cline fork) |
+| 11 | [Continue](./11-continue.md) | IDE Extension | ⭐⭐⭐ 61 | `ai` | Open-source AI assistant |
+| 12 | [Google Jules](./12-google-jules.md) | Cloud Agent | ⭐⭐⭐½ 71 | _(via AGENTS.md)_ | Google's autonomous coding agent |
+| 13 | [Amazon Q Developer](./13-amazon-q-developer.md) | IDE Extension | ⭐⭐⭐½ 70 | _(via AGENTS.md)_ | AWS AI coding assistant |
+| 14 | [Sourcegraph Cody](./14-sourcegraph-cody.md) | IDE Extension | ⭐⭐⭐½ 68 | _(via AGENTS.md)_ | Code intelligence AI assistant |
+| 15 | [Aider](./15-aider.md) | CLI Agent | ⭐⭐⭐⭐ 76 | _(via AGENTS.md)_ | Open-source AI pair programming |
+| 16 | [Amp](./16-amp.md) | CLI Agent | ⭐⭐⭐½ 72 | _(via AGENTS.md)_ | Sourcegraph's coding agent |
+| 17 | [OpenCode](./17-opencode.md) | CLI Agent | ⭐⭐⭐ 56 | _(via AGENTS.md)_ | Open-source terminal AI |
+| 18 | [Factory](./18-factory.md) | Cloud Agent | ⭐⭐⭐½ 72 | _(via AGENTS.md)_ | Autonomous coding platform |
 
 ---
 
@@ -73,6 +87,13 @@ what AgentKit Forge generates, gap analysis, and integration recommendations.
 
 ---
 
+## Coding Performance
+
+For weighted scoring of each platform's coding ability across key metrics,
+see [PLATFORM_CODING_PERFORMANCE.md](./PLATFORM_CODING_PERFORMANCE.md).
+
+---
+
 ## Integration Plan
 
 For the phased integration plan to address gaps across all platforms, see
@@ -82,6 +103,8 @@ For the phased integration plan to address gaps across all platforms, see
 
 ## See Also
 
+- [PLATFORM_CODING_PERFORMANCE.md](./PLATFORM_CODING_PERFORMANCE.md) — Weighted decision matrix and scoring
+- [INTEGRATION_PLAN.md](./INTEGRATION_PLAN.md) — Phased plan to address platform gaps
 - [TOOLS.md](../TOOLS.md) — Quick-reference table of what AgentKit Forge generates
 - [CUSTOMIZATION.md](../CUSTOMIZATION.md) — How to customize overlays and settings
 - [PROJECT_YAML_REFERENCE.md](../PROJECT_YAML_REFERENCE.md) — Project configuration schema

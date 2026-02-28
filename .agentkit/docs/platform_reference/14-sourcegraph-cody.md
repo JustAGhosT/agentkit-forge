@@ -2,6 +2,14 @@
 
 **Render target:** _(via AGENTS.md — no dedicated render target)_
 
+| | |
+|---|---|
+| **Type** | AI Coding Assistant with Code Intelligence |
+| **Categories** | IDE Extension |
+| **Access** | VS Code / JetBrains extension or web — requires Sourcegraph account (free tier available) |
+| **Documentation** | [sourcegraph.com/docs/cody](https://sourcegraph.com/docs/cody) |
+| **Performance Rating** | ⭐⭐⭐½ — **68/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions)) |
+
 ---
 
 ## Platform Overview

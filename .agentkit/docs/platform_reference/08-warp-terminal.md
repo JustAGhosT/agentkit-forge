@@ -2,6 +2,14 @@
 
 **Render target:** `warp`
 
+| | |
+|---|---|
+| **Type** | AI-Native Terminal / Agentic Development Environment |
+| **Categories** | AI-Native IDE |
+| **Access** | Desktop app — download from [warp.dev](https://www.warp.dev/) (macOS, Linux; Windows via WSL) |
+| **Documentation** | [docs.warp.dev](https://docs.warp.dev/) |
+| **Performance Rating** | ⭐⭐⭐ — **63/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ai-native-ides)) |
+
 ---
 
 ## Platform Overview

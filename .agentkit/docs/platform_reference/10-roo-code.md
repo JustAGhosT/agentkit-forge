@@ -2,6 +2,14 @@
 
 **Render target:** `roo`
 
+| | |
+|---|---|
+| **Type** | AI Coding Assistant (VS Code extension) |
+| **Categories** | IDE Extension |
+| **Access** | VS Code extension — install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RooVetGit.roo-cline) |
+| **Documentation** | [docs.roocode.com](https://docs.roocode.com/) |
+| **Performance Rating** | ⭐⭐⭐½ — **73/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions)) |
+
 ---
 
 ## Platform Overview

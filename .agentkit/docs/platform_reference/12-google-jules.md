@@ -2,6 +2,14 @@
 
 **Render target:** _(via AGENTS.md — no dedicated render target)_
 
+| | |
+|---|---|
+| **Type** | Autonomous Cloud Coding Agent |
+| **Categories** | Cloud / Autonomous Agent |
+| **Access** | Web interface — [jules.google](https://jules.google/) — requires Google account and GitHub repo access |
+| **Documentation** | [developers.google.com/jules](https://developers.google.com/jules) |
+| **Performance Rating** | ⭐⭐⭐½ — **71/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cloud--autonomous-agents)) |
+
 ---
 
 ## Platform Overview

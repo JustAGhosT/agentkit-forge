@@ -2,6 +2,14 @@
 
 **Render target:** _(via AGENTS.md — no dedicated render target)_
 
+| | |
+|---|---|
+| **Type** | AI Pair Programming Tool (CLI, open-source) |
+| **Categories** | CLI Agent |
+| **Access** | CLI tool — `pip install aider-chat` or `brew install aider` |
+| **Documentation** | [aider.chat](https://aider.chat/) |
+| **Performance Rating** | ⭐⭐⭐⭐ — **76/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents)) |
+
 ---
 
 ## Platform Overview

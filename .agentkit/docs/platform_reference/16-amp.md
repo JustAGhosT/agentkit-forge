@@ -2,6 +2,14 @@
 
 **Render target:** _(via AGENTS.md — no dedicated render target)_
 
+| | |
+|---|---|
+| **Type** | AI Coding Agent (CLI + IDE) |
+| **Categories** | CLI Agent |
+| **Access** | CLI tool or VS Code extension — see [ampcode.com](https://ampcode.com/) |
+| **Documentation** | [ampcode.com/docs](https://ampcode.com/docs) |
+| **Performance Rating** | ⭐⭐⭐½ — **72/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents)) |
+
 ---
 
 ## Platform Overview

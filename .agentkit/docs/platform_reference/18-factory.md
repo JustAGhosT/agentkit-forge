@@ -2,6 +2,14 @@
 
 **Render target:** _(via AGENTS.md — no dedicated render target)_
 
+| | |
+|---|---|
+| **Type** | Autonomous Cloud Coding Platform |
+| **Categories** | Cloud / Autonomous Agent |
+| **Access** | Web dashboard — [factory.ai](https://www.factory.ai/) — requires account and GitHub/GitLab repo access |
+| **Documentation** | [docs.factory.ai](https://docs.factory.ai/) |
+| **Performance Rating** | ⭐⭐⭐½ — **72/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cloud--autonomous-agents)) |
+
 ---
 
 ## Platform Overview

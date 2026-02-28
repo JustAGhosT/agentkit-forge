@@ -2,6 +2,14 @@
 
 **Render target:** `cline`
 
+| | |
+|---|---|
+| **Type** | AI Coding Assistant (VS Code extension) |
+| **Categories** | IDE Extension |
+| **Access** | VS Code extension — install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev) |
+| **Documentation** | [docs.cline.bot](https://docs.cline.bot/) |
+| **Performance Rating** | ⭐⭐⭐½ — **73/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions)) |
+
 ---
 
 ## Platform Overview

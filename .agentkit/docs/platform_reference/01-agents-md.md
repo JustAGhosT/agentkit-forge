@@ -2,6 +2,14 @@
 
 **Always generated** — not gated by `renderTargets`.
 
+| | |
+|---|---|
+| **Type** | Universal Instruction Standard |
+| **Categories** | Universal Standard |
+| **Access** | File-based — any tool that reads `AGENTS.md` from the repository |
+| **Documentation** | [agents.md](https://agents.md/) |
+| **Performance Rating** | N/A — AGENTS.md is a standard, not a coding platform |
+
 ---
 
 ## What Is It?

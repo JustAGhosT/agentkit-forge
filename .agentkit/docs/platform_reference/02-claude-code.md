@@ -2,6 +2,14 @@
 
 **Render target:** `claude`
 
+| | |
+|---|---|
+| **Type** | AI Coding Agent (CLI + IDE integration) |
+| **Categories** | CLI Agent |
+| **Access** | CLI tool — `npm install -g @anthropic-ai/claude-code` or `brew install claude-code` |
+| **Documentation** | [docs.anthropic.com/en/docs/claude-code](https://docs.anthropic.com/en/docs/claude-code) |
+| **Performance Rating** | ⭐⭐⭐⭐½ — **89/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents)) |
+
 ---
 
 ## Platform Overview

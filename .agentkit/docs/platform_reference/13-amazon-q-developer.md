@@ -2,6 +2,14 @@
 
 **Render target:** _(via AGENTS.md — no dedicated render target)_
 
+| | |
+|---|---|
+| **Type** | AI Coding Assistant (IDE extension + CLI) |
+| **Categories** | IDE Extension |
+| **Access** | VS Code / JetBrains extension, AWS Console, or CLI — requires AWS account (free tier available) |
+| **Documentation** | [docs.aws.amazon.com/amazonq](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html) |
+| **Performance Rating** | ⭐⭐⭐½ — **70/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions)) |
+
 ---
 
 ## Platform Overview

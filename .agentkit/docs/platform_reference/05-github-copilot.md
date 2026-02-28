@@ -2,6 +2,14 @@
 
 **Render target:** `copilot`
 
+| | |
+|---|---|
+| **Type** | AI Coding Assistant (IDE extension + cloud agent) |
+| **Categories** | IDE Extension, Cloud / Autonomous Agent |
+| **Access** | VS Code / Visual Studio / JetBrains extension + GitHub.com — requires GitHub Copilot subscription |
+| **Documentation** | [docs.github.com/en/copilot](https://docs.github.com/en/copilot) |
+| **Performance Rating** | ⭐⭐⭐⭐ — **78/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions)) |
+
 ---
 
 ## Platform Overview

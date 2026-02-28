@@ -2,6 +2,14 @@
 
 **Render target:** `ai`
 
+| | |
+|---|---|
+| **Type** | AI Coding Assistant (IDE extension, open-source) |
+| **Categories** | IDE Extension |
+| **Access** | VS Code / JetBrains extension — install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=Continue.continue) or [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/22707-continue) |
+| **Documentation** | [docs.continue.dev](https://docs.continue.dev/) |
+| **Performance Rating** | ⭐⭐⭐ — **61/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions)) |
+
 ---
 
 ## Platform Overview

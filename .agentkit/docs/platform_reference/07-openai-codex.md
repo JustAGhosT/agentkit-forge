@@ -2,6 +2,14 @@
 
 **Render target:** `codex`
 
+| | |
+|---|---|
+| **Type** | AI Coding Agent (CLI + Cloud) |
+| **Categories** | CLI Agent, Cloud / Autonomous Agent |
+| **Access** | CLI tool — `npm install -g @openai/codex` or cloud via [chatgpt.com/codex](https://chatgpt.com/codex) |
+| **Documentation** | [developers.openai.com/codex](https://developers.openai.com/codex/) |
+| **Performance Rating** | ⭐⭐⭐⭐ — **79/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents)) |
+
 ---
 
 ## Platform Overview

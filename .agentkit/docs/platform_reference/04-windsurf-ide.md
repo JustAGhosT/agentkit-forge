@@ -2,6 +2,14 @@
 
 **Render target:** `windsurf`
 
+| | |
+|---|---|
+| **Type** | AI-Native Code Editor (Cascade AI) |
+| **Categories** | AI-Native IDE |
+| **Access** | Desktop app — download from [windsurf.com](https://windsurf.com/) (macOS, Windows, Linux) |
+| **Documentation** | [docs.windsurf.com](https://docs.windsurf.com/) |
+| **Performance Rating** | ⭐⭐⭐½ — **69/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ai-native-ides)) |
+
 ---
 
 ## Platform Overview

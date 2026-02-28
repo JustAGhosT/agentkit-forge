@@ -2,6 +2,14 @@
 
 **Render target:** `cursor`
 
+| | |
+|---|---|
+| **Type** | AI-Native Code Editor (VS Code fork) |
+| **Categories** | AI-Native IDE |
+| **Access** | Desktop app — download from [cursor.com](https://cursor.com/) (macOS, Windows, Linux) |
+| **Documentation** | [docs.cursor.com](https://docs.cursor.com/) |
+| **Performance Rating** | ⭐⭐⭐⭐ — **77/100** ([details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ai-native-ides)) |
+
 ---
 
 ## Platform Overview
