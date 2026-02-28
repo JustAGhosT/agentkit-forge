@@ -414,9 +414,13 @@ export async function listTasks(projectRoot, filters = {}) {
     return { tasks: [] };
   }
 
-  const tasks = (
-    await Promise.all(
-      files.map(async (file) => {
+  // Limit concurrent file reads to avoid hitting OS file descriptor limits (EMFILE)
+  const concurrencyLimit = 20;
+  const results = [];
+  for (let i = 0; i < files.length; i += concurrencyLimit) {
+    const batch = files.slice(i, i + concurrencyLimit);
+    const batchResults = await Promise.all(
+      batch.map(async (file) => {
         try {
           const content = await readFile(resolve(dir, file), 'utf-8');
           const data = JSON.parse(content);
@@ -437,8 +441,10 @@ export async function listTasks(projectRoot, filters = {}) {
           return null;
         }
       })
-    )
-  ).filter(Boolean);
+    );
+    results.push(...batchResults);
+  }
+  const tasks = results.filter(Boolean);
 
   // Sort by priority (P0 first), then by creation date (newest first)
   tasks.sort((a, b) => {
