@@ -38,6 +38,18 @@ When upgrading introduces new spec fields:
 
 ## Version History
 
+### v0.2.0
+
+- Async I/O optimizations: non-blocking filesystem operations in `check` and `discover` commands
+- Bounded concurrency for parallel directory walks (prevents EMFILE/IO thrashing)
+- Deterministic tech stack ordering in `discover` output
+- Improved path traversal protection with symlink resolution and regular-file validation
+- Enhanced project.yaml schema validation (name, description, enum empty-string handling)
+- Corrected `drTestSchedule` field mapping in sync refactor
+- No breaking changes — fully backwards compatible
+
+**Upgrade instructions:** Run `agentkit sync` to regenerate all configs, then `agentkit validate` to verify integrity.
+
 ### v0.1.0 (Initial)
 
 - Initial release of AgentKit Forge
@@ -49,6 +61,10 @@ When upgrading introduces new spec fields:
 ---
 
 ## Breaking Changes
+
+### v0.2.0
+
+No breaking changes — fully backwards compatible with v0.1.0.
 
 ### v0.1.0
 

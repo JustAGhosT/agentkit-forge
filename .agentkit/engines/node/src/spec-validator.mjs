@@ -63,7 +63,7 @@ function validate(value, schema, path = '') {
     }
   }
 
-  if (schema.enum && value !== '' && !schema.enum.includes(value)) {
+  if (schema.enum && !schema.enum.includes(value)) {
     errors.push(`${path}: must be one of [${schema.enum.join(', ')}], got "${value}"`);
   }
 
@@ -244,6 +244,8 @@ const PROJECT_ENUMS = {
 const projectSchema = {
   type: 'object',
   properties: {
+    name: { type: 'string', minLength: 1 },
+    description: { type: 'string' },
     phase: { type: 'string', enum: PROJECT_ENUMS.phase },
     stack: {
       type: 'object',
