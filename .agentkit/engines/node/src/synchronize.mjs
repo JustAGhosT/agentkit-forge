@@ -311,30 +311,10 @@ async function syncClaudeSkills(
 /**
  * Generates .cursor/rules/team-<id>.mdc for each team.
  */
-async function syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec) {
-  // Use a simple inline template for cursor team rules
-  const teamTemplate = `---
-description: "Team {{teamName}} — {{teamFocus}}"
-globs: []
-alwaysApply: false
-generated_by: "{{lastAgent}}"
-last_model: "{{lastModel}}"
-last_updated: "{{syncDate}}"
----
-# Team: {{teamName}}
-
-**Focus**: {{teamFocus}}
-**Scope**: {{teamScope}}
-
-## Persona
-
-You are a member of the {{teamName}} team. Your expertise is {{teamFocus}}.
-Scope all operations to the team's owned paths.
-
-## Scope
-
-{{teamScope}}
-`;
+async function syncCursorTeams(templatesDir, tmpDir, vars, version, repoName, teamsSpec) {
+  const tplPath = join(templatesDir, 'cursor', 'teams', 'TEMPLATE.mdc');
+  if (!existsSync(tplPath)) return;
+  const teamTemplate = await readFile(tplPath, 'utf-8');
   for (const team of teamsSpec.teams || []) {
     const teamVars = {
       ...vars,
@@ -343,7 +323,7 @@ Scope all operations to the team's owned paths.
       teamFocus: team.focus || '',
       teamScope: Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || ''),
     };
-    const rendered = renderTemplate(teamTemplate, teamVars);
+    const rendered = renderTemplate(teamTemplate, teamVars, tplPath);
     const withHeader = insertHeader(rendered, '.mdc', version, repoName);
     await writeOutput(join(tmpDir, '.cursor', 'rules', `team-${team.id}.mdc`), withHeader);
   }
@@ -380,17 +360,10 @@ async function syncCursorCommands(
 /**
  * Generates .windsurf/rules/team-<id>.md for each team.
  */
-async function syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec) {
-  const teamTemplate = `# Team: {{teamName}}
-
-**Focus**: {{teamFocus}}
-**Scope**: {{teamScope}}
-
-## Persona
-
-You are a member of the {{teamName}} team. Your expertise is {{teamFocus}}.
-Scope all operations to the team's owned paths.
-`;
+async function syncWindsurfTeams(templatesDir, tmpDir, vars, version, repoName, teamsSpec) {
+  const tplPath = join(templatesDir, 'windsurf', 'teams', 'TEMPLATE.md');
+  if (!existsSync(tplPath)) return;
+  const teamTemplate = await readFile(tplPath, 'utf-8');
   for (const team of teamsSpec.teams || []) {
     const teamVars = {
       ...vars,
@@ -399,7 +372,7 @@ Scope all operations to the team's owned paths.
       teamFocus: team.focus || '',
       teamScope: Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || ''),
     };
-    const rendered = renderTemplate(teamTemplate, teamVars);
+    const rendered = renderTemplate(teamTemplate, teamVars, tplPath);
     const withHeader = insertHeader(rendered, '.md', version, repoName);
     await writeOutput(join(tmpDir, '.windsurf', 'rules', `team-${team.id}.md`), withHeader);
   }
@@ -883,7 +856,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   if (targets.has('cursor')) {
     gatedTasks.push(
       syncDirectCopy(templatesDir, 'cursor/rules', tmpDir, '.cursor/rules', vars, version, repoName),
-      syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec),
+      syncCursorTeams(templatesDir, tmpDir, vars, version, repoName, teamsSpec),
       syncCursorCommands(templatesDir, tmpDir, vars, version, repoName, commandsSpec)
     );
   }
@@ -909,7 +882,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
         version,
         repoName
       ),
-      syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec)
+      syncWindsurfTeams(templatesDir, tmpDir, vars, version, repoName, teamsSpec)
     );
   }
 
