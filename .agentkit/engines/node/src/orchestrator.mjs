@@ -4,16 +4,7 @@
  * Manages orchestrator state, event logging, and session locking.
  */
 import { execFileSync } from 'child_process';
-import {
-  appendFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  renameSync,
-  unlinkSync,
-  writeFileSync,
-} from 'fs';
+import { appendFile, mkdir, readFile, rename, unlink, writeFile } from 'fs/promises';
 import yaml from 'js-yaml';
 import { resolve } from 'path';
 import { formatTimestamp } from './runner.mjs';
@@ -65,11 +56,17 @@ const LOCK_STALE_MS = 30 * 60 * 1000; // 30 minutes
  * @param {string} agentkitRoot
  * @returns {string[]}
  */
-export function loadTeamIdsFromSpec(agentkitRoot) {
+export async function loadTeamIdsFromSpec(agentkitRoot) {
   try {
     const teamsPath = resolve(agentkitRoot, 'spec', 'teams.yaml');
-    if (existsSync(teamsPath)) {
-      const spec = yaml.load(readFileSync(teamsPath, 'utf-8'));
+    let specContent;
+    try {
+      specContent = await readFile(teamsPath, 'utf-8');
+    } catch {
+      // File doesn't exist or is unreadable — fall through to defaults
+    }
+    if (specContent !== undefined) {
+      const spec = yaml.load(specContent);
       if (spec.teams && Array.isArray(spec.teams)) {
         const ids = spec.teams.map((t) => t.id).filter(Boolean);
         if (ids.length > 0) {
@@ -95,9 +92,9 @@ export function loadTeamIdsFromSpec(agentkitRoot) {
  * teams are loaded even if runOrchestrate hasn't been called yet.
  * @param {string} agentkitRoot
  */
-export function ensureTeamIds(agentkitRoot) {
+export async function ensureTeamIds(agentkitRoot) {
   if (!_teamIdsInitialized) {
-    loadTeamIdsFromSpec(agentkitRoot);
+    await loadTeamIdsFromSpec(agentkitRoot);
   }
 }
 
@@ -130,11 +127,13 @@ function lockPath(projectRoot) {
  * @param {string} projectRoot
  * @returns {object}
  */
-function createDefaultState(projectRoot) {
+async function createDefaultState(projectRoot) {
   let repoId = 'unknown';
   const markerPath = resolve(projectRoot, '.agentkit-repo');
-  if (existsSync(markerPath)) {
-    repoId = readFileSync(markerPath, 'utf-8').trim();
+  try {
+    repoId = (await readFile(markerPath, 'utf-8')).trim();
+  } catch {
+    /* fallback to 'unknown' */
   }
 
   let branch = 'main';
@@ -172,19 +171,19 @@ function createDefaultState(projectRoot) {
 /**
  * Load orchestrator state from disk. Creates default state if missing.
  * @param {string} projectRoot
- * @returns {object} state
+ * @returns {Promise<object>} state
  */
-export function loadState(projectRoot) {
+export async function loadState(projectRoot) {
   const path = statePath(projectRoot);
-  if (existsSync(path)) {
-    try {
-      return JSON.parse(readFileSync(path, 'utf-8'));
-    } catch (err) {
+  try {
+    return JSON.parse(await readFile(path, 'utf-8'));
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
       console.warn(`[agentkit:orchestrate] Corrupted state file, resetting: ${err.message}`);
     }
   }
-  const state = createDefaultState(projectRoot);
-  saveState(projectRoot, state);
+  const state = await createDefaultState(projectRoot);
+  await saveState(projectRoot, state);
   return state;
 }
 
@@ -193,15 +192,13 @@ export function loadState(projectRoot) {
  * @param {string} projectRoot
  * @param {object} state
  */
-export function saveState(projectRoot, state) {
+export async function saveState(projectRoot, state) {
   const dir = stateDir(projectRoot);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
+  await mkdir(dir, { recursive: true });
   const path = statePath(projectRoot);
   const tmpPath = path + '.tmp';
-  writeFileSync(tmpPath, JSON.stringify(state, null, 2) + '\n', 'utf-8');
-  renameSync(tmpPath, path);
+  await writeFile(tmpPath, JSON.stringify(state, null, 2) + '\n', 'utf-8');
+  await rename(tmpPath, path);
 }
 
 // ---------------------------------------------------------------------------
@@ -214,12 +211,10 @@ export function saveState(projectRoot, state) {
  * @param {{ pid?: number, hostname?: string, sessionId?: string }} holder
  * @returns {{ acquired: boolean, existingLock?: object }}
  */
-export function acquireLock(projectRoot, holder = {}) {
+export async function acquireLock(projectRoot, holder = {}) {
   const lPath = lockPath(projectRoot);
   const dir = stateDir(projectRoot);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
+  await mkdir(dir, { recursive: true });
 
   const lockData = {
     pid: holder.pid || process.pid,
@@ -230,7 +225,7 @@ export function acquireLock(projectRoot, holder = {}) {
 
   try {
     // Atomic create — fails with EEXIST if lock file already exists
-    writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', {
+    await writeFile(lPath, JSON.stringify(lockData, null, 2) + '\n', {
       encoding: 'utf-8',
       flag: 'wx',
     });
@@ -240,16 +235,16 @@ export function acquireLock(projectRoot, holder = {}) {
     // Lock file exists — check staleness
     let existing;
     try {
-      existing = JSON.parse(readFileSync(lPath, 'utf-8'));
+      existing = JSON.parse(await readFile(lPath, 'utf-8'));
     } catch {
       // Corrupted lock file — delete and retry
       try {
-        unlinkSync(lPath);
+        await unlink(lPath);
       } catch {
         /* ignore */
       }
       try {
-        writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', {
+        await writeFile(lPath, JSON.stringify(lockData, null, 2) + '\n', {
           encoding: 'utf-8',
           flag: 'wx',
         });
@@ -263,9 +258,9 @@ export function acquireLock(projectRoot, holder = {}) {
       return { acquired: false, existingLock: existing };
     }
     // Stale lock — remove and retry once
-    unlinkSync(lPath);
+    await unlink(lPath);
     try {
-      writeFileSync(lPath, JSON.stringify(lockData, null, 2) + '\n', {
+      await writeFile(lPath, JSON.stringify(lockData, null, 2) + '\n', {
         encoding: 'utf-8',
         flag: 'wx',
       });
@@ -274,7 +269,7 @@ export function acquireLock(projectRoot, holder = {}) {
       // Another process acquired the lock — re-read current holder
       let currentLock = existing;
       try {
-        currentLock = JSON.parse(readFileSync(lPath, 'utf-8'));
+        currentLock = JSON.parse(await readFile(lPath, 'utf-8'));
       } catch {
         /* use stale data as fallback */
       }
@@ -296,18 +291,16 @@ function getHostname() {
  * @param {string} projectRoot
  * @returns {boolean} true if lock was released, false if no lock existed
  */
-export function releaseLock(projectRoot) {
+export async function releaseLock(projectRoot) {
   const path = lockPath(projectRoot);
-  if (existsSync(path)) {
-    try {
-      unlinkSync(path);
-    } catch (err) {
-      console.warn(`[agentkit:orchestrate] Failed to release lock: ${err.message}`);
-      return false;
-    }
+  try {
+    await unlink(path);
     return true;
+  } catch (err) {
+    if (err.code === 'ENOENT') return false;
+    console.warn(`[agentkit:orchestrate] Failed to release lock: ${err.message}`);
+    return false;
   }
-  return false;
 }
 
 /**
@@ -315,16 +308,13 @@ export function releaseLock(projectRoot) {
  * @param {string} projectRoot
  * @returns {{ locked: boolean, stale: boolean, lock?: object }}
  */
-export function checkLock(projectRoot) {
+export async function checkLock(projectRoot) {
   const path = lockPath(projectRoot);
-  if (!existsSync(path)) {
-    return { locked: false, stale: false };
-  }
   let lock;
   try {
-    lock = JSON.parse(readFileSync(path, 'utf-8'));
+    lock = JSON.parse(await readFile(path, 'utf-8'));
   } catch {
-    // Corrupted lock file — treat as unlocked
+    // File absent or corrupted — treat as unlocked
     return { locked: false, stale: false };
   }
   const age = Date.now() - new Date(lock.started_at).getTime();
@@ -345,17 +335,15 @@ export function checkLock(projectRoot) {
  * @param {string} action - What happened (e.g. 'phase_advanced', 'check_completed')
  * @param {object} data - Event data
  */
-export function appendEvent(projectRoot, action, data = {}) {
+export async function appendEvent(projectRoot, action, data = {}) {
   const dir = stateDir(projectRoot);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
+  await mkdir(dir, { recursive: true });
   const event = {
     timestamp: new Date().toISOString(),
     action,
     ...data,
   };
-  appendFileSync(eventsPath(projectRoot), JSON.stringify(event) + '\n', 'utf-8');
+  await appendFile(eventsPath(projectRoot), JSON.stringify(event) + '\n', 'utf-8');
 }
 
 /**
@@ -364,10 +352,15 @@ export function appendEvent(projectRoot, action, data = {}) {
  * @param {number} limit - Max events to return (default 20)
  * @returns {object[]}
  */
-export function readEvents(projectRoot, limit = 20) {
+export async function readEvents(projectRoot, limit = 20) {
   const path = eventsPath(projectRoot);
-  if (!existsSync(path)) return [];
-  const lines = readFileSync(path, 'utf-8').trim().split('\n').filter(Boolean);
+  let content;
+  try {
+    content = await readFile(path, 'utf-8');
+  } catch {
+    return [];
+  }
+  const lines = content.trim().split('\n').filter(Boolean);
   const events = lines
     .map((line) => {
       try {
@@ -498,11 +491,11 @@ export function updateTeamStatus(state, teamId, status, notes, agentkitRoot) {
  * @param {string} projectRoot
  * @returns {string}
  */
-export function getStatus(projectRoot, agentkitRoot) {
-  if (agentkitRoot) ensureTeamIds(agentkitRoot);
-  const state = loadState(projectRoot);
-  const lockStatus = checkLock(projectRoot);
-  const events = readEvents(projectRoot, 5);
+export async function getStatus(projectRoot, agentkitRoot) {
+  if (agentkitRoot) await ensureTeamIds(agentkitRoot);
+  const state = await loadState(projectRoot);
+  const lockStatus = await checkLock(projectRoot);
+  const events = await readEvents(projectRoot, 5);
 
   const lines = [
     `=== AgentKit Forge — Orchestrator Status ===`,
@@ -753,20 +746,20 @@ export async function getTasksSummary(projectRoot) {
  */
 export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
   // Load team IDs from spec if available (overrides hardcoded defaults)
-  loadTeamIdsFromSpec(agentkitRoot);
+  await loadTeamIdsFromSpec(agentkitRoot);
 
   // --status: show current state
   if (flags.status) {
-    console.log(getStatus(projectRoot));
+    console.log(await getStatus(projectRoot));
     return;
   }
 
   // --force-unlock: clear stale lock
   if (flags['force-unlock']) {
-    const released = releaseLock(projectRoot);
+    const released = await releaseLock(projectRoot);
     if (released) {
       console.log('[agentkit:orchestrate] Lock released.');
-      appendEvent(projectRoot, 'lock_force_released');
+      await appendEvent(projectRoot, 'lock_force_released');
     } else {
       console.log('[agentkit:orchestrate] No lock to release.');
     }
@@ -774,7 +767,7 @@ export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
   }
 
   // Acquire lock
-  const lockResult = acquireLock(projectRoot);
+  const lockResult = await acquireLock(projectRoot);
   if (!lockResult.acquired) {
     const lock = lockResult.existingLock;
     if (lock) {
@@ -789,7 +782,7 @@ export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
   }
 
   try {
-    const state = loadState(projectRoot);
+    const state = await loadState(projectRoot);
 
     // --phase N: jump to specific phase
     if (flags.phase) {
@@ -799,26 +792,26 @@ export async function runOrchestrate({ agentkitRoot, projectRoot, flags }) {
         console.error(`[agentkit:orchestrate] ${result.error}`);
         return;
       }
-      saveState(projectRoot, result.state);
-      appendEvent(projectRoot, 'phase_set', { phase, phase_name: PHASES[phase] });
+      await saveState(projectRoot, result.state);
+      await appendEvent(projectRoot, 'phase_set', { phase, phase_name: PHASES[phase] });
       console.log(`[agentkit:orchestrate] Phase set to ${phase} — ${PHASES[phase]}`);
       console.log(`Next action: ${result.state.next_action}`);
       return;
     }
 
     // Default: show status and advance phase if requested
-    console.log(getStatus(projectRoot));
+    console.log(await getStatus(projectRoot));
     console.log('');
     console.log('Use this command within your AI tool as a slash command for full orchestration.');
     console.log(`Current phase: ${state.current_phase}/5 — ${state.phase_name}`);
     console.log(`Next action: ${state.next_action}`);
 
-    appendEvent(projectRoot, 'orchestrate_invoked', {
+    await appendEvent(projectRoot, 'orchestrate_invoked', {
       phase: state.current_phase,
       phase_name: state.phase_name,
     });
   } finally {
-    releaseLock(projectRoot);
+    await releaseLock(projectRoot);
   }
 }
 
