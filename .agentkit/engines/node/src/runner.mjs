@@ -128,42 +128,6 @@ export function formatTimestamp(isoTimestamp) {
 }
 
 /**
- * Limit concurrency for an array of promise-returning functions.
- * Similar to p-limit but minimal implementation.
- * @param {Array<() => Promise<any>>} tasks
- * @param {number} concurrency
- * @returns {Promise<any[]>}
- */
-export async function runWithConcurrency(tasks, concurrency) {
-  const results = [];
-  const executing = [];
-
-  for (let i = 0; i < tasks.length; i++) {
-    const index = i;
-    const p = tasks[index]().then((res) => {
-      results[index] = res;
-      return res;
-    });
-
-    // Wrap so the promise removes itself from `executing` when it settles,
-    // ensuring Promise.race() below reliably picks up newly-freed slots.
-    const e = p.finally(() => {
-      const idx = executing.indexOf(e);
-      if (idx !== -1) executing.splice(idx, 1);
-    });
-
-    executing.push(e);
-
-    if (executing.length >= concurrency) {
-      await Promise.race(executing);
-    }
-  }
-
-  await Promise.all(executing);
-  return results;
-}
-
-/**
  * Run tasks with a concurrency limit using an iterator-based pool.
  * @template T
  * @param {Array<() => Promise<T>>} tasks
