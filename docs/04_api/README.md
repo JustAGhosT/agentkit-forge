@@ -1,7 +1,7 @@
 # API
 
 | File | Description |
-|------|-------------|
+| --- | --- |
 | [01_overview.md](./01_overview.md) | API overview and design principles |
 | [02_endpoints.md](./02_endpoints.md) | Endpoint reference |
 | [03_authentication.md](./03_authentication.md) | Authentication and authorization |

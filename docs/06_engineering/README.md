@@ -1,7 +1,7 @@
 # Engineering
 
 | File | Description |
-|------|-------------|
+| --- | --- |
 | [01_setup.md](./01_setup.md) | Local development environment setup |
 | [02_coding_standards.md](./02_coding_standards.md) | Coding conventions and style guide |
 | [03_testing.md](./03_testing.md) | Testing strategy and practices |

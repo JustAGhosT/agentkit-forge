@@ -1,7 +1,7 @@
 # Product
 
 | File | Description |
-|------|-------------|
+| --- | --- |
 | [01_prd.md](./01_prd.md) | Product Requirements Document |
 | [02_user_stories.md](./02_user_stories.md) | User stories and acceptance criteria |
 | [03_roadmap.md](./03_roadmap.md) | Release timeline and milestones |

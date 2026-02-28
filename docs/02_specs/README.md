@@ -1,7 +1,7 @@
 # Specifications
 
 | File | Description |
-|------|-------------|
+| --- | --- |
 | [01_functional_spec.md](./01_functional_spec.md) | Functional requirements |
 | [02_technical_spec.md](./02_technical_spec.md) | Technical design and stack |
 | [03_api_spec.md](./03_api_spec.md) | API contract specification |

@@ -1,7 +1,7 @@
 # Reference
 
 | File | Description |
-|------|-------------|
+| --- | --- |
 | [01_glossary.md](./01_glossary.md) | Terms and definitions |
 | [02_faq.md](./02_faq.md) | Frequently asked questions |
 | [03_changelog.md](./03_changelog.md) | Version history |

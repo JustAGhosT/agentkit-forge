@@ -1,7 +1,7 @@
 # Operations
 
 | File | Description |
-|------|-------------|
+| --- | --- |
 | [01_deployment.md](./01_deployment.md) | Deployment procedures and environments |
 | [02_monitoring.md](./02_monitoring.md) | Monitoring, alerting, and observability |
 | [03_incident_response.md](./03_incident_response.md) | Incident response procedures |

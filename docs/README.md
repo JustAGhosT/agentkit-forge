@@ -6,7 +6,7 @@ documentation category maintained by this repository.
 ## Categories
 
 | # | Category | Description |
-|---|----------|-------------|
+| --- | -------- | ----------- |
 | 1 | [Product](./01_product/) | Product vision, strategy, personas, and metrics |
 | 2 | [Specifications](./02_specs/) | Functional, technical, API, and data model specs |
 | 3 | [Architecture](./03_architecture/) | System design, diagrams, ADRs, and tech stack |
