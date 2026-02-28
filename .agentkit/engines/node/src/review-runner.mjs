@@ -4,7 +4,7 @@
  * TODO/FIXME scanning, and lint on changed files.
  * This is NOT the AI review — that's the /review slash command.
  */
-import { existsSync, readFileSync, readdirSync, statSync, promises as fsPromises } from 'fs';
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync, promises as fsPromises } from 'fs';
 import { resolve, relative, extname, sep } from 'path';
 import { execCommand, formatDuration, runInPool } from './runner.mjs';
 import { appendEvent } from './orchestrator.mjs';
@@ -24,6 +24,10 @@ const SECRET_PATTERNS = [
   { name: 'Connection String', pattern: /mongodb(\+srv)?:\/\/[^\s'"]+/g },
   { name: 'JWT', pattern: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g },
 ];
+
+// Maximum number of files processed in parallel during secret/TODO scanning.
+// Keeps the number of open file descriptors bounded and avoids EMFILE errors.
+const CONCURRENCY_POOL_SIZE = 50;
 
 // Paths that commonly produce false positives in secret scanning, or that are
 // framework internals (.agentkit/) which should not be reported as app issues.
@@ -138,7 +142,7 @@ async function scanSecrets(projectRoot, files) {
     return fileFindings;
   });
 
-  const results = await runInPool(tasks, 50);
+  const results = await runInPool(tasks, CONCURRENCY_POOL_SIZE);
   return results.flat();
 }
 
@@ -208,7 +212,7 @@ async function scanTodos(projectRoot, files) {
     return fileFindings;
   });
 
-  const results = await runInPool(tasks, 50);
+  const results = await runInPool(tasks, CONCURRENCY_POOL_SIZE);
   return results.flat();
 }
 
