@@ -177,18 +177,27 @@ const command = args[0];
 const commandArgs = args.slice(1);
 
 function parseFlags(command, args) {
-  // Build options for parseArgs
-  const options = {};
+  // Global flags that apply to all commands
+  const GLOBAL_FLAGS = ['help', 'quiet', 'verbose'];
 
-  for (const [key, type] of Object.entries(FLAG_TYPES)) {
-    options[key] = { type };
-    if (key === 'quiet') options[key].short = 'q';
-    if (key === 'verbose') options[key].short = 'v';
+  // Scope options to flags valid for this command plus global flags
+  const commandFlags = VALID_FLAGS[command] ?? [];
+  const allFlags = new Set([...GLOBAL_FLAGS, ...commandFlags]);
+
+  const options = {};
+  for (const flagName of allFlags) {
+    // --status is handled separately with a command-specific type
+    if (flagName === 'status') continue;
+    const type = FLAG_TYPES[flagName];
+    if (!type) continue;
+    options[flagName] = { type };
+    if (flagName === 'quiet') options[flagName].short = 'q';
+    if (flagName === 'verbose') options[flagName].short = 'v';
   }
 
   // Only add --status for commands that support it, with the correct type:
   // orchestrate: boolean flag, tasks: string value
-  if (VALID_FLAGS[command]?.includes('status')) {
+  if (commandFlags.includes('status')) {
     options.status = { type: command === 'orchestrate' ? 'boolean' : 'string' };
   }
 
