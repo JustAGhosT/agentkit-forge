@@ -12,7 +12,7 @@ export const PROJECT_MAPPING = [
   { src: 'stack.orm', dest: 'stackOrm', type: 'string' },
   { src: 'stack.database', dest: 'stackDatabase', type: 'array-or-string' },
   { src: 'stack.search', dest: 'stackSearch', type: 'string' },
-  { src: 'stack.messaging', dest: 'stackMessaging', type: 'array-or-string' },
+  { src: 'stack.messaging', dest: 'stackMessaging', type: 'array-join' },
 
   // Architecture
   { src: 'architecture.pattern', dest: 'architecturePattern' },

@@ -35,17 +35,17 @@ import { PROJECT_MAPPING, get, transform, check } from './sync.refactor.mjs';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function readYaml(filePath) {
+export function readYaml(filePath) {
   if (!existsSync(filePath)) return null;
   return yaml.load(readFileSync(filePath, 'utf-8'));
 }
 
-function readText(filePath) {
+export function readText(filePath) {
   if (!existsSync(filePath)) return null;
   return readFileSync(filePath, 'utf-8');
 }
 
-async function runConcurrent(items, fn, concurrency = 50) {
+export async function runConcurrent(items, fn, concurrency = 50) {
   const chunks = [];
   for (let i = 0; i < items.length; i += concurrency) {
     chunks.push(items.slice(i, i + concurrency));
@@ -72,7 +72,7 @@ function isShellScriptTarget(targetPath) {
  * - Sanitizes string values to prevent shell metacharacter injection
  * - Warns on unresolved placeholders when DEBUG is set
  */
-function renderTemplate(template, vars, targetPath = '') {
+export function renderTemplate(template, vars, targetPath = '') {
   let result = template;
   const allowRawVars = isShellScriptTarget(targetPath);
 
@@ -111,7 +111,7 @@ function renderTemplate(template, vars, targetPath = '') {
  * Supports {{#if var}}...{{else}}...{{/if}} syntax.
  * Handles nested conditionals via innermost-first resolution.
  */
-function resolveConditionals(template, vars) {
+export function resolveConditionals(template, vars) {
   let result = template;
   // Process innermost #if blocks first (no nested #if inside)
   const ifRegex =
@@ -148,7 +148,7 @@ function resolveConditionals(template, vars) {
  * Inside the block, {{.}} refers to the current item (for string arrays).
  * For object arrays, {{.name}}, {{.purpose}} etc. access properties.
  */
-function resolveEachBlocks(template, vars) {
+export function resolveEachBlocks(template, vars) {
   const eachRegex = /\{\{#each\s+([a-zA-Z_][a-zA-Z0-9_]*)\}\}([\s\S]*?)\{\{\/each\}\}/g;
   return template.replace(eachRegex, (_, varName, body) => {
     const arr = vars[varName];
@@ -180,7 +180,7 @@ function resolveEachBlocks(template, vars) {
  * Falsy: undefined, null, false, '', 0, empty array []
  * Truthy: everything else (including 'none' — use explicit checks in templates)
  */
-function evalTruthy(value) {
+export function evalTruthy(value) {
   if (value === undefined || value === null || value === false || value === '' || value === 0)
     return false;
   if (Array.isArray(value) && value.length === 0) return false;
@@ -191,7 +191,7 @@ function evalTruthy(value) {
  * Flattens a project.yaml object into a flat key→value map suitable for template rendering.
  * Uses a declarative mapping configuration for cleaner code.
  */
-function flattenProjectYaml(project, docsSpec = null) {
+export function flattenProjectYaml(project, docsSpec = null) {
   if (!project || typeof project !== 'object') return {};
   const vars = {};
 
@@ -269,7 +269,7 @@ function flattenProjectYaml(project, docsSpec = null) {
  * @deprecated - Merged into flattenProjectYaml via declarative mappings.
  * Kept exported for test compatibility if any tests import it directly.
  */
-function flattenCrosscutting(cc, vars) {
+export function flattenCrosscutting(cc, vars) {
   // Delegate to main flatten function by wrapping cc in a project-like structure
   // This is a backward compatibility shim.
   const tempProject = { crosscutting: cc };
@@ -293,14 +293,14 @@ function flattenCrosscutting(cc, vars) {
  * Strips shell metacharacters that could cause command injection if the
  * rendered output is executed in a shell context (e.g., hook scripts).
  */
-function sanitizeTemplateValue(value) {
+export function sanitizeTemplateValue(value) {
   let s = value;
   s = s.replace(/\$\([^)]*\)/g, (m) => m.slice(2, -1));
   s = s.replace(/[`$\\;|&<>!{}]/g, '');
   return s;
 }
 
-function formatCommandFlags(flags) {
+export function formatCommandFlags(flags) {
   if (!Array.isArray(flags) || flags.length === 0) return '';
   const rows = flags.map(
     (f) =>
@@ -311,7 +311,7 @@ function formatCommandFlags(flags) {
   );
 }
 
-function getGeneratedHeader(version, repoName, ext) {
+export function getGeneratedHeader(version, repoName, ext) {
   const comment = getCommentStyle(ext);
   if (!comment) return '';
   return [
@@ -322,7 +322,7 @@ function getGeneratedHeader(version, repoName, ext) {
   ].join('\n');
 }
 
-function getCommentStyle(ext) {
+export function getCommentStyle(ext) {
   switch (ext) {
     case '.md':
     case '.mdc':
@@ -344,7 +344,7 @@ function getCommentStyle(ext) {
   }
 }
 
-async function ensureDir(dirPath) {
+export async function ensureDir(dirPath) {
   await mkdir(dirPath, { recursive: true });
 }
 
@@ -378,7 +378,7 @@ const SCAFFOLD_ONCE_GITHUB_FILES = new Set([
  * Check if a relative path is a scaffold-once file (project-owned content).
  * These are only written on first sync; subsequent syncs skip them if they exist.
  */
-function isScaffoldOnce(relPath) {
+export function isScaffoldOnce(relPath) {
   // Normalize Windows backslashes to forward slashes for consistent matching
   const normalized = relPath.replace(/\\/g, '/');
   if (SCAFFOLD_ONCE_ROOT_FILES.has(normalized)) return true;
@@ -389,12 +389,12 @@ function isScaffoldOnce(relPath) {
   return false;
 }
 
-async function writeOutput(filePath, content) {
+export async function writeOutput(filePath, content) {
   await ensureDir(dirname(filePath));
   await writeFile(filePath, content, 'utf-8');
 }
 
-async function* walkDir(dir) {
+export async function* walkDir(dir) {
   if (!existsSync(dir)) return;
   let entries = [];
   try {
@@ -417,7 +417,7 @@ async function* walkDir(dir) {
 // Core sync logic
 // ---------------------------------------------------------------------------
 
-function simpleDiff(a, b) {
+export function simpleDiff(a, b) {
   const aLines = a.split(/\r?\n/);
   const bLines = b.split(/\r?\n/);
   const out = [];
@@ -433,6 +433,848 @@ function simpleDiff(a, b) {
     }
   }
   return out.slice(0, 20).join('\n') + (out.length > 20 ? '\n...' : '');
+}
+
+// ---------------------------------------------------------------------------
+// New utility functions
+// ---------------------------------------------------------------------------
+
+/**
+ * Merges two permissions objects. Each has `allow` and `deny` arrays.
+ * Union both lists with deduplication.
+ */
+export function mergePermissions(base, overlay) {
+  const allow = [...new Set([...(base.allow || []), ...(overlay.allow || [])])];
+  const deny = [...new Set([...(base.deny || []), ...(overlay.deny || [])])];
+  return { allow, deny };
+}
+
+/**
+ * Inserts a generated header into file content.
+ * - Skip if already has header
+ * - Insert after shebang for .sh/.ps1 files
+ * - Insert after frontmatter (---...---) for .md/.mdc files
+ * - Return unchanged for .json/.template files
+ */
+export function insertHeader(content, ext, version, repoName) {
+  const header = getGeneratedHeader(version, repoName, ext);
+  if (!header) return content; // JSON / template — no comment syntax
+  if (content.includes('GENERATED by AgentKit Forge')) return content; // already present
+
+  const normalizedExt = ext.toLowerCase();
+
+  if (normalizedExt === '.sh' || normalizedExt === '.ps1') {
+    // Insert after shebang line
+    if (content.startsWith('#!')) {
+      const newlineIdx = content.indexOf('\n');
+      if (newlineIdx !== -1) {
+        return content.slice(0, newlineIdx + 1) + header + content.slice(newlineIdx + 1);
+      }
+    }
+    return header + content;
+  }
+
+  if (normalizedExt === '.md' || normalizedExt === '.mdc') {
+    // Insert after frontmatter if present
+    if (content.startsWith('---')) {
+      const closingMarker = '\n---';
+      const endFrontmatter = content.indexOf(closingMarker, 3);
+      if (endFrontmatter !== -1) {
+        const afterClose = endFrontmatter + closingMarker.length;
+        // Skip a trailing newline after ---
+        const insertPos =
+          content[afterClose] === '\n' ? afterClose + 1 : afterClose;
+        return content.slice(0, insertPos) + header + content.slice(insertPos);
+      }
+    }
+    return header + content;
+  }
+
+  return header + content;
+}
+
+/**
+ * All available render targets.
+ */
+export const ALL_RENDER_TARGETS = [
+  'claude', 'cursor', 'windsurf', 'ai', 'copilot', 'gemini', 'codex',
+  'warp', 'cline', 'roo', 'mcp',
+];
+
+/**
+ * Resolves which render targets to generate.
+ * - If flags?.only is set, split by comma, trim, filter empty.
+ * - If overlayTargets is a non-empty array, return Set(overlayTargets).
+ * - Otherwise return Set(ALL_RENDER_TARGETS).
+ */
+export function resolveRenderTargets(overlayTargets, flags) {
+  if (flags?.only) {
+    return new Set(
+      flags.only
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+    );
+  }
+  if (Array.isArray(overlayTargets) && overlayTargets.length > 0) {
+    return new Set(overlayTargets);
+  }
+  return new Set(ALL_RENDER_TARGETS);
+}
+
+/**
+ * Categorizes a file by its path prefix.
+ */
+export function categorizeFile(relPath) {
+  const norm = relPath.replace(/\\/g, '/');
+  if (norm.startsWith('.claude/')) return 'claude';
+  if (norm.startsWith('.cursor/')) return 'cursor';
+  if (norm.startsWith('.windsurf/')) return 'windsurf';
+  if (norm.startsWith('.github/')) return 'github';
+  if (norm.startsWith('.gemini/')) return 'gemini';
+  if (norm.startsWith('.agents/')) return 'codex';
+  if (norm.startsWith('.clinerules/')) return 'cline';
+  if (norm.startsWith('.roo/')) return 'roo';
+  if (norm.startsWith('.ai/')) return 'ai';
+  if (norm.startsWith('.mcp/')) return 'mcp';
+  if (norm.startsWith('docs/')) return 'docs';
+  if (norm.startsWith('.vscode/')) return 'vscode';
+  if (norm === 'GEMINI.md') return 'gemini';
+  if (norm === 'WARP.md') return 'warp';
+  if (norm === 'CLAUDE.md') return 'claude';
+  return 'root';
+}
+
+/**
+ * Prints a sync summary to console. Skip if opts.quiet.
+ */
+export function printSyncSummary(fileSummary, targets, opts) {
+  if (opts?.quiet) return;
+  const total = Object.values(fileSummary).reduce((s, c) => s + c, 0);
+  console.log(`[agentkit:sync] Summary: ${total} file(s) across ${[...targets].join(', ')}`);
+  for (const [cat, count] of Object.entries(fileSummary).sort()) {
+    console.log(`  ${cat}: ${count}`);
+  }
+}
+
+/**
+ * Computes project.yaml completeness.
+ * Returns { total, present, percent, missing }.
+ */
+export function computeProjectCompleteness(projectSpec) {
+  if (!projectSpec || typeof projectSpec !== 'object') {
+    return { total: 0, present: 0, percent: 0, missing: [] };
+  }
+  const fields = [
+    'name',
+    'description',
+    'phase',
+    'stack.languages',
+    'stack.database',
+    'architecture.pattern',
+    'architecture.apiStyle',
+    'deployment.cloudProvider',
+    'deployment.environments',
+    'testing.coverage',
+  ];
+  const missing = [];
+  let present = 0;
+  for (const field of fields) {
+    const parts = field.split('.');
+    let val = projectSpec;
+    for (const p of parts) val = val?.[p];
+    const isEmpty =
+      val === undefined ||
+      val === null ||
+      val === '' ||
+      (Array.isArray(val) && val.length === 0);
+    if (!isEmpty) {
+      present++;
+    } else {
+      missing.push(field);
+    }
+  }
+  const percent = Math.round((present / fields.length) * 100);
+  return { total: fields.length, present, percent, missing };
+}
+
+// ---------------------------------------------------------------------------
+// Sync helper — generic directory copy with template rendering
+// ---------------------------------------------------------------------------
+
+/**
+ * Copies template files from templatesDir/sourceSubdir to tmpDir/destSubdir.
+ * Renders each file as a template and inserts a generated header.
+ * If source dir does not exist, returns without error (no-op).
+ */
+async function syncDirectCopy(
+  templatesDir,
+  sourceSubdir,
+  tmpDir,
+  destSubdir,
+  vars,
+  version,
+  repoName
+) {
+  const sourceDir = join(templatesDir, sourceSubdir);
+  if (!existsSync(sourceDir)) return;
+  for await (const srcFile of walkDir(sourceDir)) {
+    const relPath = relative(sourceDir, srcFile);
+    const destFile =
+      destSubdir === '.'
+        ? join(tmpDir, relPath)
+        : join(tmpDir, destSubdir, relPath);
+    const ext = extname(srcFile).toLowerCase();
+    let content;
+    try {
+      content = await readFile(srcFile, 'utf-8');
+    } catch {
+      // Binary or unreadable — copy as-is
+      await ensureDir(dirname(destFile));
+      try {
+        await cp(srcFile, destFile, { force: true });
+      } catch {
+        /* ignore */
+      }
+      continue;
+    }
+    const rendered = renderTemplate(content, vars, srcFile);
+    const withHeader = insertHeader(rendered, ext, version, repoName);
+    await writeOutput(destFile, withHeader);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Always-on sync helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Copies templates/root to tmpDir root — AGENTS.md and other always-on files.
+ */
+async function syncAgentsMd(templatesDir, tmpDir, vars, version, repoName) {
+  await syncDirectCopy(templatesDir, 'root', tmpDir, '.', vars, version, repoName);
+}
+
+/**
+ * Root-level docs sync.
+ * All templates/root files are already handled by syncAgentsMd.
+ * This function exists as a named hook for future per-overlay root-doc customisation.
+ */
+async function syncRootDocs(_templatesDir, _tmpDir, _vars, _version, _repoName) {
+  // Intentionally empty — templates/root is fully handled by syncAgentsMd.
+  // Reserved for future overlay-specific root-doc generation.
+}
+
+/**
+ * Copies templates/github to tmpDir/.github.
+ */
+async function syncGitHub(templatesDir, tmpDir, vars, version, repoName) {
+  await syncDirectCopy(templatesDir, 'github', tmpDir, '.github', vars, version, repoName);
+}
+
+/**
+ * Copies templates/renovate to tmpDir root.
+ */
+async function syncEditorConfigs(templatesDir, tmpDir, vars, version, repoName) {
+  await syncDirectCopy(templatesDir, 'renovate', tmpDir, '.', vars, version, repoName);
+}
+
+// ---------------------------------------------------------------------------
+// Claude sync helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates .claude/settings.json from templates/claude/settings.json
+ * merged with the resolved permissions.
+ */
+async function syncClaudeSettings(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  mergedPermissions,
+  _settingsSpec
+) {
+  const tplPath = join(templatesDir, 'claude', 'settings.json');
+  if (!existsSync(tplPath)) return;
+  let settings;
+  try {
+    settings = JSON.parse(await readFile(tplPath, 'utf-8'));
+  } catch {
+    return;
+  }
+  // Override permissions with merged set
+  settings.permissions = mergedPermissions;
+  const destFile = join(tmpDir, '.claude', 'settings.json');
+  await writeOutput(destFile, JSON.stringify(settings, null, 2) + '\n');
+}
+
+/**
+ * Copies individual command templates and generates team commands.
+ * Skips team-TEMPLATE.md; uses it as the generator for team commands.
+ */
+async function syncClaudeCommands(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  teamsSpec,
+  commandsSpec
+) {
+  const commandsDir = join(templatesDir, 'claude', 'commands');
+  if (!existsSync(commandsDir)) return;
+
+  // Copy non-template command files
+  for await (const srcFile of walkDir(commandsDir)) {
+    const fname = basename(srcFile);
+    if (fname === 'team-TEMPLATE.md') continue; // skip template
+    const ext = extname(srcFile).toLowerCase();
+    const content = await readFile(srcFile, 'utf-8');
+    const rendered = renderTemplate(content, vars, srcFile);
+    const withHeader = insertHeader(rendered, ext, version, repoName);
+    await writeOutput(join(tmpDir, '.claude', 'commands', fname), withHeader);
+  }
+
+  // Generate team commands from team-TEMPLATE.md
+  const teamTemplatePath = join(commandsDir, 'team-TEMPLATE.md');
+  if (!existsSync(teamTemplatePath)) return;
+  const teamTemplate = await readFile(teamTemplatePath, 'utf-8');
+  for (const team of teamsSpec.teams || []) {
+    const teamVars = {
+      ...vars,
+      teamName: team.name || team.id,
+      teamId: team.id,
+      teamFocus: team.focus || '',
+      teamScope: Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || ''),
+    };
+    const rendered = renderTemplate(teamTemplate, teamVars, teamTemplatePath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(join(tmpDir, '.claude', 'commands', `team-${team.id}.md`), withHeader);
+  }
+}
+
+/**
+ * Generates .claude/agents/<id>.md for each agent in agentsSpec.
+ */
+async function syncClaudeAgents(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  agentsSpec,
+  _rulesSpec
+) {
+  const tplPath = join(templatesDir, 'claude', 'agents', 'TEMPLATE.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const [category, agents] of Object.entries(agentsSpec.agents || {})) {
+    for (const agent of agents) {
+      const agentVars = buildAgentVars(agent, category, vars);
+      const rendered = renderTemplate(template, agentVars, tplPath);
+      const withHeader = insertHeader(rendered, '.md', version, repoName);
+      await writeOutput(join(tmpDir, '.claude', 'agents', `${agent.id}.md`), withHeader);
+    }
+  }
+}
+
+/**
+ * Copies templates/claude/CLAUDE.md to tmpDir/CLAUDE.md.
+ */
+async function syncClaudeMd(templatesDir, tmpDir, vars, version, repoName) {
+  const tplPath = join(templatesDir, 'claude', 'CLAUDE.md');
+  if (!existsSync(tplPath)) return;
+  const content = await readFile(tplPath, 'utf-8');
+  const rendered = renderTemplate(content, vars, tplPath);
+  const withHeader = insertHeader(rendered, '.md', version, repoName);
+  await writeOutput(join(tmpDir, 'CLAUDE.md'), withHeader);
+}
+
+/**
+ * Generates .claude/skills/<name>/SKILL.md for each non-team command.
+ */
+async function syncClaudeSkills(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  commandsSpec
+) {
+  const tplPath = join(templatesDir, 'claude', 'skills', 'TEMPLATE', 'SKILL.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const cmd of commandsSpec.commands || []) {
+    if (cmd.type === 'team') continue;
+    const cmdVars = buildCommandVars(cmd, vars);
+    const rendered = renderTemplate(template, cmdVars, tplPath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(join(tmpDir, '.claude', 'skills', cmd.name, 'SKILL.md'), withHeader);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cursor sync helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates .cursor/rules/team-<id>.mdc for each team.
+ */
+async function syncCursorTeams(tmpDir, vars, version, repoName, teamsSpec) {
+  // Use a simple inline template for cursor team rules
+  const teamTemplate = `---
+description: "Team {{teamName}} — {{teamFocus}}"
+globs: []
+alwaysApply: false
+---
+# Team: {{teamName}}
+
+**Focus**: {{teamFocus}}
+**Scope**: {{teamScope}}
+
+## Persona
+
+You are a member of the {{teamName}} team. Your expertise is {{teamFocus}}.
+Scope all operations to the team's owned paths.
+
+## Scope
+
+{{teamScope}}
+`;
+  for (const team of teamsSpec.teams || []) {
+    const teamVars = {
+      ...vars,
+      teamName: team.name || team.id,
+      teamId: team.id,
+      teamFocus: team.focus || '',
+      teamScope: Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || ''),
+    };
+    const rendered = renderTemplate(teamTemplate, teamVars);
+    const withHeader = insertHeader(rendered, '.mdc', version, repoName);
+    await writeOutput(join(tmpDir, '.cursor', 'rules', `team-${team.id}.mdc`), withHeader);
+  }
+}
+
+/**
+ * Generates .cursor/commands/<name>.md for each non-team command.
+ */
+async function syncCursorCommands(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  commandsSpec
+) {
+  const tplPath = join(templatesDir, 'cursor', 'commands', 'TEMPLATE.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const cmd of commandsSpec.commands || []) {
+    if (cmd.type === 'team') continue;
+    const cmdVars = buildCommandVars(cmd, vars);
+    const rendered = renderTemplate(template, cmdVars, tplPath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(join(tmpDir, '.cursor', 'commands', `${cmd.name}.md`), withHeader);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Windsurf sync helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates .windsurf/rules/team-<id>.md for each team.
+ */
+async function syncWindsurfTeams(tmpDir, vars, version, repoName, teamsSpec) {
+  const teamTemplate = `# Team: {{teamName}}
+
+**Focus**: {{teamFocus}}
+**Scope**: {{teamScope}}
+
+## Persona
+
+You are a member of the {{teamName}} team. Your expertise is {{teamFocus}}.
+Scope all operations to the team's owned paths.
+`;
+  for (const team of teamsSpec.teams || []) {
+    const teamVars = {
+      ...vars,
+      teamName: team.name || team.id,
+      teamId: team.id,
+      teamFocus: team.focus || '',
+      teamScope: Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || ''),
+    };
+    const rendered = renderTemplate(teamTemplate, teamVars);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(join(tmpDir, '.windsurf', 'rules', `team-${team.id}.md`), withHeader);
+  }
+}
+
+/**
+ * Generates .windsurf/commands/<name>.md for each non-team command.
+ */
+async function syncWindsurfCommands(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  commandsSpec
+) {
+  const tplPath = join(templatesDir, 'windsurf', 'templates', 'command.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const cmd of commandsSpec.commands || []) {
+    if (cmd.type === 'team') continue;
+    const cmdVars = buildCommandVars(cmd, vars);
+    const rendered = renderTemplate(template, cmdVars, tplPath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(join(tmpDir, '.windsurf', 'commands', `${cmd.name}.md`), withHeader);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Copilot sync helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Copies copilot-instructions.md and instructions/ directory.
+ */
+async function syncCopilot(templatesDir, tmpDir, vars, version, repoName) {
+  // copilot-instructions.md → .github/copilot-instructions.md
+  const instrPath = join(templatesDir, 'copilot', 'copilot-instructions.md');
+  if (existsSync(instrPath)) {
+    const content = await readFile(instrPath, 'utf-8');
+    const rendered = renderTemplate(content, vars, instrPath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(join(tmpDir, '.github', 'copilot-instructions.md'), withHeader);
+  }
+  // instructions/ → .github/instructions/
+  await syncDirectCopy(
+    templatesDir,
+    'copilot/instructions',
+    tmpDir,
+    '.github/instructions',
+    vars,
+    version,
+    repoName
+  );
+}
+
+/**
+ * Generates .github/prompts/<name>.prompt.md for each non-team command.
+ */
+async function syncCopilotPrompts(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  commandsSpec
+) {
+  const tplPath = join(templatesDir, 'copilot', 'prompts', 'TEMPLATE.prompt.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const cmd of commandsSpec.commands || []) {
+    if (cmd.type === 'team') continue;
+    const cmdVars = buildCommandVars(cmd, vars);
+    const rendered = renderTemplate(template, cmdVars, tplPath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(
+      join(tmpDir, '.github', 'prompts', `${cmd.name}.prompt.md`),
+      withHeader
+    );
+  }
+}
+
+/**
+ * Generates .github/agents/<id>.agent.md from agents in agentsSpec.
+ */
+async function syncCopilotAgents(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  agentsSpec,
+  _rulesSpec
+) {
+  const tplPath = join(templatesDir, 'copilot', 'agents', 'TEMPLATE.agent.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const [category, agents] of Object.entries(agentsSpec.agents || {})) {
+    for (const agent of agents) {
+      const agentVars = buildAgentVars(agent, category, vars);
+      const rendered = renderTemplate(template, agentVars, tplPath);
+      const withHeader = insertHeader(rendered, '.md', version, repoName);
+      await writeOutput(join(tmpDir, '.github', 'agents', `${agent.id}.agent.md`), withHeader);
+    }
+  }
+}
+
+/**
+ * Generates .github/chatmodes/team-<id>.chatmode.md for each team.
+ */
+async function syncCopilotChatModes(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  teamsSpec
+) {
+  const tplPath = join(templatesDir, 'copilot', 'chatmodes', 'TEMPLATE.chatmode.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const team of teamsSpec.teams || []) {
+    const teamVars = {
+      ...vars,
+      teamName: team.name || team.id,
+      teamId: team.id,
+      teamFocus: team.focus || '',
+      teamScope: Array.isArray(team.scope) ? team.scope.join(', ') : (team.scope || ''),
+    };
+    const rendered = renderTemplate(template, teamVars, tplPath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(
+      join(tmpDir, '.github', 'chatmodes', `team-${team.id}.chatmode.md`),
+      withHeader
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Gemini sync helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Copies templates/gemini/GEMINI.md → tmpDir/GEMINI.md
+ * and templates/gemini/* → tmpDir/.gemini/
+ */
+async function syncGemini(templatesDir, tmpDir, vars, version, repoName) {
+  const geminiDir = join(templatesDir, 'gemini');
+  if (!existsSync(geminiDir)) return;
+
+  for await (const srcFile of walkDir(geminiDir)) {
+    const fname = basename(srcFile);
+    const ext = extname(srcFile).toLowerCase();
+    const content = await readFile(srcFile, 'utf-8');
+    const rendered = renderTemplate(content, vars, srcFile);
+    const withHeader = insertHeader(rendered, ext, version, repoName);
+
+    if (fname === 'GEMINI.md') {
+      // Root-level GEMINI.md
+      await writeOutput(join(tmpDir, 'GEMINI.md'), withHeader);
+    } else {
+      // All other files go into .gemini/
+      const relPath = relative(geminiDir, srcFile);
+      await writeOutput(join(tmpDir, '.gemini', relPath), withHeader);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Codex sync helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates .agents/skills/<name>/SKILL.md for each non-team command.
+ */
+async function syncCodexSkills(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  commandsSpec
+) {
+  const tplPath = join(templatesDir, 'codex', 'skills', 'TEMPLATE', 'SKILL.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const cmd of commandsSpec.commands || []) {
+    if (cmd.type === 'team') continue;
+    const cmdVars = buildCommandVars(cmd, vars);
+    const rendered = renderTemplate(template, cmdVars, tplPath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(join(tmpDir, '.agents', 'skills', cmd.name, 'SKILL.md'), withHeader);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Warp sync helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Copies templates/warp/WARP.md → tmpDir/WARP.md.
+ */
+async function syncWarp(templatesDir, tmpDir, vars, version, repoName) {
+  const tplPath = join(templatesDir, 'warp', 'WARP.md');
+  if (!existsSync(tplPath)) return;
+  const content = await readFile(tplPath, 'utf-8');
+  const rendered = renderTemplate(content, vars, tplPath);
+  const withHeader = insertHeader(rendered, '.md', version, repoName);
+  await writeOutput(join(tmpDir, 'WARP.md'), withHeader);
+}
+
+// ---------------------------------------------------------------------------
+// Cline sync helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates .clinerules/<domain>.md for each rule domain.
+ */
+async function syncClineRules(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  rulesSpec
+) {
+  const tplPath = join(templatesDir, 'cline', 'clinerules', 'TEMPLATE.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const rule of rulesSpec.rules || []) {
+    const ruleVars = buildRuleVars(rule, vars);
+    const rendered = renderTemplate(template, ruleVars, tplPath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(join(tmpDir, '.clinerules', `${rule.domain}.md`), withHeader);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Roo sync helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates .roo/rules/<domain>.md for each rule domain.
+ */
+async function syncRooRules(
+  templatesDir,
+  tmpDir,
+  vars,
+  version,
+  repoName,
+  rulesSpec
+) {
+  const tplPath = join(templatesDir, 'roo', 'rules', 'TEMPLATE.md');
+  if (!existsSync(tplPath)) return;
+  const template = await readFile(tplPath, 'utf-8');
+
+  for (const rule of rulesSpec.rules || []) {
+    const ruleVars = buildRuleVars(rule, vars);
+    const rendered = renderTemplate(template, ruleVars, tplPath);
+    const withHeader = insertHeader(rendered, '.md', version, repoName);
+    await writeOutput(join(tmpDir, '.roo', 'rules', `${rule.domain}.md`), withHeader);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MCP / A2A sync helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Copies templates/mcp/ → tmpDir/.mcp/
+ */
+/**
+ * Copies templates/mcp/ → tmpDir/.mcp/
+ * agentsSpec and teamsSpec are accepted for API symmetry and future use.
+ */
+async function syncA2aConfig(tmpDir, vars, version, repoName, _agentsSpec, _teamsSpec, templatesDir) {
+  await _syncA2aConfig(templatesDir, tmpDir, vars, version, repoName);
+}
+
+async function _syncA2aConfig(templatesDir, tmpDir, vars, version, repoName) {
+  const mcpDir = join(templatesDir, 'mcp');
+  if (!existsSync(mcpDir)) return;
+  for await (const srcFile of walkDir(mcpDir)) {
+    const relPath = relative(mcpDir, srcFile);
+    const ext = extname(srcFile).toLowerCase();
+    let content;
+    try {
+      content = await readFile(srcFile, 'utf-8');
+    } catch {
+      const destFile = join(tmpDir, '.mcp', relPath);
+      await ensureDir(dirname(destFile));
+      await cp(srcFile, destFile, { force: true });
+      continue;
+    }
+    const rendered = renderTemplate(content, vars, srcFile);
+    const withHeader = insertHeader(rendered, ext, version, repoName);
+    await writeOutput(join(tmpDir, '.mcp', relPath), withHeader);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Variable builder helpers
+// ---------------------------------------------------------------------------
+
+function buildCommandVars(cmd, vars) {
+  return {
+    ...vars,
+    commandName: cmd.name,
+    commandDescription:
+      typeof cmd.description === 'string' ? cmd.description.trim() : (cmd.description || ''),
+    commandFlags: formatCommandFlags(cmd.flags),
+  };
+}
+
+function buildAgentVars(agent, category, vars) {
+  const focus = agent.focus || [];
+  const responsibilities = agent.responsibilities || [];
+  const tools = agent['preferred-tools'] || agent.tools || [];
+  const conventions = agent.conventions || [];
+  const examples = agent.examples || [];
+  const antiPatterns = agent['anti-patterns'] || [];
+
+  return {
+    ...vars,
+    agentName: agent.name,
+    agentId: agent.id,
+    agentCategory: category,
+    agentRole: typeof agent.role === 'string' ? agent.role.trim() : (agent.role || ''),
+    agentFocusList: focus.map((f) => `- ${f}`).join('\n'),
+    agentResponsibilitiesList: responsibilities.map((r) => `- ${r}`).join('\n'),
+    agentToolsList: tools.map((t) => `- ${t}`).join('\n'),
+    agentConventions: conventions.length > 0 ? conventions.map((c) => `- ${c}`).join('\n') : '',
+    agentExamples:
+      examples.length > 0
+        ? examples
+            .map(
+              (e) =>
+                `### ${e.title || 'Example'}\n\`\`\`\n${(e.code || '').trim()}\n\`\`\``
+            )
+            .join('\n\n')
+        : '',
+    agentAntiPatterns:
+      antiPatterns.length > 0 ? antiPatterns.map((a) => `- ${a}`).join('\n') : '',
+    agentDomainRules: '',
+  };
+}
+
+function buildRuleVars(rule, vars) {
+  const appliesTo = rule['applies-to'] || [];
+  const conventions = rule.conventions || [];
+  return {
+    ...vars,
+    ruleDomain: rule.domain,
+    ruleDescription:
+      typeof rule.description === 'string' ? rule.description.trim() : (rule.description || ''),
+    ruleAppliesTo: appliesTo.join('\n'),
+    ruleConventions: conventions
+      .map((c) => (typeof c === 'string' ? `- ${c}` : `- **[${c.id || ''}]** ${c.rule || ''}`))
+      .join('\n'),
+  };
 }
 
 export async function runSync({ agentkitRoot, projectRoot, flags }) {
@@ -616,7 +1458,7 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
   }
 
   if (targets.has('mcp')) {
-    gatedTasks.push(syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec));
+    gatedTasks.push(syncA2aConfig(tmpDir, vars, version, repoName, agentsSpec, teamsSpec, templatesDir));
   }
 
   await Promise.all(gatedTasks);
