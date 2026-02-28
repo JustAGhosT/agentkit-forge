@@ -204,17 +204,20 @@ describe('review-runner', () => {
       ).rejects.toThrow('must be within the project root');
     });
 
-    it('rejects symlinks traversing outside project root', async () => {
+    it('rejects --file symlinks that point outside project root', async () => {
       setupTestRepo();
-      const secretFile = resolve(TEST_ROOT, '..', 'secret.txt');
-      // Create file outside project root
-      writeFileSync(secretFile, 'secret-data', 'utf-8');
-
+      const outsideFile = resolve(TEST_ROOT, '..', 'outside-secret.txt');
+      const symlinkPath = resolve(TEST_ROOT, 'evil-link.js');
+      // Create a real file outside the project root, then a symlink inside pointing to it
+      writeFileSync(outsideFile, 'AKIAIOSFODNN7EXAMPLE', 'utf-8');
       try {
-        // Create symlink inside project root pointing outside
-        const symlinkPath = resolve(TEST_ROOT, 'symlink.txt');
-        if (existsSync(symlinkPath)) rmSync(symlinkPath);
-        symlinkSync(secretFile, symlinkPath);
+        try {
+          symlinkSync(outsideFile, symlinkPath);
+        } catch (symlinkErr) {
+          // On Windows without developer mode, symlinkSync throws EPERM; skip in that case
+          if (symlinkErr.code === 'EPERM' || symlinkErr.code === 'ENOTSUP') return;
+          throw symlinkErr;
+        }
 
         vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -222,12 +225,47 @@ describe('review-runner', () => {
           runReview({
             agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
             projectRoot: TEST_ROOT,
-            flags: { file: 'symlink.txt' },
+            flags: { file: 'evil-link.js' },
           })
-        ).rejects.toThrow('File must be within the project root (symlinks traversing outside are not allowed)');
+        ).rejects.toThrow('symlinks traversing outside are not allowed');
       } finally {
-        // Clean up the external file
-        if (existsSync(secretFile)) rmSync(secretFile);
+        if (existsSync(outsideFile)) rmSync(outsideFile, { force: true });
+        if (existsSync(symlinkPath)) rmSync(symlinkPath, { force: true });
+      }
+    });
+
+    it('rejects git-diff symlinks that point outside project root', async () => {
+      setupTestRepo();
+      const outsideFile = resolve(TEST_ROOT, '..', 'outside-diff-secret.txt');
+      const symlinkPath = resolve(TEST_ROOT, 'evil-diff-link.js');
+      writeFileSync(outsideFile, 'AKIAIOSFODNN7EXAMPLE', 'utf-8');
+      try {
+        try {
+          symlinkSync(outsideFile, symlinkPath);
+        } catch (symlinkErr) {
+          // On Windows without developer mode, symlinkSync throws EPERM; skip in that case
+          if (symlinkErr.code === 'EPERM' || symlinkErr.code === 'ENOTSUP') return;
+          throw symlinkErr;
+        }
+
+        // Mock git diff to return the symlink filename (simulating --range / default diff path)
+        vi.spyOn(runner, 'execCommand').mockImplementation((cmd) => {
+          if (cmd.includes('git diff')) return { exitCode: 0, stdout: 'evil-diff-link.js\n', stderr: '', durationMs: 5 };
+          return { exitCode: 1, stdout: '', stderr: '', durationMs: 0 };
+        });
+        vi.spyOn(orchestrator, 'appendEvent').mockImplementation(() => {});
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+
+        await expect(
+          runReview({
+            agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+            projectRoot: TEST_ROOT,
+            flags: {}, // No --file: uses git diff output
+          })
+        ).rejects.toThrow('symlinks traversing outside are not allowed');
+      } finally {
+        if (existsSync(outsideFile)) rmSync(outsideFile, { force: true });
+        if (existsSync(symlinkPath)) rmSync(symlinkPath, { force: true });
       }
     });
   });
