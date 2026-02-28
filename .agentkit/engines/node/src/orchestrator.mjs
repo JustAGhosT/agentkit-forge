@@ -730,7 +730,10 @@ export function getTasksSummary(projectRoot) {
   for (const file of files) {
     try {
       const content = readFileSync(resolve(dir, file), 'utf-8');
-      activeTasks.push(JSON.parse(content));
+      const task = JSON.parse(content);
+      if (task && typeof task === 'object' && !Array.isArray(task)) {
+        activeTasks.push(task);
+      }
     } catch {
       // Skip unreadable/corrupted task files in summary output
     }
@@ -740,7 +743,6 @@ export function getTasksSummary(projectRoot) {
 
   const nonTerminal = activeTasks.filter((t) => !TERMINAL_STATES.includes(t.status));
   const terminal = activeTasks.filter((t) => TERMINAL_STATES.includes(t.status));
-
   const lines = ['--- Task Queue ---', ''];
 
   if (nonTerminal.length > 0) {
