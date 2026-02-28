@@ -126,3 +126,69 @@ export function formatDuration(ms) {
 export function formatTimestamp(isoTimestamp) {
   return isoTimestamp.replace('T', ' ').replace(/(\.\d+)?Z$/, '');
 }
+
+/**
+ * Limit concurrency for an array of promise-returning functions.
+ * Similar to p-limit but minimal implementation.
+ * @param {Array<() => Promise<any>>} tasks
+ * @param {number} concurrency
+ * @returns {Promise<any[]>}
+ */
+export async function runWithConcurrency(tasks, concurrency) {
+  const results = [];
+  const executing = [];
+
+  for (let i = 0; i < tasks.length; i++) {
+    const index = i;
+    const p = tasks[index]().then((res) => {
+      results[index] = res;
+      return res;
+    });
+
+    // Wrap so the promise removes itself from `executing` when it settles,
+    // ensuring Promise.race() below reliably picks up newly-freed slots.
+    const e = p.finally(() => {
+      const idx = executing.indexOf(e);
+      if (idx !== -1) executing.splice(idx, 1);
+    });
+
+    executing.push(e);
+
+    if (executing.length >= concurrency) {
+      await Promise.race(executing);
+    }
+  }
+
+  await Promise.all(executing);
+  return results;
+}
+
+/**
+ * Run tasks with a concurrency limit using an iterator-based pool.
+ * @template T
+ * @param {Array<() => Promise<T>>} tasks
+ * @param {number} concurrency
+ * @returns {Promise<T[]>}
+ */
+export async function runInPool(tasks, concurrency) {
+  if (!Array.isArray(tasks)) {
+    throw new TypeError('runInPool: tasks must be an array');
+  }
+  if (tasks.length === 0) return [];
+
+  let limit = Math.floor(concurrency);
+  if (!isFinite(limit) || limit <= 0) {
+    throw new RangeError('runInPool: concurrency must be a finite positive integer');
+  }
+  limit = Math.min(limit, tasks.length);
+
+  const results = new Array(tasks.length);
+  const iterator = tasks.entries();
+  const workers = new Array(limit).fill(iterator).map(async (iter) => {
+    for (const [index, task] of iter) {
+      results[index] = await task();
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
