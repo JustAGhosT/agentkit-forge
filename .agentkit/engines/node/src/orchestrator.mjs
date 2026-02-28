@@ -713,7 +713,7 @@ export async function orchestratorProcessHandoffs(projectRoot, state) {
 /**
  * Get a summary of all active tasks for display.
  * @param {string} projectRoot
- * @returns {string}
+ * @returns {Promise<string>}
  */
 export function getTasksSummary(projectRoot) {
   const dir = resolve(projectRoot, '.claude', 'state', 'tasks');
