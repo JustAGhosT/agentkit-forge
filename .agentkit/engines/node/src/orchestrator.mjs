@@ -62,8 +62,9 @@ export async function loadTeamIdsFromSpec(agentkitRoot) {
     let specContent;
     try {
       specContent = await readFile(teamsPath, 'utf-8');
-    } catch {
-      // File doesn't exist or is unreadable — fall through to defaults
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+      // File doesn't exist — fall through to defaults
     }
     if (specContent !== undefined) {
       const spec = yaml.load(specContent);
@@ -132,7 +133,10 @@ async function createDefaultState(projectRoot) {
   const markerPath = resolve(projectRoot, '.agentkit-repo');
   try {
     repoId = (await readFile(markerPath, 'utf-8')).trim();
-  } catch {
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.warn(`[agentkit:orchestrate] Could not read repo marker: ${err.message}`);
+    }
     /* fallback to 'unknown' */
   }
 
