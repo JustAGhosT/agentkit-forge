@@ -189,7 +189,15 @@ function parseFlags(command, args) {
     // --status is handled separately with a command-specific type
     if (flagName === 'status') continue;
     const type = FLAG_TYPES[flagName];
-    if (!type) continue;
+    if (!type) {
+      if (process.env.NODE_ENV !== 'production') {
+        throw new Error(
+          `Internal CLI configuration error: flag "--${flagName}" is listed as valid for ` +
+          `command "${command}" but has no entry in FLAG_TYPES.`
+        );
+      }
+      continue;
+    }
     options[flagName] = { type };
     if (flagName === 'quiet') options[flagName].short = 'q';
     if (flagName === 'verbose') options[flagName].short = 'v';
@@ -209,12 +217,25 @@ function parseFlags(command, args) {
       allowPositionals: true
     });
 
-    return { ...values, _args: positionals };
+    // With strict: false, unknown flag tokens end up in positionals instead of values.
+    // Filter them out, warn the user, and exclude them from the positional args.
+    const unknownFlags = [];
+    const filteredPositionals = [];
+    for (const token of positionals) {
+      if (typeof token === 'string' && token.length >= 2 && token.startsWith('-')) {
+        unknownFlags.push(token);
+      } else {
+        filteredPositionals.push(token);
+      }
+    }
+    if (unknownFlags.length > 0) {
+      for (const flag of unknownFlags) {
+        console.warn(`[agentkit:${command}] Warning: unrecognised flag ${flag} (ignored)`);
+      }
+    }
+
+    return { ...values, _args: filteredPositionals };
   } catch (err) {
-    // Fallback or error handling if needed, though strict: false should prevent throws
-    // except for explicit type mismatches if any?
-    // parseArgs usually throws if option requires value but none provided (for string types)
-    // We can catch and print a friendly error or rethrow
     console.error(`Error parsing arguments: ${err.message}`);
     process.exit(1);
   }

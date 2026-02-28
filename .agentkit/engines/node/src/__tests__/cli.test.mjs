@@ -97,5 +97,19 @@ describe('CLI', () => {
       const result = run('spec-validate', '--status');
       expect(result.exitCode).toBe(0);
     });
+
+    it('sync -q (short for --quiet) does not error', () => {
+      // -q is a short alias for --quiet; --help exits before running sync
+      const result = run('sync', '-q', '--help');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('AgentKit Forge');
+    });
+
+    it('sync -v (short for --verbose) does not error', () => {
+      // -v is a short alias for --verbose; --help exits before running sync
+      const result = run('sync', '-v', '--help');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('AgentKit Forge');
+    });
   });
 });
