@@ -199,6 +199,50 @@ describe('cost-tracker', () => {
       expect(existsSync(pointerPath)).toBe(true);
       expect(readFileSync(pointerPath, 'utf-8').trim()).toBe(session.sessionId);
     });
+
+    it('falls back to O(N) scan and self-heals when pointer points to a nonexistent session ID', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      const pointerPath = resolve(TEST_AGENTKIT, 'logs', 'active-session-id');
+
+      // Write a stale/nonexistent session ID to the pointer file
+      writeFileSync(pointerPath, 'nonexistent-0000000000-aaaaaa', 'utf-8');
+
+      expect(() => recordCommand(TEST_AGENTKIT, 'check')).not.toThrow();
+
+      // Pointer should be self-healed with the real active session ID
+      expect(existsSync(pointerPath)).toBe(true);
+      expect(readFileSync(pointerPath, 'utf-8').trim()).toBe(session.sessionId);
+
+      // Command should have been recorded on the real active session via O(N) fallback
+      const sessDir = resolve(TEST_AGENTKIT, 'logs', 'sessions');
+      const sessionFile = resolve(sessDir, `session-${session.sessionId}.json`);
+      const updated = JSON.parse(readFileSync(sessionFile, 'utf-8'));
+      expect(updated.commandsRun).toHaveLength(1);
+      expect(updated.commandsRun[0].command).toBe('check');
+    });
+
+    it('falls back to O(N) scan and removes stale pointer when it points to a completed session', () => {
+      const session = initSession({ agentkitRoot: TEST_AGENTKIT, projectRoot: TEST_PROJECT });
+      const sessDir = resolve(TEST_AGENTKIT, 'logs', 'sessions');
+      const sessionFile = resolve(sessDir, `session-${session.sessionId}.json`);
+
+      // Complete the session by updating status directly (bypass endSession to keep pointer intact)
+      const data = JSON.parse(readFileSync(sessionFile, 'utf-8'));
+      data.status = 'completed';
+      data.endTime = new Date().toISOString();
+      data.durationMs = 0;
+      writeFileSync(sessionFile, JSON.stringify(data, null, 2) + '\n');
+
+      const pointerPath = resolve(TEST_AGENTKIT, 'logs', 'active-session-id');
+      // Pointer still points to the now-completed session
+      expect(readFileSync(pointerPath, 'utf-8').trim()).toBe(session.sessionId);
+
+      // Should not throw; detects stale pointer and removes it
+      expect(() => recordCommand(TEST_AGENTKIT, 'check')).not.toThrow();
+
+      // Stale pointer should have been removed (no active session found to self-heal with)
+      expect(existsSync(pointerPath)).toBe(false);
+    });
   });
 
   describe('generateReport()', () => {

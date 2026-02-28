@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, rmSync, existsSync, unlinkSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { recordCommand, initSession } from './.agentkit/engines/node/src/cost-tracker.mjs';
@@ -43,6 +43,12 @@ for (let i = 0; i < 1000; i++) {
 
 // --- Benchmark 1: Worst case — no active session (O(N) full scan) ---
 console.log('\nBenchmarking recordCommand with 1000 closed sessions (Worst Case — O(N) scan)...');
+
+// Clear any stale pointer so every iteration exercises the full O(N) scan path
+const pointerPath = resolve(AGENTKIT_ROOT, 'logs', 'active-session-id');
+if (existsSync(pointerPath)) {
+  try { unlinkSync(pointerPath); } catch (err) { console.warn(`[benchmark] Failed to remove stale pointer: ${err.message}`); }
+}
 
 let start = process.hrtime.bigint();
 const ITERATIONS = 100;
