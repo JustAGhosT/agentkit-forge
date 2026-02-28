@@ -417,34 +417,6 @@ export async function listTasks(projectRoot, filters = {}) {
     return { tasks: [] };
   }
 
-  const tasks = [];
-  const readPromises = files.map(async (file) => {
-    try {
-      const content = await readFile(resolve(dir, file), 'utf-8');
-      return JSON.parse(content);
-    } catch {
-      return null;
-    }
-  });
-
-  const results = await Promise.all(readPromises);
-
-  for (const data of results) {
-    if (!data) continue;
-
-    if (filters.status && data.status !== filters.status) continue;
-    if (
-      filters.assignee &&
-      !(Array.isArray(data.assignees) && data.assignees.includes(filters.assignee))
-    )
-      continue;
-    if (filters.delegator && data.delegator !== filters.delegator) continue;
-    if (filters.type && data.type !== filters.type) continue;
-    if (filters.priority && data.priority !== filters.priority) continue;
-
-    tasks.push(data);
-  }
-
   const tasks = (
     await Promise.all(
       files.map(async (file) => {
