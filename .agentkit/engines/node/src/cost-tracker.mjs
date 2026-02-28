@@ -125,8 +125,12 @@ export function initSession({ agentkitRoot, projectRoot }) {
   }
   writeFileSync(sessionFilePath(agentkitRoot, sessionId), JSON.stringify(session, null, 2) + '\n', 'utf-8');
 
-  // Write active-session-id pointer for O(1) lookup in recordCommand
-  writeFileSync(activeSessionPointerPath(agentkitRoot), sessionId, 'utf-8');
+  // Write active-session-id pointer for O(1) lookup in recordCommand (best-effort)
+  try {
+    writeFileSync(activeSessionPointerPath(agentkitRoot), sessionId, 'utf-8');
+  } catch (err) {
+    console.warn(`[agentkit:cost] Failed to write active-session pointer: ${err.message}`);
+  }
 
   // Log event
   logEvent(agentkitRoot, {
@@ -217,11 +221,13 @@ export function recordCommand(agentkitRoot, command) {
   if (existsSync(pointerPath)) {
     try {
       const pointedId = readFileSync(pointerPath, 'utf-8').trim();
-      if (pointedId) {
+      // Validate: session IDs are YYYYMMDDHHMMSS-hexhex (digits, letters, hyphens only).
+      // This prevents path traversal — dots and slashes are rejected.
+      if (pointedId && /^[A-Za-z0-9_-]+$/.test(pointedId)) {
         const filePath = sessionFilePath(agentkitRoot, pointedId);
         if (existsSync(filePath)) {
           const session = JSON.parse(readFileSync(filePath, 'utf-8'));
-          if (session.status === 'active') {
+          if (session.status === 'active' && /^[A-Za-z0-9_-]+$/.test(session.sessionId)) {
             session.commandsRun = session.commandsRun || [];
             session.commandsRun.push({ command, timestamp: new Date().toISOString() });
             const tmpPath = filePath + '.tmp';
