@@ -142,6 +142,11 @@ async function withHandoffLock(projectRoot, taskId, fn) {
  * @returns {string}
  */
 function generateRandomSuffix() {
+  if (!globalThis.crypto || typeof globalThis.crypto.getRandomValues !== 'function') {
+    throw new Error(
+      'AgentKit Forge Node engine requires Node.js >= 22 with Web Crypto API available (globalThis.crypto.getRandomValues).',
+    );
+  }
   const bytes = new Uint8Array(3);
   globalThis.crypto.getRandomValues(bytes);
   return Buffer.from(bytes).toString('hex');
