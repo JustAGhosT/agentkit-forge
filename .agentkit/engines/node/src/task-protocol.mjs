@@ -4,6 +4,7 @@
  * Tasks are JSON files in .claude/state/tasks/ with lifecycle states,
  * messages, artifacts, dependency tracking, and chained handoffs.
  */
+import { randomBytes } from 'crypto';
 import { existsSync } from 'fs';
 import { access, mkdir, open, readdir, readFile, rename, unlink, writeFile } from 'fs/promises';
 import { resolve } from 'path';
