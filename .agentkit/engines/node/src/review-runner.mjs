@@ -308,7 +308,7 @@ export async function runReview({ agentkitRoot /* kept for interface compatibili
 
   // Log event
   try {
-    appendEvent(projectRoot, 'review_completed', {
+    await appendEvent(projectRoot, 'review_completed', {
       filesReviewed: changedFiles.length,
       totalFindings: allFindings.length,
       secretFindings: secrets.length,
