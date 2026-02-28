@@ -4,7 +4,7 @@
  * TODO/FIXME scanning, and lint on changed files.
  * This is NOT the AI review — that's the /review slash command.
  */
-import { existsSync, readFileSync, readdirSync, statSync, promises as fsPromises } from 'fs';
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync, promises as fsPromises } from 'fs';
 import { resolve, relative, extname, sep } from 'path';
 import { execCommand, formatDuration, runInPool } from './runner.mjs';
 import { appendEvent } from './orchestrator.mjs';
@@ -74,6 +74,21 @@ function getChangedFiles(projectRoot, flags) {
     if (!abs.startsWith(resolve(projectRoot) + sep) && abs !== resolve(projectRoot)) {
       throw new Error(`--file must be within the project root: ${flags.file}`);
     }
+
+    if (existsSync(abs)) {
+      const stats = statSync(abs);
+      if (!stats.isFile()) {
+        throw new Error(`File is not a regular file: ${flags.file}`);
+      }
+      const realPath = realpathSync(abs);
+      const realProjectRoot = realpathSync(projectRoot);
+      if (!realPath.startsWith(realProjectRoot + sep) && realPath !== realProjectRoot) {
+        throw new Error(`File must be within the project root (symlinks traversing outside are not allowed): ${flags.file}`);
+      }
+    } else {
+      throw new Error(`File not found: ${flags.file}`);
+    }
+
     return [flags.file];
   }
 
