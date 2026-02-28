@@ -93,7 +93,7 @@ describe('cost-tracker', () => {
 
       const files = readdirSync(sessDir);
       expect(files.length).toBeGreaterThan(0);
-      expect(files[0]).toContain(session.sessionId);
+      expect(files.some((f) => f.includes(session.sessionId))).toBe(true);
     });
   });
 
