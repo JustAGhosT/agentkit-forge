@@ -255,6 +255,8 @@ export async function runReview({ agentkitRoot /* kept for interface compatibili
   console.log('');
 
   console.log('--- Large File Detection ---');
+  // This is still sync and fast (stat only), keeping it sync is fine or could be async.
+  // Given it's just stat, let's leave it as is unless requested.
   const largeFiles = scanLargeFiles(projectRoot, changedFiles);
   allFindings.push(...largeFiles);
   if (largeFiles.length > 0) {
