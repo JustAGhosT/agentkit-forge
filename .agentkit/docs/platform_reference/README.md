@@ -94,6 +94,24 @@ see [PLATFORM_CODING_PERFORMANCE.md](./PLATFORM_CODING_PERFORMANCE.md).
 
 ---
 
+## Platform Evaluations
+
+Each platform is evaluated across six key decision dimensions. See the
+consolidated view at [PLATFORM_CONSOLIDATED_RATING.md](./PLATFORM_CONSOLIDATED_RATING.md)
+or drill into individual dimensions:
+
+| Dimension | Weight | Document |
+|-----------|--------|----------|
+| Coding Performance | 30% | [PLATFORM_CODING_PERFORMANCE.md](./PLATFORM_CODING_PERFORMANCE.md) |
+| Developer Experience | 20% | [PLATFORM_DEVELOPER_EXPERIENCE.md](./PLATFORM_DEVELOPER_EXPERIENCE.md) |
+| Cost & Value | 20% | [PLATFORM_COST_ANALYSIS.md](./PLATFORM_COST_ANALYSIS.md) |
+| Customization & Extensibility | 10% | [PLATFORM_CUSTOMIZATION.md](./PLATFORM_CUSTOMIZATION.md) |
+| Privacy & Security | 10% | [PLATFORM_PRIVACY_SECURITY.md](./PLATFORM_PRIVACY_SECURITY.md) |
+| Team & Enterprise | 10% | [PLATFORM_TEAM_ENTERPRISE.md](./PLATFORM_TEAM_ENTERPRISE.md) |
+| **Consolidated Rating** | — | [**PLATFORM_CONSOLIDATED_RATING.md**](./PLATFORM_CONSOLIDATED_RATING.md) |
+
+---
+
 ## Integration Plan
 
 For the phased integration plan to address gaps across all platforms, see
@@ -103,7 +121,13 @@ For the phased integration plan to address gaps across all platforms, see
 
 ## See Also
 
-- [PLATFORM_CODING_PERFORMANCE.md](./PLATFORM_CODING_PERFORMANCE.md) — Weighted decision matrix and scoring
+- [PLATFORM_CONSOLIDATED_RATING.md](./PLATFORM_CONSOLIDATED_RATING.md) — Combined final rankings and recommendations
+- [PLATFORM_CODING_PERFORMANCE.md](./PLATFORM_CODING_PERFORMANCE.md) — Coding ability evaluation
+- [PLATFORM_COST_ANALYSIS.md](./PLATFORM_COST_ANALYSIS.md) — Cost and pricing evaluation
+- [PLATFORM_DEVELOPER_EXPERIENCE.md](./PLATFORM_DEVELOPER_EXPERIENCE.md) — UX and workflow evaluation
+- [PLATFORM_CUSTOMIZATION.md](./PLATFORM_CUSTOMIZATION.md) — Extensibility evaluation
+- [PLATFORM_PRIVACY_SECURITY.md](./PLATFORM_PRIVACY_SECURITY.md) — Privacy and security evaluation
+- [PLATFORM_TEAM_ENTERPRISE.md](./PLATFORM_TEAM_ENTERPRISE.md) — Team and enterprise evaluation
 - [INTEGRATION_PLAN.md](./INTEGRATION_PLAN.md) — Phased plan to address platform gaps
 - [TOOLS.md](../TOOLS.md) — Quick-reference table of what AgentKit Forge generates
 - [CUSTOMIZATION.md](../CUSTOMIZATION.md) — How to customize overlays and settings

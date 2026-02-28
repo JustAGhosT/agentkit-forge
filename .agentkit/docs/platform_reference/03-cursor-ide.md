@@ -110,6 +110,33 @@ monorepo layouts. The `.mdc` format with YAML frontmatter is fully utilized.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 77/100 ⭐⭐⭐⭐ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ai-native-ides) |
+| Developer Experience | 84/100 ⭐⭐⭐⭐ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--ai-native-ides) |
+| Cost & Value | 68/100 ⭐⭐⭐½ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--ai-native-ides) |
+| Customization | 79/100 ⭐⭐⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--ai-native-ides) |
+| Privacy & Security | 63/100 ⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--ai-native-ides) |
+| Team & Enterprise | 63/100 ⭐⭐⭐ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--ai-native-ides) |
+| **Weighted Total** | **74/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Developers who want AI woven into every IDE interaction** — inline completions, Composer, chat
+- **Teams with project-specific coding standards** — `.mdc` rules with glob activation are powerful
+- **VS Code users** ready to switch to a dedicated AI-native editor
+- **Fast prototyping and iteration** with Composer multi-file mode
+
+### Not Ideal For
+
+- **Teams that need to stay in VS Code** — Cursor is a fork, not an extension
+- **Budget-constrained teams** at $40/seat/mo for Business tier
+- **Enterprise governance** — fewer admin controls than Copilot
+
+---
+
 ## References
 
 - [Cursor official documentation — Rules](https://cursor.com/docs/context/rules)

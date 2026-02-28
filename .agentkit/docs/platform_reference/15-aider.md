@@ -112,6 +112,34 @@ integration.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 76/100 ⭐⭐⭐⭐ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents) |
+| Developer Experience | 74/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--cli-agents) |
+| Cost & Value | 80/100 ⭐⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--cli-agents) |
+| Customization | 62/100 ⭐⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--cli-agents) |
+| Privacy & Security | 62/100 ⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--cli-agents) |
+| Team & Enterprise | 30/100 ⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--cli-agents) |
+| **Weighted Total** | **70/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Open-source purists** — fully open-source with 60+ model backends
+- **Budget-conscious developers** — $0 tool cost; only pay API costs
+- **Git-centric workflows** — best-in-class auto-commit, auto-lint, auto-test loop
+- **Polyglot projects** — Aider's polyglot benchmark covers many languages
+- **Air-gapped environments** — can run fully local with Ollama
+
+### Not Ideal For
+
+- **Enterprise teams** — no SSO, admin controls, audit, or org policies
+- **Teams wanting predictable costs** — BYOK API costs can vary significantly
+- **GUI-preferring developers** — terminal-only; no IDE extension
+
+---
+
 ## References
 
 - [Aider documentation](https://aider.chat/)

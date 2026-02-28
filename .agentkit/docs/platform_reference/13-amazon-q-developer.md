@@ -94,6 +94,33 @@ would enable richer integration.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 70/100 ⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions) |
+| Developer Experience | 73/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--ide-extensions) |
+| Cost & Value | 79/100 ⭐⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--ide-extensions) |
+| Customization | 56/100 ⭐⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--ide-extensions) |
+| Privacy & Security | 79/100 ⭐⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--ide-extensions) |
+| Team & Enterprise | 86/100 ⭐⭐⭐⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--ide-extensions) |
+| **Weighted Total** | **74/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **AWS-heavy teams** — deepest AWS service integration (CDK, CloudFormation, Lambda)
+- **Security-conscious enterprises** — FedRAMP, SOC 2, ISO 27001, HIPAA compliant
+- **Code modernization** — `/transform` automates language/framework migrations
+- **Enterprise governance** — IAM policies, CloudTrail audit, AWS Organizations
+
+### Not Ideal For
+
+- **Non-AWS projects** — AWS integration advantages are less relevant
+- **Teams wanting model choice** — locked to Amazon's model offerings
+- **Deep customization** — fewer instruction file options than Claude Code or Copilot
+
+---
+
 ## References
 
 - [Amazon Q Developer documentation](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html)

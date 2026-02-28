@@ -75,6 +75,34 @@ test, and deployment information for best results.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 72/100 ⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cloud--autonomous-agents) |
+| Developer Experience | 57/100 ⭐⭐⭐ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--cloud--autonomous-agents) |
+| Cost & Value | 38/100 ⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--cloud--autonomous-agents) |
+| Customization | 47/100 ⭐⭐½ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--cloud--autonomous-agents) |
+| Privacy & Security | 52/100 ⭐⭐½ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--cloud--autonomous-agents) |
+| Team & Enterprise | 71/100 ⭐⭐⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--cloud--autonomous-agents) |
+| **Weighted Total** | **57/100 ⭐⭐⭐** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Enterprise-scale autonomous development** — end-to-end SDLC automation
+- **Automated code reviews** — PR review with style and security checks
+- **Code migration projects** — automated dependency upgrades, framework migrations
+- **Organizations already invested in autonomous tooling** as part of their pipeline
+
+### Not Ideal For
+
+- **Individuals or small teams** — enterprise sales model, no free tier
+- **Budget-conscious organizations** — custom pricing, likely premium
+- **Teams wanting transparency** — dashboard-driven, limited file-based config
+- **Interactive coding** — designed for autonomous, not collaborative, workflows
+
+---
+
 ## References
 
 - [Factory — Autonomous AI coding](https://www.factory.ai/)

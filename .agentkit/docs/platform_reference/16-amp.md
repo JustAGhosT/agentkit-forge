@@ -61,6 +61,33 @@ Monitor for future platform-specific configuration options.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 72/100 ⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents) |
+| Developer Experience | 70/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--cli-agents) |
+| Cost & Value | 79/100 ⭐⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--cli-agents) |
+| Customization | 52/100 ⭐⭐½ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--cli-agents) |
+| Privacy & Security | 48/100 ⭐⭐½ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--cli-agents) |
+| Team & Enterprise | 42/100 ⭐⭐ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--cli-agents) |
+| **Weighted Total** | **65/100 ⭐⭐⭐** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Sourcegraph users** already in the Sourcegraph ecosystem
+- **Autonomous multi-step CLI tasks** — plans and executes independently
+- **Free-tier users** — generous free access for individual developers
+- **AGENTS.md-first projects** — native AGENTS.md support
+
+### Not Ideal For
+
+- **Enterprise governance** — limited admin and team features
+- **Deep customization** — minimal configuration beyond AGENTS.md
+- **Privacy-sensitive projects** — cloud-processed via Sourcegraph
+
+---
+
 ## References
 
 - [Amp by Sourcegraph](https://sourcegraph.com/amp)

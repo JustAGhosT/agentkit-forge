@@ -85,6 +85,33 @@ gaps exist in hierarchical CLAUDE.md placement and domain-specific skill/rule ex
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 89/100 ⭐⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents) |
+| Developer Experience | 80/100 ⭐⭐⭐⭐ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--cli-agents) |
+| Cost & Value | 64/100 ⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--cli-agents) |
+| Customization | 84/100 ⭐⭐⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--cli-agents) |
+| Privacy & Security | 66/100 ⭐⭐⭐½ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--cli-agents) |
+| Team & Enterprise | 68/100 ⭐⭐⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--cli-agents) |
+| **Weighted Total** | **78/100 ⭐⭐⭐⭐** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Power users** who need the strongest coding performance available
+- **Complex multi-file refactoring** where subagent architecture excels
+- **Teams investing in rich customization** — hooks, skills, commands, rules
+- **Terminal-first workflows** that benefit from deep git integration
+
+### Not Ideal For
+
+- **Budget-sensitive individuals** — $20/mo minimum with usage caps
+- **Teams needing model flexibility** — locked to Anthropic's Claude models
+- **Regulated environments** requiring fully local/air-gapped execution
+
+---
+
 ## References
 
 - [Claude Code official documentation — Extending Claude](https://code.claude.com/docs/en/features-overview)

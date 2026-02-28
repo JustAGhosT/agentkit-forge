@@ -105,6 +105,33 @@ skills with scripts and templates.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 79/100 ⭐⭐⭐⭐ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents) |
+| Developer Experience | 69/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--cli-agents) |
+| Cost & Value | 59/100 ⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--cli-agents) |
+| Customization | 67/100 ⭐⭐⭐½ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--cli-agents) |
+| Privacy & Security | 62/100 ⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--cli-agents) |
+| Team & Enterprise | 50/100 ⭐⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--cli-agents) |
+| **Weighted Total** | **67/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **AGENTS.md-first projects** — Codex treats AGENTS.md as its primary instruction file
+- **Cloud autonomous coding** — sandboxed execution without local resources
+- **OpenAI ecosystem users** already on ChatGPT Plus/Pro
+- **Skills-based workflows** — modular, reusable task definitions
+
+### Not Ideal For
+
+- **Budget-sensitive users** — Pro tier ($200/mo) needed for full autonomous use
+- **Teams needing model choice** — OpenAI models only
+- **Enterprise deployments** — limited admin and governance features
+
+---
+
 ## References
 
 - [OpenAI Codex — Custom instructions with AGENTS.md](https://developers.openai.com/codex/guides/agents-md)

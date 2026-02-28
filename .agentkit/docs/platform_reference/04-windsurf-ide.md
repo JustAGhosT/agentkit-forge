@@ -96,6 +96,33 @@ workflow expansion, MCP configuration, and explicit AI behavior directives.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 69/100 ⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ai-native-ides) |
+| Developer Experience | 77/100 ⭐⭐⭐⭐ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--ai-native-ides) |
+| Cost & Value | 73/100 ⭐⭐⭐½ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--ai-native-ides) |
+| Customization | 62/100 ⭐⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--ai-native-ides) |
+| Privacy & Security | 55/100 ⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--ai-native-ides) |
+| Team & Enterprise | 51/100 ⭐⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--ai-native-ides) |
+| **Weighted Total** | **68/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Cursor alternative at a lower price point** — $15/mo vs $20/mo
+- **Teams that value Cascade's flow-based AI** and Memories system
+- **Multi-language projects** with 70+ language support out of the box
+- **Workflow automation** via `.windsurf/workflows/` YAML sequences
+
+### Not Ideal For
+
+- **Teams requiring AGENTS.md support** — not documented as supported natively
+- **Enterprise buyers** — fewer governance and admin features
+- **Advanced customization** — fewer activation controls than Cursor
+
+---
+
 ## References
 
 - [Windsurf Cascade documentation](https://docs.windsurf.com/windsurf/cascade)

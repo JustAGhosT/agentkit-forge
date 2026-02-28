@@ -91,6 +91,33 @@ render target would enable richer integration.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 68/100 ⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions) |
+| Developer Experience | 74/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--ide-extensions) |
+| Cost & Value | 80/100 ⭐⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--ide-extensions) |
+| Customization | 58/100 ⭐⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--ide-extensions) |
+| Privacy & Security | 66/100 ⭐⭐⭐½ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--ide-extensions) |
+| Team & Enterprise | 72/100 ⭐⭐⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--ide-extensions) |
+| **Weighted Total** | **71/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Large codebases** — code graph intelligence is industry-leading for cross-repo understanding
+- **Enterprise teams** needing code-graph-based access controls and org policies
+- **Multi-repo environments** — simultaneous search and context across repositories
+- **Good value** — generous free tier for individuals, $9/mo Pro
+
+### Not Ideal For
+
+- **Agentic/autonomous coding** — primarily a copilot, not an autonomous agent
+- **Multi-file editing** — stronger at understanding than coordinated editing
+- **Full Cody power** requires a Sourcegraph instance
+
+---
+
 ## References
 
 - [Sourcegraph Cody documentation](https://sourcegraph.com/docs/cody)

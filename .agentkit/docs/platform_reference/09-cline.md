@@ -103,6 +103,33 @@ ordering prefixes.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 73/100 ⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions) |
+| Developer Experience | 72/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--ide-extensions) |
+| Cost & Value | 80/100 ⭐⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--ide-extensions) |
+| Customization | 68/100 ⭐⭐⭐½ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--ide-extensions) |
+| Privacy & Security | 62/100 ⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--ide-extensions) |
+| Team & Enterprise | 32/100 ⭐⭐ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--ide-extensions) |
+| **Weighted Total** | **69/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Budget-conscious teams** — free tool, only pay API costs (BYOK)
+- **Agentic VS Code workflows** — autonomous file creation, command execution
+- **Cross-tool compatibility** — reads .cursorrules, .windsurfrules, AGENTS.md
+- **Air-gapped environments** — can run with local models (Ollama, LM Studio)
+
+### Not Ideal For
+
+- **Enterprise deployments** — no SSO, admin, audit, or org policies
+- **Teams wanting predictable costs** — BYOK API usage can spike unpredictably
+- **Non-VS Code users** — VS Code only
+
+---
+
 ## References
 
 - [Cline — Rules documentation](https://docs.cline.bot/customization/cline-rules)

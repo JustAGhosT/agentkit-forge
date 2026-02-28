@@ -90,6 +90,33 @@ generating multi-agent workflow templates.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 63/100 ⭐⭐⭐ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ai-native-ides) |
+| Developer Experience | 77/100 ⭐⭐⭐⭐ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--ai-native-ides) |
+| Cost & Value | 69/100 ⭐⭐⭐½ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--ai-native-ides) |
+| Customization | 62/100 ⭐⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--ai-native-ides) |
+| Privacy & Security | 51/100 ⭐⭐½ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--ai-native-ides) |
+| Team & Enterprise | 54/100 ⭐⭐⭐ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--ai-native-ides) |
+| **Weighted Total** | **65/100 ⭐⭐⭐** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Terminal-first developers** who live in the command line
+- **DevOps / infrastructure teams** — natural language to shell commands
+- **Team collaboration** — Warp Drive shares commands, environments, and prompts
+- **Multi-agent terminal workflows** — run concurrent AI agents for different roles
+
+### Not Ideal For
+
+- **Complex multi-file coding** — terminal is less natural for IDE-level edits
+- **Enterprise compliance** — fewer certifications than Copilot or Amazon Q
+- **Windows users** — requires WSL on Windows
+
+---
+
 ## References
 
 - [Warp — Rules documentation](https://docs.warp.dev/agent-platform/capabilities/rules)

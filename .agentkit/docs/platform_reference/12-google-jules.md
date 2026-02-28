@@ -78,6 +78,34 @@ of the generated `AGENTS.md` directly determines Jules' effectiveness.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 71/100 ⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cloud--autonomous-agents) |
+| Developer Experience | 68/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--cloud--autonomous-agents) |
+| Cost & Value | 62/100 ⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--cloud--autonomous-agents) |
+| Customization | 41/100 ⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--cloud--autonomous-agents) |
+| Privacy & Security | 49/100 ⭐⭐½ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--cloud--autonomous-agents) |
+| Team & Enterprise | 43/100 ⭐⭐ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--cloud--autonomous-agents) |
+| **Weighted Total** | **62/100 ⭐⭐⭐** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Async bug fixes** — fire-and-forget: describe the issue, get a PR later
+- **Teams already using Gemini** — included in Gemini subscription plans
+- **Low-effort maintenance tasks** — automated dependency updates, simple fixes
+- **AGENTS.md-driven projects** — reads AGENTS.md before every task
+
+### Not Ideal For
+
+- **Interactive/iterative coding** — async-only, no real-time collaboration
+- **Complex customization** — only reads AGENTS.md, no rules directory or skills
+- **Enterprise governance** — emerging enterprise features, not yet mature
+- **Time-sensitive tasks** — cloud execution introduces latency
+
+---
+
 ## References
 
 - [Google Jules — AI coding agent](https://jules.google/)

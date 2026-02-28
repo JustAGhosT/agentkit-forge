@@ -103,6 +103,34 @@ organization-wide instructions and specialized coding agent / code review prompt
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 78/100 ⭐⭐⭐⭐ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions) |
+| Developer Experience | 86/100 ⭐⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--ide-extensions) |
+| Cost & Value | 72/100 ⭐⭐⭐½ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--ide-extensions) |
+| Customization | 76/100 ⭐⭐⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--ide-extensions) |
+| Privacy & Security | 74/100 ⭐⭐⭐½ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--ide-extensions) |
+| Team & Enterprise | 88/100 ⭐⭐⭐⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--ide-extensions) |
+| **Weighted Total** | **79/100 ⭐⭐⭐⭐** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Enterprise teams (50+ devs)** — best admin, SSO, audit, and policy controls
+- **GitHub-centric workflows** — native issues → PRs → CI → deploy integration
+- **Lowest-friction adoption** — "it just works" with one-click install
+- **Teams wanting IDE + Coding Agent + Code Review** in a single subscription
+- **Organizations needing compliance** — SOC 2, ISO 27001, GDPR
+
+### Not Ideal For
+
+- **Teams wanting model flexibility** — locked to GitHub-provided models
+- **MCP/tool integration** — no MCP support yet
+- **Budget-zero teams** — no meaningful free tier
+
+---
+
 ## References
 
 - [Use custom instructions in VS Code](https://code.visualstudio.com/docs/copilot/customization/custom-instructions)

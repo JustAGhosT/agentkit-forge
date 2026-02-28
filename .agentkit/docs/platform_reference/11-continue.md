@@ -88,6 +88,33 @@ YAML frontmatter. The portable format works but misses Continue-specific feature
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 61/100 ⭐⭐⭐ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions) |
+| Developer Experience | 68/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--ide-extensions) |
+| Cost & Value | 76/100 ⭐⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--ide-extensions) |
+| Customization | 72/100 ⭐⭐⭐½ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--ide-extensions) |
+| Privacy & Security | 64/100 ⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--ide-extensions) |
+| Team & Enterprise | 50/100 ⭐⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--ide-extensions) |
+| **Weighted Total** | **66/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Model-agnostic teams** — best model flexibility; any provider, local or remote
+- **JetBrains users** — one of few AI assistants with strong JetBrains support
+- **Teams using multiple tools** — can render rules for Cursor, Claude, Copilot, Cody
+- **Organizations wanting managed rules** — Mission Control Hub for cross-project enforcement
+
+### Not Ideal For
+
+- **Teams needing maximum coding performance** — quality depends heavily on model choice
+- **Full agentic workflows** — primarily a copilot, not an autonomous agent
+- **Teams needing AGENTS.md** — uses own rules system without direct AGENTS.md support
+
+---
+
 ## References
 
 - [Continue — Rules documentation](https://docs.continue.dev/customize/rules)

@@ -98,6 +98,33 @@ to Roo modes would significantly enhance integration.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 73/100 ⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--ide-extensions) |
+| Developer Experience | 72/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--ide-extensions) |
+| Cost & Value | 80/100 ⭐⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--ide-extensions) |
+| Customization | 75/100 ⭐⭐⭐½ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--ide-extensions) |
+| Privacy & Security | 62/100 ⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--ide-extensions) |
+| Team & Enterprise | 34/100 ⭐⭐ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--ide-extensions) |
+| **Weighted Total** | **70/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Teams wanting mode-specific AI behavior** — Architect, Code, Debug, Ask modes
+- **Budget-conscious teams** — free BYOK model, same economics as Cline
+- **Cursor rule migration** — imports `.mdc` files directly
+- **Custom workflow orchestration** — Boomerang tasks and custom modes
+
+### Not Ideal For
+
+- **Enterprise deployments** — no SSO, admin, audit, or org policies
+- **Cost-predictable budgets** — BYOK API usage variability
+- **Non-VS Code users** — VS Code only
+
+---
+
 ## References
 
 - [Roo Code Features Documentation](https://docs.roocode.com/features/)

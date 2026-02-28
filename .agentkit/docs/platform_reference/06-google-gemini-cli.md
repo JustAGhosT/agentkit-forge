@@ -107,6 +107,33 @@ Priority (highest to lowest):
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 73/100 ⭐⭐⭐½ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents) |
+| Developer Experience | 73/100 ⭐⭐⭐½ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--cli-agents) |
+| Cost & Value | 83/100 ⭐⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--cli-agents) |
+| Customization | 59/100 ⭐⭐⭐ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--cli-agents) |
+| Privacy & Security | 59/100 ⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--cli-agents) |
+| Team & Enterprise | 50/100 ⭐⭐½ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--cli-agents) |
+| **Weighted Total** | **71/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Budget-conscious developers** — most generous free tier of any CLI agent
+- **Google ecosystem users** already in the Gemini/Google Cloud world
+- **Fast inference needs** — Google infrastructure provides low latency
+- **Pairing with paid agents** — use Gemini CLI for routine tasks, save Claude Code for complex work
+
+### Not Ideal For
+
+- **Teams needing model flexibility** — Gemini models only
+- **Deep customization** — fewer activation controls than Claude Code or Codex
+- **Enterprise governance** — limited admin and team features
+
+---
+
 ## References
 
 - [Gemini CLI official configuration docs](https://google-gemini.github.io/gemini-cli/docs/get-started/configuration.html)

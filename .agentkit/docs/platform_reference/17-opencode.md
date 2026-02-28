@@ -62,6 +62,33 @@ platform-specific configuration options.
 
 ---
 
+## Consolidated Rating
+
+| Dimension | Score | Details |
+|-----------|-------|---------|
+| Coding Performance | 56/100 ⭐⭐⭐ | [details](./PLATFORM_CODING_PERFORMANCE.md#category-matrix--cli-agents) |
+| Developer Experience | 61/100 ⭐⭐⭐ | [details](./PLATFORM_DEVELOPER_EXPERIENCE.md#category-matrix--cli-agents) |
+| Cost & Value | 79/100 ⭐⭐⭐⭐ | [details](./PLATFORM_COST_ANALYSIS.md#category-matrix--cli-agents) |
+| Customization | 51/100 ⭐⭐½ | [details](./PLATFORM_CUSTOMIZATION.md#category-matrix--cli-agents) |
+| Privacy & Security | 61/100 ⭐⭐⭐ | [details](./PLATFORM_PRIVACY_SECURITY.md#category-matrix--cli-agents) |
+| Team & Enterprise | 22/100 ⭐ | [details](./PLATFORM_TEAM_ENTERPRISE.md#category-matrix--cli-agents) |
+| **Weighted Total** | **58/100 ⭐⭐⭐** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
+
+### Best For
+
+- **Go developers** — Go-native tooling with familiar ecosystem
+- **Minimal setup needs** — lightweight terminal AI with quick start
+- **Budget-zero projects** — fully open-source, $0 tool cost
+- **Local model users** — supports local LLM backends
+
+### Not Ideal For
+
+- **Complex coding tasks** — less mature than Claude Code or Aider
+- **Enterprise or team use** — no governance, admin, or collaboration features
+- **Non-Go developers** — Go-based install is less accessible than npm/pip
+
+---
+
 ## References
 
 - [OpenCode — GitHub](https://github.com/opencode-ai/opencode)
