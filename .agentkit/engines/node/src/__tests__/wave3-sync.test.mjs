@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 import { afterEach, beforeEach, describe, expect, it, test } from 'vitest';
-import { runSync } from '../sync.mjs';
+import { runSync } from '../sync-legacy.mjs';
 
 // ---------------------------------------------------------------------------
 // Helpers

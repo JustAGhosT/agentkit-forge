@@ -15,7 +15,7 @@ import {
   flattenCrosscutting,
   resolveRenderTargets,
   ALL_RENDER_TARGETS,
-} from '../sync.mjs';
+} from '../sync-legacy.mjs';
 
 // ---------------------------------------------------------------------------
 // renderTemplate

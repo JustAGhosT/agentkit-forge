@@ -1,6 +1,12 @@
 /**
- * AgentKit Forge — Sync Command
- * Reads spec + overlay → renders templates → writes generated outputs
+ * AgentKit Forge — Sync Command (Legacy / Synchronous)
+ *
+ * This is the original synchronous-fs implementation of the sync engine.
+ * The primary async version lives in `synchronize.mjs` and is used by the CLI.
+ * This file is still used by `tool-manager.mjs` (for `agentkit add`) and by
+ * unit tests that exercise template-rendering helpers.
+ *
+ * Reads spec + overlay → renders templates → writes generated outputs.
  */
 import { createHash } from 'crypto';
 import {
