@@ -11,12 +11,14 @@ import {
   chmod,
   cp,
   mkdir,
+  mkdtemp,
   readFile,
   readdir,
   rm,
   unlink,
   writeFile,
 } from 'fs/promises';
+import { tmpdir } from 'os';
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
 import {
@@ -820,10 +822,9 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
     log(`[agentkit:sync] Syncing only: ${[...targets].join(', ')}`);
   }
 
-  // 4. Render templates to temp directory
-  const tmpDir = resolve(agentkitRoot, '.tmp');
-  await rm(tmpDir, { recursive: true, force: true });
-  await mkdir(tmpDir, { recursive: true });
+  // 4. Render templates to temp directory (unique per invocation to avoid concurrency conflicts)
+  const tmpDir = await mkdtemp(join(tmpdir(), 'agentkit-sync-'));
+  try {
 
   const templatesDir = resolve(agentkitRoot, 'templates');
 
@@ -1170,5 +1171,9 @@ export async function runSync({ agentkitRoot, projectRoot, flags }) {
       log('  Tip: Run "agentkit init" to customize which AI tools you generate configs for.');
       log('       Run "agentkit add <tool>" to add tools incrementally.');
     }
+  }
+  } finally {
+    // Clean up per-invocation temp directory
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }
 }

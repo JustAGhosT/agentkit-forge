@@ -8,6 +8,7 @@ import {
   cpSync,
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readFileSync,
   readdirSync,
   rmSync,
@@ -17,6 +18,7 @@ import {
 } from 'fs';
 import yaml from 'js-yaml';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path';
+import { tmpdir } from 'os';
 import { VALID_TASK_TYPES } from './task-types.mjs';
 import { PROJECT_MAPPING, get, transform, check } from './sync.refactor.mjs';
 
@@ -670,9 +672,7 @@ function computeManifest(tmpDir) {
  * @returns {string} Absolute path to the temp directory containing rendered outputs.
  */
 function generateTemplates(agentkitRoot, vars, version, repoName, targets, mergedPermissions, settingsSpec, teamsSpec, commandsSpec, agentsSpec, rulesSpec) {
-  const tmpDir = resolve(agentkitRoot, '.tmp');
-  rmSync(tmpDir, { recursive: true, force: true });
-  mkdirSync(tmpDir, { recursive: true });
+  const tmpDir = mkdtempSync(join(tmpdir(), 'agentkit-sync-'));
   const templatesDir = resolve(agentkitRoot, 'templates');
   // --- Always-on outputs (not gated by renderTargets) ---
   syncAgentsMd(templatesDir, tmpDir, vars, version, repoName);
