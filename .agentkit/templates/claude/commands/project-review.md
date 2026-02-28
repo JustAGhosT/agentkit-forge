@@ -1,12 +1,6 @@
 ---
 description: "Comprehensive production-grade project review and assessment"
-allowed-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash
-  - WebSearch
-  - WebFetch
+allowed-tools: Read, Glob, Grep, Bash, WebSearch, WebFetch
 generated_by: "{{lastAgent}}"
 last_model: "{{lastModel}}"
 last_updated: "{{syncDate}}"
