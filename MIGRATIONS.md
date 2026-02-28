@@ -46,7 +46,7 @@ When upgrading introduces new spec fields:
 - Improved path traversal protection with symlink resolution and regular-file validation
 - Enhanced project.yaml schema validation (name, description, enum empty-string handling)
 - Corrected `drTestSchedule` field mapping in sync refactor
-- No breaking changes — fully backwards compatible
+- **Breaking change:** Minimum Node.js version raised to **18.0.0**. Users on Node 16 must upgrade.
 
 **Upgrade instructions:** Run `agentkit sync` to regenerate all configs, then `agentkit validate` to verify integrity.
 

@@ -128,6 +128,12 @@ export function execCommand(cmd, { cwd, timeout = 300_000 } = {}) {
   // This prevents command injection vulnerabilities via cmd.exe argument parsing quirks.
   if (process.platform === 'win32') {
      executable = resolveWindowsExecutable(executable, cwd);
+     // .cmd/.bat scripts cannot be spawned directly with shell:false on Windows.
+     // Wrap them in `cmd.exe /d /s /c` using an array to avoid shell injection.
+     if (/\.(cmd|bat)$/i.test(executable)) {
+       args = ['/d', '/s', '/c', executable, ...args];
+       executable = 'cmd.exe';
+     }
   }
 
   const result = spawnSync(executable, args, {

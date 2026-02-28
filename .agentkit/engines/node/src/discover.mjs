@@ -3,7 +3,7 @@
  * Scans the repository to detect tech stacks, project structure, team boundaries,
  * and build a structured discovery report.
  */
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { existsSync } from 'fs';
 import { access, readdir, readFile } from 'fs/promises';
 import yaml from 'js-yaml';
 import { basename, extname, join, resolve } from 'node:path';
