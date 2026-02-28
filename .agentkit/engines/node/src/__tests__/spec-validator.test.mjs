@@ -53,6 +53,11 @@ describe('validate()', () => {
     expect(validate('z', schema, 'x')).toHaveLength(1);
   });
 
+  it('rejects empty string for enum fields', () => {
+    const schema = { type: 'string', enum: ['a', 'b', 'c'] };
+    expect(validate('', schema, 'x')).toHaveLength(1);
+  });
+
   it('validates minLength', () => {
     const schema = { type: 'string', minLength: 3 };
     expect(validate('abc', schema, 'x')).toEqual([]);
@@ -299,9 +304,9 @@ describe('validateProjectYaml', () => {
     expect(errors).toEqual([]);
   });
 
-  it('accepts empty string for enum fields without error', () => {
+  it('rejects empty string for enum fields', () => {
     const { errors } = validateProjectYaml({ phase: '' });
-    expect(errors).toEqual([]);
+    expect(errors.some(e => e.includes('phase'))).toBe(true);
   });
 
   it('validates architecture.monorepoTool enum', () => {
