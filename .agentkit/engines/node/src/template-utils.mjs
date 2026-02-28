@@ -121,11 +121,12 @@ export function resolveConditionals(template, vars) {
     }
   }
 
-  // Process {{#unless var}}...{{/unless}} blocks (inverted #if)
+  // Process {{#unless var}}...{{/unless}} blocks (inverted #if).
+  // Supports nesting via innermost-first resolution (same strategy as #if above).
   const unlessRegex =
     /\{\{#unless\s+([a-zA-Z_][a-zA-Z0-9_]*)\}\}((?:(?!\{\{#unless\s)(?!\{\{\/unless\}\})[\s\S])*?)\{\{\/unless\}\}/g;
-  safety = 50;
-  while (unlessRegex.test(result) && safety-- > 0) {
+  let unlessSafety = 50;
+  while (unlessRegex.test(result) && unlessSafety-- > 0) {
     result = result.replace(unlessRegex, (_, varName, body) => {
       const isTruthy = evalTruthy(vars[varName]);
       const elseMarker = '{{else}}';
