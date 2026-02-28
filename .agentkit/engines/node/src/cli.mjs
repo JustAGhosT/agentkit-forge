@@ -107,6 +107,9 @@ const VALID_FLAGS = {
   list: ['help'],
 };
 
+// Global flags that apply to all commands
+const GLOBAL_FLAGS = ['help', 'quiet', 'verbose'];
+
 // Explicit flag types to ensure correct parsing via node:util parseArgs
 const FLAG_TYPES = {
   // Global
@@ -177,9 +180,6 @@ const command = args[0];
 const commandArgs = args.slice(1);
 
 function parseFlags(command, args) {
-  // Global flags that apply to all commands
-  const GLOBAL_FLAGS = ['help', 'quiet', 'verbose'];
-
   // Scope options to flags valid for this command plus global flags
   const commandFlags = VALID_FLAGS[command] ?? [];
   const allFlags = new Set([...GLOBAL_FLAGS, ...commandFlags]);
@@ -190,13 +190,10 @@ function parseFlags(command, args) {
     if (flagName === 'status') continue;
     const type = FLAG_TYPES[flagName];
     if (!type) {
-      if (process.env.NODE_ENV !== 'production') {
-        throw new Error(
-          `Internal CLI configuration error: flag "--${flagName}" is listed as valid for ` +
-          `command "${command}" but has no entry in FLAG_TYPES.`
-        );
-      }
-      continue;
+      throw new Error(
+        `Internal CLI configuration error: flag "--${flagName}" is listed as valid for ` +
+        `command "${command}" but has no entry in FLAG_TYPES.`
+      );
     }
     options[flagName] = { type };
     if (flagName === 'quiet') options[flagName].short = 'q';
@@ -217,20 +214,37 @@ function parseFlags(command, args) {
       allowPositionals: true
     });
 
-    // With strict: false, unknown flag tokens end up in positionals instead of values.
-    // Filter them out, warn the user, and exclude them from the positional args.
-    const unknownFlags = [];
-    const filteredPositionals = [];
-    for (const token of positionals) {
-      if (typeof token === 'string' && token.length >= 2 && token.startsWith('-')) {
-        unknownFlags.push(token);
-      } else {
-        filteredPositionals.push(token);
+    // With strict: false, parseArgs returns boolean true for a known string option
+    // that is passed without a value (e.g. --status with no argument). Enforce that
+    // all known string options received an actual string value.
+    for (const [flagName, flagOpt] of Object.entries(options)) {
+      if (flagOpt.type === 'string' && Object.hasOwn(values, flagName) && typeof values[flagName] !== 'string') {
+        throw new TypeError(`Option '--${flagName} <value>' argument missing`);
       }
     }
-    if (unknownFlags.length > 0) {
-      for (const flag of unknownFlags) {
-        console.warn(`[agentkit:${command}] Warning: unrecognised flag ${flag} (ignored)`);
+
+    // With strict: false, unknown flag tokens end up in positionals instead of values.
+    // Filter them out, warn the user, and exclude them from the positional args.
+    // For flags without an inline value (e.g. --foo bar), also skip the next token
+    // so bare values don't end up as positional arguments.
+    const unknownFlags = [];
+    const filteredPositionals = [];
+    for (let i = 0; i < positionals.length; i++) {
+      const token = positionals[i];
+      if (typeof token === 'string' && token.length >= 2 && token.startsWith('-')) {
+        unknownFlags.push(token);
+        console.warn(`[agentkit:${command}] Warning: unrecognised flag ${token} (ignored)`);
+        // Skip the next token if it looks like a value (not a flag) for flags
+        // that don't embed their value inline (e.g. --foo bar, but not --foo=bar).
+        if (
+          !token.includes('=') &&
+          i + 1 < positionals.length &&
+          !positionals[i + 1].startsWith('-')
+        ) {
+          i++;
+        }
+      } else {
+        filteredPositionals.push(token);
       }
     }
 
@@ -391,7 +405,7 @@ async function main() {
   }
 
   // Warn on unrecognised flags
-  const validForCommand = VALID_FLAGS[command] || [];
+  const validForCommand = [...(VALID_FLAGS[command] || []), ...GLOBAL_FLAGS];
   for (const key of Object.keys(flags)) {
     if (key === '_args') continue;
     if (!validForCommand.includes(key)) {

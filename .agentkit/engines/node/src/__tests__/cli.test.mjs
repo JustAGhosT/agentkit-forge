@@ -91,6 +91,12 @@ describe('CLI', () => {
       expect(result.stdout).toContain('AgentKit Forge');
     });
 
+    it('tasks --status without a value exits non-zero', () => {
+      // --status is a string option for tasks; omitting the value should cause an error
+      const result = run('tasks', '--status');
+      expect(result.exitCode).not.toBe(0);
+    });
+
     it('command without --status support does not error when --status is passed without a value', () => {
       // spec-validate does not declare --status; with strict:false the unknown flag is
       // tolerated and spec-validate runs to completion
