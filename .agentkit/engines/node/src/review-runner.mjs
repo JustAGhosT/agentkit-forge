@@ -64,12 +64,23 @@ function getChangedFiles(projectRoot, flags) {
     return r.exitCode === 0 ? r.stdout.trim().split('\n').filter(Boolean) : [];
   }
 
-  if (flags.file) {
+    if (flags.file) {
     // Constrain to project root to prevent path traversal
     const abs = resolve(projectRoot, flags.file);
     if (!abs.startsWith(resolve(projectRoot) + sep) && abs !== resolve(projectRoot)) {
       throw new Error(`--file must be within the project root: ${flags.file}`);
     }
+
+    if (existsSync(abs)) {
+      const realPath = realpathSync(abs);
+      const realProjectRoot = realpathSync(projectRoot);
+      if (!realPath.startsWith(realProjectRoot + sep) && realPath !== realProjectRoot) {
+        throw new Error(`File must be within the project root (symlinks traversing outside are not allowed): ${flags.file}`);
+      }
+    } else {
+      throw new Error(`File not found: ${flags.file}`);
+    }
+
     return [flags.file];
   }
 
