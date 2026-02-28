@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { runReview } from '../review-runner.mjs';
 import * as runner from '../runner.mjs';
 import * as orchestrator from '../orchestrator.mjs';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, rmSync, existsSync, symlinkSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -202,6 +202,28 @@ describe('review-runner', () => {
           flags: { file: '../../etc/passwd' },
         })
       ).rejects.toThrow('must be within the project root');
+    });
+
+    it('rejects --file symlinks that point outside project root', async () => {
+      setupTestRepo();
+      const outsideFile = resolve(TEST_ROOT, '..', 'outside-secret.txt');
+      // Create a real file outside the project root, then a symlink inside pointing to it
+      writeFileSync(outsideFile, 'AKIAIOSFODNN7EXAMPLE', 'utf-8');
+      try {
+        symlinkSync(outsideFile, resolve(TEST_ROOT, 'evil-link.js'));
+
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+
+        await expect(
+          runReview({
+            agentkitRoot: resolve(__dirname, '..', '..', '..', '..'),
+            projectRoot: TEST_ROOT,
+            flags: { file: 'evil-link.js' },
+          })
+        ).rejects.toThrow('symlinks traversing outside are not allowed');
+      } finally {
+        if (existsSync(outsideFile)) rmSync(outsideFile, { force: true });
+      }
     });
   });
 

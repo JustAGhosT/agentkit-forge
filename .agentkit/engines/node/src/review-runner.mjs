@@ -74,6 +74,18 @@ function getChangedFiles(projectRoot, flags) {
     if (!abs.startsWith(resolve(projectRoot) + sep) && abs !== resolve(projectRoot)) {
       throw new Error(`--file must be within the project root: ${flags.file}`);
     }
+    // Reject symlinks that resolve outside the project root.
+    // Use realpathSync directly (no existsSync pre-check) to avoid a TOCTOU window.
+    try {
+      const realPath = realpathSync(abs);
+      const realProjectRoot = realpathSync(projectRoot);
+      if (!realPath.startsWith(realProjectRoot + sep) && realPath !== realProjectRoot) {
+        throw new Error(`File must be within the project root (symlinks traversing outside are not allowed): ${flags.file}`);
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err; // re-throw our traversal error and unexpected OS errors
+      // ENOENT: file doesn't exist yet (e.g. deleted between staging and scan) — let scanners skip it
+    }
     return [flags.file];
   }
 
