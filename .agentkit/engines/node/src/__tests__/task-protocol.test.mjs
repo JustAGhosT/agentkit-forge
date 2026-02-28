@@ -210,32 +210,32 @@ describe('getTask', () => {
 // ---------------------------------------------------------------------------
 
 describe('listTasks', () => {
-  it('returns empty list when no tasks exist', () => {
-    expect(listTasks(tmpRoot).tasks).toEqual([]);
+  it('returns empty list when no tasks exist', async () => {
+    expect((await listTasks(tmpRoot)).tasks).toEqual([]);
   });
 
   it('lists all tasks', async () => {
     await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'] });
     await createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['y'] });
-    expect(listTasks(tmpRoot).tasks).toHaveLength(2);
+    expect((await listTasks(tmpRoot)).tasks).toHaveLength(2);
   });
 
   it('filters by status', async () => {
     await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'] });
-    expect(listTasks(tmpRoot, { status: 'submitted' }).tasks).toHaveLength(1);
-    expect(listTasks(tmpRoot, { status: 'completed' }).tasks).toHaveLength(0);
+    expect((await listTasks(tmpRoot, { status: 'submitted' })).tasks).toHaveLength(1);
+    expect((await listTasks(tmpRoot, { status: 'completed' })).tasks).toHaveLength(0);
   });
 
   it('filters by assignee', async () => {
     await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['team-backend'] });
     await createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['team-frontend'] });
-    expect(listTasks(tmpRoot, { assignee: 'team-backend' }).tasks).toHaveLength(1);
+    expect((await listTasks(tmpRoot, { assignee: 'team-backend' })).tasks).toHaveLength(1);
   });
 
   it('sorts by priority then date', async () => {
     await createTask(tmpRoot, { title: 'Low', delegator: 'test', assignees: ['x'], priority: 'P3' });
     await createTask(tmpRoot, { title: 'High', delegator: 'test', assignees: ['x'], priority: 'P0' });
-    const { tasks } = listTasks(tmpRoot);
+    const { tasks } = await listTasks(tmpRoot);
     expect(tasks[0].title).toBe('High');
     expect(tasks[1].title).toBe('Low');
   });
@@ -647,7 +647,7 @@ describe('formatTaskList', () => {
   it('produces a markdown table', async () => {
     await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'], priority: 'P0' });
     await createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['y'], priority: 'P2' });
-    const { tasks } = listTasks(tmpRoot);
+    const { tasks } = await listTasks(tmpRoot);
     const table = formatTaskList(tasks);
     expect(table).toContain('| ID |');
     expect(table).toContain('submitted');
