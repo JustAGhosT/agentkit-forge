@@ -1,7 +1,9 @@
 /**
  * AgentKit Forge — Synchronize Command
  * Reads spec + overlay → renders templates → writes generated AI-tool configuration outputs.
- * All file I/O is async; pure template helpers live in template-utils.mjs.
+ * Main file operations (mkdir, writeFile, readdir, cp) use async fs/promises.
+ * readYaml/readText use synchronous fs APIs for simplicity at startup.
+ * Pure template helpers live in template-utils.mjs.
  */
 import { createHash } from 'crypto';
 import { existsSync, readFileSync } from 'fs';
