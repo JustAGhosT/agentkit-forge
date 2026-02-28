@@ -1,0 +1,88 @@
+# Continue
+
+**Render target:** `ai`
+
+---
+
+## Platform Overview
+
+Continue (continue.dev) is an open-source AI coding assistant for VS Code and
+JetBrains. It uses `.continue/rules/` for project rules and supports a rich
+ecosystem of shareable rule sets. Continue can render rules for multiple
+target formats (Cursor, Claude, Copilot, Codex, Cody).
+
+---
+
+## Native Configuration
+
+| Feature | Location | Format |
+|---------|----------|--------|
+| Project rules | `.continue/rules/*.md` | Markdown with optional YAML frontmatter |
+| Hub/org rules | Continue Mission Control | Managed dashboard |
+| Portable rules | `.continuerules` | Plain text |
+| Cross-tool rules | `.cursorrules`, `.windsurfrules` | Auto-detected |
+
+### Key Capabilities
+
+- **Local rules** in `.continue/rules/` — version-controlled, project-specific.
+- **Hub/organization rules** for cross-project enforcement via dashboard.
+- **YAML frontmatter** for categorization: `title`, `objective`, `severity`,
+  `applies` (glob patterns).
+- **Severity levels**: `block` (hard enforcement) or `warn` (soft guidance).
+- **Format conversion**: The rules CLI can render rules for Cursor, Claude,
+  Copilot, Cody, Codex, and more.
+- **Multi-model support**: Assign different rules to distinct models, tasks,
+  or agents. Works with local and remote LLMs (Ollama, Azure, AWS).
+- **UI + CLI**: Visual Studio Code extension GUI and `rules-cli` for
+  downloading, rendering, and publishing rule sets.
+
+### Directory Structure Example
+
+```
+.continue/
+  rules/
+    typescript-standards.md
+    security-policy.md
+    testing-requirements.md
+  config.json
+```
+
+---
+
+## What AgentKit Forge Generates
+
+| Output | Path | Source |
+|--------|------|--------|
+| Continue rules | `.ai/continuerules` | `templates/ai/continuerules` |
+| Cursor rules | `.ai/cursorrules` | `templates/ai/cursorrules` |
+| Windsurf rules | `.ai/windsurfrules` | `templates/ai/windsurfrules` |
+
+These are portable rule files that work across multiple IDEs.
+
+---
+
+## Gap Analysis
+
+| Feature | Platform Supports | AgentKit Forge Status | Gap |
+|---------|------------------|----------------------|-----|
+| .continue/rules/ directory | ✅ Project-specific rules | ❌ Not generated | Generate rules in .continue/rules/ format |
+| Portable rules files | ✅ Multi-format | ✅ 3 portable files generated | None |
+| YAML frontmatter | ✅ title, objective, severity, applies | ❌ Not in portable files | Add frontmatter to generated rules |
+| Severity levels | ✅ block / warn | ❌ Not used | Could classify rules by severity |
+| Hub/org rules | ✅ Managed dashboard | ❌ Not applicable | Platform-managed feature |
+| Format conversion | ✅ Multi-target rendering | N/A | Continue can render from any format |
+| config.json | ✅ Model/provider config | ❌ Not generated | Could generate config.json |
+| AGENTS.md support | ⚠️ Not directly | ✅ Always generated | Continue uses own rule system |
+
+**Summary:** Continue is supported via portable rule files. Key gap is not
+generating rules in the native `.continue/rules/` directory format with
+YAML frontmatter. The portable format works but misses Continue-specific features.
+
+---
+
+## References
+
+- [Continue — Rules documentation](https://docs.continue.dev/customize/rules)
+- [Awesome Rules — Curated rule collection](https://github.com/continuedev/awesome-rules)
+- [Rules CLI Tool — GitHub](https://github.com/continuedev/rules)
+- [Configuration Interface — DeepWiki](https://deepwiki.com/continuedev/continue/6.2-configuration-interface)
