@@ -8,6 +8,9 @@
 | [04_contributing.md](./04_contributing.md) | Contribution guidelines |
 | [05_project_yaml_reference.md](./05_project_yaml_reference.md) | `project.yaml` field reference |
 | [ai_handoffs/](./ai_handoffs/) | AI session handoff records |
+| [model-families/](./model-families/) | LLM benchmark dossiers by model family |
+| [model-guides/](./model-guides/) | Per-team LLM model selection guides |
+| [analysis/](./analysis/) | LLM decision engine analysis and scoring |
 
 ## Related
 

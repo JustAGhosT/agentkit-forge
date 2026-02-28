@@ -25,7 +25,6 @@ documentation category maintained by this repository.
 - [Deployment Guide](./05_operations/01_deployment.md)
 - [Glossary](./08_reference/01_glossary.md)
 - [project.yaml Reference](./08_reference/05_project_yaml_reference.md)
-- [PRD Library](./prd/README.md)
 
 ## Conventions
 

@@ -41,7 +41,7 @@
 | Field | Type | Example |
 |-------|------|---------|
 | `documentation.hasPrd` | boolean | `true` |
-| `documentation.prdPath` | string | `docs/prd/` |
+| `documentation.prdPath` | string | `docs/01_product/` |
 | `documentation.hasAdr` | boolean | `false` |
 | `documentation.adrPath` | string | `docs/adr/` |
 | `documentation.hasApiSpec` | boolean | `false` |
