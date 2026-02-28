@@ -712,73 +712,15 @@ export async function orchestratorProcessHandoffs(projectRoot, state) {
 }
 
 /**
- * Get a summary of all active tasks for display.
- * Tasks are sorted by priority (P0 first) then creation date (newest first)
- * to match the ordering produced by listTasks().
- * @param {string} projectRoot
- * @returns {string}
- */
-export function getTasksSummary(projectRoot) {
-  const dir = resolve(projectRoot, '.claude', 'state', 'tasks');
-  if (!existsSync(dir)) return 'No tasks in the task queue.';
-
-  let files;
-  try {
-    files = readdirSync(dir).filter((f) => f.endsWith('.json') && !f.endsWith('.tmp'));
-  } catch {
-    return 'No tasks in the task queue.';
-  }
-
-  const activeTasks = [];
-  for (const file of files) {
-    try {
-      const content = readFileSync(resolve(dir, file), 'utf-8');
-      const task = JSON.parse(content);
-      if (task && typeof task === 'object' && !Array.isArray(task)) {
-        activeTasks.push(task);
-      }
-    } catch {
-      // Skip unreadable/corrupted task files in summary output
-    }
-  }
-
-  if (activeTasks.length === 0) return 'No tasks in the task queue.';
-
-  // Sort by priority (P0 first), then by creation date (newest first) — matches listTasks()
-  activeTasks.sort((a, b) => {
-    const paRaw = TASK_PRIORITIES.indexOf(a.priority);
-    const pbRaw = TASK_PRIORITIES.indexOf(b.priority);
-    const pa = paRaw === -1 ? Number.POSITIVE_INFINITY : paRaw;
-    const pb = pbRaw === -1 ? Number.POSITIVE_INFINITY : pbRaw;
-    if (pa !== pb) return pa - pb;
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
-
-  const nonTerminal = activeTasks.filter((t) => !TERMINAL_STATES.includes(t.status));
-  const terminal = activeTasks.filter((t) => TERMINAL_STATES.includes(t.status));
-  const lines = ['--- Task Queue ---', ''];
-
-  if (nonTerminal.length > 0) {
-    lines.push(`Active tasks: ${nonTerminal.length}`);
-    lines.push(formatTaskList(nonTerminal));
-    lines.push('');
-  }
-
-  if (terminal.length > 0) {
-    lines.push(`Completed/closed tasks: ${terminal.length}`);
-  }
-
-  return lines.join('\n');
-}
-
-/**
- * Async task summary helper for callers already using async flows.
+ * Get a summary of all tasks for display.
  * @param {string} projectRoot
  * @returns {Promise<string>}
  */
-export async function getTasksSummaryAsync(projectRoot) {
+export async function getTasksSummary(projectRoot) {
   const listResult = await listTasks(projectRoot);
-  const activeTasks = Array.isArray(listResult?.tasks) ? listResult.tasks : [];
+  const activeTasks = (Array.isArray(listResult?.tasks) ? listResult.tasks : []).filter(
+    (t) => t && typeof t === 'object' && !Array.isArray(t)
+  );
   if (activeTasks.length === 0) return 'No tasks in the task queue.';
 
   const nonTerminal = activeTasks.filter((t) => !TERMINAL_STATES.includes(t.status));
