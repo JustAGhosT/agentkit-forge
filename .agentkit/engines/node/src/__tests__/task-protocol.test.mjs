@@ -211,30 +211,25 @@ describe('getTask', () => {
 
 describe('listTasks', () => {
   it('returns empty list when no tasks exist', async () => {
-    const result = await listTasks(tmpRoot);
-    expect(result.tasks).toEqual([]);
+    expect((await listTasks(tmpRoot)).tasks).toEqual([]);
   });
 
   it('lists all tasks', async () => {
     await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'] });
     await createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['y'] });
-    const result = await listTasks(tmpRoot);
-    expect(result.tasks).toHaveLength(2);
+    expect((await listTasks(tmpRoot)).tasks).toHaveLength(2);
   });
 
   it('filters by status', async () => {
     await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['x'] });
-    const result1 = await listTasks(tmpRoot, { status: 'submitted' });
-    expect(result1.tasks).toHaveLength(1);
-    const result2 = await listTasks(tmpRoot, { status: 'completed' });
-    expect(result2.tasks).toHaveLength(0);
+    expect((await listTasks(tmpRoot, { status: 'submitted' })).tasks).toHaveLength(1);
+    expect((await listTasks(tmpRoot, { status: 'completed' })).tasks).toHaveLength(0);
   });
 
   it('filters by assignee', async () => {
     await createTask(tmpRoot, { title: 'A', delegator: 'test', assignees: ['team-backend'] });
     await createTask(tmpRoot, { title: 'B', delegator: 'test', assignees: ['team-frontend'] });
-    const result = await listTasks(tmpRoot, { assignee: 'team-backend' });
-    expect(result.tasks).toHaveLength(1);
+    expect((await listTasks(tmpRoot, { assignee: 'team-backend' })).tasks).toHaveLength(1);
   });
 
   it('sorts by priority then date', async () => {
