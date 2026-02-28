@@ -1,3 +1,4 @@
+<!-- generated_by: {{lastAgent}} | last_model: {{lastModel}} | last_updated: {{syncDate}} -->
 # Project Context
 
 This repository uses the AgentKit Forge unified agent team framework.

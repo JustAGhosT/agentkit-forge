@@ -1,3 +1,4 @@
+<!-- generated_by: {{lastAgent}} | last_model: {{lastModel}} | last_updated: {{syncDate}} -->
 # /{{commandName}} — {{commandDescription}}
 
 ## When to Use

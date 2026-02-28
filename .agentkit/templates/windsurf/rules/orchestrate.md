@@ -1,3 +1,4 @@
+<!-- generated_by: {{lastAgent}} | last_model: {{lastModel}} | last_updated: {{syncDate}} -->
 # Orchestration Workflow
 
 Follow the 5-phase lifecycle for all significant work items.

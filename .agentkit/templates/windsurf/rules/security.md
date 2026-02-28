@@ -1,3 +1,4 @@
+<!-- generated_by: {{lastAgent}} | last_model: {{lastModel}} | last_updated: {{syncDate}} -->
 # Security Rules
 
 These rules apply to all AI-assisted development in this repository.
