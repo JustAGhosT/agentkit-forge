@@ -90,7 +90,7 @@ describe('runDoctor', () => {
     );
   });
 
-  it('should report error if overlay settings file is missing', async () => {
+  it('should report warning if overlay settings file is missing', async () => {
     const { validateSpec } = await import('../spec-validator.mjs');
     validateSpec.mockReturnValue({ valid: true, errors: [], warnings: [] });
 
