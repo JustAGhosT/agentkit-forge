@@ -68,7 +68,7 @@ function getChangedFiles(projectRoot, flags) {
     return r.exitCode === 0 ? r.stdout.trim().split('\n').filter(Boolean) : [];
   }
 
-    if (flags.file) {
+  if (flags.file) {
     // Constrain to project root to prevent path traversal
     const abs = resolve(projectRoot, flags.file);
     if (!abs.startsWith(resolve(projectRoot) + sep) && abs !== resolve(projectRoot)) {
