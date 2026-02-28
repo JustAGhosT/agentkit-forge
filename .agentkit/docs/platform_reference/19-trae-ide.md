@@ -61,7 +61,7 @@ configuration format is required beyond the universal AGENTS.md standard.
 | Developer Experience | 79/100 ⭐⭐⭐⭐ | VS Code familiarity, polished UI, fast onboarding |
 | Cost & Value | 92/100 ⭐⭐⭐⭐½ | Free unlimited GPT-4o + Claude access — best value in market |
 | Customization | 55/100 ⭐⭐⭐ | Custom agents but limited rules/activation system |
-| Privacy & Security | 45/100 ⭐⭐ | ByteDance ownership raises data concerns; local storage but cloud processing |
+| Privacy & Security | 45/100 ⭐⭐ | Local file storage but cloud model processing; [privacy policy](https://www.trae.ai/privacy) should be reviewed for data handling specifics |
 | Team & Enterprise | 40/100 ⭐⭐ | Limited team/enterprise features |
 | **Weighted Total** | **71/100 ⭐⭐⭐½** | [methodology](./PLATFORM_CONSOLIDATED_RATING.md#decision-dimensions--weights) |
 
@@ -74,7 +74,7 @@ configuration format is required beyond the universal AGENTS.md standard.
 
 ### Not Ideal For
 
-- **Privacy-sensitive projects** — ByteDance data handling concerns
+- **Privacy-sensitive projects** — code is processed via cloud models; review [Trae's privacy policy](https://www.trae.ai/privacy) before use with proprietary code
 - **Enterprise compliance** — limited governance and audit features
 - **Linux users** — full Linux support still pending
 - **Deep customization** — fewer rule/activation controls than Cursor

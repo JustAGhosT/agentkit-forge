@@ -44,9 +44,6 @@ productivity, autonomy, and the best AI coding experience money can buy.
 ### 💰 $50/month — Strong Professional
 
 ```
-Paid:  Claude Code Max 5x ($100/mo split to ~$50 average)
-       └── Best coding performance, unlimited-ish
--- OR --
 Paid:  Cursor Business ($40/mo)
        └── Full IDE with admin, SSO, privacy mode
 Paid:  Copilot Individual ($10/mo)

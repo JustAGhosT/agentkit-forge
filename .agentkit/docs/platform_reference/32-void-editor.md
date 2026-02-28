@@ -61,7 +61,7 @@ model provider. Y Combinator-backed with 28K+ GitHub stars.
 
 - **Team collaboration** — no multiplayer or team features
 - **Enterprise needs** — no SSO, governance, audit, or policies
-- **Polished experience** — development paused; less refined than Cursor
+- **Polished experience** — core team [paused development in mid-2025](https://github.com/voideditor/void) to explore new ideas; community maintains it
 - **Maximum coding performance** — quality depends entirely on chosen model
 
 ---

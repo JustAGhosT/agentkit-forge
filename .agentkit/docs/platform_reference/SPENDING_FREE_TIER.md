@@ -27,7 +27,7 @@ Every platform below offers meaningful free access. Listed in order of value.
 
 | Platform | Free Tier Details | Monthly Limit | Best For |
 |----------|------------------|---------------|----------|
-| **Trae IDE** | Unlimited GPT-4o + Claude 3.7 access | No documented limit | Full AI IDE experience |
+| **Trae IDE** | Free GPT-4o + Claude 3.7 access | Soft limits likely apply (fair use) | Full AI IDE experience |
 | **Codeium** | Unlimited completions | Unlimited | Fast code completions |
 | **Void Editor** | Free forever (BYOK) | Unlimited (API costs) | Privacy-first coding |
 | **PearAI** | Open-source + BYOK | Unlimited (API costs) | Bundled AI tools |
