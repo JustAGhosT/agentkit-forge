@@ -1,6 +1,9 @@
 ---
 description: "Structured code review — check correctness, security, performance, tests, and docs"
 allowed-tools: Bash(git *)
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 
 # Code Review

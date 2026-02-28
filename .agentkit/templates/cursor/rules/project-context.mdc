@@ -2,6 +2,9 @@
 description: "Project context and conventions for {{repoName}}"
 globs:
 alwaysApply: true
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 # Project Context
 

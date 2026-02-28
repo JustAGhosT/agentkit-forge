@@ -1,6 +1,9 @@
 ---
 description: "Build the project — auto-detects stack, accepts optional scope"
 allowed-tools: Bash(git *), Bash(npm *), Bash(pnpm *), Bash(npx *), Bash(dotnet *), Bash(cargo *), Bash(python *), Bash(go *), Bash(make *)
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 
 # Build

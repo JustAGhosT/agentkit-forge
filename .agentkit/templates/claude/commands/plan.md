@@ -1,6 +1,9 @@
 ---
 description: "Produce a structured implementation plan before writing any code"
 allowed-tools: Bash(git *), Bash(find *), Bash(ls *)
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 
 # Implementation Plan

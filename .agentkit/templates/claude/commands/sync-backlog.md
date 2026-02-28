@@ -1,6 +1,9 @@
 ---
 description: "Update AGENT_BACKLOG.md with current findings, state, and code TODOs"
 allowed-tools: Bash(git *), Bash(grep *), Bash(find *)
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 
 # Sync Backlog

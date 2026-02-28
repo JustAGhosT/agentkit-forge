@@ -2,6 +2,9 @@
 description: "Orchestration workflow for multi-agent coordination"
 globs:
 alwaysApply: false
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 # Orchestration
 

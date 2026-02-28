@@ -1,6 +1,9 @@
 ---
 description: "Master orchestrator — coordinate work across unified teams with state persistence"
 allowed-tools: Bash(git *), Bash(npm *), Bash(pnpm *), Bash(dotnet *), Bash(cargo *)
+generated_by: "{{lastAgent}}"
+last_model: "{{lastModel}}"
+last_updated: "{{syncDate}}"
 ---
 
 # W1 Orchestrator
