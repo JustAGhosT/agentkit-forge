@@ -7,7 +7,7 @@
  * are not available. This tracks operational metrics (session duration, commands
  * run, files modified) which are useful for understanding usage patterns.
  */
-import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, renameSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, renameSync, unlinkSync } from 'fs';
 import { resolve, basename } from 'path';
 import { execSync } from 'child_process';
 import { formatTimestamp } from './runner.mjs';
@@ -54,6 +54,10 @@ function usageLogPath(agentkitRoot, date) {
 
 function sessionFilePath(agentkitRoot, sessionId) {
   return resolve(sessionsDir(agentkitRoot), `session-${sessionId}.json`);
+}
+
+function activeSessionPointerPath(agentkitRoot) {
+  return resolve(logsDir(agentkitRoot), 'active-session-id');
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +125,9 @@ export function initSession({ agentkitRoot, projectRoot }) {
   }
   writeFileSync(sessionFilePath(agentkitRoot, sessionId), JSON.stringify(session, null, 2) + '\n', 'utf-8');
 
+  // Write active-session-id pointer for O(1) lookup in recordCommand
+  writeFileSync(activeSessionPointerPath(agentkitRoot), sessionId, 'utf-8');
+
   // Log event
   logEvent(agentkitRoot, {
     sessionId,
@@ -173,6 +180,14 @@ export function endSession({ agentkitRoot, projectRoot, sessionId }) {
 
   writeFileSync(path, JSON.stringify(session, null, 2) + '\n', 'utf-8');
 
+  // Remove active-session-id pointer (only if it points to this session)
+  const pointerPath = activeSessionPointerPath(agentkitRoot);
+  try {
+    if (existsSync(pointerPath) && readFileSync(pointerPath, 'utf-8').trim() === sessionId) {
+      unlinkSync(pointerPath);
+    }
+  } catch { /* pointer cleanup is best-effort */ }
+
   // Log event
   logEvent(agentkitRoot, {
     sessionId,
@@ -197,7 +212,32 @@ export function recordCommand(agentkitRoot, command) {
   const dir = sessionsDir(agentkitRoot);
   if (!existsSync(dir)) return;
 
-  // Find the most recent active session file
+  // O(1) fast path: read the active-session-id pointer file
+  const pointerPath = activeSessionPointerPath(agentkitRoot);
+  if (existsSync(pointerPath)) {
+    try {
+      const pointedId = readFileSync(pointerPath, 'utf-8').trim();
+      if (pointedId) {
+        const filePath = sessionFilePath(agentkitRoot, pointedId);
+        if (existsSync(filePath)) {
+          const session = JSON.parse(readFileSync(filePath, 'utf-8'));
+          if (session.status === 'active') {
+            session.commandsRun = session.commandsRun || [];
+            session.commandsRun.push({ command, timestamp: new Date().toISOString() });
+            const tmpPath = filePath + '.tmp';
+            writeFileSync(tmpPath, JSON.stringify(session, null, 2) + '\n', 'utf-8');
+            renameSync(tmpPath, filePath);
+            logEvent(agentkitRoot, { event: 'command_run', command, sessionId: session.sessionId });
+            return;
+          }
+        }
+        // Pointer is stale — remove it and fall through to O(N) scan
+        try { unlinkSync(pointerPath); } catch { /* best-effort */ }
+      }
+    } catch { /* corrupted pointer — fall through to O(N) scan */ }
+  }
+
+  // O(N) fallback: scan all session files (self-heals the pointer when active session found)
   const files = readdirSync(dir)
     .filter(f => f.startsWith('session-') && f.endsWith('.json'))
     .sort()
@@ -215,6 +255,9 @@ export function recordCommand(agentkitRoot, command) {
         const tmpPath = filePath + '.tmp';
         writeFileSync(tmpPath, JSON.stringify(session, null, 2) + '\n', 'utf-8');
         renameSync(tmpPath, filePath);
+
+        // Self-heal the pointer
+        try { writeFileSync(pointerPath, session.sessionId, 'utf-8'); } catch { /* best-effort */ }
 
         logEvent(agentkitRoot, { event: 'command_run', command, sessionId: session.sessionId });
         return;
