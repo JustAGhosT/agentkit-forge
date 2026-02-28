@@ -42,26 +42,13 @@ function isShellScriptTarget(targetPath) {
 }
 
 /**
- * Renders a template by:
- * 1. Resolving {{#if var}}...{{/if}} conditional blocks
- * 2. Resolving {{#each var}}...{{/each}} iteration blocks
- * 3. Replacing {{key}} placeholders with values from vars
- *
+ * Phase 3 of template rendering: replaces {{key}} placeholders with values from vars.
  * - Replaces longest keys first to prevent partial matches (e.g., {{versionInfo}} before {{version}})
- * - Sanitizes string values to prevent shell metacharacter injection
+ * - Sanitizes string values to prevent shell metacharacter injection unless allowRawVars is set
  * - Warns on unresolved placeholders when DEBUG is set
  */
-function renderTemplate(template, vars, targetPath = '') {
+function replacePlaceholders(template, vars, allowRawVars = false) {
   let result = template;
-  const allowRawVars = isShellScriptTarget(targetPath);
-
-  // Phase 1: Resolve {{#if var}}...{{/if}} blocks (supports nesting)
-  result = resolveConditionals(result, vars);
-
-  // Phase 2: Resolve {{#each var}}...{{/each}} blocks
-  result = resolveEachBlocks(result, vars);
-
-  // Phase 3: Replace {{key}} placeholders
   const sortedKeys = Object.keys(vars).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
     const value = vars[key];
@@ -82,6 +69,19 @@ function renderTemplate(template, vars, targetPath = '') {
     console.warn(`[agentkit:sync] Warning: unresolved placeholders: ${unique.join(', ')}`);
   }
   return result;
+}
+
+/**
+ * Renders a template by running three pipeline phases:
+ * 1. Resolving {{#if var}}...{{/if}} conditional blocks
+ * 2. Resolving {{#each var}}...{{/each}} iteration blocks
+ * 3. Replacing {{key}} placeholders with values from vars
+ */
+function renderTemplate(template, vars, targetPath = '') {
+  const allowRawVars = isShellScriptTarget(targetPath);
+  let result = resolveConditionals(template, vars);
+  result = resolveEachBlocks(result, vars);
+  return replacePlaceholders(result, vars, allowRawVars);
 }
 
 /**
@@ -1863,6 +1863,7 @@ export {
   isScaffoldOnce,
   mergePermissions,
   renderTemplate,
+  replacePlaceholders,
   resolveConditionals,
   resolveEachBlocks,
   resolveRenderTargets,
